@@ -4,7 +4,7 @@
 
 Roughly **50/50** between two motions. About half of enterprise adoption is triggered by a specific compliance or regulatory event — a DPIA, an internal AI-use policy rollout, an audit finding, or a contractual obligation to a counterparty. The other half is led by enterprises that have made a deliberate call to use AI on sensitive data and are not willing to do it without provable controls in place, mandate or not.
 
-We are not confined to regulated verticals. The pattern we see is **cross-industry**: any enterprise where data sensitivity, board oversight, or counterparty risk makes "send the document straight to a model" unacceptable. Financial services, professional services, and healthcare lead, but the broader buying centre is any organisation where a CTO or General Counsel has to be able to answer the question *"what did the model actually see?"*.
+We are not confined to regulated verticals, and we do not over-index on any single industry. The pattern is **cross-industry**: any enterprise where data sensitivity, board oversight, or counterparty risk makes "send the document straight to a model" unacceptable. The buying centre is consistent regardless of sector — a CTO, CISO, or General Counsel who has to be able to answer the question *"what did the model actually see?"* — and that question lands the same way in a bank, a hospital, a law firm, a manufacturer, or a public-sector body.
 
 ## Q2 · The two governance modules
 
