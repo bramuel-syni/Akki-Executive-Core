@@ -26,7 +26,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from typing import Any, Dict, Literal, Tuple
+from typing import Any, Dict, Literal, Optional, Tuple
 
 from services.synisense.exceptions import ServiceUnavailable
 
@@ -120,6 +120,7 @@ async def invoke_with_metering(
     *,
     model_preference: ModelPreference = "balanced",
     timeout_seconds: float = 20.0,
+    system_msg: Optional[str] = None,
 ) -> Tuple[str, str, str, Dict[str, Any]]:
     """Same contract as `invoke()` but additionally returns a usage dict.
 
@@ -129,13 +130,12 @@ async def invoke_with_metering(
       - Live SDK call: `{"input_tokens": int, "output_tokens": int, "method": "exact"}`
       - Mock / fallback: `{}` (caller must fall back to estimation).
 
-    Implementation: we call `litellm.acompletion` directly instead of
-    `LlmChat.send_message` because the latter discards the
-    `ModelResponse.usage` payload. The request shape mirrors what
-    `LlmChat._execute_completion` builds (same LLM-gateway proxy URL,
-    same `custom_llm_provider="openai"` envelope, same model name
-    transform for Gemini), so behaviour stays identical to the legacy
-    path apart from the additional usage capture.
+    Phase 14 (2026-06-05) — `system_msg` kwarg. When provided, REPLACES
+    the built-in privacy-governed system prompt for this call. When
+    None (default for the 90+ existing call sites), the built-in
+    prompt is preserved. This is how `routers/chat.py` injects the
+    AKKI editorial persona + token-shape fluency guard rails without
+    rippling into every other shield_invoke consumer.
     """
     provider, model = _provider_for(model_preference)
 
@@ -171,7 +171,7 @@ async def invoke_with_metering(
             "messages": [
                 {
                     "role": "system",
-                    "content": (
+                    "content": system_msg if system_msg else (
                         "You are a privacy-governed assistant. The user message contains "
                         "opaque tokens of the shape [[ENT_XXX_NNN]] — preserve them "
                         "verbatim. Do not invent meanings for them. Respond concisely."

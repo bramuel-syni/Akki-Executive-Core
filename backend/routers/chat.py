@@ -145,6 +145,58 @@ def _cascade_starting_from(model_id: str) -> List[str]:
     return [m for m in MODEL_FALLBACK_CASCADE if m != model_id]
 
 
+# ─────────────────────────────────────────────────────────────────────
+# Phase 14 (2026-06-05) — Chat fluency system message.
+#
+# Shared by BOTH the sync `send_message` (L1833) and the streaming
+# `stream_message` (L2722) paths. Sources the token-shape contract
+# from `deidentifier.SHIELD_TOKEN_FORMAT_DESCRIPTION` (single source
+# of truth) so a future change to the wire token format doesn't drift
+# the chat preamble out of sync.
+#
+# Pre-Phase-14 the sync path's `system_msg` was dead code (built then
+# never appended) AND described a token shape `[EMAIL_1]` that the
+# de-identifier never emitted. This caused the user-visible failure
+# where Claude apologised about "redacted tokens", suggested typos
+# ("onrr"), and complained about ambiguous proper nouns ("Malaria").
+# Anchor: /app/memory/sprints/PHASE_14_CHAT_FLUENCY.md
+# ─────────────────────────────────────────────────────────────────────
+from services.synisense.shield.deidentifier import (
+    SHIELD_TOKEN_FORMAT_DESCRIPTION as _SHIELD_TOKEN_FORMAT_DESCRIPTION,
+    SHIELD_TOKEN_EXAMPLES as _SHIELD_TOKEN_EXAMPLES,
+)
+
+
+def _phase14_chat_fluency_system_msg() -> str:
+    """Return the AKKI chat system prompt with the Phase 14 fluency
+    guard rails. Quoted verbatim by the deterministic
+    `test_chat_system_msg_prepended.py` lockdown."""
+    examples = ", ".join(_SHIELD_TOKEN_EXAMPLES[:2])
+    return (
+        "You are AKKI, a calm, editorial intelligence partner for "
+        "executives and non-executive directors. Tone: precise, "
+        "neutral, no hype, Economist-style cadence.\n\n"
+        "Some inputs you receive will contain opaque placeholders of "
+        f"the shape {_SHIELD_TOKEN_FORMAT_DESCRIPTION.split(' where')[0]} "
+        f"(e.g. {examples}). These are stable referents — each one "
+        "consistently refers to the same real-world entity throughout "
+        "the conversation. Reason about them as you would about any "
+        "proper noun. The system rehydrates them to their real values "
+        "before the user reads your reply.\n\n"
+        "Hard requirements:\n"
+        "- Never mention, quote, or apologise about these "
+        "placeholders. The user does not see them and must not be "
+        "made aware of them.\n"
+        "- Do not use the words \"redacted\", \"token\", \"tokens\", "
+        "or phrases like \"I can't parse\" or \"did you mean\".\n"
+        "- If a passage is genuinely ambiguous, ask a natural "
+        "conversational follow-up the way a human assistant would — "
+        "never reference the redaction mechanism.\n"
+        "- Otherwise, respond substantively and fluently, exactly as "
+        "you would in a normal Claude conversation."
+    )
+
+
 def _model_def(model_id: str) -> Optional[Dict[str, str]]:
     for m in SUPPORTED_MODELS:
         if m["id"] == model_id:
@@ -1830,21 +1882,20 @@ async def send_message(
                 "[/LINKED_CONTEXT]"
             )
 
-    system_msg = (
-        "You are AKKI, a calm, editorial intelligence partner for executives "
-        "and non-executive directors. Tone: precise, neutral, no hype, "
-        "Economist-style cadence. When tokens like [EMAIL_1] or [PERSON_3] "
-        "appear, treat each as a stable referent — reason about it without "
-        "asking the user what it means; the system will rehydrate the "
-        "real value before the user reads your reply."
-    )
+    # ── Phase 14 (2026-06-05) — chat fluency preamble. Builds the
+    # AKKI editorial persona + no-leak hard requirements + token-
+    # shape contract sourced from `deidentifier.SHIELD_TOKEN_FORMAT_
+    # DESCRIPTION` (single source of truth). The streaming sibling
+    # at L2722 appends the same preamble via the same helper so the
+    # two endpoints never diverge.
+    system_msg = _phase14_chat_fluency_system_msg()
     if grounding_paragraphs:
         # Tighten the system message so the model uses ONLY the supplied
         # anchor ids. The post-processor still validates and drops any
         # hallucinated marker, but a stronger system rail meaningfully
         # cuts the rate of hallucinated citations in practice.
         system_msg += (
-            " A [GROUNDING] block follows containing extracted paragraphs "
+            "\n\nA [GROUNDING] block follows containing extracted paragraphs "
             "from the user's documents. Cite ONLY using the inline marker "
             "[[cite:<anchor_id>]] where <anchor_id> appears in the block. "
             "Never invent anchor ids. If the answer is not in the grounding "
@@ -1871,6 +1922,7 @@ async def send_message(
     started_ms = time.monotonic()
     shield_audit_id: Optional[str] = None
     shield_de_id_summary: Dict[str, int] = {}
+    chat_system_prompt_injection_failed = False  # Phase 14 typed flag (T1 step 5)
     try:
         from services.synisense.shield.client import invoke as shield_invoke
         pref = "balanced"
@@ -1886,6 +1938,7 @@ async def send_message(
             user_id=current["id"],
             model_preference=pref,
             internal_caller=True,
+            system_msg=system_msg,
         )
         reply_text = sr.get("response") or ""
         shield_audit_id = sr.get("audit_id")
@@ -1894,7 +1947,13 @@ async def send_message(
         )
         mode = "live"
     except Exception as e:
-        logger.exception("Chat Shield call failed")
+        # Phase 14 — Honesty protocol: when shield_invoke fails, the
+        # caller-provided `system_msg` (chat fluency preamble) never
+        # reached the model. Surface a typed flag on the response so
+        # the FE can warn / opt-in for a retry. Logged with exc_info
+        # via `logger.exception` (Guard Rail 2 — no silent swallow).
+        logger.exception("Chat Shield call failed", exc_info=True)
+        chat_system_prompt_injection_failed = True
         reply_text = f"(LLM error: {type(e).__name__}: {str(e)[:200]})"
         mode = "error"
     latency_ms = int((time.monotonic() - started_ms) * 1000)
@@ -2059,6 +2118,10 @@ async def send_message(
         "shielding": detected,
         "will_shield": will_shield,
         "bypass_reason": bypass_reason,
+        # Phase 14 (2026-06-05) — typed flag for when the chat-fluency
+        # system prompt did not reach the model because shield_invoke
+        # raised. FE may show an inline warning + offer a retry.
+        "chat_system_prompt_injection_failed": chat_system_prompt_injection_failed,
         # Phase C — frontend uses this to render the intervention card
         # (hypothesis-test / annotation / Solva handoff). When no
         # detector fires, `protective_event.intervention_type == "none"`
@@ -2747,6 +2810,18 @@ async def stream_message(
             pass
     except Exception:  # pragma: no cover — fallback to legacy prompt
         pass
+
+    # Phase 14 (2026-06-05) — Append the chat-fluency preamble to the
+    # streaming system_msg too so the two endpoints (sync at L1833,
+    # streaming here) never diverge on the no-leak + token-shape
+    # contract. The earlier system_msg layers (turn-class + chat-v2
+    # governance) stay first; the Phase 14 guard appends so the
+    # token-shape contract is the last instruction the model reads
+    # before the user turn.
+    try:
+        system_msg = (system_msg or "") + "\n\n" + _phase14_chat_fluency_system_msg()
+    except Exception:
+        logger.exception("Phase 14 fluency preamble append failed", exc_info=True)
 
     request_account = current  # closures capture this at the inner scope
     request_obj = request

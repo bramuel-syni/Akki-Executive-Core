@@ -34,7 +34,7 @@ Verbatim, dated:
 
 **Reconciliation note (2026-06-03):** The previous Section 3 was a prior agent's 8-cluster aggregation. This section is rebuilt verbatim against the three QA docs the user uploaded (`Onboarding Journey QA`, `Task Manager QA`, `Google Login + Doc Reader + Calendar + Open Questions QA`, all dated 2nd June 2026). The audit memo at `sprints/MASTER_STATE_RECONCILIATION_2026-06-03.md` documents the divergences uncovered.
 
-**Total items across 3 QA docs: 37. ✅ 32 · 🟡 0 · ❌ 4 · 🚧 1 · ❔ 0.** (Plus Bug #30 ✅, plus Track A Phase 4 ✅ + Phase 5 ✅ + Phase 6 ✅ + **Phase 7 ✅ 2026-06-05**, plus 3 closed bugs `BUG-ANL-001` ✅ + `BUG-ANL-002` ✅ + `BUG-WS-001` ✅. **0 open bugs. 0 deferred phases — confidence scoring runtime path closed via Phase 7.**)
+**Total items across 3 QA docs: 37. ✅ 32 · 🟡 0 · ❌ 4 · 🚧 1 · ❔ 0.** (Plus Bug #30 ✅, plus Track A Phase 4 ✅ + Phase 5 ✅ + Phase 6 ✅ + Phase 7 ✅ + **Phase 14 ✅ 2026-06-05**, plus 3 closed bugs `BUG-ANL-001` ✅ + `BUG-ANL-002` ✅ + `BUG-WS-001` ✅. **0 open bugs. 0 deferred phases.**)
 
 Status legend:
 - ✅ SHIPPED — code change verified; tester journey-completion passed
@@ -347,6 +347,42 @@ Status legend:
 
   **Iteration budget**: 1/3 used. Iter-2/3 reserved for unforeseen architectural surprises only.
 
+- Phase 14 (Chat Fluency & Detection Hardening): closes the user-visible chat UX failure where Claude apologised about "redacted tokens", suggested typos ("onrr"), and flagged disease names as orgs ("Malaria suggests an organization") → ✅ SHIPPED 2026-06-05 (iter-1 single-dispatch ship after read-only investigation).
+
+  **Investigation finding (pre-Phase-14):** read-only audit of `/app/chat` confirmed **TWO** root causes:
+  - **Dead-code system_msg**: `routers/chat.py:1833` built a `system_msg` variable that was NEVER appended to `full_prompt` and NEVER threaded through `shield_invoke`. The model received zero AKKI persona / fluency framing.
+  - **Token-shape drift**: the same dead `system_msg` claimed tokens of shape `[EMAIL_1]` / `[PERSON_3]`; the de-identifier at `services/synisense/shield/deidentifier.py:594` actually emitted `[[ENT_PERSON_001]]`. Two-way contract drift.
+  - **Detection quality**: 2-3 char tenant entities prefix-bit longer words (`Le` → `Lemonrr` → leaks `monrr`); spaCy NER mis-labelled `Malaria` and other disease names + common capitalised words as ORG.
+
+  **Iter-1 ship — 3-track ship in one dispatch:**
+
+  • **Track 1 — Chat fluency**: exported `SHIELD_TOKEN_FORMAT_DESCRIPTION` + `SHIELD_TOKEN_EXAMPLES` constants from `deidentifier.py` (single source of truth); rewrote chat `system_msg` via new `_phase14_chat_fluency_system_msg()` helper at `routers/chat.py:~150` (forbids `redacted`, `token(s)`, `I can't parse`, `did you mean`; instructs natural follow-up on ambiguity; references actual `[[ENT_*]]` shape); added optional `system_msg=None` kwarg to `services/synisense/shield/client.py:invoke()` + `llm_router.py:invoke_with_metering()` (backwards-compatible for 90+ existing call sites); threaded the kwarg into the sync `shield_invoke` call; appended the same preamble to the streaming sibling's `system_msg` at `chat.py:~2780` so the two endpoints don't diverge; added typed `chat_system_prompt_injection_failed` flag to the sync response (T1 step 5 — Honesty protocol).
+
+  • **Track 2 — Detection quality**: `_MIN_ENTITY_LEN = 4` floor in `tenant_entities.py:harvest()` (every collection field) + defensive belt at `lookup_in_text()` for stale-cache survival; `_ORG_PROTECTOR_TERMS` frozenset in `deidentifier.py` (43 terms: 19 diseases + 6 weekdays + 12 months + 6 generic capitalised English words) wired into the spaCy hit loop so ORG hits matching the protector are dropped before append. Zero changes to regex layer, other spaCy types, or substitution path.
+
+  • **Track 3 — Test pinning (5 tests, 4 deterministic + 1 integration-marked)**:
+    - `test_chat_system_msg_prepended.py` — captures `shield_invoke` kwargs via monkeypatch, fires sync send-message route, asserts AKKI preamble landed in `system_msg=`.
+    - `test_chat_token_shape_consistency.py` (5 assertions) — constants exported + examples match canonical `[[ENT_<TYPE>_<NNN>]]` shape + chat preamble uses real shape (no `[EMAIL_1]` regression) + all `_SPACY_TYPES_KEPT` + regex types enumerated in description.
+    - `test_tenant_entities_length_floor.py` (3 assertions) — short-prefix bite suppression + `onrr`-fragment regression + 4-char boundary inclusive.
+    - `test_spacy_org_common_noun_protector.py` (5 assertions) — real-spaCy round-trips for Malaria + Following NOT redacted, Apple Inc IS redacted; constant exported with correct buckets; does not overreach onto real brand names.
+    - **`test_chat_fluency_no_shield_leak.py` (`@pytest.mark.integration`)** — real Anthropic round-trip via Shield with the user-screenshot-like prompt (`"Mary Anne and Bramuel are meeting in Nairobi on Friday to discuss the malaria response programme..."`); asserts NO `[[ENT_` / `redacted` / `\btoken\b` / `I can't parse` / `did you mean` leaks; asserts substantive marker present; asserts audit row written with `outcome=="success"`. **PASS in 23.37s on live LLM.**
+
+  **Files touched**:
+  - **Modified**: `services/synisense/shield/deidentifier.py` (+~65 LOC), `services/synisense/shield/tenant_entities.py` (+~20 LOC), `services/synisense/shield/client.py` (+~10 LOC), `services/synisense/shield/llm_router.py` (+~10 LOC), `routers/chat.py` (+~95 LOC / -~25 LOC).
+  - **Created**: 5 new BE test files.
+  - **Net delta**: ~200 LOC across product + tests.
+
+  **Verification**:
+  - 14/14 default Phase 14 assertions PASS + 1/1 integration-marked real-LLM round-trip PASS.
+  - **160/160 aggregate BE regression PASS** across Phase 3-7 + Phase 14 + SyniSense baseline + v1 byte-identical guard (5 deselected = integration-marked across phases).
+  - ESLint + Ruff clean on every file touched.
+
+  **No new env vars / no third-party libraries / shield_invoke signature backwards-compatible (only optional kwarg added) / no Track B retouch / no schema migrations.**
+
+  Memo: `sprints/PHASE_14_CHAT_FLUENCY.md`.
+
+  **Iteration budget**: 1/3 used. Iter-2/3 reserved for unforeseen architectural surprises only.
+
 
 ### Track B — QA cleanup
 - Phase B1 (small mechanical onboarding + signin): **O4** ✅ + **O6** ✅ + **G1** ✅ (Fig 20 — `/sign-in` → `/signin` × 4 buttons) + **G2 Fig 22 modal** ✅ (SessionTimeoutGuard handler gated on `account`); **O7** ✅ Fig 7. Phase status: ✅ SHIPPED — tester PASS Journeys 4-v2, 6, 7, 8, 9 (5/5 incl. regression), 2026-06-04. Memos: `sprints/TRACK_B_PHASE1_FIG7_V2_ROOT_CAUSE_FIX.md`, `sprints/TRACK_B_PHASE1B_O4_O6_FIG20_FIG22.md`.
@@ -420,44 +456,45 @@ Recorded for paper trail per user direction. NOT auto-scoped. Same pattern as Ph
 
 ## Section 6 — Active Phase
 
-**None active.** Track A Phase 7 ✅ COMPLETE 2026-06-05 (iter-1 single-dispatch ship — confidence scoring runtime compute path closed; 4 user-approved tightenings folded; 13/13 default + 2 integration-marked Phase 7 lockdowns PASS; 87/87 aggregate BE regression PASS). All 13 shipped phases verified (Track A Phase 1+2+3+4+5+6+7, Track B B1 incl. B1b + B2 + B3 + B4 + B5). 0 open bugs. 0 deferred phases. 1 user-blocked item (G2 GCP OAuth) only. Paused pending user pick of next dispatch.
+**None active.** Phase 14 ✅ COMPLETE 2026-06-05 (iter-1 3-track single-dispatch ship — chat fluency + detection-quality hardening; 14/14 deterministic PASS + 1/1 integration-marked real-LLM round-trip PASS in 23.37s; 160/160 aggregate BE regression PASS). All 14 shipped phases verified (Track A Phase 1+2+3+4+5+6+7 + Phase 14, Track B B1 incl. B1b + B2 + B3 + B4 + B5). 0 open bugs. 0 deferred phases. 1 user-blocked item (G2 GCP OAuth) only. Paused pending user pick of next dispatch.
 
 ---
 
 ## Section 7 — Last Updated
 
-- **Written:** 2026-06-05T00:30:00Z (Track A Phase 7 ✅ shipped — confidence scoring runtime compute path closed via new `services/work_studio/confidence_scorer.py`; 4 user-approved tightenings folded; cross-phase Mongo `WriteError` ripple resolved with surgical null-parent guards in 2 places; aggregate regression went from 74/74 → 87/87 PASS).
-- **Agent:** track-a-phase-7-confidence-scoring.
-- **Mode:** 1 new BE service file + 2 BE routers extended + 1 BE model file extended + 1 FE component extended + 1 new BE lockdown file (15 tests at cap). +13 LOC ripple guard for null-parent dotted-path Mongo writes. Memo: `sprints/TRACK_A_PHASE_7_CONFIDENCE_SCORING.md`.
-- **Counts after Phase 7 close:** ✅32 / 🟡0 / ❌4 / 🚧1 across the original 37 QA items (unchanged). Plus Bug #30 ✅ + Track A Phase 4 ✅ + Phase 5 ✅ + Phase 6 ✅ + **Phase 7 ✅** + BUG-ANL-001 ✅ + BUG-ANL-002 ✅ + BUG-WS-001 ✅. **0 open bugs. 0 deferred phases. 1 user-blocked item (G2 GCP OAuth) only.**
+- **Written:** 2026-06-05T02:15:00Z (Phase 14 ✅ shipped — closes chat UX failure where Claude responded with shield-mechanics meta-language; fixed dead-code system_msg + token-shape drift + tenant 2-3 char prefix-bite + spaCy ORG false-positives on disease names; integration test PASS in 23.37s on live LLM).
+- **Agent:** phase-14-chat-fluency-detection-hardening.
+- **Mode:** 5 BE files modified + 5 new BE test files. Net ~200 LOC delta. `shield_invoke` API additively extended with optional `system_msg=None` kwarg — backwards-compatible across 90+ existing call sites. Memo: `sprints/PHASE_14_CHAT_FLUENCY.md`.
+- **Counts after Phase 14 close:** ✅32 / 🟡0 / ❌4 / 🚧1 across the original 37 QA items (unchanged). Plus Bug #30 ✅ + Track A Phase 4 ✅ + Phase 5 ✅ + Phase 6 ✅ + Phase 7 ✅ + **Phase 14 ✅** + BUG-ANL-001 ✅ + BUG-ANL-002 ✅ + BUG-WS-001 ✅. **0 open bugs. 0 deferred phases. 1 user-blocked item (G2 GCP OAuth) only.**
 
 ---
 
-## Section 8 — Cumulative Health Snapshot (2026-06-05 00:30Z Track A Phase 7 ✅ close)
+## Section 8 — Cumulative Health Snapshot (2026-06-05 02:15Z Phase 14 ✅ close)
 
-- ✅ **13 phases shipped + verified**: Track A Phase 1 + 2 + 3 + 4 + 5 + 6 + 7, Track B B1 (incl. B1b) + B2 + B3 + B4 + B5.
+- ✅ **14 phases shipped + verified**: Track A Phase 1 + 2 + 3 + 4 + 5 + 6 + 7 + **Phase 14**, Track B B1 (incl. B1b) + B2 + B3 + B4 + B5.
 - ✅ **3 standalone bugs closed**: BUG-ANL-001 Analyze Journal route guard + BUG-ANL-002 Analyze upload silent-failure + BUG-WS-001 rag_band test spec update.
-- ✅ **TM3 unblocked** 2026-06-04: SendGrid Inbound Parse webhook live-verified end-to-end.
+- ✅ **TM3 unblocked** 2026-06-04: SendGrid Inbound Parse webhook fully verified end-to-end on production.
 - 🟡 **0 phases pending tester.**
 - ❌ **4 ❌ open items** across the 3 QA docs (unchanged).
 - 🪲 **0 open bugs.**
-- 🛌 **0 deferred future phases.** (Phase 7 closed the previously deferred confidence-scoring path.)
+- 🛌 **0 deferred future phases.**
 - 🚧 **1 USER-BLOCKED item:** Google GCP OAuth creds (G2).
-- ✅ **v1 byte-identical guard intact** (2/2 across all 13 phases).
+- ✅ **v1 byte-identical guard intact** (2/2 across all 14 phases).
+- ✅ **Phase 14 lockdown sweep 14/14 default + 1 integration-marked real-LLM PASS** (`test_chat_system_msg_prepended.py` + `test_chat_token_shape_consistency.py` + `test_tenant_entities_length_floor.py` + `test_spacy_org_common_noun_protector.py` + `test_chat_fluency_no_shield_leak.py`).
 - ✅ **Phase 7 lockdown sweep 13/13 default + 2 integration-marked PASS** (`test_track_a_phase7_confidence_scoring.py`).
 - ✅ **Phase 6 lockdown sweep 10/10 default + 2 integration-marked PASS** (`test_track_a_phase6_inline_edit_and_bc_removal.py`).
-- ✅ **Aggregate BE regression sweep 87/87 PASS** (was 74/74 pre-Phase-7; now 87/87 with 5 integration-marked deselected across all phases).
+- ✅ **Aggregate BE regression sweep 160/160 PASS** (Phase 3+4+5+6+7+14 + SyniSense baseline + v1 guard; 5 deselected = integration-marked across phases).
 - ✅ **Phase 5 inverted-stub-flag test PASS** (`test_phase5_phase6_stub_flags_persist`: `n >= 3` → `n == 0`).
 - ✅ **Chunk 8 regression 25/25 PASS** (BUG-WS-001 75/50 spec match).
 - ✅ **BUG-ANL-002 lockdown 8/8 PASS** (`/tmp/bug_anl_002_upload_journey.py` against live preview).
-- ✅ **TM3 SendGrid outbound sandbox smoke PASS** (`_sendgrid_sandbox_smoke` 200/460ms) + **inbound 3-curl auth surface PASS** on live preview.
+- ✅ **TM3 SendGrid outbound sandbox smoke PASS** + **inbound 3-curl auth surface PASS** on live preview.
 - ✅ **Voice-lint clean** across customer-copy surfaces.
 - ✅ **ESLint clean** on every file touched.
-- ✅ **Ruff clean** on all backend files touched in Phase 7.
+- ✅ **Ruff clean** on all backend files touched.
 
 ---
 
-**Paused per orchestrator instruction.** NOT auto-starting any backlog hygiene pass / sibling-route guard generalisation / data-testid presence smoke test (DECLINED 2026-06-04 — same gold-plating pattern as per-source autopick table, minutes-template polish, `useFileInputResetOnInvoke` cross-cutting hook). User decides next dispatch — only open candidate: **GCP OAuth G2 unblock when creds land**. Holding for that signal.
+**Paused per orchestrator instruction.** NOT auto-starting any backlog hygiene pass / stale tenant-catalogue cleanup / data-testid presence smoke test (DECLINED 2026-06-04). User decides next dispatch — only open candidate: **GCP OAuth G2 unblock when creds land**. Holding for that signal.
 
 ---
 

@@ -79,13 +79,21 @@ async def harvest(tenant_id: str) -> Dict[str, int]:
     rows: List[Dict[str, Any]] = []
     now = datetime.now(timezone.utc).isoformat()
 
+    # Phase 14 (2026-06-05) — Length floor on every harvested entity.
+    # Short tokens (e.g. 2-3 chars from a truncated company name or a
+    # single-syllable surname) cause partial-substitution artifacts
+    # like the "onrr" fragment when the catalogue entry is a prefix
+    # of a longer word in user prose. Rationale anchored in
+    # /app/memory/sprints/PHASE_14_CHAT_FLUENCY.md.
+    _MIN_ENTITY_LEN = 4
+
     # Accounts — Phase A binds tenant_id := account_id (see route docs),
     # so we harvest the row whose id == tenant_id.
     acc = await db.accounts.find_one({"id": tenant_id}, {"_id": 0})
     if acc:
         for field, key in (("company_name", "ORG"), ("full_name", "PERSON")):
             val = acc.get(field)
-            if isinstance(val, str) and val.strip():
+            if isinstance(val, str) and len(val.strip()) >= _MIN_ENTITY_LEN:
                 rows.append({
                     "tenant_id": tenant_id,
                     "entity_text": val.strip(),
@@ -103,7 +111,7 @@ async def harvest(tenant_id: str) -> Dict[str, int]:
     async for ctx in ctx_cursor:
         for field, key in (("name", "ORG"), ("organization_name", "ORG")):
             val = ctx.get(field)
-            if isinstance(val, str) and val.strip():
+            if isinstance(val, str) and len(val.strip()) >= _MIN_ENTITY_LEN:
                 rows.append({
                     "tenant_id": tenant_id,
                     "entity_text": val.strip(),
@@ -122,6 +130,8 @@ async def harvest(tenant_id: str) -> Dict[str, int]:
             async for cy in cy_cursor:
                 title = cy.get("title")
                 for noun in _extract_proper_nouns(title or ""):
+                    if len(noun) < _MIN_ENTITY_LEN:
+                        continue  # Phase 14 length floor — see top of harvest()
                     rows.append({
                         "tenant_id": tenant_id,
                         "entity_text": noun,
@@ -204,6 +214,13 @@ async def lookup_in_text(text: str, *, tenant_id: str) -> List[Dict[str, Any]]:
         entity_text = row.get("entity_text") or ""
         entity_type = row.get("entity_type") or "ORG"
         if not entity_text:
+            continue
+        # Phase 14 (2026-06-05) — defensive belt against pre-Phase-14
+        # cache entries that may still hold short-prefix tokens. The
+        # harvest()-side filter is the suspenders; this guard is the
+        # belt that survives a stale cache after a deploy. Anchor:
+        # /app/memory/sprints/PHASE_14_CHAT_FLUENCY.md.
+        if len(entity_text.strip()) < 4:
             continue
         pattern = re.compile(
             r"(?<![A-Za-z0-9_])" + re.escape(entity_text) + r"(?![A-Za-z0-9_])",

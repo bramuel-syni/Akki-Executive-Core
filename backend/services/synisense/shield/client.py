@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, Literal
+from typing import Any, Dict, Literal, Optional
 
 from services.synisense.shield import (
     audit_log,
@@ -43,10 +43,22 @@ async def invoke(
     user_id: str,
     model_preference: Literal["analytical", "generative", "balanced"] = "balanced",
     internal_caller: bool = False,
+    system_msg: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Run the full Shield pipeline. Returns
     `{response, trust_receipt, audit_id}`. Raises one of the four
-    SynisenseError subclasses on rejection / failure."""
+    SynisenseError subclasses on rejection / failure.
+
+    Phase 14 (2026-06-05) — `system_msg` kwarg threads a caller-
+    provided system prompt all the way to the provider. When None,
+    llm_router uses its built-in generic system prompt (preserves
+    pre-Phase-14 behaviour for the 90+ existing call sites). When
+    provided (e.g. chat router's fluency preamble), it REPLACES the
+    generic one. The system prompt is not redacted by the Shield —
+    it is the orchestration layer's contract with the model and is
+    expected to contain no tenant PII. Callers are responsible for
+    keeping it generic.
+    """
     import time
     purpose_validator.validate_purpose(purpose, internal_caller=internal_caller)
 
@@ -54,6 +66,7 @@ async def invoke(
     de_id = await deidentifier.deidentify(content, tenant_id=tenant_id, purpose=purpose)
     llm_text, provider, model, usage = await llm_router.invoke_with_metering(
         de_id.redacted_text, model_preference=model_preference,
+        system_msg=system_msg,
     )
     response_text = reidentifier.reidentify(llm_text, de_id.token_map)
     latency_ms = int((time.perf_counter() - started) * 1000)

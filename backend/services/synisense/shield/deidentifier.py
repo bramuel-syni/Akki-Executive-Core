@@ -153,6 +153,56 @@ _SPACY_TYPES_KEPT = {"PERSON", "ORG", "GPE", "PRODUCT", "NORP", "FAC", "EVENT", 
 
 
 # ─────────────────────────────────────────────────────────────────────
+# Phase 14 (2026-06-05) — Token-shape contract published as module
+# constants so callers (e.g. chat router's system_msg) can quote the
+# REAL token format we emit instead of inventing one. The single
+# source of truth.
+# ─────────────────────────────────────────────────────────────────────
+SHIELD_TOKEN_FORMAT_DESCRIPTION = (
+    "[[ENT_<TYPE>_<NNN>]] where <TYPE> is one of PERSON, ORG, GPE, "
+    "EMAIL, PHONE_E164, MONEY, DATE_ISO, URL, IP, NORP, PRODUCT, "
+    "FAC, EVENT, LAW, API_KEY, IBAN, CREDIT_CARD, ACCOUNT_NUM, SSN, "
+    "UK_NI_NUMBER and <NNN> is a zero-padded counter."
+)
+SHIELD_TOKEN_EXAMPLES = [
+    "[[ENT_PERSON_001]]",
+    "[[ENT_ORG_002]]",
+    "[[ENT_GPE_001]]",
+    "[[ENT_EMAIL_001]]",
+]
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Phase 14 (2026-06-05) — Narrow static protector list for spaCy ORG
+# false-positives. Kept deliberately tight (no POS check, no WordNet,
+# no embedding heuristic) per the phase brief's explicit hard-no on
+# broader heuristics. Two buckets:
+#   1. Diseases / medical conditions that spaCy frequently mis-tags
+#      as ORG (the "Malaria token suggests an organization" case).
+#   2. Common capitalised English words (months, weekdays, generic
+#      sentence-start nouns) that show up as ORG in spaCy's trained
+#      weights when they happen to head a sentence or appear in a
+#      bullet.
+# ─────────────────────────────────────────────────────────────────────
+_ORG_PROTECTOR_TERMS = frozenset({
+    # Diseases / medical
+    "malaria", "diabetes", "influenza", "cholera", "tuberculosis",
+    "hepatitis", "dengue", "ebola", "measles", "polio", "smallpox",
+    "leprosy", "hiv", "aids", "covid", "cancer", "alzheimer",
+    "parkinson", "asthma",
+    # Common scientific / generic capitalised nouns
+    "following", "pending", "regarding", "including", "given",
+    "considering",
+    # Weekdays
+    "monday", "tuesday", "wednesday", "thursday", "friday",
+    "saturday", "sunday",
+    # Months
+    "january", "february", "march", "april", "may", "june", "july",
+    "august", "september", "october", "november", "december",
+})
+
+
+# ─────────────────────────────────────────────────────────────────────
 # spaCy model loader (lazy + thread-safe).
 #
 # Tries `en_core_web_trf` first per the brief, falls back to
@@ -557,6 +607,13 @@ async def deidentify(content: str, *, tenant_id: str, purpose: Optional[str] = N
 
     for ent in doc.ents:
         if ent.label_ not in _SPACY_TYPES_KEPT:
+            continue
+        # Phase 14 (2026-06-05) — narrow ORG protector. Drop hits
+        # where spaCy mis-labels a disease name or a generic
+        # capitalised English word (month, weekday, sentence-
+        # starter) as ORG. See `_ORG_PROTECTOR_TERMS` above for the
+        # rationale + exhaustive list.
+        if ent.label_ == "ORG" and ent.text.strip().casefold() in _ORG_PROTECTOR_TERMS:
             continue
         hits.append({
             "start": ent.start_char, "end": ent.end_char,
