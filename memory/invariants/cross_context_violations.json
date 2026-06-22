@@ -1,0 +1,416 @@
+{
+  "scan_timestamp": "2026-06-22T21:15:41.426347+00:00",
+  "scan_roots": [
+    "/app/backend/services",
+    "/app/backend/routers"
+  ],
+  "primitives_inspected": [
+    "find_audit",
+    "find_receipt",
+    "narrate_analysis",
+    "shield_invoke"
+  ],
+  "akki_owned_collections": [
+    "accounts",
+    "briefings",
+    "chat_messages",
+    "chats",
+    "contexts",
+    "cycle_questions",
+    "cycles",
+    "documents",
+    "memberships",
+    "objectives",
+    "signals"
+  ],
+  "escape_hatch_marker": "boundary:allow-direct-call",
+  "violations": [
+    {
+      "file": "/app/backend/routers/admin_health.py",
+      "line": 71,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/routers/chat.py",
+      "line": 587,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/routers/chat.py",
+      "line": 1933,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/routers/chat.py",
+      "line": 3055,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/routers/chat.py",
+      "line": 3079,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/routers/chat.py",
+      "line": 3405,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/routers/chat.py",
+      "line": 2475,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/routers/chat.py",
+      "line": 2498,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/routers/documents.py",
+      "line": 1362,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/routers/monitor_status_assessment.py",
+      "line": 271,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/routers/solva_phase_d.py",
+      "line": 428,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/routers/strategic_goal_assessment.py",
+      "line": 284,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/routers/synisense_shield.py",
+      "line": 204,
+      "kind": "primitive_call",
+      "name": "find_audit",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/routers/synisense_shield.py",
+      "line": 219,
+      "kind": "primitive_call",
+      "name": "find_receipt",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/routers/tasks.py",
+      "line": 590,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/routers/work_studio_overlay.py",
+      "line": 584,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/routers/workbook_analysis.py",
+      "line": 1082,
+      "kind": "primitive_call",
+      "name": "narrate_analysis",
+      "owner": "solva",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/services/chat/protective_layer/__init__.py",
+      "line": 230,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/services/documents/intelligence_service.py",
+      "line": 439,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/services/documents/intelligence_service.py",
+      "line": 413,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/services/documents/intelligence_service.py",
+      "line": 484,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/services/sandbox_generation.py",
+      "line": 173,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/services/solva/orchestration/shield_invoker.py",
+      "line": 65,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/services/solva/reasoning.py",
+      "line": 62,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/services/solva_v2/analyze_narration.py",
+      "line": 695,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "solva"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_derivation.py",
+      "line": 198,
+      "kind": "db_read_from_other_context",
+      "name": "db.chat_messages.count_documents",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_derivation.py",
+      "line": 270,
+      "kind": "db_read_from_other_context",
+      "name": "db.chat_messages.count_documents",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_derivation.py",
+      "line": 287,
+      "kind": "db_read_from_other_context",
+      "name": "db.documents.count_documents",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_derivation.py",
+      "line": 290,
+      "kind": "db_read_from_other_context",
+      "name": "db.briefings.count_documents",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_derivation.py",
+      "line": 425,
+      "kind": "db_read_from_other_context",
+      "name": "db.cycles.count_documents",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_derivation.py",
+      "line": 426,
+      "kind": "db_read_from_other_context",
+      "name": "db.cycles.count_documents",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_derivation.py",
+      "line": 429,
+      "kind": "db_read_from_other_context",
+      "name": "db.cycles.count_documents",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_derivation.py",
+      "line": 433,
+      "kind": "db_read_from_other_context",
+      "name": "db.objectives.count_documents",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_derivation.py",
+      "line": 434,
+      "kind": "db_read_from_other_context",
+      "name": "db.objectives.count_documents",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_derivation.py",
+      "line": 88,
+      "kind": "db_read_from_other_context",
+      "name": "db.cycles.find",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_derivation.py",
+      "line": 210,
+      "kind": "db_read_from_other_context",
+      "name": "db.cycle_questions.count_documents",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_derivation.py",
+      "line": 284,
+      "kind": "db_read_from_other_context",
+      "name": "db.cycles.count_documents",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_derivation.py",
+      "line": 348,
+      "kind": "db_read_from_other_context",
+      "name": "db.documents.find",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_derivation.py",
+      "line": 384,
+      "kind": "db_read_from_other_context",
+      "name": "db.cycles.find",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_derivation.py",
+      "line": 476,
+      "kind": "db_read_from_other_context",
+      "name": "db.memberships.find",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_seeder.py",
+      "line": 56,
+      "kind": "db_read_from_other_context",
+      "name": "db.cycles.find",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/engine/signal_seeder.py",
+      "line": 67,
+      "kind": "db_read_from_other_context",
+      "name": "db.contexts.find_one",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/shield/tenant_entities.py",
+      "line": 107,
+      "kind": "db_read_from_other_context",
+      "name": "db.contexts.find",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/shield/tenant_entities.py",
+      "line": 92,
+      "kind": "db_read_from_other_context",
+      "name": "db.accounts.find_one",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/synisense/shield/tenant_entities.py",
+      "line": 127,
+      "kind": "db_read_from_other_context",
+      "name": "db.cycles.find",
+      "owner": "akki",
+      "caller_ctx": "synisense"
+    },
+    {
+      "file": "/app/backend/services/tasks/compile_service.py",
+      "line": 80,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/services/tasks/intelligence_service.py",
+      "line": 251,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    },
+    {
+      "file": "/app/backend/services/work_studio/confidence_scorer.py",
+      "line": 239,
+      "kind": "primitive_call",
+      "name": "shield_invoke",
+      "owner": "synisense",
+      "caller_ctx": "akki"
+    }
+  ],
+  "violation_count": 48,
+  "phase": "1_observe_mode",
+  "phase_2_enforce_target": "violation_count == 0"
+}

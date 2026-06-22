@@ -1,0 +1,199 @@
+{
+  "class": "AkkiContract",
+  "method_count": 11,
+  "methods": {
+    "audit_event": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "action",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "payload",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Dict[str, Any]",
+          "has_default": false
+        }
+      ],
+      "return": "None"
+    },
+    "get_chat_history": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "chat_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "limit",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "int",
+          "has_default": true
+        }
+      ],
+      "return": "List[ChatMessage]"
+    },
+    "get_tenant_profile": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "TenantProfile"
+    },
+    "list_briefings": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "List[Briefing]"
+    },
+    "list_contexts": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "List[Context]"
+    },
+    "list_cycle_questions": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "cycle_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "List[CycleQuestion]"
+    },
+    "list_cycles": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        }
+      ],
+      "return": "List[Cycle]"
+    },
+    "list_documents": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "kind",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        }
+      ],
+      "return": "List[Document]"
+    },
+    "list_objectives": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "List[Objective]"
+    },
+    "list_signals": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "since",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[datetime]",
+          "has_default": true
+        }
+      ],
+      "return": "List[Signal]"
+    },
+    "list_tenant_entities": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "List[TenantEntity]"
+    }
+  }
+}

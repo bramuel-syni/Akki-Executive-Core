@@ -1,0 +1,103 @@
+{
+  "class": "SolvaContract",
+  "method_count": 5,
+  "methods": {
+    "get_session_state": {
+      "parameters": [
+        {
+          "name": "session_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "SolvaSessionState"
+    },
+    "list_solva_artefacts": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        }
+      ],
+      "return": "List[SolvaArtefact]"
+    },
+    "refuse_to_decide_check": {
+      "parameters": [
+        {
+          "name": "inputs",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "SolvaInputs",
+          "has_default": false
+        },
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "Optional[RefusalReason]"
+    },
+    "run_solva_session": {
+      "parameters": [
+        {
+          "name": "session_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "phase",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Literal['A', 'B', 'C', 'D', 'E']",
+          "has_default": false
+        }
+      ],
+      "return": "PhaseResult"
+    },
+    "synthesize_workbook": {
+      "parameters": [
+        {
+          "name": "analysis_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "objective",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        }
+      ],
+      "return": "SynthesisResult"
+    }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "class": "SyniSenseContract",
+  "method_count": 5,
+  "methods": {
+    "get_audit_events": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "since",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[datetime]",
+          "has_default": true
+        },
+        {
+          "name": "until",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[datetime]",
+          "has_default": true
+        },
+        {
+          "name": "limit",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "int",
+          "has_default": true
+        }
+      ],
+      "return": "List[AuditEvent]"
+    },
+    "get_shield_metrics": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "ShieldMetrics"
+    },
+    "get_trust_receipt": {
+      "parameters": [
+        {
+          "name": "audit_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "Optional[TrustReceipt]"
+    },
+    "refresh_tenant_entities_cache": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "None"
+    },
+    "shield_invoke": {
+      "parameters": [
+        {
+          "name": "content",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "purpose",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "consumer_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "user_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "model_preference",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": true
+        },
+        {
+          "name": "internal_caller",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "bool",
+          "has_default": true
+        },
+        {
+          "name": "system_msg",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        }
+      ],
+      "return": "ShieldResult"
+    }
+  }
+}

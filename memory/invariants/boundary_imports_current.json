@@ -1,0 +1,23 @@
+{
+  "violations": [
+    {
+      "file": "/app/backend/services/solva_v2/analyze_narration.py",
+      "line": 38,
+      "imported": "services.synisense.shield.client",
+      "context_prefix": "/app/backend/services/solva_v2/"
+    },
+    {
+      "file": "/app/backend/services/solva_v2/llm_adapter.py",
+      "line": 125,
+      "imported": "services.synisense",
+      "context_prefix": "/app/backend/services/solva_v2/"
+    },
+    {
+      "file": "/app/backend/services/solva_v2/llm_adapter.py",
+      "line": 346,
+      "imported": "services.synisense",
+      "context_prefix": "/app/backend/services/solva_v2/"
+    }
+  ],
+  "count": 3
+}
