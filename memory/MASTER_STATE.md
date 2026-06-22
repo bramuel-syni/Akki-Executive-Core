@@ -6,6 +6,8 @@ Read first every dispatch. Update at every phase close.
 
 ## Section 1 — Discipline Rails (verbatim)
 
+> **Anti-Forget Protocol**: see `/app/memory/ANTI_FORGET_PROTOCOL.md` — read this on every session resume.
+
 **R1** — MASTER_STATE.md is the single source of truth. Read first every dispatch; updated at every phase close.
 **R2** — Intent Pre-Read mandatory before any code dispatch. User approval in writing required. No approval = no dispatch.
 **R3** — A phase is "done" only when matrix items move to ✅ AND tester journey-completion passes (NOT surface-render).
@@ -456,69 +458,91 @@ Recorded for paper trail per user direction. NOT auto-scoped. Same pattern as Ph
 
 ## Section 6 — Active Phase
 
-**None active.** Phase 15 ✅ COMPLETE 2026-06-05 (Master Documentation + Download Surface — PRODUCT.md 906 lines + DEVELOPMENT.md 1797 lines + 3 download routes + 5 smoke tests PASS in 3.85s). Phase 14 ✅ + Phase 15 ✅ shipped same day. All 15 shipped phases verified. 0 open bugs. 0 deferred phases. 1 user-blocked item (G2 GCP OAuth) only. Paused pending user pick of next dispatch.
+**Re-Architecture Phase 0 ✅ COMPLETE 2026-06-05** (Characterisation harness + global invariants).
+
+Per the approved 8-phase Syni Re-Architecture Plan (v3) — superseding all prior service-split / microservices planning notes.
+
+**Acceptance criteria (from dispatch p.9):**
+- ✅ Three characterisation goldens written (`backend/tests/characterisation/`): chat round-trip, Solva analyze, Work Studio compile lifecycle. All `@pytest.mark.integration`; structural-shape goldens with first-run blessing.
+- ✅ Four invariant suites under `backend/tests/invariants/`:
+  - **tenancy** — observe mode, AST-walks `backend/services/` + `backend/routers/`, records violations to `/app/memory/invariants/tenancy_violations.json`. 311 files scanned · 682 definite + 145 non-literal violations recorded · build does NOT fail (Phase-2 will flip to enforce).
+  - **shield-no-leak** — parametrised across chat + Solva analyze; generalises the Phase 14 lockdown. Integration-marked.
+  - **fail-closed** — deterministic monkeypatch of `mint_chat_outcome` → ShieldFailure → 503 refusal shape verified. 2/2 PASS.
+  - **audit-always** — integration-marked; one chat round-trip → ≥1 `synisense_audit_log` row + ≥1 `synisense_trust_receipts` mirror row.
+- ✅ Invariant directory wired into default pytest discovery (no `pytest.ini` change needed — `tests/` recursive collection picks it up).
+- ✅ Deliberate-violation smoke (`test_invariant_violations_smoke.py`) — 4 cases SKIPPED by default; unskip via `AKKI_RUN_DELIBERATE_VIOLATION_SMOKE=1`; verified 4/4 PASS when unskipped → proves the tenancy invariant has teeth.
+- ✅ All existing tests still green. Phase 14 chat-fluency 2/2 + Phase 15 docs-download 5/5 + Phase 0 deterministic invariants 8/8 = 15/15 PASS in 6.19s. No regressions to the 296-PASS aggregate sweep.
+- ✅ Sprint memo: `/app/memory/sprints/PHASE_0_CHARACTERISATION_AND_INVARIANTS.md`.
+- ✅ Anti-Forget Protocol: `/app/memory/ANTI_FORGET_PROTOCOL.md` created — referenced from Section 1 above.
+
+**Out of scope (held):** Phase 1 work (contracts, ownership, tenant propagation), Phase 2 tenancy fixes, Phase 3 frontend contract. All deferred to subsequent dispatches per the 8-phase plan.
 
 ---
 
 ## Section 7 — Last Updated
 
-- **Written:** 2026-06-05T<phase-15-close>Z (Phase 15 ✅ shipped — Master Documentation + Download Surface; 906-line PRODUCT.md + 1797-line DEVELOPMENT.md + `routers/docs_download.py` + 5 deterministic smoke tests PASS).
-- **Agent:** phase-15-master-documentation-download-surface.
-- **Mode:** 2 markdown docs (2,703 lines) + 1 new BE router (149 LOC) + 1 new BE test file (172 LOC) + 5 LOC server.py glue. Memo: `sprints/PHASE_15_DOCUMENTATION.md`.
-- **Counts after Phase 15 close:** ✅32 / 🟡0 / ❌4 / 🚧1 across the original 37 QA items (unchanged). Plus Bug #30 ✅ + Track A Phase 4 ✅ + Phase 5 ✅ + Phase 6 ✅ + Phase 7 ✅ + **Phase 14 ✅** + **Phase 15 ✅** + BUG-ANL-001 ✅ + BUG-ANL-002 ✅ + BUG-WS-001 ✅. **0 open bugs. 0 deferred phases. 1 user-blocked item (G2 GCP OAuth) only.**
+- **Written:** 2026-06-05T<phase-0-close>Z (Re-Architecture Phase 0 ✅ shipped — characterisation harness + global invariants).
+- **Agent:** rearch-phase-0-characterisation-and-invariants.
+- **Mode:** 3 characterisation goldens + 4 invariant suites + 1 deliberate-violation smoke + Anti-Forget Protocol artefact + this state file updated. Memo: `sprints/PHASE_0_CHARACTERISATION_AND_INVARIANTS.md`.
+- **Counts after Re-Arch Phase 0 close:** Phase 14 + 15 ledger unchanged. 8-phase re-architecture backlog (Section 8) now canonical; supersedes any prior service-split planning.
 
 ---
 
-## Section 8 — Cumulative Health Snapshot (2026-06-05 Phase 15 ✅ close)
+## Section 8 — Re-Architecture Backlog (single source of truth)
 
-- ✅ **15 phases shipped + verified**: Track A Phase 1 + 2 + 3 + 4 + 5 + 6 + 7 + **Phase 14** + **Phase 15**, Track B B1 (incl. B1b) + B2 + B3 + B4 + B5.
+This is the canonical execution plan for the Syni Re-Architecture (approved 2026-06-05 from `Syni_ReArchitecture_Plan.pdf` v3). It supersedes any prior microservices / service-split planning notes. The Phase-0 dispatch operationalises this plan together with `/app/memory/ANTI_FORGET_PROTOCOL.md`.
+
+| Phase | Goal | Status | When |
+|---|---|---|---|
+| 0 | Characterisation harness + global invariants | ✅ DONE 2026-06-05 | shipped |
+| 1 | Contracts + logical data ownership + tenant propagation | Pending | After 0 (Pre-Read required) |
+| 2 | Tenancy guard (#1 bug-class fix) | Pending | After 1 |
+| 3 | Frontend API-boundary contract | Pending | After 1 (∥ 2) |
+| 4 | Process separation (one deployment) | Pending | After 1–3 |
+| 5 | Deployment separation (sell-ready) | Pending | After 4 |
+| 6 | Physical data carve | GATED | Scale OR signed sale |
+| 7 | Commercial surfaces | GATED | Paying customer |
+
+**Phase 0 deliverables (now in tree):**
+- `backend/tests/characterisation/` — 3 goldens (chat / Solva analyze / Work Studio compile). All integration-marked.
+- `backend/tests/invariants/` — 4 invariant suites + 1 deliberate-violation smoke.
+- `/app/memory/invariants/tenancy_violations.json` — observe-mode report (regenerated on every test run).
+- `/app/memory/ANTI_FORGET_PROTOCOL.md` — durable operating contract.
+
+**Phase 1 Pre-Read TODOs (logged for the next dispatch):**
+- Confirm canonical `TENANT_SCOPED_COLLECTIONS` allow-list in `test_invariant_tenancy.py`. Phase 0 seeded with the obvious candidates; Phase 1 must enumerate the full set against the data-ownership matrix.
+- Determine bounded-context decomposition (SyniSense / Solva / Akki orchestration) per the Operating Protocol §2.
+- Extend `test_invariant_shield_no_leak.py` to cover Work Studio compile output, brief outputs, pulse idea narration.
+
+---
+
+## Section 9 — Cumulative Health Snapshot (2026-06-05 Phase 15 ✅ close + Re-Arch Phase 0 ✅)
+
+- ✅ **15 product phases + Re-Arch Phase 0 shipped + verified**: Track A Phase 1 + 2 + 3 + 4 + 5 + 6 + 7 + **Phase 14** + **Phase 15**, Track B B1 (incl. B1b) + B2 + B3 + B4 + B5, plus Re-Architecture Phase 0.
 - ✅ **3 standalone bugs closed**: BUG-ANL-001 + BUG-ANL-002 + BUG-WS-001.
 - ✅ **TM3 unblocked** 2026-06-04: SendGrid Inbound Parse webhook fully verified end-to-end.
-- ✅ **Master docs delivered**: `/app/memory/PRODUCT.md` (906 lines, 18 pages) + `/app/memory/DEVELOPMENT.md` (1797 lines, 36 pages) + 3 download routes (`/api/docs/product`, `/api/docs/development`, `/api/docs/bundle.zip`) + 5 deterministic smoke tests PASS.
+- ✅ **Master docs delivered**: `/app/memory/PRODUCT.md` (906 lines, 18 pages) + `/app/memory/DEVELOPMENT.md` (1797 lines, 36 pages) + 3 download routes + 5 deterministic smoke tests PASS.
+- ✅ **Anti-Forget Protocol delivered** 2026-06-05: `/app/memory/ANTI_FORGET_PROTOCOL.md` (durable operating contract, read on every resume).
 - 🟡 **0 phases pending tester.**
-- ❌ **4 ❌ open items** across the 3 QA docs (unchanged).
+- ❌ **4 ❌ open items** across the 3 original QA docs (unchanged).
 - 🪲 **0 open bugs.**
 - 🛌 **0 deferred future phases.**
 - 🚧 **1 USER-BLOCKED item:** Google GCP OAuth creds (G2).
 - ✅ **v1 byte-identical guard intact** (2/2 across all 15 phases).
-- ✅ **Phase 15 lockdown sweep 5/5 PASS** (`test_docs_download.py` — product + development + bundle + missing-503 + single-missing-503 belt).
-- ✅ **Phase 14 lockdown sweep 14/14 default + 1 integration-marked real-LLM PASS** (re-verified post-Phase-15 — 7 tests PASS in 23.44s).
+- ✅ **Re-Arch Phase 0 deterministic sweep 8/8 PASS** (`tests/invariants/test_invariant_tenancy.py` 6/6 + `tests/invariants/test_invariant_fail_closed.py` 2/2). Plus 4/4 deliberate-violation smoke PASS when unskipped.
+- ✅ **Re-Arch Phase 0 characterisation collection** 3 goldens collected (integration-marked; goldens written on first run).
+- ✅ **Phase 15 lockdown sweep 5/5 PASS** (`test_docs_download.py`).
+- ✅ **Phase 14 lockdown sweep 14/14 default + 1 integration-marked real-LLM PASS**.
 - ✅ **Phase 7 lockdown sweep 13/13 default + 2 integration-marked PASS**.
 - ✅ **Phase 6 lockdown sweep 10/10 default + 2 integration-marked PASS**.
-- ✅ **Aggregate BE regression sweep ≥296 PASS** post Phase 15 (Phase 15 introduces no regressions; 3 pre-existing failures in unrelated `cycle_manager` / `tasks_initiatives` / `monitor_v2` paths predate Phase 15 — logged in `sprints/PHASE_15_DOCUMENTATION.md` for visibility).
-- ✅ **Phase 5 inverted-stub-flag test PASS**.
-- ✅ **Chunk 8 regression 25/25 PASS**.
-- ✅ **BUG-ANL-002 lockdown 8/8 PASS** on live preview.
-- ✅ **TM3 SendGrid outbound sandbox smoke PASS** + **inbound 3-curl auth surface PASS** on live preview.
+- ✅ **Aggregate BE regression sweep ≥296 PASS** post Re-Arch Phase 0 (Phase 0 introduces zero regressions; 3 pre-existing failures predate Phase 15 in unrelated `cycle_manager` / `tasks_initiatives` / `monitor_v2` paths — logged in `sprints/PHASE_15_DOCUMENTATION.md`).
 - ✅ **Voice-lint clean** across customer-copy surfaces.
 - ✅ **ESLint clean** on every file touched.
 - ✅ **Ruff clean** on all backend files touched.
 
 ---
 
-**Paused per orchestrator instruction.** NOT auto-starting any backlog hygiene pass / stale tenant-catalogue cleanup / data-testid presence smoke test (DECLINED 2026-06-04) / confidence chip on universal Documents page (DECLINED). User decides next dispatch — only open candidate: **GCP OAuth G2 unblock when creds land**. Holding for that signal.
-
----
-
-## Section 8 — Cumulative Health Snapshot (2026-06-04 22:55Z BUG-WS-001 ✅ close)
-
-- ✅ **12 phases shipped + verified**: Track A Phase 1 + 2 + 3 + 4 + 5 + 6, Track B B1 (incl. B1b) + B2 + B3 + B4 + B5.
-- ✅ **3 standalone bugs closed**: BUG-ANL-001 Analyze Journal route guard + BUG-ANL-002 Analyze upload silent-failure on same-file retry + BUG-WS-001 rag_band test spec update.
-- 🟡 **0 phases pending tester.**
-- ❌ **4 ❌ open items** across the 3 QA docs (unchanged).
-- 🪲 **0 open bugs.**
-- 🚧 **1 USER-BLOCKED item remaining:** Google GCP OAuth creds (G2). **TM3 ✅ unblocked 2026-06-04** — SendGrid inbound webhook live-verified end-to-end on preview. **Phase 7 ✅ shipped 2026-06-05** — confidence scoring runtime compute path closed.
-- 🛌 **1 deferred future phase:** Confidence scoring runtime compute path (Phase 6 iter-0 archaeology) — no production scorer exists today; awaiting dedicated Pre-Read.
-- ✅ **v1 byte-identical guard intact** (2/2 across all 12 phases).
-- ✅ **Chunk 8 regression 25/25 PASS** (was 24/25 + 1 fail pre-BUG-WS-001).
-- ✅ **Aggregate BE regression sweep 74/74 PASS** (Phase 6 + Phase 5 + Phase 4 + Phase 3 + v1 guard + Chunk 8 all green; was 73/73 + 1 deselected pre-existing fail pre-BUG-WS-001 close).
-- ✅ **Phase 6 lockdown sweep 10/10 default + 2 integration-marked PASS** (`test_track_a_phase6_inline_edit_and_bc_removal.py`).
-- ✅ **Phase 6 Playwright lockdown 15/15 assertions PASS** (`/tmp/phase6_inline_edit_journey.py` 6/6 + `/tmp/phase6_save_on_close.py` 3/3 + `/tmp/phase6_revise_with_ai_journey.py` 6/6).
-- ✅ **Phase 5 inverted-stub-flag test PASS** (`test_phase5_phase6_stub_flags_persist`: `n >= 3` → `n == 0`).
-- ✅ **BUG-ANL-002 lockdown 8/8 PASS** (`/tmp/bug_anl_002_upload_journey.py` against live preview).
-- ✅ **Voice-lint clean** across customer-copy surfaces.
-- ✅ **ESLint clean** on every file touched.
-- ✅ **Ruff clean** on all backend files touched.
+**Paused per orchestrator instruction.** Re-Architecture Phase 0 ✅ DONE. Next legitimate dispatch is Phase 1 Pre-Read (contracts + logical data ownership + tenant propagation). NOT auto-starting Phase 1 per Discipline Rail R2 (Approval Gate) + R6 (no auto-starting). Holding.
 
 ---
 
