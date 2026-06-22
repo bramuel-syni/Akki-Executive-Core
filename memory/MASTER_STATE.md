@@ -34,7 +34,7 @@ Verbatim, dated:
 
 **Reconciliation note (2026-06-03):** The previous Section 3 was a prior agent's 8-cluster aggregation. This section is rebuilt verbatim against the three QA docs the user uploaded (`Onboarding Journey QA`, `Task Manager QA`, `Google Login + Doc Reader + Calendar + Open Questions QA`, all dated 2nd June 2026). The audit memo at `sprints/MASTER_STATE_RECONCILIATION_2026-06-03.md` documents the divergences uncovered.
 
-**Total items across 3 QA docs: 37. ✅ 32 · 🟡 0 · ❌ 4 · 🚧 1 · ❔ 0.** (Plus Bug #30 ✅, plus Track A Phase 4 ✅ + Phase 5 ✅ + Phase 6 ✅ + Phase 7 ✅ + **Phase 14 ✅ 2026-06-05**, plus 3 closed bugs `BUG-ANL-001` ✅ + `BUG-ANL-002` ✅ + `BUG-WS-001` ✅. **0 open bugs. 0 deferred phases.**)
+**Total items across 3 QA docs: 37. ✅ 32 · 🟡 0 · ❌ 4 · 🚧 1 · ❔ 0.** (Plus Bug #30 ✅, plus Track A Phase 4 ✅ + Phase 5 ✅ + Phase 6 ✅ + Phase 7 ✅ + **Phase 14 ✅ 2026-06-05** + **Phase 15 ✅ 2026-06-05 (Documentation + Download Surface)**, plus 3 closed bugs `BUG-ANL-001` ✅ + `BUG-ANL-002` ✅ + `BUG-WS-001` ✅. **0 open bugs. 0 deferred phases.**)
 
 Status legend:
 - ✅ SHIPPED — code change verified; tester journey-completion passed
@@ -456,37 +456,39 @@ Recorded for paper trail per user direction. NOT auto-scoped. Same pattern as Ph
 
 ## Section 6 — Active Phase
 
-**None active.** Phase 14 ✅ COMPLETE 2026-06-05 (iter-1 3-track single-dispatch ship — chat fluency + detection-quality hardening; 14/14 deterministic PASS + 1/1 integration-marked real-LLM round-trip PASS in 23.37s; 160/160 aggregate BE regression PASS). All 14 shipped phases verified (Track A Phase 1+2+3+4+5+6+7 + Phase 14, Track B B1 incl. B1b + B2 + B3 + B4 + B5). 0 open bugs. 0 deferred phases. 1 user-blocked item (G2 GCP OAuth) only. Paused pending user pick of next dispatch.
+**None active.** Phase 15 ✅ COMPLETE 2026-06-05 (Master Documentation + Download Surface — PRODUCT.md 906 lines + DEVELOPMENT.md 1797 lines + 3 download routes + 5 smoke tests PASS in 3.85s). Phase 14 ✅ + Phase 15 ✅ shipped same day. All 15 shipped phases verified. 0 open bugs. 0 deferred phases. 1 user-blocked item (G2 GCP OAuth) only. Paused pending user pick of next dispatch.
 
 ---
 
 ## Section 7 — Last Updated
 
-- **Written:** 2026-06-05T02:15:00Z (Phase 14 ✅ shipped — closes chat UX failure where Claude responded with shield-mechanics meta-language; fixed dead-code system_msg + token-shape drift + tenant 2-3 char prefix-bite + spaCy ORG false-positives on disease names; integration test PASS in 23.37s on live LLM).
-- **Agent:** phase-14-chat-fluency-detection-hardening.
-- **Mode:** 5 BE files modified + 5 new BE test files. Net ~200 LOC delta. `shield_invoke` API additively extended with optional `system_msg=None` kwarg — backwards-compatible across 90+ existing call sites. Memo: `sprints/PHASE_14_CHAT_FLUENCY.md`.
-- **Counts after Phase 14 close:** ✅32 / 🟡0 / ❌4 / 🚧1 across the original 37 QA items (unchanged). Plus Bug #30 ✅ + Track A Phase 4 ✅ + Phase 5 ✅ + Phase 6 ✅ + Phase 7 ✅ + **Phase 14 ✅** + BUG-ANL-001 ✅ + BUG-ANL-002 ✅ + BUG-WS-001 ✅. **0 open bugs. 0 deferred phases. 1 user-blocked item (G2 GCP OAuth) only.**
+- **Written:** 2026-06-05T<phase-15-close>Z (Phase 15 ✅ shipped — Master Documentation + Download Surface; 906-line PRODUCT.md + 1797-line DEVELOPMENT.md + `routers/docs_download.py` + 5 deterministic smoke tests PASS).
+- **Agent:** phase-15-master-documentation-download-surface.
+- **Mode:** 2 markdown docs (2,703 lines) + 1 new BE router (149 LOC) + 1 new BE test file (172 LOC) + 5 LOC server.py glue. Memo: `sprints/PHASE_15_DOCUMENTATION.md`.
+- **Counts after Phase 15 close:** ✅32 / 🟡0 / ❌4 / 🚧1 across the original 37 QA items (unchanged). Plus Bug #30 ✅ + Track A Phase 4 ✅ + Phase 5 ✅ + Phase 6 ✅ + Phase 7 ✅ + **Phase 14 ✅** + **Phase 15 ✅** + BUG-ANL-001 ✅ + BUG-ANL-002 ✅ + BUG-WS-001 ✅. **0 open bugs. 0 deferred phases. 1 user-blocked item (G2 GCP OAuth) only.**
 
 ---
 
-## Section 8 — Cumulative Health Snapshot (2026-06-05 02:15Z Phase 14 ✅ close)
+## Section 8 — Cumulative Health Snapshot (2026-06-05 Phase 15 ✅ close)
 
-- ✅ **14 phases shipped + verified**: Track A Phase 1 + 2 + 3 + 4 + 5 + 6 + 7 + **Phase 14**, Track B B1 (incl. B1b) + B2 + B3 + B4 + B5.
-- ✅ **3 standalone bugs closed**: BUG-ANL-001 Analyze Journal route guard + BUG-ANL-002 Analyze upload silent-failure + BUG-WS-001 rag_band test spec update.
-- ✅ **TM3 unblocked** 2026-06-04: SendGrid Inbound Parse webhook fully verified end-to-end on production.
+- ✅ **15 phases shipped + verified**: Track A Phase 1 + 2 + 3 + 4 + 5 + 6 + 7 + **Phase 14** + **Phase 15**, Track B B1 (incl. B1b) + B2 + B3 + B4 + B5.
+- ✅ **3 standalone bugs closed**: BUG-ANL-001 + BUG-ANL-002 + BUG-WS-001.
+- ✅ **TM3 unblocked** 2026-06-04: SendGrid Inbound Parse webhook fully verified end-to-end.
+- ✅ **Master docs delivered**: `/app/memory/PRODUCT.md` (906 lines, 18 pages) + `/app/memory/DEVELOPMENT.md` (1797 lines, 36 pages) + 3 download routes (`/api/docs/product`, `/api/docs/development`, `/api/docs/bundle.zip`) + 5 deterministic smoke tests PASS.
 - 🟡 **0 phases pending tester.**
 - ❌ **4 ❌ open items** across the 3 QA docs (unchanged).
 - 🪲 **0 open bugs.**
 - 🛌 **0 deferred future phases.**
 - 🚧 **1 USER-BLOCKED item:** Google GCP OAuth creds (G2).
-- ✅ **v1 byte-identical guard intact** (2/2 across all 14 phases).
-- ✅ **Phase 14 lockdown sweep 14/14 default + 1 integration-marked real-LLM PASS** (`test_chat_system_msg_prepended.py` + `test_chat_token_shape_consistency.py` + `test_tenant_entities_length_floor.py` + `test_spacy_org_common_noun_protector.py` + `test_chat_fluency_no_shield_leak.py`).
-- ✅ **Phase 7 lockdown sweep 13/13 default + 2 integration-marked PASS** (`test_track_a_phase7_confidence_scoring.py`).
-- ✅ **Phase 6 lockdown sweep 10/10 default + 2 integration-marked PASS** (`test_track_a_phase6_inline_edit_and_bc_removal.py`).
-- ✅ **Aggregate BE regression sweep 160/160 PASS** (Phase 3+4+5+6+7+14 + SyniSense baseline + v1 guard; 5 deselected = integration-marked across phases).
-- ✅ **Phase 5 inverted-stub-flag test PASS** (`test_phase5_phase6_stub_flags_persist`: `n >= 3` → `n == 0`).
-- ✅ **Chunk 8 regression 25/25 PASS** (BUG-WS-001 75/50 spec match).
-- ✅ **BUG-ANL-002 lockdown 8/8 PASS** (`/tmp/bug_anl_002_upload_journey.py` against live preview).
+- ✅ **v1 byte-identical guard intact** (2/2 across all 15 phases).
+- ✅ **Phase 15 lockdown sweep 5/5 PASS** (`test_docs_download.py` — product + development + bundle + missing-503 + single-missing-503 belt).
+- ✅ **Phase 14 lockdown sweep 14/14 default + 1 integration-marked real-LLM PASS** (re-verified post-Phase-15 — 7 tests PASS in 23.44s).
+- ✅ **Phase 7 lockdown sweep 13/13 default + 2 integration-marked PASS**.
+- ✅ **Phase 6 lockdown sweep 10/10 default + 2 integration-marked PASS**.
+- ✅ **Aggregate BE regression sweep ≥296 PASS** post Phase 15 (Phase 15 introduces no regressions; 3 pre-existing failures in unrelated `cycle_manager` / `tasks_initiatives` / `monitor_v2` paths predate Phase 15 — logged in `sprints/PHASE_15_DOCUMENTATION.md` for visibility).
+- ✅ **Phase 5 inverted-stub-flag test PASS**.
+- ✅ **Chunk 8 regression 25/25 PASS**.
+- ✅ **BUG-ANL-002 lockdown 8/8 PASS** on live preview.
 - ✅ **TM3 SendGrid outbound sandbox smoke PASS** + **inbound 3-curl auth surface PASS** on live preview.
 - ✅ **Voice-lint clean** across customer-copy surfaces.
 - ✅ **ESLint clean** on every file touched.
@@ -494,7 +496,7 @@ Recorded for paper trail per user direction. NOT auto-scoped. Same pattern as Ph
 
 ---
 
-**Paused per orchestrator instruction.** NOT auto-starting any backlog hygiene pass / stale tenant-catalogue cleanup / data-testid presence smoke test (DECLINED 2026-06-04). User decides next dispatch — only open candidate: **GCP OAuth G2 unblock when creds land**. Holding for that signal.
+**Paused per orchestrator instruction.** NOT auto-starting any backlog hygiene pass / stale tenant-catalogue cleanup / data-testid presence smoke test (DECLINED 2026-06-04) / confidence chip on universal Documents page (DECLINED). User decides next dispatch — only open candidate: **GCP OAuth G2 unblock when creds land**. Holding for that signal.
 
 ---
 

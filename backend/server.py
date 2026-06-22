@@ -156,6 +156,8 @@ from routers import profile as profile_router  # noqa: E402  Patch 25C — /me/p
 # Phase AA-slice-1 (2026-05-27) — tasks/initiatives data model + CRUD.
 # Backs Monitor v2 (Phase AA). New `tasks_initiatives` collection.
 from routers import tasks_initiatives as tasks_initiatives_router  # noqa: E402
+# Phase 15 (2026-06-05) — Master Documentation download surface.
+from routers import docs_download as docs_download_router  # noqa: E402
 
 
 logger = logging.getLogger("akki")
@@ -312,6 +314,9 @@ app.include_router(daily_review_router.router)
 app.include_router(first_session_router.router)
 app.include_router(depth_router.router)
 app.include_router(governance_router.router)
+# Phase 15 (2026-06-05) — Master Documentation download surface.
+# Three endpoints: GET /api/docs/product, /development, /bundle.zip
+app.include_router(docs_download_router.router)
 
 # Solva v2 — production reasoning surface. Open to every authenticated
 # account. Registered AFTER all v1 routers so nothing is shadowed.
