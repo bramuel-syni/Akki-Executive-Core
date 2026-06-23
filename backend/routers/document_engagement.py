@@ -22,7 +22,11 @@ import os
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-from contracts.responses import OkResponse
+from contracts.responses import (
+    DocumentEngagementResponse,
+    IdResponse,
+    OkResponse,
+)
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr, Field
@@ -101,7 +105,7 @@ class DocumentShareIn(BaseModel):
     message: Optional[str] = Field(default=None, max_length=2000)
 
 
-@router.post("/contexts/{context_id}/documents/{doc_id}/share", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/documents/{doc_id}/share", response_model=Optional[IdResponse])
 async def share_document(
     context_id: str, doc_id: str,
     body: DocumentShareIn,
@@ -184,7 +188,7 @@ async def share_document(
     return record
 
 
-@router.get("/contexts/{context_id}/documents/{doc_id}/engagement", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/contexts/{context_id}/documents/{doc_id}/engagement", response_model=Optional[DocumentEngagementResponse])
 async def get_engagement(
     context_id: str, doc_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),

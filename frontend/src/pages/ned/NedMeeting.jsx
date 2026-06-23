@@ -15,7 +15,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

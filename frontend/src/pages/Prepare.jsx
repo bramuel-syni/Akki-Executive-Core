@@ -43,7 +43,8 @@ import WalkInCard from "@/components/walkin/WalkInCard";
 import HighlightsStats from "@/components/highlights/HighlightsStats";
 import HandoffActions from "@/components/shell/HandoffActions";
 import { useAuth } from "@/contexts/AuthContext";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { pollJob } from "@/lib/pollJob";
 import { toast } from "sonner";
 import {

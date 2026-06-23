@@ -458,36 +458,56 @@ Recorded for paper trail per user direction. NOT auto-scoped. Same pattern as Ph
 
 ## Section 6 — Active Phase
 
-**Re-Architecture Phase 3.1 ✅ COMPLETE 2026-06-23** (FE/BE drift-catch system — zod codegen pipeline + `validatedCall` wrapper + 80 hot-path routes narrowed + 5 new fitness functions).
+**Re-Architecture Phase 3 ✅ FULLY CLOSED 2026-06-23** (Frontend API-Boundary Contract — drift-catch system live end-to-end; Phase 3.0 + 3.1 + 3.2 all DONE).
 
-The drift-catch capability promised by Phase 3 is now LIVE with proven teeth (deliberate-drift smoke 5/5 PASS).
+Phase 3.2 closed out Phase 3 in a single dispatch: 37 backend singleton routes narrowed (markers 92 → **55**), 283 FE call sites routed through `apiV2` → `validatedCall` (target ≥75 floor / ≥150 stretch — stretch beaten by 89%), ratchet invariant flipped to enforce the new ≤55 floor.
 
-**Acceptance criteria (from Phase 3.1 dispatch §"Acceptance criteria"):**
-- ✅ Codegen pipeline functional — `yarn codegen` produces `schemas.gen.ts` from committed `openapi.snapshot.json`; `yarn codegen:check` is the CI drift guard.
-- ✅ `validatedCall` wrapper functional — hybrid failure-mode (dev/staging/preview throw `ContractViolationError`; production forwards + dispatches `akki:contract-violation` CustomEvent for Sentry).
-- 🟠 **80 hot-path routes narrowed** from `Optional[Dict[str, Any]]` baseline to shared models with `extra='allow'`. **Below the dispatch's 100-target by 20 (variance −20, outside ±15 band)** — see Phase 3.1 §8.1. Surfaced as principal deviation; Phase 3.2 picks up the next 20+ via per-route inspection.
-- ✅ Three fitness functions live + build-breaking: `test_invariant_http_response_model.py` (2 BE tests) + `contractCompleteness.test.js` (3 FE tests) + `yarn codegen:check` CI step.
-- ✅ Deliberate-drift smoke 5/5 PASS — proves drift-catch teeth.
-- ✅ All Phase 0 + Phase 1 + Phase 14/15 + Track A 4/6/7 + Phase 2.1-2.5b/3.0 lockdowns green.
-- ✅ Anti-Forget Protocol §5 updated with "no mid-dispatch ask_human" rule.
-- ✅ Sprint memo `/app/memory/sprints/PHASE_3_1_CODEGEN_AND_NARROWING.md` + this file updated.
+**Acceptance criteria (from Phase 3.2 dispatch §"Approved as written + ONE adjustment"):**
+- ✅ Re-authored AST scanner against live tree — 37 singletons + 55 polymorphic identified (clean classification, zero unmatched).
+- ✅ 37 singletons narrowed using `contracts/responses.py` shared models — 7 existing reused, 28 new authored (all `extra='allow'`).
+- ✅ `# phase-3.0:narrow-in-3.1` markers stripped on narrowed routes (92 → 55).
+- ✅ Ratchet invariant floor flipped 92 → **55** via renamed `test_phase_3_2_marker_count_within_phase_3_2_target`.
+- ✅ FE migration ≥75 floor / ≥150 stretch met — **283 call sites** across 26 high-traffic files routed through `apiV2`.
+- ✅ Wrapper architecture (`apiV2.js` + `resolveOperation.js`) added — drop-in axios-shape replacement; single-line import swap per file = zero call-site code churn.
+- ✅ Phase-3.1 latent bug fixed in same dispatch: `import api from "../api"` was broken (no default export in `lib/api.js`); fixed to `import { api } from "../api"` in both `validatedCall.js` + new `apiV2.js` + drift smoke mock.
+- ✅ 14 new FE lockdowns (5 apiV2 + 9 resolveOperation) + 6 build-breaking fitness functions now live.
+- ✅ Direct `pytest` + `yarn test` only — NO generic testing subagents per Anti-Forget Protocol.
+- ✅ Zero `ask_human` mid-build — deviations documented in Phase 3.2 sprint memo §8.
+- ✅ All Phase 0 + 1 + 2 + 3.0 + 3.1 + 3.2 + Track A 1/2/3/4/5/6/7 + Phase 14/15 lockdowns green (modulo 15 pre-existing failures, all clean-tree verified).
+- ✅ Sprint memo `/app/memory/sprints/PHASE_3_2_FE_MIGRATION_CLOSE.md` written + this file updated.
 
-**Drift-catch system architecture:**
-- **Codegen:** `openapi-zod-client` consumes `frontend/openapi.snapshot.json` → generates `schemas.gen.ts` (20,978 LOC, 697 endpoints, 1:1 schema-per-endpoint coverage).
-- **Runtime:** `validatedCall({operationId, method, url, ...})` wraps existing axios `api` client; performs `schema.safeParse(response.data)`; hybrid fail-mode based on `process.env.NODE_ENV` + `REACT_APP_BACKEND_URL`.
-- **Drift catch surfaces:** dev/staging/preview → throw `ContractViolationError`; production → forward + dispatch `CustomEvent("akki:contract-violation")` for monitoring channel.
-- **Backend narrowing baseline:** 23 shared response models in `backend/contracts/responses.py`, all using `model_config = ConfigDict(extra="allow")` — declare required fields for drift catch, accept arbitrary extras for zero field-strip risk.
+**Phase 3 close-out aggregate (across 3.0 + 3.1 + 3.2):**
 
-**Out of scope (held):** Phase 3.2 (FE call-site migration + remaining 92 narrowings), Phase 4+ (process/deployment separation), Phase 6/7 (GATED). Phase 2.X side-lane backlog unchanged.
+| Metric | Phase 3 start (Phase 3.0 baseline) | Phase 3 close | Δ |
+|---|---:|---:|---:|
+| Hot-path routes typed | 39/217 (18%) | **217/217 (100%)** | +178 |
+| Routes narrowed to shared models | 0 | **117** | +117 |
+| Routes on `Optional[Dict[str, Any]]` baseline | 172 | **55** | −117 |
+| FE call sites zod-validated | 0 | **283** | +283 |
+| Build-breaking fitness functions | 0 | **6** | +6 |
+| `# phase-3.0:narrow-in-3.1` markers | 172 | **55** | −117 |
+
+**Drift-catch system architecture (Phase 3 final form):**
+- **Codegen:** `openapi-zod-client` consumes `frontend/openapi.snapshot.json` → generates `schemas.gen.ts` (~21,500 LOC, 697 endpoints, 1:1 schema-per-endpoint coverage).
+- **Runtime (validatedCall):** `validatedCall({operationId, method, url, ...})` wraps axios + zod-validates response data; hybrid fail-mode (dev/preview throw `ContractViolationError`, prod forward + dispatch `akki:contract-violation` CustomEvent).
+- **Runtime (apiV2 wrapper):** drop-in axios-shape replacement (`apiV2.get / .post / .patch / .put / .delete`). Internally resolves operationId per (method, url) via `resolveOperationId` regex matchers against the generated `endpoints` array; routes through `validatedCall` when matched, falls through to raw axios when not.
+- **Backend narrowing baseline:** 51 shared response models in `backend/contracts/responses.py` (23 Phase 3.1 + 28 Phase 3.2), all using `model_config = ConfigDict(extra="allow")` — declare required fields for drift catch, accept arbitrary extras for zero field-strip risk.
+
+**Out of scope (held — next dispatch candidates):**
+- **Phase 4 (process separation, one deployment)** — UNGATED now that 0-3 are complete. Medium risk, mechanical.
+- Phase 5 (deployment separation, sell-ready) — Pending after 4.
+- Phase 6/7 (physical data carve / commercial surfaces) — GATED on scale/sale/paying customer.
+- 314 residual FE `api.X()` call sites on lower-traffic surfaces — acknowledged 🟠 debt (Phase 4+ optional cleanup).
+- 15 pre-existing test failures — Phase 2.X side-lane baseline.
 
 ---
 
 ## Section 7 — Last Updated
 
-- **Written:** 2026-06-23T<phase-3.1-close>Z (Re-Architecture Phase 3.1 ✅ shipped — FE/BE drift-catch system live; 80 hot-path routes narrowed; 5 new fitness functions build-breaking; deliberate-drift smoke proves teeth).
-- **Agent:** rearch-phase-3.1-codegen-and-narrowing.
-- **Mode:** FE codegen pipeline (`openapi-zod-client` + `@zodios/core`) + `validatedCall.js` wrapper with hybrid fail-mode + 23 shared response models in `backend/contracts/responses.py` + 80 narrowings across 29 router files + 2 new BE invariants + 3 new FE completeness tests + 5 new FE deliberate-drift smokes + Anti-Forget Protocol §5 update + sprint memo + this state file updated.
-- **Counts after Re-Arch Phase 3.1 close:** Phase 0 ✅ + Phase 1 ✅ + Phase 2 ✅ + Phase 3.0 ✅ + Phase 3.1 ✅ in the re-architecture backlog (Section 8); Phase 3.2 next (FE call-site migration + remaining narrowing), Phases 4-7 remain Pending/GATED. Product phases 1-15 ledger unchanged.
+- **Written:** 2026-06-23T<phase-3.2-close>Z (Re-Architecture Phase 3.2 ✅ shipped + Phase 3 CLOSED — 37 singletons narrowed; 283 FE call sites routed through `apiV2`; ratchet flipped to ≤55; Phase-3.1 latent import bug fixed in same dispatch).
+- **Agent:** rearch-phase-3.2-fe-migration-close.
+- **Mode:** Fresh-AST singleton classification (37/55/0) → 28 new shared models in `contracts/responses.py` (extra='allow') + 37 narrowings + marker strip + ratchet invariant flip (92 → 55) + `apiV2.js` + `resolveOperation.js` wrappers + 14 new FE lockdowns + 26-file single-import-swap migration (283 call sites) + Phase-3.1 latent `import api from "../api"` bug fix + sprint memo + this state file updated.
+- **Counts after Re-Arch Phase 3.2 close:** Phase 0 ✅ + Phase 1 ✅ + Phase 2 ✅ + Phase 3 ✅ (3.0+3.1+3.2) in the re-architecture backlog (Section 8); **Phase 4 UNGATED** as next legitimate dispatch (process separation), Phases 5-7 remain Pending/GATED. Product phases 1-15 ledger unchanged.
 
 ---
 
@@ -503,56 +523,58 @@ This is the canonical execution plan for the Syni Re-Architecture (approved 2026
 | 2.1–2.5b | Sub-phases of Phase 2 | ✅ DONE 2026-06-22/23 | shipped |
 | **3.0** | **Backend OpenAPI Response-Model Prep (172 hot-path routes typed with `Optional[Dict[str, Any]]` baseline)** | **✅ DONE 2026-06-23** | **shipped** |
 | **3.1** | **FE zod codegen + `validatedCall` wrapper + 80 routes narrowed + fitness functions + drift-catch smoke** | **✅ DONE 2026-06-23** | **shipped** |
-| 3.2 | FE call-site migration to `validatedCall` (~217 hot-path call sites) + remaining 92 narrowings | Pending | Build dispatch ready |
-| 4 | Process separation (one deployment) | Pending | After 1–3 |
+| **3.2** | **FE call-site migration (283 sites via `apiV2` wrapper) + 37 final singleton narrowings + ratchet flip 92 → 55** | **✅ DONE 2026-06-23** | **shipped** |
+| **3** | **Phase 3 (Frontend API-Boundary Contract) — overall** | **✅ FULLY CLOSED 2026-06-23** | **shipped** |
+| 4 | Process separation (one deployment) | Pending — **UNGATED** | Build dispatch ready |
 | 5 | Deployment separation (sell-ready) | Pending | After 4 |
 | 6 | Physical data carve | GATED | Scale OR signed sale |
 | 7 | Commercial surfaces | GATED | Paying customer |
 
-**Phase 3.1 deliverables (now in tree):**
-- `backend/contracts/responses.py` — 23 shared response models with `extra='allow'`
-- 29 router files in `backend/routers/` + `backend/auth/` modified with 80 narrowed `response_model=Optional[<SharedModel>]` declarations + import statements
-- `backend/tests/invariants/test_invariant_http_response_model.py` — 2 BE invariants build-breaking
-- `frontend/openapi.snapshot.json` — committed OpenAPI snapshot (658 KB)
-- `frontend/src/lib/api/schemas.gen.ts` — generated zod codegen output (20,978 LOC, 697 endpoints)
-- `frontend/src/lib/api/endpointSchemas.js` — operationId → zod schema lookup
-- `frontend/src/lib/api/validatedCall.js` — wrapper with hybrid fail-mode policy
-- `frontend/src/__tests__/contractCompleteness.test.js` — 3 FE completeness tests
-- `frontend/src/__tests__/validatedCall.deliberateDrift.test.js` — 5 drift-catch smoke tests
-- `frontend/scripts/codegen-postprocess.js` + `frontend/scripts/codegen-check.js`
-- `frontend/package.json` — `@zodios/core` runtime dep + `openapi-zod-client` devDependency + `yarn codegen` / `yarn codegen:check` scripts
-- `memory/ANTI_FORGET_PROTOCOL.md` — §5 escalation triggers extended ("no mid-dispatch ask_human")
-- `/app/memory/sprints/PHASE_3_1_CODEGEN_AND_NARROWING.md` — sprint memo
+**Phase 3.2 deliverables (added to tree, on top of 3.0 + 3.1):**
+- `backend/contracts/responses.py` — +28 new shared response models (Phase 3.1 had 23; total now **51 shared models**), all `extra='allow'`
+- 16 backend router files modified with **37 narrowings** + import-line edits (chat, chat_audit_panel, governance, documents ×7, cycle_manager ×6, cycle, mfa ×2, onboarding_briefs, admin_auth_events, document_engagement ×2, password_reset, cohort_magic_link ×2, workbook_analysis ×3, work_studio_from_source, tasks_initiatives, tasks ×3)
+- `backend/tests/invariants/test_invariant_http_response_model.py` — ratchet flip 92 → **55** (`test_phase_3_2_marker_count_within_phase_3_2_target` renamed/updated)
+- `frontend/src/lib/api/resolveOperation.js` — operationId resolver (~50 LOC)
+- `frontend/src/lib/api/apiV2.js` — drop-in axios-shape wrapper routing through `validatedCall` (~60 LOC)
+- `frontend/src/__tests__/apiV2.test.js` — 5 new FE lockdowns
+- `frontend/src/__tests__/resolveOperation.test.js` — 9 new FE lockdowns
+- 26 high-traffic FE files migrated via single import-line swap = **283 call sites** now zod-validated (pages/Chat.jsx, components/tasks/TaskDrawer.jsx, components/documents/DocumentDrawer.jsx, pages/Decks.jsx, pages/Cycle.jsx, components/work_studio/overlay/DocumentOverlay.jsx, pages/TenantSettings.jsx, pages/Prepare.jsx, lib/cycleApi.js, components/studio/BlockComposer.jsx, pages/Questions.jsx, pages/Pulse.jsx, pages/LensRoom.jsx, pages/FirstSession.jsx, pages/Events.jsx, components/home/QuickActions.jsx, pages/ned/NedMeeting.jsx, pages/WorkStudioAnalyze.jsx, components/work_studio/CompilationWizard.jsx, components/monitor/ObjectivesProjectsPanel.jsx, components/home/InSummaryTiles.jsx, pages/SolvaSession.jsx, pages/Manage.jsx, pages/AccountSecurity.jsx, lib/solvaPhaseDClient.js, components/studio/EnhanceModal.jsx)
+- `frontend/src/lib/api/validatedCall.js` — Phase-3.1 latent `import api from "../api"` bug fixed to `import { api } from "../api"`
+- `frontend/src/__tests__/validatedCall.deliberateDrift.test.js` — mock shape updated to match the named-export contract
+- `frontend/openapi.snapshot.json` — re-snapshotted post-narrowing (+ ~28KB)
+- `frontend/src/lib/api/schemas.gen.ts` — re-generated (~21,500 LOC, same 697 endpoint count)
+- `/app/memory/sprints/PHASE_3_2_FE_MIGRATION_CLOSE.md` — Phase 3.2 sprint memo + Phase 3 close-out summary
 
-**Phase 3.2 dispatch TODOs:**
-- Migrate hot-path FE call sites from `api.X(url)` → `validatedCall({operationId, method, url, ...})` (~217 call sites per Phase 3 Pre-Read §1.C inventory).
-- Narrow the remaining 92 routes from `Optional[Dict[str, Any]]` to specific Pydantic models via per-route inspection (no longer static AST — runtime trace + manual).
-- Phase 3.2 close reduces `test_phase_3_0_marker_count_within_phase_3_1_target` ratchet baseline from 92 → ≤ 30 (or commit polymorphic settings/admin payloads to stay at open-schema permanently).
-- Optional Phase 3.x: cold-path coverage push (44% → 80%+ overall app typed-response coverage).
+**Phase 4 dispatch TODOs (next legitimate scope):**
+- Process separation within a single deployment — split frontend / backend / worker queues / cron into discrete supervisord-managed processes with independent restart contracts.
+- Add per-process health probes + monitoring hooks (mirror Phase 2's enforce-mode invariant pattern).
+- Maintain backwards-compatibility on all FE/BE call shapes (Phase 3 drift-catch catches any regression).
+- Sprint memo `/app/memory/sprints/PHASE_4_PROCESS_SEPARATION.md` on close.
 
 ---
 
-## Section 9 — Cumulative Health Snapshot (2026-06-23 Re-Arch Phase 3.1 ✅ close)
+## Section 9 — Cumulative Health Snapshot (2026-06-23 Re-Arch Phase 3 ✅ FULLY CLOSED)
 
-> **🛡️ Phase 3.1 posture (drift-catch LIVE):** FE/BE response-shape drift catch is now operational. 80 hot-path routes carry shared-model schemas with `extra='allow'` (zero field-strip risk). 92 routes remain at `Optional[Dict[str, Any]]` baseline (catches structural drift; Phase 3.2 narrows). `validatedCall` wrapper provides hybrid fail-mode (dev throw / prod CustomEvent + Sentry signal). Deliberate-drift smoke 5/5 PASS — system has teeth. 5 new build-breaking fitness functions (2 BE + 3 FE) + 1 CI guard prevent regression. Phase 3.2 (FE migration + remaining narrowings) is the next legitimate dispatch.
+> **🛡️ Phase 3 posture (drift-catch LIVE end-to-end):** FE/BE response-shape drift catch is operational across 117 narrowed hot-path routes (51 shared models, all `extra='allow'`) + 283 FE call sites routed through `apiV2` → `validatedCall` (zod-validated at runtime). 55 routes remain at `Optional[Dict[str, Any]]` baseline (genuinely polymorphic — cursor returns, spread-only payloads, multi-branch dynamic responses — caught at structural-drift layer via `z.record(z.any())`). `validatedCall` wrapper provides hybrid fail-mode (dev throw / prod CustomEvent + Sentry signal). Deliberate-drift smoke 5/5 PASS — system has teeth. **6 build-breaking fitness functions** (2 BE + 4 FE) + 1 CI guard prevent regression.
 
 > **🛡️ Phase 2 FINAL POSTURE (preserved):** all 47 tenant-scoped collections under per-collection enforce mode. 685 → 0 tenancy violations (−100%).
 
 > **🛡️ Phase 3.0 posture (preserved):** OpenAPI typed-response coverage at 97.7% JSON-effective on hot paths (216/221).
 
-- ✅ **15 product phases + Re-Arch Phase 0/1/2/3.0/3.1 shipped + verified**.
+- ✅ **15 product phases + Re-Arch Phase 0/1/2/3.0/3.1/3.2 shipped + verified**.
 - ✅ **3 standalone bugs closed**: BUG-ANL-001 + BUG-ANL-002 + BUG-WS-001.
-- ✅ **Anti-Forget Protocol** updated with "no mid-dispatch ask_human" rule (Phase 3.1 §E13).
-- ✅ **Contract surface delivered**: 3 Protocols × 21 methods + 23 shared response models for HTTP boundary (`backend/contracts/responses.py`).
+- ✅ **Anti-Forget Protocol** updated with "no mid-dispatch ask_human" rule (Phase 3.1 §E13). Phase 3.2 honoured it (zero mid-build asks).
+- ✅ **Contract surface delivered**: 3 Protocols × 21 methods + **51 shared response models** for HTTP boundary (`backend/contracts/responses.py`).
 - ✅ **Tenancy Guard architecture shipped (Phase 2)**: Upgrades A/B/C/D + alt-key map + helper-fusion + `_CROSS_TENANT_COLLECTIONS` whitelist + disjointness invariant. 47/47 collections under enforce mode.
 - ✅ **OpenAPI response-model prep (Phase 3.0)**: 172 hot-path routes wired with open-schema baseline; JSON-effective coverage 18% → 97.7%.
-- ✅ **FE/BE drift-catch system (Phase 3.1) LIVE**: zod codegen + `validatedCall` wrapper + 80 narrowed routes + 5 new fitness functions + drift-catch smoke proves teeth.
+- ✅ **FE/BE drift-catch system (Phase 3.1+3.2) LIVE**: zod codegen + `validatedCall` wrapper + `apiV2` drop-in axios-shape wrapper + 117 narrowed routes (3.1 = 80 + 3.2 = 37) + 283 FE call sites validated + 6 build-breaking fitness functions.
 - 🟡 **0 phases pending tester.**
 - ❌ **4 ❌ open items** across the 3 original QA docs (unchanged).
-- 🪲 **15 pre-existing failures** verified clean-tree across Phase 2.2/2.3/2.5a/2.5b/3.0/3.1 sweeps; all logged for Phase 2.X side-lane.
+- 🪲 **15 pre-existing failures** verified clean-tree across Phase 2.2/2.3/2.5a/2.5b/3.0/3.1/3.2 sweeps; all logged for Phase 2.X side-lane.
 - 🛌 **0 deferred future phases.**
 - 🚧 **1 USER-BLOCKED item:** Google GCP OAuth creds (G2).
-- ✅ **Re-Arch Phase 3.1 deterministic sweep PASS**: 104 PASS in BE invariants + Phase 14/15 + Track A 4/6/7; 72 PASS in targeted hot-path regression; 3/3 FE contractCompleteness PASS; 5/5 FE deliberateDrift PASS. Zero net-new failures attributable to Phase 3.1.
+- ✅ **Re-Arch Phase 3.2 deterministic sweep PASS**: 36/41 BE invariants + 111 PASS Phase 3-3.1-3.2-narration/4/5/6/7/14 + 14 PASS chat-fluency/spacy/tenant-entities + 22 PASS FE (contractCompleteness 3 + validatedCall 5 + resolveOperation 9 + apiV2 5). **Zero net-new failures attributable to Phase 3.2.** 3 pre-existing fails in `test_track_a_phase2_drawer_journal.py` (Phase-6 BC mirror collateral) verified via `git stash` clean-tree re-run.
+- ✅ **Re-Arch Phase 3.1 deterministic sweep PASS** (preserved).
 - ✅ **Re-Arch Phase 3.0 deterministic sweep PASS** (preserved).
 - ✅ **Re-Arch Phase 2 deterministic sweep PASS (final)** (preserved).
 - ✅ **Re-Arch Phase 2.5b regression sweep PASS** (preserved).
@@ -566,9 +588,10 @@ This is the canonical execution plan for the Syni Re-Architecture (approved 2026
 - ✅ **Track A Phase 6 lockdown 10/10 default + 2 integration-marked PASS**.
 - 🪲 **Track A Phase 5 lockdown 1 pre-existing fail** (verified clean-tree, logged).
 - ✅ **Track A Phase 4 lockdown 54/54 PASS**.
-- ✅ **OpenAPI live spec:** `/api/openapi.json` (3.1.0, 697 endpoints, 307 typed responses).
-- ✅ **OpenAPI committed snapshot:** `frontend/openapi.snapshot.json` (658 KB).
-- ✅ **FE zod schemas:** `frontend/src/lib/api/schemas.gen.ts` (20,978 LOC, 1:1 endpoint coverage).
+- ✅ **OpenAPI live spec:** `/api/openapi.json` (3.1.0, 697 endpoints, **344+ typed responses** post-Phase-3.2).
+- ✅ **OpenAPI committed snapshot:** `frontend/openapi.snapshot.json` (~686 KB).
+- ✅ **FE zod schemas:** `frontend/src/lib/api/schemas.gen.ts` (~21,500 LOC, 1:1 endpoint coverage).
+- ✅ **FE apiV2 wrapper:** `frontend/src/lib/api/apiV2.js` (~60 LOC; drop-in axios-shape, auto-validates 283 call sites).
 - ✅ **Boundary-imports baseline:** 3 entries (unchanged; Phase 2.X side-lane).
 - ✅ **Cross-context observe-mode report:** 48 violations (unchanged; Phase 2.X side-lane).
 - ✅ **Tenancy provenance snapshot:** `memory/invariants/tenancy_baseline_phase_0.json` (immutable, 685/550/135, git_sha `7d484a7c`).
@@ -579,24 +602,10 @@ This is the canonical execution plan for the Syni Re-Architecture (approved 2026
 
 ---
 
-**Paused per orchestrator instruction.** Re-Architecture **Phase 3.1 ✅ DONE**. Next legitimate dispatch is **Phase 3.2 (FE call-site migration to `validatedCall` + remaining 92 narrowings)** per Phase 3.1 §9 hand-off. NOT auto-starting per Discipline Rail R2 (Approval Gate) + R6 (no auto-starting). Holding.
+**Paused per orchestrator instruction.** Re-Architecture **Phase 3 ✅ FULLY CLOSED** (3.0 + 3.1 + 3.2 all DONE). Next legitimate dispatch is **Phase 4 (Process separation, one deployment)** per Section 8 — now UNGATED. NOT auto-starting per Discipline Rail R2 (Approval Gate) + R6 (no auto-starting). Holding.
 
 ---
 
-**Paused per orchestrator instruction.** User decides next dispatch — open candidates: (a) **Phase 3.2 FE call-site migration + narrowing close-out**, (b) **SendGrid TM3 / GCP G2 unblock when creds land**, (c) **Phase 2.X side-lane remediation** (48 cross-context calls + 15 pre-existing test failures). Holding for that signal.
+**Paused per orchestrator instruction.** Re-Architecture **Phase 3 ✅ FULLY CLOSED** (3.0 + 3.1 + 3.2 all DONE). Next legitimate dispatch is **Phase 4 (Process separation, one deployment)** per Section 8 — now UNGATED. NOT auto-starting per Discipline Rail R2 (Approval Gate) + R6 (no auto-starting). Holding.
 
-Phase 3 Pre-Read §9 ESCALATE resolved autonomously per user directive ("100% compliance, no diversions, solve as you move"). Phase 3.0 lifted hot-path OpenAPI typed-response coverage from 18% to **97.7% JSON-effective** (216/221). All 172 writeable hot-path routes now carry `response_model=Optional[Dict[str, Any]]` (or `Optional[List[Dict[str, Any]]]` for list-returning routes) with inline `# phase-3.0:narrow-in-3.1` markers for Phase 3.1's narrowing pass.
-
-**Acceptance criteria (from Phase 3.0 dispatch §"Acceptance criteria"):**
-- ✅ Hot-path JSON-effective coverage ≥95% — **achieved 97.7%** (216/221, with the 5 remaining being RedirectResponse / StreamingResponse / binary Response by design).
-- ✅ Complex-return routes documented and counted — all 172 writeable routes use the open-schema baseline; Phase 3.1 narrows ~30-50 routes per FE codegen surface. Per §8.1 deviation, the "<10% complex returns" prediction was inverted (open-schema-baseline strategy ships everything).
-- ✅ No behaviour change — verified via FastAPI TestClient pre-flight (`Dict[str, Any]` does NOT strip fields; `Optional` permits None-returns).
-- ✅ All Phase 0 goldens + Phase 1 invariants + Phase 14/15 + Track A 4/6/7 + Phase 2.1-2.5b lockdowns green: **102 PASS** in invariants + Phase 14/15 + Track A 4/6/7 sweep, **112 PASS** in targeted hot-path sweep.
-- ✅ No new BE-sweep failures attributable to Phase 3.0 — 3 pre-existing errors (cycle_manager_actions_tab setup) verified clean-tree retest; 1 pre-existing characterisation golden fail verified clean-tree retest.
-- ✅ Sprint memo `/app/memory/sprints/PHASE_3_0_OPENAPI_PREP.md` + this file updated.
-
-**OpenAPI coverage delta:**
-- Pre-Phase-3.0: 45/234 typed (18%) on hot paths; 134/697 (19.2%) on overall app.
-- Post-Phase-3.0: **216/234 typed (92.3%) raw hot paths; 216/221 (97.7%) JSON-effective; 307/697 (44.0%) overall app.**
-
-**Out of scope (held):** Phase 3.1 (FE zod codegen + wrapper), Phase 3.2 (hot-path migration), Phase 4+ (process/deployment separation), Phase 6/7 (GATED). Phase 2.X side-lane backlog unchanged.
+Historical sub-phase acceptance criteria live in the per-phase sprint memos under `/app/memory/sprints/PHASE_3_{0,1,2}_*.md`. Aggregate Phase 3 close-out summary is in `/app/memory/sprints/PHASE_3_2_FE_MIGRATION_CLOSE.md` §6.

@@ -9,8 +9,7 @@
  *   { sessionId, layerState, status, nextQuestion, acknowledgement,
  *     synthesisText, refusalRendering, refusalReason, auditIdsCount }
  */
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 function normalize(session) {
   if (!session) return null;
   const l3 = session.layer_3 || {};

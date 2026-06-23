@@ -18,7 +18,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Upload as UploadIcon, Mail as MailIcon, HelpCircle as SolveIcon, Copy as CopyIcon, ArrowLeft, ArrowRight, Target as CycleIcon, Sparkles as DemoIcon } from "lucide-react";
 

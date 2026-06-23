@@ -25,7 +25,8 @@ import DocumentDrawer from "@/components/documents/DocumentDrawer";
 // Phase P5.19 — origin chip + source-message modal reuse from P5.17.
 import OriginChip from "@/components/origin/OriginChip";
 import SourceMessageModal from "@/components/origin/SourceMessageModal";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { takeToSolva } from "@/lib/takeToSolva";
 import {
   Sparkles, MessageSquare, Send, Bookmark, BookmarkCheck,

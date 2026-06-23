@@ -57,7 +57,9 @@ import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Literal, Optional
-from contracts.responses import ArtefactRedirectResponse
+from contracts.responses import (
+    ArtefactRedirectResponse,
+)
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -621,7 +623,7 @@ class FromDocumentRequest(BaseModel):
 @router.post(
     "/contexts/{context_id}/work-studio/from-document",
     status_code=201,
-    response_model=Optional[Dict[str, Any]],  # phase-3.0:narrow-in-3.1
+    response_model=Optional[ArtefactRedirectResponse],
 )
 async def create_work_studio_from_document(
     context_id: str,

@@ -30,7 +30,13 @@ import re
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-from contracts.responses import IdResponse, ItemsListResponse
+from contracts.responses import (
+    AnomaliesResponse,
+    IdResponse,
+    ItemsListResponse,
+    SignalsResponse,
+    WorkbookAnalysisResponse,
+)
 
 from fastapi import (
     APIRouter, Depends, File, Form, HTTPException, Query, Response,
@@ -345,7 +351,7 @@ async def get_analysis(aid: str, current: Dict[str, Any] = Depends(get_current_a
 # ─────────────────────────────────────────────────────────────────
 
 
-@router.post("/analyses/{aid}/signals/extract", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/analyses/{aid}/signals/extract", response_model=Optional[SignalsResponse])
 async def extract_signals_endpoint(
     aid: str, current: Dict[str, Any] = Depends(get_current_account),
 ):
@@ -529,7 +535,7 @@ class AnomaliesRequest(BaseModel):
     iqr_multiplier: float = 1.5
 
 
-@router.post("/analyses/{aid}/anomalies", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/analyses/{aid}/anomalies", response_model=Optional[AnomaliesResponse])
 async def anomalies_endpoint(
     aid: str,
     body: AnomaliesRequest,
@@ -1196,7 +1202,7 @@ class _AnalysisNoteIn(BaseModel):
     body: str = Field(..., min_length=0, max_length=4000)
 
 
-@router.get("/v2/analyses", response_model=Optional[List[Dict[str, Any]]])  # phase-3.0:narrow-in-3.1
+@router.get("/v2/analyses", response_model=Optional[List[WorkbookAnalysisResponse]])
 async def list_analyses_v2(
     context_id: Optional[str] = Query(None),
     current: Dict[str, Any] = Depends(get_current_account),

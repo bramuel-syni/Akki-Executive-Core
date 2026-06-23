@@ -1,5 +1,5 @@
 {
-  "scan_timestamp": "2026-06-23T08:48:59.040094+00:00",
+  "scan_timestamp": "2026-06-23T10:27:55.128186+00:00",
   "scan_roots": [
     "/app/backend/services",
     "/app/backend/routers"
@@ -35,7 +35,7 @@
     },
     {
       "file": "/app/backend/routers/chat.py",
-      "line": 588,
+      "line": 594,
       "kind": "primitive_call",
       "name": "shield_invoke",
       "owner": "synisense",
@@ -43,7 +43,7 @@
     },
     {
       "file": "/app/backend/routers/chat.py",
-      "line": 1934,
+      "line": 1940,
       "kind": "primitive_call",
       "name": "shield_invoke",
       "owner": "synisense",
@@ -51,7 +51,7 @@
     },
     {
       "file": "/app/backend/routers/chat.py",
-      "line": 3057,
+      "line": 3063,
       "kind": "primitive_call",
       "name": "shield_invoke",
       "owner": "synisense",
@@ -59,7 +59,7 @@
     },
     {
       "file": "/app/backend/routers/chat.py",
-      "line": 3081,
+      "line": 3087,
       "kind": "primitive_call",
       "name": "shield_invoke",
       "owner": "synisense",
@@ -67,7 +67,7 @@
     },
     {
       "file": "/app/backend/routers/chat.py",
-      "line": 3407,
+      "line": 3413,
       "kind": "primitive_call",
       "name": "shield_invoke",
       "owner": "synisense",
@@ -75,7 +75,7 @@
     },
     {
       "file": "/app/backend/routers/chat.py",
-      "line": 2476,
+      "line": 2482,
       "kind": "primitive_call",
       "name": "shield_invoke",
       "owner": "synisense",
@@ -83,7 +83,7 @@
     },
     {
       "file": "/app/backend/routers/chat.py",
-      "line": 2499,
+      "line": 2505,
       "kind": "primitive_call",
       "name": "shield_invoke",
       "owner": "synisense",
@@ -91,7 +91,7 @@
     },
     {
       "file": "/app/backend/routers/documents.py",
-      "line": 1364,
+      "line": 1374,
       "kind": "primitive_call",
       "name": "shield_invoke",
       "owner": "synisense",
@@ -139,7 +139,7 @@
     },
     {
       "file": "/app/backend/routers/tasks.py",
-      "line": 591,
+      "line": 597,
       "kind": "primitive_call",
       "name": "shield_invoke",
       "owner": "synisense",
@@ -155,7 +155,7 @@
     },
     {
       "file": "/app/backend/routers/workbook_analysis.py",
-      "line": 1083,
+      "line": 1089,
       "kind": "primitive_call",
       "name": "narrate_analysis",
       "owner": "solva",

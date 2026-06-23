@@ -27,7 +27,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import {
   FileText, MessageSquare, Sparkles, Brain, Signal, Link2, Share2,

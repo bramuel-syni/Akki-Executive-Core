@@ -27,7 +27,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { api, apiErrorMessage, API_BASE } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage, API_BASE } from "@/lib/api";
 import {
   Loader2, Download, AlertCircle, Wand2, Upload, MessageSquare,
   AlertTriangle, Check, ChevronRight, ChevronDown, GitBranch, Eye,

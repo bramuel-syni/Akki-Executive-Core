@@ -16,7 +16,10 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
-from contracts.responses import OkResponse
+from contracts.responses import (
+    AdminAuthEventsResponse,
+    OkResponse,
+)
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -31,7 +34,7 @@ async def _require_superadmin(account: Dict[str, Any] = Depends(get_current_acco
     return account
 
 
-@router.get("/events", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/events", response_model=Optional[AdminAuthEventsResponse])
 async def auth_events(
     hours: int = Query(24, ge=1, le=720),
     account: Dict[str, Any] = Depends(_require_superadmin),

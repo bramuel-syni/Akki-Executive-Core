@@ -20,7 +20,8 @@
  */
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { api, API_BASE } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { API_BASE } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import AppShell from "@/components/layout/AppShell";
 import {

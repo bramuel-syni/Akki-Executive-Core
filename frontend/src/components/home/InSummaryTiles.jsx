@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import {
   Sparkles, ScrollText, Send, FileText, BookOpen, Building2,
 } from "lucide-react";

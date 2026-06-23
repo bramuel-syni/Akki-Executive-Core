@@ -5,7 +5,17 @@ import logging
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional
-from contracts.responses import DocumentMetaResponse, ThreadAncestryResponse
+from contracts.responses import (
+    AsyncJobResponse,
+    DiffResponse,
+    DocumentMetaResponse,
+    ExportPolicyResponse,
+    IntelligenceRegenerateResponse,
+    JournalCommentaryResponse,
+    OkResponse,
+    ParagraphsResponse,
+    ThreadAncestryResponse,
+)
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 from datetime import datetime, timezone
@@ -1034,7 +1044,7 @@ async def get_document_intelligence(
 @router.post(
     "/contexts/{context_id}/documents/{doc_id}/briefings/generate",
     status_code=202,
-    response_model=Optional[Dict[str, Any]],  # phase-3.0:narrow-in-3.1
+    response_model=Optional[AsyncJobResponse],
 )
 async def generate_briefing_from_document(
     context_id: str, doc_id: str,
@@ -1197,7 +1207,7 @@ async def generate_briefing_from_document(
     return {"job_id": job_id, "status": "queued", "source_doc_id": doc_id}
 
 
-@router.post("/contexts/{context_id}/documents/{doc_id}/intelligence/regenerate", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/documents/{doc_id}/intelligence/regenerate", response_model=Optional[IntelligenceRegenerateResponse])
 async def regenerate_document_intelligence(
     context_id: str, doc_id: str,
     background_tasks: BackgroundTasks,
@@ -1719,7 +1729,7 @@ async def patch_document_lineage(
 # ─────────────────────────────────────────────────────────────────────
 
 
-@router.get("/contexts/{context_id}/documents/{doc_id}/export-guard", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/contexts/{context_id}/documents/{doc_id}/export-guard", response_model=Optional[ExportPolicyResponse])
 async def check_export_guard(
     context_id: str, doc_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
@@ -2122,7 +2132,7 @@ async def search_document_journal(
 
 
 
-@router.post("/contexts/{context_id}/documents/{doc_id}/journal-commentary", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/documents/{doc_id}/journal-commentary", response_model=Optional[JournalCommentaryResponse])
 async def journal_commentary(
     context_id: str, doc_id: str,
     refresh: bool = False,
@@ -2248,7 +2258,7 @@ async def update_document_trust(
     return sanitize_doc(d)
 
 
-@router.post("/contexts/{context_id}/documents/{doc_id}/evolution-diff", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/documents/{doc_id}/evolution-diff", response_model=Optional[DiffResponse])
 async def document_evolution_diff(
     context_id: str, doc_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
@@ -2370,7 +2380,7 @@ async def document_evolution_diff(
     }
 
 
-@router.delete("/contexts/{context_id}/documents/{doc_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.delete("/contexts/{context_id}/documents/{doc_id}", response_model=Optional[OkResponse])
 async def archive_document(
     context_id: str, doc_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
@@ -2491,7 +2501,7 @@ async def _materialise_paragraphs(d: Dict[str, Any]) -> Dict[str, Any]:
     return payload
 
 
-@router.get("/contexts/{context_id}/documents/{doc_id}/paragraphs", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/contexts/{context_id}/documents/{doc_id}/paragraphs", response_model=Optional[ParagraphsResponse])
 async def get_document_paragraphs(
     context_id: str, doc_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),

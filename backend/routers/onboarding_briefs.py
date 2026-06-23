@@ -25,7 +25,10 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-from contracts.responses import OkResponse
+from contracts.responses import (
+    OkResponse,
+    OnboardingBriefsResponse,
+)
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -128,7 +131,7 @@ async def _build_slides(account_id: str) -> List[Dict[str, Any]]:
     return [dict(s) for s in ONBOARDING_SLIDES_DEFAULT]
 
 
-@router.get("/onboarding-briefs", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/onboarding-briefs", response_model=Optional[OnboardingBriefsResponse])
 async def get_onboarding_briefs(
     request: Request,
     current: Dict[str, Any] = Depends(get_current_account),

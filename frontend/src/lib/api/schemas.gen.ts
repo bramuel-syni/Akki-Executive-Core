@@ -9,6 +9,14 @@ const routers__auth__RegisterIn = z
     context_name: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough();
+const AuthSessionResponse = z
+  .object({
+    access_token: z.union([z.string(), z.null()]),
+    account: z.union([z.object({}).partial().passthrough(), z.null()]),
+    contexts: z.union([z.array(z.unknown()), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const ValidationError = z
   .object({
     loc: z.array(z.union([z.string(), z.number()])),
@@ -22,6 +30,20 @@ const HTTPValidationError = z
   .passthrough();
 const LoginIn = z
   .object({ email: z.string().email(), password: z.string() })
+  .passthrough();
+const OkResponse = z
+  .object({
+    ok: z.union([z.boolean(), z.null()]),
+    message: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
+const AccountWrapResponse = z
+  .object({
+    account: z.union([z.object({}).partial().passthrough(), z.null()]),
+    contexts: z.union([z.array(z.unknown()), z.null()]),
+  })
+  .partial()
   .passthrough();
 const DeclareRoleIn = z
   .object({ declared_role: z.enum(["ned", "executive", "dual", "undeclared"]) })
@@ -90,6 +112,16 @@ const DocumentMetaGenerateIn = z
   })
   .partial()
   .passthrough();
+const DocumentMetaResponse = z
+  .object({
+    display_name: z.union([z.string(), z.null()]),
+    description: z.union([z.string(), z.null()]),
+    shielding: z.union([z.unknown(), z.null()]),
+    shielding_masked: z.union([z.unknown(), z.null()]),
+    mode: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const Body_upload_document_api_contexts__context_id__documents_post = z
   .object({
     file: z.instanceof(File),
@@ -103,6 +135,13 @@ const Body_upload_document_api_contexts__context_id__documents_post = z
   })
   .passthrough();
 const committee_id = z.union([z.string(), z.null()]).optional();
+const ThreadAncestryResponse = z
+  .object({
+    ancestors: z.union([z.array(z.unknown()), z.null()]),
+    descendants: z.union([z.array(z.unknown()), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const _ManualCreateIn = z
   .object({
     name: z.string().max(300).default("Untitled draft"),
@@ -120,6 +159,22 @@ const DocumentTrustUpdate = z
   })
   .partial()
   .passthrough();
+const AsyncJobResponse = z
+  .object({
+    job_id: z.union([z.string(), z.null()]),
+    kind: z.union([z.string(), z.null()]),
+    status: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
+const IntelligenceRegenerateResponse = z
+  .object({
+    doc_id: z.union([z.string(), z.null()]),
+    mode: z.union([z.string(), z.null()]),
+    status: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const _PromptedEditIn = z
   .object({ prompt: z.string().min(1).max(2000) })
   .passthrough();
@@ -133,6 +188,42 @@ const LineagePatchBody = z
   .object({
     parent_doc_id: z.union([z.string(), z.null()]),
     version_label: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
+const ExportPolicyResponse = z
+  .object({
+    can_export: z.union([z.boolean(), z.null()]),
+    watermark_label: z.union([z.string(), z.null()]),
+    watermark_required: z.union([z.boolean(), z.null()]),
+  })
+  .partial()
+  .passthrough();
+const JournalCommentaryResponse = z
+  .object({
+    cached: z.union([z.boolean(), z.null()]),
+    commentary: z.union([z.unknown(), z.null()]),
+    commentary_redacted: z.union([z.unknown(), z.null()]),
+    doc_id: z.union([z.string(), z.null()]),
+    generated_at: z.union([z.string(), z.null()]),
+    synisense_version: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
+const DiffResponse = z
+  .object({
+    diff: z.union([z.array(z.unknown()), z.null()]),
+    previous_doc: z.union([z.object({}).partial().passthrough(), z.null()]),
+  })
+  .partial()
+  .passthrough();
+const ParagraphsResponse = z
+  .object({
+    computed_at: z.union([z.string(), z.null()]),
+    doc_id: z.union([z.string(), z.null()]),
+    page_count: z.union([z.number(), z.null()]),
+    paragraphs: z.union([z.array(z.unknown()), z.null()]),
+    version: z.union([z.unknown(), z.null()]),
   })
   .partial()
   .passthrough();
@@ -176,6 +267,16 @@ const ExportRequestIn = z
       .default("auto"),
   })
   .passthrough();
+const ExportStartResponse = z
+  .object({
+    export_id: z.union([z.string(), z.null()]),
+    kind: z.union([z.string(), z.null()]),
+    output_format: z.union([z.string(), z.null()]),
+    status: z.union([z.string(), z.null()]),
+    created_at: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const Body_start_enhance_api_contexts__context_id__work_studio_enhance__kind__post =
   z
     .object({
@@ -203,6 +304,16 @@ const _SaveDraftIn = z
       .default("report"),
     document_id: z.union([z.string(), z.null()]).optional(),
   })
+  .passthrough();
+const DraftLifecycleResponse = z
+  .object({
+    draft_session_id: z.union([z.string(), z.null()]),
+    export_id: z.union([z.string(), z.null()]),
+    idempotent_update: z.union([z.boolean(), z.null()]),
+    lifecycle_state: z.union([z.string(), z.null()]),
+    updated_at: z.union([z.string(), z.null()]),
+  })
+  .partial()
   .passthrough();
 const ExportRequest = z
   .object({
@@ -241,6 +352,18 @@ const FromSourceRequest = z
     programme: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough();
+const ArtefactRedirectResponse = z
+  .object({
+    artefact_id: z.union([z.string(), z.null()]),
+    kind: z.union([z.string(), z.null()]),
+    redirect_url: z.union([z.string(), z.null()]),
+    brief_id: z.union([z.string(), z.null()]),
+    title: z.union([z.string(), z.null()]),
+    document_id: z.union([z.string(), z.null()]),
+    active_revision_id: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const CreateArtefactRequest = z
   .object({
     kind: z.enum(["deck", "report"]),
@@ -256,6 +379,15 @@ const FromDocumentRequest = z
     source_doc_id: z.string().min(1).max(128),
   })
   .passthrough();
+const ItemsListResponse = z
+  .object({
+    items: z.union([z.array(z.unknown()), z.null()]),
+    next_cursor: z.union([z.string(), z.null()]),
+    total: z.union([z.number(), z.null()]),
+    total_pending: z.union([z.number(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const DocumentPatchIn = z
   .object({
     title: z.union([z.string(), z.null()]),
@@ -266,8 +398,22 @@ const DocumentPatchIn = z
   })
   .partial()
   .passthrough();
+const IdResponse = z
+  .object({
+    id: z.union([z.string(), z.null()]),
+    deleted: z.union([z.boolean(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const SaveIn = z
   .object({ label: z.union([z.string(), z.null()]) })
+  .partial()
+  .passthrough();
+const SnapshotResponse = z
+  .object({
+    snapshot_id: z.union([z.string(), z.null()]),
+    saved_at: z.union([z.string(), z.null()]),
+  })
   .partial()
   .passthrough();
 const ReviseIn = z
@@ -624,6 +770,16 @@ const PolishIn = z
   .object({ instruction: z.union([z.string(), z.null()]) })
   .partial()
   .passthrough();
+const CommitteesResponse = z
+  .object({ committees: z.union([z.array(z.unknown()), z.null()]) })
+  .partial()
+  .passthrough();
+const ScheduleResponse = z
+  .object({
+    schedule: z.union([z.object({}).partial().passthrough(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const CycleScheduleIn = z
   .object({
     cadence: z.enum(["weekly", "monthly"]).optional().default("weekly"),
@@ -642,6 +798,15 @@ const CycleScheduleIn = z
     committee_id: z.union([z.string(), z.null()]).optional(),
     enabled: z.boolean().optional().default(true),
   })
+  .passthrough();
+const CycleActionsResponse = z
+  .object({
+    as_of: z.union([z.string(), z.null()]),
+    context_id: z.union([z.string(), z.null()]),
+    counts: z.union([z.unknown(), z.null()]),
+    sections: z.union([z.unknown(), z.null()]),
+  })
+  .partial()
   .passthrough();
 const _OutputSpecIn = z
   .object({
@@ -697,11 +862,30 @@ const _TaskPatch = z
 const _AgentPrefillIn = z
   .object({ name: z.string().min(1).max(200) })
   .passthrough();
+const ObjectiveSourceResponse = z
+  .object({
+    objective: z.union([z.unknown(), z.null()]),
+    source: z.union([z.unknown(), z.null()]),
+    success_criteria: z.union([z.array(z.unknown()), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const _ContributionPatchIn = z
   .object({
     status: z.string().min(1).max(40),
     note: z.union([z.string(), z.null()]).optional(),
   })
+  .passthrough();
+const TaskHashResponse = z
+  .object({
+    task_id: z.union([z.string(), z.null()]),
+    task_hash: z.union([z.string(), z.null()]),
+    status: z.union([z.string(), z.null()]),
+    contributor_id: z.union([z.string(), z.null()]),
+    readiness_score: z.union([z.number(), z.null()]),
+    team: z.union([z.unknown(), z.null()]),
+  })
+  .partial()
   .passthrough();
 const _ReviewCompleteIn = z
   .object({ skip_circulation: z.boolean().default(false) })
@@ -713,6 +897,16 @@ const _CirculationSendIn = z
     message: z.union([z.string(), z.null()]).optional(),
     base_url: z.union([z.string(), z.null()]).optional(),
   })
+  .passthrough();
+const TaskCirculationResponse = z
+  .object({
+    docs: z.union([z.array(z.unknown()), z.null()]),
+    expires_at: z.union([z.string(), z.null()]),
+    own_comments: z.union([z.unknown(), z.null()]),
+    reviewer_email: z.union([z.string(), z.null()]),
+    task: z.union([z.unknown(), z.null()]),
+  })
+  .partial()
   .passthrough();
 const _CirculationSpan = z
   .object({
@@ -730,6 +924,19 @@ const _CirculationCommentIn = z
   .passthrough();
 const _ApplyCommentIn = z
   .object({ comment_id: z.string(), action: z.string().min(1).max(40) })
+  .passthrough();
+const TaskContributeResponse = z
+  .object({
+    contribution: z.union([z.unknown(), z.null()]),
+    contributor_email: z.union([z.string(), z.null()]),
+    docs: z.union([z.array(z.unknown()), z.null()]),
+    expires_at: z.union([z.string(), z.null()]),
+    peers: z.union([z.array(z.unknown()), z.null()]),
+    task: z.union([z.unknown(), z.null()]),
+    your_due_date: z.union([z.string(), z.null()]),
+    your_status: z.union([z.string(), z.null()]),
+  })
+  .partial()
   .passthrough();
 const Body_contributor_upload_api_tasks_contribute__token__upload_post = z
   .object({
@@ -964,6 +1171,10 @@ const NotifyOut = z
     message: z.string(),
   })
   .passthrough();
+const OnboardingBriefsResponse = z
+  .object({ slides: z.union([z.array(z.unknown()), z.null()]) })
+  .partial()
+  .passthrough();
 const UserCreateIn = z
   .object({
     email: z.string().email(),
@@ -980,6 +1191,13 @@ const ForceResetIn = z
   .passthrough();
 const DeleteAccountRequest = z.object({ confirm: z.string() }).passthrough();
 const ForgotPasswordIn = z.object({ email: z.string().email() }).passthrough();
+const PasswordResetTokenResponse = z
+  .object({
+    email_masked: z.union([z.string(), z.null()]),
+    valid: z.union([z.boolean(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const ResetPasswordIn = z
   .object({ new_password: z.string().min(10).max(200) })
   .passthrough();
@@ -988,6 +1206,18 @@ const DocumentShareIn = z
     recipient_emails: z.array(z.string().email()).min(1).max(10),
     message: z.union([z.string(), z.null()]).optional(),
   })
+  .passthrough();
+const DocumentEngagementResponse = z
+  .object({
+    linked_count: z.union([z.number(), z.null()]),
+    linked_documents: z.union([z.array(z.unknown()), z.null()]),
+    readers: z.union([z.array(z.unknown()), z.null()]),
+    share_count: z.union([z.number(), z.null()]),
+    shares: z.union([z.array(z.unknown()), z.null()]),
+    unique_readers: z.union([z.number(), z.null()]),
+    view_count: z.union([z.number(), z.null()]),
+  })
+  .partial()
   .passthrough();
 const GoalIn = z
   .object({
@@ -1062,6 +1292,30 @@ const ExtractFromDocIn = z
     replace_existing: z.boolean().optional().default(false),
   })
   .passthrough();
+const ChatAuditPanelResponse = z
+  .object({
+    audit_id: z.union([z.string(), z.null()]),
+    message_id: z.union([z.string(), z.null()]),
+    protective_event: z.union([z.unknown(), z.null()]),
+    protective_layer_prose: z.union([z.string(), z.null()]),
+    provider_prose: z.union([z.string(), z.null()]),
+    references: z.union([z.unknown(), z.null()]),
+    scores: z.union([z.unknown(), z.null()]),
+    shielding_prose: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
+const ChatAuditAggregateResponse = z
+  .object({
+    average_dilution: z.union([z.number(), z.null()]),
+    average_exposure_reduction: z.union([z.number(), z.null()]),
+    headline_prose: z.union([z.string(), z.null()]),
+    identifiers_shielded: z.union([z.number(), z.null()]),
+    llm_calls: z.union([z.number(), z.null()]),
+    message_count: z.union([z.number(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const SeedPayload = z
   .object({
     source: z.string().min(1).max(40),
@@ -1100,6 +1354,13 @@ const Body_restore_one_api_admin_solva_legacy_restore_post = z
 const ArtefactFromSolvaIn = z
   .object({ session_id: z.string().min(1).max(120) })
   .passthrough();
+const ChatModelsResponse = z
+  .object({
+    default_model_id: z.union([z.string(), z.null()]),
+    models: z.union([z.array(z.unknown()), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const LinkedContextIn = z
   .object({
     ctx_type: z.string().min(1).max(40),
@@ -1118,6 +1379,22 @@ const ChatCreateIn = z
   .passthrough();
 const Body_attach_to_chat_api_chats__chat_id__attach_post = z
   .object({ file: z.instanceof(File) })
+  .passthrough();
+const ChatAttachmentResponse = z
+  .object({
+    chat_id: z.union([z.string(), z.null()]),
+    context_id: z.union([z.string(), z.null()]),
+    document_id: z.union([z.string(), z.null()]),
+    name: z.union([z.string(), z.null()]),
+    original_filename: z.union([z.string(), z.null()]),
+    mime_type: z.union([z.string(), z.null()]),
+    size_bytes: z.union([z.number(), z.null()]),
+    char_len: z.union([z.number(), z.null()]),
+    sensitivity: z.union([z.unknown(), z.null()]),
+    storage_key: z.union([z.string(), z.null()]),
+    created_at: z.union([z.string(), z.null()]),
+  })
+  .partial()
   .passthrough();
 const ChatPatchIn = z
   .object({
@@ -1148,6 +1425,14 @@ const MessageSendIn = z
       .optional(),
     show_pass_1: z.boolean().optional().default(false),
   })
+  .passthrough();
+const ChatAuditResponse = z
+  .object({
+    chat_id: z.union([z.string(), z.null()]),
+    rows: z.union([z.array(z.unknown()), z.null()]),
+    verification_note: z.union([z.string(), z.null()]),
+  })
+  .partial()
   .passthrough();
 const SignalActionIn = z
   .object({
@@ -1187,6 +1472,14 @@ const AgendaIn = z
     items: z.array(AgendaItemIn).max(30).optional(),
   })
   .passthrough();
+const CycleTeamResponse = z
+  .object({
+    agenda_id: z.union([z.string(), z.null()]),
+    cycle_id: z.union([z.string(), z.null()]),
+    members: z.union([z.array(z.unknown()), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const TeamMemberIn = z
   .object({
     id: z.union([z.string(), z.null()]).optional(),
@@ -1207,6 +1500,14 @@ const TeamMemberPatch = z
   })
   .partial()
   .passthrough();
+const CycleContributionsListResponse = z
+  .object({
+    agenda_id: z.union([z.string(), z.null()]),
+    contributions: z.union([z.array(z.unknown()), z.null()]),
+    cycle_id: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const ContributionIn = z
   .object({
     agenda_item_id: z.union([z.string(), z.null()]),
@@ -1217,6 +1518,26 @@ const ContributionIn = z
       .default("note"),
     source_doc_id: z.union([z.string(), z.null()]),
     body_text: z.union([z.string(), z.null()]),
+    title: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
+const CycleContributionResponse = z
+  .object({
+    id: z.union([z.string(), z.null()]),
+    agenda_id: z.union([z.string(), z.null()]),
+    agenda_item_id: z.union([z.string(), z.null()]),
+    body_text: z.union([z.string(), z.null()]),
+    context_id: z.union([z.string(), z.null()]),
+    created_at: z.union([z.string(), z.null()]),
+    cycle_id: z.union([z.string(), z.null()]),
+    kind: z.union([z.string(), z.null()]),
+    scored_at: z.union([z.string(), z.null()]),
+    scored_by: z.union([z.string(), z.null()]),
+    scores: z.union([z.unknown(), z.null()]),
+    source_doc_id: z.union([z.string(), z.null()]),
+    status: z.union([z.string(), z.null()]),
+    team_member_id: z.union([z.string(), z.null()]),
     title: z.union([z.string(), z.null()]),
   })
   .partial()
@@ -1232,6 +1553,21 @@ const ScoreIn = z
   .passthrough();
 const FollowUpsDraftIn = z
   .object({ item_ids: z.union([z.array(z.string()), z.null()]) })
+  .partial()
+  .passthrough();
+const FollowUpDraftsResponse = z
+  .object({
+    count: z.union([z.number(), z.null()]),
+    drafts: z.union([z.array(z.unknown()), z.null()]),
+  })
+  .partial()
+  .passthrough();
+const CycleFollowUpsResponse = z
+  .object({
+    agenda_id: z.union([z.string(), z.null()]),
+    cycle_id: z.union([z.string(), z.null()]),
+    followups: z.union([z.array(z.unknown()), z.null()]),
+  })
   .partial()
   .passthrough();
 const CycleCreateIn = z
@@ -1279,6 +1615,13 @@ const AcceptOut = z
   .passthrough();
 const DeclineIn = z
   .object({ reason: z.union([z.string(), z.null()]) })
+  .partial()
+  .passthrough();
+const BriefsCountResponse = z
+  .object({
+    briefs: z.union([z.array(z.unknown()), z.null()]),
+    count: z.union([z.number(), z.null()]),
+  })
   .partial()
   .passthrough();
 const MeetingCreate = z
@@ -1334,6 +1677,15 @@ const BriefIn = z
     deep: z.boolean().optional().default(false),
   })
   .passthrough();
+const ByContextSummaryResponse = z
+  .object({
+    by_context: z.union([z.array(z.unknown()), z.null()]),
+    by_kind: z.union([z.array(z.unknown()), z.null()]),
+    total: z.union([z.number(), z.null()]),
+    total_pending: z.union([z.number(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const AcceptIn = z
   .object({ note: z.union([z.string(), z.null()]) })
   .partial()
@@ -1379,6 +1731,22 @@ const WalkinIn = z
     artefact_id: z.string().min(4).max(80),
     context_id: z.string().min(4).max(80),
   })
+  .passthrough();
+const AdminAuthEventsResponse = z
+  .object({
+    by_credential: z.union([z.unknown(), z.null()]),
+    by_failure_reason: z.union([z.unknown(), z.null()]),
+    dual_credentials_mismatched: z.union([z.number(), z.null()]),
+    dual_credentials_seen: z.union([z.number(), z.null()]),
+    failure: z.union([z.number(), z.null()]),
+    failure_rate_pct: z.union([z.number(), z.null()]),
+    recent: z.union([z.array(z.unknown()), z.null()]),
+    sampled_events: z.union([z.number(), z.null()]),
+    success: z.union([z.number(), z.null()]),
+    top_paths: z.union([z.unknown(), z.null()]),
+    window_hours: z.union([z.number(), z.null()]),
+  })
+  .partial()
   .passthrough();
 const routers__admin_journal__BackfillRequest = z
   .object({
@@ -1522,6 +1890,10 @@ const SolvaCycleEditIn = z
   .passthrough();
 const edit_review_item_api_me_review_queue_items__kind___item_id__edit_post_Body =
   z.union([SolvaCycleEditIn, z.null()]);
+const StateOnlyResponse = z
+  .object({ state: z.union([z.string(), z.null()]) })
+  .partial()
+  .passthrough();
 const IntakeIn = z
   .object({
     role: z.string().min(1).max(32),
@@ -1534,6 +1906,17 @@ const ArtefactIn = z
   .object({ kind: z.string().min(1).max(32), id: z.string().min(1).max(64) })
   .passthrough();
 const CompleteIn = z.object({ artefact: ArtefactIn }).passthrough();
+const GovernancePanelResponse = z
+  .object({
+    audit_log: z.union([z.unknown(), z.null()]),
+    connected_models: z.union([z.unknown(), z.null()]),
+    inbound: z.union([z.unknown(), z.null()]),
+    sensitivity: z.union([z.unknown(), z.null()]),
+    shielding: z.union([z.unknown(), z.null()]),
+    synisense: z.union([z.unknown(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const ExportIn = z
   .object({
     action: z.union([z.string(), z.null()]),
@@ -1780,6 +2163,13 @@ const SignalTypeDefinition = z
 const SignalTypeCatalogue = z
   .object({ signal_types: z.array(SignalTypeDefinition) })
   .passthrough();
+const StatusKindResponse = z
+  .object({
+    status: z.union([z.string(), z.null()]),
+    kind: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const ExcoCreateIn = z
   .object({
     name: z.string().min(1).max(120),
@@ -1839,6 +2229,15 @@ const CompilationCreate = z
     cadence_payload: CadencePayload.optional(),
     formats: z.array(z.string()).optional(),
   })
+  .passthrough();
+const CompilationStartResponse = z
+  .object({
+    compilation_id: z.union([z.string(), z.null()]),
+    export_id: z.union([z.string(), z.null()]),
+    idempotent: z.union([z.boolean(), z.null()]),
+    status: z.union([z.string(), z.null()]),
+  })
+  .partial()
   .passthrough();
 const RecentViewIn = z
   .object({
@@ -2024,19 +2423,61 @@ const ExtractTriggerIn = z
   })
   .partial()
   .passthrough();
+const DocumentExtractResponse = z
+  .object({
+    document_id: z.union([z.string(), z.null()]),
+    extract_goals: z.union([z.unknown(), z.null()]),
+    extract_tasks: z.union([z.unknown(), z.null()]),
+    extraction_queued: z.union([z.boolean(), z.null()]),
+    has_extracted_text: z.union([z.boolean(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const PasswordChangeIn = z
   .object({
     current_password: z.string().min(1).max(200),
     new_password: z.string().min(10).max(200),
   })
   .passthrough();
+const MfaEnrollStartResponse = z
+  .object({
+    otpauth_url: z.union([z.string(), z.null()]),
+    qr_data_url: z.union([z.string(), z.null()]),
+    secret: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const MFAConfirmIn = z.object({ code: z.string().min(6).max(8) }).passthrough();
 const MFAVerifyIn = z.object({ code: z.string().min(6).max(14) }).passthrough();
 const MFADisableIn = z
   .object({ password: z.string().min(1).max(200) })
   .passthrough();
+const MfaStatusResponse = z
+  .object({
+    enrolled_at: z.union([z.string(), z.null()]),
+    locked: z.union([z.boolean(), z.null()]),
+    mfa_enabled: z.union([z.boolean(), z.null()]),
+    recovery_codes_remaining: z.union([z.number(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 const IssueIn = z
   .object({ application_id: z.string().min(1).max(120) })
+  .passthrough();
+const TokenIssueResponse = z
+  .object({
+    expires_at: z.union([z.string(), z.null()]),
+    token: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
+const CohortPreviewResponse = z
+  .object({
+    expires_at: z.union([z.string(), z.null()]),
+    first_name: z.union([z.string(), z.null()]),
+    organisation: z.union([z.string(), z.null()]),
+  })
+  .partial()
   .passthrough();
 const ConsumeIn = z
   .object({
@@ -2072,6 +2513,10 @@ const _RouteIn = z.object({
 const Body_upload_workbook_api_workbook_upload_post = z
   .object({ file: z.instanceof(File) })
   .passthrough();
+const SignalsResponse = z
+  .object({ signals: z.union([z.array(z.unknown()), z.null()]) })
+  .partial()
+  .passthrough();
 const SimulateRequest = z
   .object({
     sheet: z.string(),
@@ -2099,6 +2544,10 @@ const AnomaliesRequest = z
     iqr_multiplier: z.number().optional().default(1.5),
   })
   .passthrough();
+const AnomaliesResponse = z
+  .object({ anomalies: z.union([z.array(z.unknown()), z.null()]) })
+  .partial()
+  .passthrough();
 const Body_upload_workbook_multi_api_workbook_upload_multi_post = z
   .object({
     files: z.array(z.instanceof(File)),
@@ -2106,6 +2555,15 @@ const Body_upload_workbook_multi_api_workbook_upload_multi_post = z
     context_id: z.union([z.string(), z.null()]).optional(),
     objective: z.union([z.string(), z.null()]).optional(),
   })
+  .passthrough();
+const WorkbookAnalysisResponse = z
+  .object({
+    id: z.union([z.string(), z.null()]),
+    context_id: z.union([z.string(), z.null()]),
+    account_id: z.union([z.string(), z.null()]),
+    status: z.union([z.string(), z.null()]),
+  })
+  .partial()
   .passthrough();
 const _AnalysisObjectivePatch = z
   .object({ objective: z.string().max(4000) })
@@ -2123,9 +2581,12 @@ const PreferencesPutRequest = z
 
 export const schemas = {
   routers__auth__RegisterIn,
+  AuthSessionResponse,
   ValidationError,
   HTTPValidationError,
   LoginIn,
+  OkResponse,
+  AccountWrapResponse,
   DeclareRoleIn,
   SetPasswordIn,
   AccountUpdateIn,
@@ -2135,28 +2596,42 @@ export const schemas = {
   ContextRenameIn,
   InvitationIn,
   DocumentMetaGenerateIn,
+  DocumentMetaResponse,
   Body_upload_document_api_contexts__context_id__documents_post,
   committee_id,
+  ThreadAncestryResponse,
   _ManualCreateIn,
   DocumentTrustUpdate,
+  AsyncJobResponse,
+  IntelligenceRegenerateResponse,
   _PromptedEditIn,
   AttachmentCreateBody,
   LineagePatchBody,
+  ExportPolicyResponse,
+  JournalCommentaryResponse,
+  DiffResponse,
+  ParagraphsResponse,
   LLMProbeIn,
   TelemetryEventIn,
   BriefingCreateIn,
   MarkReadIn,
   ExportRequestIn,
+  ExportStartResponse,
   Body_start_enhance_api_contexts__context_id__work_studio_enhance__kind__post,
   _SaveDraftIn,
+  DraftLifecycleResponse,
   ExportRequest,
   EnhanceRequest,
   SetActiveRequest,
   FromSourceRequest,
+  ArtefactRedirectResponse,
   CreateArtefactRequest,
   FromDocumentRequest,
+  ItemsListResponse,
   DocumentPatchIn,
+  IdResponse,
   SaveIn,
+  SnapshotResponse,
   ReviseIn,
   LearnResearchIn,
   CommitteeIn,
@@ -2194,18 +2669,25 @@ export const schemas = {
   ReportPatchIn,
   ReviewActionIn,
   PolishIn,
+  CommitteesResponse,
+  ScheduleResponse,
   CycleScheduleIn,
+  CycleActionsResponse,
   _OutputSpecIn,
   _TeamMemberIn,
   _TaskIn,
   _TaskPatch,
   _AgentPrefillIn,
+  ObjectiveSourceResponse,
   _ContributionPatchIn,
+  TaskHashResponse,
   _ReviewCompleteIn,
   _CirculationSendIn,
+  TaskCirculationResponse,
   _CirculationSpan,
   _CirculationCommentIn,
   _ApplyCommentIn,
+  TaskContributeResponse,
   Body_contributor_upload_api_tasks_contribute__token__upload_post,
   _ContributorCommentIn,
   _ContributorSubmitIn,
@@ -2238,15 +2720,20 @@ export const schemas = {
   FinishIn,
   CheckoutIn,
   NotifyOut,
+  OnboardingBriefsResponse,
   UserCreateIn,
   ForceResetIn,
   DeleteAccountRequest,
   ForgotPasswordIn,
+  PasswordResetTokenResponse,
   ResetPasswordIn,
   DocumentShareIn,
+  DocumentEngagementResponse,
   GoalIn,
   GoalPatch,
   ExtractFromDocIn,
+  ChatAuditPanelResponse,
+  ChatAuditAggregateResponse,
   SeedPayload,
   CreateSessionIn,
   _UpdateSessionTitleIn,
@@ -2256,11 +2743,14 @@ export const schemas = {
   _PostBody,
   Body_restore_one_api_admin_solva_legacy_restore_post,
   ArtefactFromSolvaIn,
+  ChatModelsResponse,
   LinkedContextIn,
   ChatCreateIn,
   Body_attach_to_chat_api_chats__chat_id__attach_post,
+  ChatAttachmentResponse,
   ChatPatchIn,
   MessageSendIn,
+  ChatAuditResponse,
   SignalActionIn,
   state,
   limit,
@@ -2269,11 +2759,16 @@ export const schemas = {
   ResolveIn,
   AgendaItemIn,
   AgendaIn,
+  CycleTeamResponse,
   TeamMemberIn,
   TeamMemberPatch,
+  CycleContributionsListResponse,
   ContributionIn,
+  CycleContributionResponse,
   ScoreIn,
   FollowUpsDraftIn,
+  FollowUpDraftsResponse,
+  CycleFollowUpsResponse,
   CycleCreateIn,
   ApplyTemplateIn,
   QuickActionOrderOut,
@@ -2283,12 +2778,14 @@ export const schemas = {
   AssignmentCreateIn,
   AcceptOut,
   DeclineIn,
+  BriefsCountResponse,
   MeetingCreate,
   MeetingPatch,
   NoteCreate,
   PositionCreate,
   FollowupDraft,
   BriefIn,
+  ByContextSummaryResponse,
   AcceptIn,
   RejectIn,
   EnterpriseInterestIn,
@@ -2296,6 +2793,7 @@ export const schemas = {
   GenerateIn,
   routers__decks__FeedbackIn,
   WalkinIn,
+  AdminAuthEventsResponse,
   routers__admin_journal__BackfillRequest,
   CohortApplicationIn,
   routers__admin_shield_backfill__BackfillRequest,
@@ -2320,10 +2818,12 @@ export const schemas = {
   reject_review_item_api_me_review_queue_items__kind___item_id__reject_post_Body,
   SolvaCycleEditIn,
   edit_review_item_api_me_review_queue_items__kind___item_id__edit_post_Body,
+  StateOnlyResponse,
   IntakeIn,
   DoorIn,
   ArtefactIn,
   CompleteIn,
+  GovernancePanelResponse,
   ExportIn,
   StartV2In,
   FrameAuditDecisionIn,
@@ -2349,6 +2849,7 @@ export const schemas = {
   SubscriptionResponse,
   SignalTypeDefinition,
   SignalTypeCatalogue,
+  StatusKindResponse,
   ExcoCreateIn,
   ExcoMember,
   ExcoTeamOut,
@@ -2356,6 +2857,7 @@ export const schemas = {
   ExcoAddMemberIn,
   CadencePayload,
   CompilationCreate,
+  CompilationStartResponse,
   RecentViewIn,
   StatusAssessmentBody,
   StrategicGoalUpdateIn,
@@ -2375,21 +2877,29 @@ export const schemas = {
   TaskInitiativeIn,
   TaskInitiativePatch,
   ExtractTriggerIn,
+  DocumentExtractResponse,
   PasswordChangeIn,
+  MfaEnrollStartResponse,
   MFAConfirmIn,
   MFAVerifyIn,
   MFADisableIn,
+  MfaStatusResponse,
   IssueIn,
+  TokenIssueResponse,
+  CohortPreviewResponse,
   ConsumeIn,
   _ActionIn,
   WaitlistJoinRequest,
   _StatusIn,
   _RouteIn,
   Body_upload_workbook_api_workbook_upload_post,
+  SignalsResponse,
   SimulateRequest,
   ForecastRequest,
   AnomaliesRequest,
+  AnomaliesResponse,
   Body_upload_workbook_multi_api_workbook_upload_multi_post,
+  WorkbookAnalysisResponse,
   _AnalysisObjectivePatch,
   _AnalysisNoteIn,
   PreferencesPutRequest,
@@ -2482,7 +2992,7 @@ Authorization: the requesting account MUST match &#x60;account_id&#x60;.`,
         schema: z.object({ context_id: z.string() }).passthrough(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([AccountWrapResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -2591,7 +3101,7 @@ Suitable for the Admin Health dashboard tile.`,
         schema: z.number().int().gte(1).lte(720).optional().default(24),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([AdminAuthEventsResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -2617,7 +3127,7 @@ scenarios.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -4195,7 +4705,7 @@ the past. Returns per-account cascade counts. Superadmin-only.`,
         schema: DeclareRoleIn,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([AccountWrapResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -4222,7 +4732,7 @@ account exists.`,
         schema: z.object({ email: z.string().email() }).passthrough(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -4243,7 +4753,7 @@ account exists.`,
         schema: LoginIn,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([AuthSessionResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -4262,7 +4772,7 @@ rejected by &#x60;get_current_account&#x60; even if an attacker still holds
 a copy of the raw token. The &#x60;revoked_jtis&#x60; TTL index auto-cleans
 rows after the access-token TTL window.`,
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
   },
   {
     method: "post",
@@ -4276,7 +4786,7 @@ rows after the access-token TTL window.`,
         schema: ConsumeIn,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -4302,7 +4812,7 @@ the prior token. Returns &#x60;{token, expires_at}&#x60; so the caller (the
           .passthrough(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([TokenIssueResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -4323,7 +4833,7 @@ the prior token. Returns &#x60;{token, expires_at}&#x60; so the caller (the
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([CohortPreviewResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -4363,7 +4873,7 @@ the prior token. Returns &#x60;{token, expires_at}&#x60; so the caller (the
     path: "/api/auth/me",
     alias: "me_api_auth_me_get",
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([AccountWrapResponse, z.null()]),
   },
   {
     method: "post",
@@ -4381,7 +4891,7 @@ against a stolen but unlocked session).`,
           .passthrough(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -4404,7 +4914,7 @@ recovery codes ONCE — they will not be retrievable afterwards.`,
         schema: z.object({ code: z.string().min(6).max(8) }).passthrough(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -4421,7 +4931,7 @@ recovery codes ONCE — they will not be retrievable afterwards.`,
 calling again rotates the pending secret. Confirm must happen
 before the secret becomes active.`,
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([MfaEnrollStartResponse, z.null()]),
   },
   {
     method: "post",
@@ -4438,7 +4948,7 @@ everyone&#x27;s recovery codes from a compromised session).`,
         schema: z.object({ code: z.string().min(6).max(8) }).passthrough(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -4454,7 +4964,7 @@ everyone&#x27;s recovery codes from a compromised session).`,
     description: `Lightweight status endpoint for the frontend to render the
 Account → Security panel.`,
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([MfaStatusResponse, z.null()]),
   },
   {
     method: "post",
@@ -4470,7 +4980,7 @@ on success (so the post-login JWT carries an &#x60;mfa_verified&#x60; claim).`,
         schema: z.object({ code: z.string().min(6).max(14) }).passthrough(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -4632,7 +5142,7 @@ invite the applicant received in their approval email.`,
         schema: PasswordChangeIn,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -4646,7 +5156,7 @@ invite the applicant received in their approval email.`,
     path: "/api/auth/refresh",
     alias: "refresh_token_api_auth_refresh_post",
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
   },
   {
     method: "post",
@@ -4660,7 +5170,7 @@ invite the applicant received in their approval email.`,
         schema: routers__auth__RegisterIn,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([AuthSessionResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -4685,7 +5195,7 @@ since token is cleared on successful set).`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([PasswordResetTokenResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -4714,7 +5224,7 @@ since token is cleared on successful set).`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -4754,7 +5264,7 @@ Idempotent: re-running while already True rotates the password.`,
           .passthrough(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -5055,7 +5565,7 @@ email re-subscribes silently (no duplicate, no error).`,
     path: "/api/chat/models",
     alias: "list_models_api_chat_models_get",
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ChatModelsResponse, z.null()]),
   },
   {
     method: "post",
@@ -5204,7 +5714,7 @@ purges from time-based ones.`,
         schema: z.boolean().optional().default(false),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -5239,7 +5749,7 @@ Header: &#x60;X-Active-Context&#x60; is consulted defensively — when set,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ChatAttachmentResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -5264,7 +5774,7 @@ ip, ua_sha) and confirming &#x60;row_hash&#x60; matches.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ChatAuditResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -5294,7 +5804,7 @@ message&#x27;s position in &#x60;chat_messages&#x60;.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ChatAuditPanelResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -5318,7 +5828,7 @@ Powers the pinned strip at the top of the chat surface.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ChatAuditAggregateResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -5374,7 +5884,7 @@ Auditors prove existence + ordering + integrity without exposure.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -5526,7 +6036,7 @@ guard against accidental cascade.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -5582,7 +6092,7 @@ Workstream A.2 — X-Active-Context REQUIRED.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -5646,7 +6156,7 @@ comparison so the type brackets align.`,
         schema: z.number().int().gte(0).optional().default(0),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ItemsListResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -5696,7 +6206,7 @@ Returns:
         schema: z.boolean().optional().default(false),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ItemsListResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -7278,7 +7788,7 @@ too. Workspace owner can always cancel.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([CycleActionsResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -7361,7 +7871,7 @@ avoids a circular import with the committees router.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([CommitteesResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -7388,7 +7898,7 @@ avoids a circular import with the committees router.`,
         schema: committee_id,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([CycleContributionsListResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -7420,7 +7930,7 @@ avoids a circular import with the committees router.`,
         schema: committee_id,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([CycleContributionResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -7463,7 +7973,7 @@ fullness/relevance/readiness rubric.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([CycleContributionResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -7502,7 +8012,7 @@ polling round-trip.`,
         schema: committee_id,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([AsyncJobResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -7560,7 +8070,7 @@ compilation → Validating → Almost there.`,
         schema: committee_id,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([CycleFollowUpsResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -7624,7 +8134,7 @@ lookup + most-recent-unanswered-followup-to-this-recipient match.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -7658,7 +8168,7 @@ Returns the drafts; nothing is sent.`,
         schema: committee_id,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([FollowUpDraftsResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -7684,7 +8194,7 @@ Returns the drafts; nothing is sent.`,
         schema: committee_id,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ItemsListResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -7705,7 +8215,7 @@ Returns the drafts; nothing is sent.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ScheduleResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -7733,7 +8243,7 @@ than &#x27;manage N schedules&#x27;. To change cadence, just PUT again.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ScheduleResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -7755,7 +8265,7 @@ than &#x27;manage N schedules&#x27;. To change cadence, just PUT again.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -7781,7 +8291,7 @@ than &#x27;manage N schedules&#x27;. To change cadence, just PUT again.`,
         schema: committee_id,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([CycleTeamResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -7839,7 +8349,7 @@ than &#x27;manage N schedules&#x27;. To change cadence, just PUT again.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -8811,7 +9321,7 @@ Passing &#x60;related_doc_id&#x3D;null&#x60; unlinks the document from any prede
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -8855,7 +9365,7 @@ The frontend polls &#x60;/api/jobs/{job_id}&#x60; to discover the new
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([AsyncJobResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -8931,7 +9441,7 @@ that no draft ships without its watermark.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([DocumentEngagementResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -8979,7 +9489,7 @@ Cached on the doc record; pass ?refresh&#x3D;true to regenerate.`,
         schema: z.boolean().optional().default(false),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([DiffResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -9011,7 +9521,7 @@ Cached on the doc record; pass ?refresh&#x3D;true to regenerate.`,
         schema: z.boolean().optional().default(false),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([StatusKindResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -9047,7 +9557,7 @@ refused with HTTP 503 + &#x60;code: DRAFT_WATERMARK_FAILED&#x60;.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ExportPolicyResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -9083,7 +9593,7 @@ collection or by polling the target collections.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([DocumentExtractResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -9145,7 +9655,7 @@ immediately with &#x60;{status: &quot;queued&quot;}&#x60;. The drawer polls
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([IntelligenceRegenerateResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -9188,7 +9698,7 @@ that shared service and surfaced here through the same import.`,
         schema: z.boolean().optional().default(false),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([JournalCommentaryResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -9220,7 +9730,7 @@ that shared service and surfaced here through the same import.`,
         schema: z.boolean().optional().default(false),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([StatusKindResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -9260,7 +9770,7 @@ Response shape:
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ParagraphsResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -9361,7 +9871,7 @@ the share record so the engagement panel can report it.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([IdResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -9434,7 +9944,7 @@ Pass ?refresh&#x3D;true to regenerate.`,
         schema: z.boolean().optional().default(false),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([StatusKindResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -9464,7 +9974,7 @@ chain of related_doc_id pointers back to the origin) plus descendants
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ThreadAncestryResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -9492,7 +10002,7 @@ document. Idempotent across a single UTC day.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -9551,7 +10061,7 @@ short display name and ≤300-char description. Used by the upload modal.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([DocumentMetaResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -9578,7 +10088,7 @@ short display name and ≤300-char description. Used by the upload modal.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([StatusKindResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -13692,7 +14202,7 @@ so the frontend can hard-redirect after the toast.
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ArtefactRedirectResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -13793,7 +14303,7 @@ the active context AND the requesting account.`,
         schema: z.number().int().optional().default(50),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ItemsListResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -13847,7 +14357,7 @@ the active context AND the requesting account.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([CompilationStartResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -13873,7 +14383,7 @@ the active context AND the requesting account.`,
         schema: z.number().int().optional().default(20),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ItemsListResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -13959,7 +14469,7 @@ the active context AND the requesting account.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([IdResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -14040,7 +14550,7 @@ the active context AND the requesting account.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([IdResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -14119,7 +14629,7 @@ must belong to the same context.
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ArtefactRedirectResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -14151,7 +14661,7 @@ must belong to the same context.
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([SnapshotResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -14178,7 +14688,7 @@ must belong to the same context.
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ItemsListResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -14269,7 +14779,7 @@ must belong to the same context.
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([DraftLifecycleResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -14304,7 +14814,7 @@ shape as export (rows in db.work_studio_exports with source&#x3D;&#x27;enhance&#
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ExportStartResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -14380,7 +14890,7 @@ with the export_id. The actual LLM + render run in the background.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ExportStartResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -14407,7 +14917,7 @@ with the export_id. The actual LLM + render run in the background.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ExportStartResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -14525,7 +15035,7 @@ Journal item.
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ArtefactRedirectResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -14552,7 +15062,7 @@ Journal item.
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ArtefactRedirectResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -15571,7 +16081,7 @@ converts them via the cohort console.`,
     path: "/api/me/first-session",
     alias: "get_first_session_api_me_first_session_get",
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([StateOnlyResponse, z.null()]),
   },
   {
     method: "post",
@@ -15585,7 +16095,7 @@ converts them via the cohort console.`,
         schema: z.object({ door: z.string().min(1).max(16) }).passthrough(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([StateOnlyResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -15606,7 +16116,7 @@ converts them via the cohort console.`,
         schema: CompleteIn,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([StateOnlyResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -15627,7 +16137,7 @@ converts them via the cohort console.`,
         schema: IntakeIn,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([StateOnlyResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -15641,21 +16151,21 @@ converts them via the cohort console.`,
     path: "/api/me/first-session/skip",
     alias: "skip_first_session_api_me_first_session_skip_post",
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([StateOnlyResponse, z.null()]),
   },
   {
     method: "post",
     path: "/api/me/first-session/start",
     alias: "start_first_session_api_me_first_session_start_post",
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([StateOnlyResponse, z.null()]),
   },
   {
     method: "get",
     path: "/api/me/governance",
     alias: "governance_panel_api_me_governance_get",
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([GovernancePanelResponse, z.null()]),
   },
   {
     method: "get",
@@ -15689,7 +16199,7 @@ converts them via the cohort console.`,
         schema: committee_id,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ItemsListResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -15777,7 +16287,7 @@ informational only and slated for removal in Phase 4.`,
     path: "/api/me/inbound-queue/counts",
     alias: "my_inbound_queue_counts_api_me_inbound_queue_counts_get",
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ByContextSummaryResponse, z.null()]),
   },
   {
     method: "get",
@@ -15809,7 +16319,7 @@ The modal consumes:
   - &#x60;shown_at: Optional[str]&#x60; — ISO timestamp; null means SHOW THE MODAL.
   - &#x60;slides: List[Slide]&#x60; — 6 slides with founder overrides applied.`,
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OnboardingBriefsResponse, z.null()]),
   },
   {
     method: "post",
@@ -15821,7 +16331,7 @@ Idempotent: re-calling stamps a fresh &#x60;shown_at&#x60; but the modal
 consumes the FIRST &#x60;shown_at !&#x3D;&#x3D; null&#x60; check and never re-renders
 in the same session.`,
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
   },
   {
     method: "get",
@@ -15829,7 +16339,7 @@ in the same session.`,
     alias: "me_portfolio_api_me_portfolio_get",
     description: `One row per active membership the calling account holds.`,
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ItemsListResponse, z.null()]),
   },
   {
     method: "get",
@@ -15908,7 +16418,7 @@ Documents + companies are all-time totals.`,
         schema: committee_id,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ItemsListResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -15929,7 +16439,7 @@ Documents + companies are all-time totals.`,
         schema: RecentViewIn,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -15950,7 +16460,7 @@ Documents + companies are all-time totals.`,
         schema: z.number().int().optional().default(3),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ItemsListResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -15980,7 +16490,7 @@ than &#x60;cursor&#x60; are returned. &#x60;limit&#x60; is capped at 100.`,
         schema: committee_id,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ItemsListResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -15994,7 +16504,7 @@ than &#x60;cursor&#x60; are returned. &#x60;limit&#x60; is capped at 100.`,
     path: "/api/me/review-queue/counts",
     alias: "review_queue_counts_api_me_review_queue_counts_get",
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ByContextSummaryResponse, z.null()]),
   },
   {
     method: "post",
@@ -16020,7 +16530,7 @@ than &#x60;cursor&#x60; are returned. &#x60;limit&#x60; is capped at 100.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -16059,7 +16569,7 @@ Phase 15.1: solva_cycle_action accepts an optional body with
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -16092,7 +16602,7 @@ Phase 15.1: solva_cycle_action accepts an optional body with
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -16252,7 +16762,7 @@ surfacing event exactly once per session.`,
     description: `List briefs I have submitted for board reporting, with a rollup
 of assignment statuses for each. Used by the submitter inbox view.`,
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([BriefsCountResponse, z.null()]),
   },
   {
     method: "get",
@@ -19310,7 +19820,7 @@ the audit row as the durable record).`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([TaskHashResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -19340,7 +19850,7 @@ links go dead).`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -19416,7 +19926,7 @@ UI polls /intelligence to pick up the new payload.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([TaskHashResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -19485,7 +19995,7 @@ rewrite) or &#x60;&quot;none&quot;&#x60; (no match + LLM failure).`,
         schema: z.object({ name: z.string().min(1).max(200) }).passthrough(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ObjectiveSourceResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -19507,7 +20017,7 @@ rewrite) or &#x60;&quot;none&quot;&#x60; (no match + LLM failure).`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([TaskCirculationResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -19558,7 +20068,7 @@ under this token.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([TaskContributeResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -19586,7 +20096,7 @@ under this token.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -19613,7 +20123,7 @@ under this token.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -19643,7 +20153,7 @@ document row with &#x60;task_id&#x60; + &#x60;contributor_token&#x60; set + &#x6
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([OkResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -20547,7 +21057,7 @@ FT-toned insight string. The Work Studio UI renders this directly.`,
     path: "/api/workbook/analyses",
     alias: "list_analyses_api_workbook_analyses_get",
     requestFormat: "json",
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([ItemsListResponse, z.null()]),
   },
   {
     method: "get",
@@ -20587,7 +21097,7 @@ FT-toned insight string. The Work Studio UI renders this directly.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([AnomaliesResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -20698,7 +21208,7 @@ FT-toned insight string. The Work Studio UI renders this directly.`,
         schema: z.string(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([SignalsResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -20745,7 +21255,7 @@ FT-toned insight string. The Work Studio UI renders this directly.`,
         schema: z.object({ file: z.instanceof(File) }).passthrough(),
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([IdResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -20772,7 +21282,7 @@ text that is captured at the top of the Analyze drawer.`,
         schema: Body_upload_workbook_multi_api_workbook_upload_multi_post,
       },
     ],
-    response: z.union([z.object({}).partial().passthrough(), z.null()]),
+    response: z.union([IdResponse, z.null()]),
     errors: [
       {
         status: 422,
@@ -20796,10 +21306,7 @@ journal view.`,
         schema: committee_id,
       },
     ],
-    response: z.union([
-      z.array(z.object({}).partial().passthrough()),
-      z.null(),
-    ]),
+    response: z.union([z.array(WorkbookAnalysisResponse), z.null()]),
     errors: [
       {
         status: 422,

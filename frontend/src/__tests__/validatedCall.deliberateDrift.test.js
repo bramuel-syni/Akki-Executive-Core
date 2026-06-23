@@ -19,8 +19,9 @@ import { z } from "zod";
 
 // Mock the underlying axios `api` client so we control the response shape.
 // Path is `../lib/api` since the test file is at src/__tests__/ and the
-// canonical client is at src/lib/api.js. `validatedCall.js` itself imports
-// `../api` (relative to src/lib/api/) — same target file.
+// canonical client is at src/lib/api.js. `validatedCall.js` imports the
+// `api` named export from `../api` (relative to src/lib/api/) — we mock
+// the same module with a matching named export.
 jest.mock("../lib/api", () => {
   const handlers = {
     get: jest.fn(),
@@ -31,6 +32,7 @@ jest.mock("../lib/api", () => {
   };
   return {
     __esModule: true,
+    api: handlers,
     default: handlers,
   };
 });
@@ -47,7 +49,7 @@ jest.mock("../lib/api/endpointSchemas", () => ({
 }));
 
 // Pull the wrapper AFTER the mocks are wired.
-import api from "../lib/api";
+import { api } from "../lib/api";
 import {
   validatedCall,
   ContractViolationError,

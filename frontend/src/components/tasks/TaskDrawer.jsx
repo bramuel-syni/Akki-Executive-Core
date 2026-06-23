@@ -18,7 +18,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTrackRecentView } from "@/lib/recentViews";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";

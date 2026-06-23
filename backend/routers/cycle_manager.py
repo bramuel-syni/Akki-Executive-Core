@@ -41,7 +41,16 @@ import logging
 import re
 import uuid
 from typing import Any, Dict, List, Optional
-from contracts.responses import AsyncJobResponse, ItemsListResponse, OkResponse
+from contracts.responses import (
+    AsyncJobResponse,
+    CycleContributionResponse,
+    CycleContributionsListResponse,
+    CycleFollowUpsResponse,
+    CycleTeamResponse,
+    FollowUpDraftsResponse,
+    ItemsListResponse,
+    OkResponse,
+)
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, model_validator
@@ -253,7 +262,7 @@ async def upsert_agenda(
 # ──────────────────────────────────────────────────────────────────────
 # Team endpoints
 # ──────────────────────────────────────────────────────────────────────
-@router.get("/contexts/{context_id}/cycle/team", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/contexts/{context_id}/cycle/team", response_model=Optional[CycleTeamResponse])
 async def list_team(
     context_id: str,
     cycle_id: Optional[str] = Query(default=None),
@@ -390,7 +399,7 @@ async def patch_team_member(
 # ──────────────────────────────────────────────────────────────────────
 # Contributions
 # ──────────────────────────────────────────────────────────────────────
-@router.get("/contexts/{context_id}/cycle/contributions", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/contexts/{context_id}/cycle/contributions", response_model=Optional[CycleContributionsListResponse])
 async def list_contributions(
     context_id: str,
     cycle_id: Optional[str] = Query(default=None),
@@ -403,7 +412,7 @@ async def list_contributions(
     return {"agenda_id": agenda["id"], "cycle_id": agenda["id"], "contributions": rows}
 
 
-@router.post("/contexts/{context_id}/cycle/contributions", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/cycle/contributions", response_model=Optional[CycleContributionResponse])
 async def add_contribution(
     context_id: str, body: ContributionIn,
     cycle_id: Optional[str] = Query(default=None),
@@ -500,7 +509,7 @@ def _heuristic_score(body_text: Optional[str], description: Optional[str]) -> Di
     }
 
 
-@router.post("/contexts/{context_id}/cycle/contributions/{contribution_id}/score", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/cycle/contributions/{contribution_id}/score", response_model=Optional[CycleContributionResponse])
 async def score_contribution(
     context_id: str, contribution_id: str, body: ScoreIn,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
@@ -733,7 +742,7 @@ def _draft_email_text(*, exec_name: str, member_name: str, item_label: str,
     return {"subject": subject, "body": body, "html": html}
 
 
-@router.post("/contexts/{context_id}/cycle/follow-ups/draft", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/cycle/follow-ups/draft", response_model=Optional[FollowUpDraftsResponse])
 async def draft_followups(
     context_id: str, body: FollowUpsDraftIn,
     cycle_id: Optional[str] = Query(default=None),
@@ -811,7 +820,7 @@ async def draft_followups(
     return {"drafts": drafts, "count": len(drafts)}
 
 
-@router.get("/contexts/{context_id}/cycle/follow-ups", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/contexts/{context_id}/cycle/follow-ups", response_model=Optional[CycleFollowUpsResponse])
 async def list_followups(
     context_id: str,
     cycle_id: Optional[str] = Query(default=None),

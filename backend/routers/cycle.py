@@ -85,7 +85,12 @@ import re
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Literal, Optional
-from contracts.responses import CommitteesResponse, OkResponse, ScheduleResponse
+from contracts.responses import (
+    CommitteesResponse,
+    CycleActionsResponse,
+    OkResponse,
+    ScheduleResponse,
+)
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, EmailStr, Field
@@ -1710,7 +1715,7 @@ async def cron_run_schedules(
 # and assembles `href` deep-links so the frontend ActionsTab can
 # route the user back to the source artefact in one click.
 # ---------------------------------------------------------------------------
-@router.get("/contexts/{context_id}/cycle/actions", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/contexts/{context_id}/cycle/actions", response_model=Optional[CycleActionsResponse])
 async def cycle_manager_actions(
     context_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),

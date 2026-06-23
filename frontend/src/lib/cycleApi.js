@@ -5,9 +5,7 @@
  * `/cycle/*` endpoints with the `?cycle_id=` query param threaded
  * through.
  */
-import { api } from "@/lib/api";
-
-
+import api from "@/lib/api/apiV2";
 // ── New v2 — cycles master ───────────────────────────────────────────
 export async function createCycle(cid, { title }) {
   const { data } = await api.post(`/contexts/${cid}/cycles`, { title });

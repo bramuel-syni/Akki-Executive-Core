@@ -21,7 +21,8 @@ import SourceMessageModal from "@/components/origin/SourceMessageModal";
 // Phase E.3 (2026-05-26) — Universal Document Drawer.
 import DocumentDrawer from "@/components/documents/DocumentDrawer";
 import { useAuth } from "@/contexts/AuthContext";
-import { api, apiErrorMessage, API_BASE } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage, API_BASE } from "@/lib/api";
 import { pollJob } from "@/lib/pollJob";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

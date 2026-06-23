@@ -62,6 +62,9 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, conint
 
 from core import db, iso as _iso, now as _now, require_context_membership, write_audit
+from contracts.responses import (
+    DocumentExtractResponse,
+)
 
 
 logger = logging.getLogger("akki.tasks_initiatives")
@@ -481,7 +484,7 @@ async def _bg_extract(
         )
 
 
-@router.post("/contexts/{context_id}/documents/{doc_id}/extract", status_code=202, response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/documents/{doc_id}/extract", status_code=202, response_model=Optional[DocumentExtractResponse])
 async def trigger_extraction(
     context_id: str,
     doc_id: str,

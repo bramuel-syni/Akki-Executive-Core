@@ -289,3 +289,302 @@ class WorkbookAnalysisResponse(BaseModel):
     context_id: Optional[str] = None
     account_id: Optional[str] = None
     status: Optional[str] = None
+
+
+
+# ────────────────────────────────────────────────────────────────────────
+# Phase 3.2 — additional shared response models authored to narrow the
+# remaining 37 singleton routes from the Phase 3.1 marker pool. All carry
+# `extra='allow'` so existing extra fields keep flowing through unchanged.
+# ────────────────────────────────────────────────────────────────────────
+
+
+class ChatModelsResponse(BaseModel):
+    """`GET /api/chat/models` shape: `{default_model_id, models}`."""
+    model_config = ConfigDict(extra="allow")
+    default_model_id: Optional[str] = None
+    models: Optional[List[Any]] = None
+
+
+class ChatAttachmentResponse(BaseModel):
+    """`POST /api/chats/{chat_id}/attach` shape: full attachment row
+    (chat-context-document linkage + storage metadata).
+    """
+    model_config = ConfigDict(extra="allow")
+    chat_id: Optional[str] = None
+    context_id: Optional[str] = None
+    document_id: Optional[str] = None
+    name: Optional[str] = None
+    original_filename: Optional[str] = None
+    mime_type: Optional[str] = None
+    size_bytes: Optional[int] = None
+    char_len: Optional[int] = None
+    sensitivity: Optional[Any] = None
+    storage_key: Optional[str] = None
+    created_at: Optional[str] = None
+
+
+class ChatAuditResponse(BaseModel):
+    """`GET /api/chats/{chat_id}/audit` shape:
+    `{chat_id, rows, verification_note}`.
+    """
+    model_config = ConfigDict(extra="allow")
+    chat_id: Optional[str] = None
+    rows: Optional[List[Any]] = None
+    verification_note: Optional[str] = None
+
+
+class ChatAuditPanelResponse(BaseModel):
+    """`GET /api/chats/{chat_id}/audit-panel` per-message panel shape."""
+    model_config = ConfigDict(extra="allow")
+    audit_id: Optional[str] = None
+    message_id: Optional[str] = None
+    protective_event: Optional[Any] = None
+    protective_layer_prose: Optional[str] = None
+    provider_prose: Optional[str] = None
+    references: Optional[Any] = None
+    scores: Optional[Any] = None
+    shielding_prose: Optional[str] = None
+
+
+class ChatAuditAggregateResponse(BaseModel):
+    """`GET /api/chats/{chat_id}/audit-panel/aggregate` aggregate shape."""
+    model_config = ConfigDict(extra="allow")
+    average_dilution: Optional[float] = None
+    average_exposure_reduction: Optional[float] = None
+    headline_prose: Optional[str] = None
+    identifiers_shielded: Optional[int] = None
+    llm_calls: Optional[int] = None
+    message_count: Optional[int] = None
+
+
+class GovernancePanelResponse(BaseModel):
+    """`GET /api/me/governance` TrustPanel surface shape."""
+    model_config = ConfigDict(extra="allow")
+    audit_log: Optional[Any] = None
+    connected_models: Optional[Any] = None
+    inbound: Optional[Any] = None
+    sensitivity: Optional[Any] = None
+    shielding: Optional[Any] = None
+    synisense: Optional[Any] = None
+
+
+class IntelligenceRegenerateResponse(BaseModel):
+    """`POST /api/contexts/{cid}/documents/{doc_id}/intelligence/regenerate`
+    shape: `{doc_id, mode, status}`.
+    """
+    model_config = ConfigDict(extra="allow")
+    doc_id: Optional[str] = None
+    mode: Optional[str] = None
+    status: Optional[str] = None
+
+
+class JournalCommentaryResponse(BaseModel):
+    """`POST /api/contexts/{cid}/documents/{doc_id}/journal-commentary`
+    shape (sync result; the async sibling already returns AsyncJobResponse).
+    """
+    model_config = ConfigDict(extra="allow")
+    cached: Optional[bool] = None
+    commentary: Optional[Any] = None
+    commentary_redacted: Optional[Any] = None
+    doc_id: Optional[str] = None
+    generated_at: Optional[str] = None
+    synisense_version: Optional[str] = None
+
+
+class ParagraphsResponse(BaseModel):
+    """`GET /api/contexts/{cid}/documents/{doc_id}/paragraphs` shape."""
+    model_config = ConfigDict(extra="allow")
+    computed_at: Optional[str] = None
+    doc_id: Optional[str] = None
+    page_count: Optional[int] = None
+    paragraphs: Optional[List[Any]] = None
+    version: Optional[Any] = None
+
+
+class CycleTeamResponse(BaseModel):
+    """`GET /api/contexts/{cid}/cycle/team` shape."""
+    model_config = ConfigDict(extra="allow")
+    agenda_id: Optional[str] = None
+    cycle_id: Optional[str] = None
+    members: Optional[List[Any]] = None
+
+
+class CycleContributionsListResponse(BaseModel):
+    """`GET /api/contexts/{cid}/cycle/contributions` shape."""
+    model_config = ConfigDict(extra="allow")
+    agenda_id: Optional[str] = None
+    contributions: Optional[List[Any]] = None
+    cycle_id: Optional[str] = None
+
+
+class CycleContributionResponse(BaseModel):
+    """`POST /api/contexts/{cid}/cycle/contributions` (+ score) shape:
+    full contribution row.
+    """
+    model_config = ConfigDict(extra="allow")
+    id: Optional[str] = None
+    agenda_id: Optional[str] = None
+    agenda_item_id: Optional[str] = None
+    body_text: Optional[str] = None
+    context_id: Optional[str] = None
+    created_at: Optional[str] = None
+    cycle_id: Optional[str] = None
+    kind: Optional[str] = None
+    scored_at: Optional[str] = None
+    scored_by: Optional[str] = None
+    scores: Optional[Any] = None
+    source_doc_id: Optional[str] = None
+    status: Optional[str] = None
+    team_member_id: Optional[str] = None
+    title: Optional[str] = None
+
+
+class FollowUpDraftsResponse(BaseModel):
+    """`POST /api/contexts/{cid}/cycle/follow-ups/draft` shape:
+    `{count, drafts}`.
+    """
+    model_config = ConfigDict(extra="allow")
+    count: Optional[int] = None
+    drafts: Optional[List[Any]] = None
+
+
+class CycleFollowUpsResponse(BaseModel):
+    """`GET /api/contexts/{cid}/cycle/follow-ups` shape."""
+    model_config = ConfigDict(extra="allow")
+    agenda_id: Optional[str] = None
+    cycle_id: Optional[str] = None
+    followups: Optional[List[Any]] = None
+
+
+class CycleActionsResponse(BaseModel):
+    """`GET /api/contexts/{cid}/cycle/actions` summary shape."""
+    model_config = ConfigDict(extra="allow")
+    as_of: Optional[str] = None
+    context_id: Optional[str] = None
+    counts: Optional[Any] = None
+    sections: Optional[Any] = None
+
+
+class MfaEnrollStartResponse(BaseModel):
+    """`POST /api/auth/mfa/enroll/start` shape:
+    `{otpauth_url, qr_data_url, secret}`.
+    """
+    model_config = ConfigDict(extra="allow")
+    otpauth_url: Optional[str] = None
+    qr_data_url: Optional[str] = None
+    secret: Optional[str] = None
+
+
+class MfaStatusResponse(BaseModel):
+    """`GET /api/auth/mfa/status` shape."""
+    model_config = ConfigDict(extra="allow")
+    enrolled_at: Optional[str] = None
+    locked: Optional[bool] = None
+    mfa_enabled: Optional[bool] = None
+    recovery_codes_remaining: Optional[int] = None
+
+
+class OnboardingBriefsResponse(BaseModel):
+    """`GET /api/onboarding-briefs` shape: `{slides}`."""
+    model_config = ConfigDict(extra="allow")
+    slides: Optional[List[Any]] = None
+
+
+class AdminAuthEventsResponse(BaseModel):
+    """`GET /api/admin/auth-events/events` summary shape."""
+    model_config = ConfigDict(extra="allow")
+    by_credential: Optional[Any] = None
+    by_failure_reason: Optional[Any] = None
+    dual_credentials_mismatched: Optional[int] = None
+    dual_credentials_seen: Optional[int] = None
+    failure: Optional[int] = None
+    failure_rate_pct: Optional[float] = None
+    recent: Optional[List[Any]] = None
+    sampled_events: Optional[int] = None
+    success: Optional[int] = None
+    top_paths: Optional[Any] = None
+    window_hours: Optional[int] = None
+
+
+class DocumentEngagementResponse(BaseModel):
+    """`GET /api/contexts/{cid}/documents/{doc_id}/engagement` shape."""
+    model_config = ConfigDict(extra="allow")
+    linked_count: Optional[int] = None
+    linked_documents: Optional[List[Any]] = None
+    readers: Optional[List[Any]] = None
+    share_count: Optional[int] = None
+    shares: Optional[List[Any]] = None
+    unique_readers: Optional[int] = None
+    view_count: Optional[int] = None
+
+
+class PasswordResetTokenResponse(BaseModel):
+    """`GET /api/auth/reset-password/{token}` shape:
+    `{email_masked, valid}`.
+    """
+    model_config = ConfigDict(extra="allow")
+    email_masked: Optional[str] = None
+    valid: Optional[bool] = None
+
+
+class TokenIssueResponse(BaseModel):
+    """`POST /api/cohort/magic-link/issue` shape:
+    `{expires_at, token}`.
+    """
+    model_config = ConfigDict(extra="allow")
+    expires_at: Optional[str] = None
+    token: Optional[str] = None
+
+
+class CohortPreviewResponse(BaseModel):
+    """`GET /api/cohort/magic-link/preview/{token}` shape."""
+    model_config = ConfigDict(extra="allow")
+    expires_at: Optional[str] = None
+    first_name: Optional[str] = None
+    organisation: Optional[str] = None
+
+
+class SignalsResponse(BaseModel):
+    """Signals extraction shape: `{signals}`."""
+    model_config = ConfigDict(extra="allow")
+    signals: Optional[List[Any]] = None
+
+
+class AnomaliesResponse(BaseModel):
+    """Anomalies extraction shape: `{anomalies}`."""
+    model_config = ConfigDict(extra="allow")
+    anomalies: Optional[List[Any]] = None
+
+
+class DocumentExtractResponse(BaseModel):
+    """`POST /api/contexts/{cid}/documents/{doc_id}/extract` shape."""
+    model_config = ConfigDict(extra="allow")
+    document_id: Optional[str] = None
+    extract_goals: Optional[Any] = None
+    extract_tasks: Optional[Any] = None
+    extraction_queued: Optional[bool] = None
+    has_extracted_text: Optional[bool] = None
+
+
+class TaskCirculationResponse(BaseModel):
+    """`GET /api/tasks/circulation/{token}` reviewer surface shape."""
+    model_config = ConfigDict(extra="allow")
+    docs: Optional[List[Any]] = None
+    expires_at: Optional[str] = None
+    own_comments: Optional[Any] = None
+    reviewer_email: Optional[str] = None
+    task: Optional[Any] = None
+
+
+class TaskContributeResponse(BaseModel):
+    """`GET /api/tasks/contribute/{token}` contributor surface shape."""
+    model_config = ConfigDict(extra="allow")
+    contribution: Optional[Any] = None
+    contributor_email: Optional[str] = None
+    docs: Optional[List[Any]] = None
+    expires_at: Optional[str] = None
+    peers: Optional[List[Any]] = None
+    task: Optional[Any] = None
+    your_due_date: Optional[str] = None
+    your_status: Optional[str] = None

@@ -36,7 +36,11 @@ import secrets
 import string
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
-from contracts.responses import OkResponse
+from contracts.responses import (
+    MfaEnrollStartResponse,
+    MfaStatusResponse,
+    OkResponse,
+)
 
 import bcrypt
 import pyotp
@@ -139,7 +143,7 @@ class MFADisableIn(BaseModel):
 
 
 # ─── Endpoints ───────────────────────────────────────────────────────
-@router.post("/enroll/start", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/enroll/start", response_model=Optional[MfaEnrollStartResponse])
 async def enroll_start(
     current: Dict[str, Any] = Depends(get_current_account),
 ):
@@ -369,7 +373,7 @@ async def regenerate_recovery(
     return {"ok": True, "recovery_codes": recovery_codes, "code_count": len(recovery_codes)}
 
 
-@router.get("/status", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/status", response_model=Optional[MfaStatusResponse])
 async def status(current: Dict[str, Any] = Depends(get_current_account)):
     """Lightweight status endpoint for the frontend to render the
     Account → Security panel."""

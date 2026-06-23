@@ -25,7 +25,9 @@ import {
   Check,
 } from "lucide-react";
 
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+
+import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {

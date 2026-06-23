@@ -31,7 +31,10 @@ import os
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
-from contracts.responses import OkResponse
+from contracts.responses import (
+    OkResponse,
+    PasswordResetTokenResponse,
+)
 
 import bcrypt
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
@@ -222,7 +225,7 @@ async def forgot_password(
 # GET /api/auth/reset-password/{token}
 # ─────────────────────────────────────────────────────────────────────
 
-@router.get("/reset-password/{token}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/reset-password/{token}", response_model=Optional[PasswordResetTokenResponse])
 async def get_reset_token(token: str):
     """Validate token. Returns 200 + {email, valid: true} for the
     form to display the masked email. 410 if expired, 401 if not

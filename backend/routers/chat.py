@@ -26,7 +26,13 @@ import time
 import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional, Literal
-from contracts.responses import ItemsListResponse, OkResponse
+from contracts.responses import (
+    ChatAttachmentResponse,
+    ChatAuditResponse,
+    ChatModelsResponse,
+    ItemsListResponse,
+    OkResponse,
+)
 
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Query
 from fastapi.responses import StreamingResponse
@@ -657,7 +663,7 @@ def _detect_voice_violation(text: str) -> Optional[str]:
 # -----------------------------------------------------------------------------
 # Routes
 # -----------------------------------------------------------------------------
-@router.get("/chat/models", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/chat/models", response_model=Optional[ChatModelsResponse])
 async def list_models(_: Dict[str, Any] = Depends(get_current_account)):
     return {"models": SUPPORTED_MODELS, "default_model_id": DEFAULT_MODEL_ID}
 
@@ -791,7 +797,7 @@ _ATTACH_ACCEPT_EXT = {
 }
 
 
-@router.post("/chats/{chat_id}/attach", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/chats/{chat_id}/attach", response_model=Optional[ChatAttachmentResponse])
 async def attach_to_chat(
     chat_id: str,
     request: Request,
@@ -3847,7 +3853,7 @@ async def stream_message(
     )
 
 
-@router.get("/chats/{chat_id}/audit", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/chats/{chat_id}/audit", response_model=Optional[ChatAuditResponse])
 async def get_chat_audit(
     chat_id: str, current: Dict[str, Any] = Depends(get_current_account),
 ):

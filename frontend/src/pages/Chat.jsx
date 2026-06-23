@@ -17,7 +17,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import AppShell from "@/components/layout/AppShell";
-import { api, apiErrorMessage, ensureCsrfToken, resolveBackendOrigin } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage, ensureCsrfToken, resolveBackendOrigin } from "@/lib/api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {

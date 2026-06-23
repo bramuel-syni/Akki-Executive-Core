@@ -111,18 +111,20 @@ def test_hot_path_routes_declare_response_model() -> None:
         )
 
 
-def test_phase_3_0_marker_count_within_phase_3_1_target() -> None:
+def test_phase_3_2_marker_count_within_phase_3_2_target() -> None:
     """The Phase 3.0 baseline left `# phase-3.0:narrow-in-3.1` markers
-    on routes using `Optional[Dict[str, Any]]`. Phase 3.1 narrowed many
-    of those to shared models. The remaining markers are Phase 3.2's
-    target.
+    on routes using `Optional[Dict[str, Any]]`. Phase 3.1 narrowed 80 of
+    those (172 → 92). Phase 3.2 narrowed a further 37 singletons
+    (92 → 55).
 
     This invariant fails build if the marker count GROWS beyond the
-    documented Phase 3.1 close baseline — preventing regression
-    (Phase 3.2 must REDUCE markers, never increase).
+    documented Phase 3.2 close baseline — preventing regression
+    (any further phase must REDUCE markers, never increase).
 
-    Baseline: Phase 3.1 close left 92 markers (172 placed in Phase 3.0
-    − 80 narrowed in Phase 3.1).
+    Baseline: Phase 3.2 close left 55 markers (92 Phase 3.1 close
+    − 37 narrowed in Phase 3.2). Of these 55, the AST scanner
+    classified them as polymorphic / cursor-returning / spread-only
+    payloads where shape can't be statically recovered.
     """
     routers_dir = Path(__file__).resolve().parent.parent.parent / "routers"
     total = 0
@@ -142,11 +144,11 @@ def test_phase_3_0_marker_count_within_phase_3_1_target() -> None:
             except Exception:
                 pass
 
-    PHASE_3_1_CLOSE_BASELINE = 92
-    assert total <= PHASE_3_1_CLOSE_BASELINE, (
+    PHASE_3_2_CLOSE_BASELINE = 55
+    assert total <= PHASE_3_2_CLOSE_BASELINE, (
         f"phase-3.0:narrow-in-3.1 marker count grew to {total} — "
-        f"Phase 3.1 close baseline was {PHASE_3_1_CLOSE_BASELINE}. "
-        f"Phase 3.2 must REDUCE the count via narrowing, never increase. "
+        f"Phase 3.2 close baseline was {PHASE_3_2_CLOSE_BASELINE}. "
+        f"Future phases must REDUCE the count via narrowing, never increase. "
         f"If a new untyped hot-path route was added, narrow it directly "
         f"instead of carrying a Phase 3.0 marker."
     )

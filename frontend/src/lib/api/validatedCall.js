@@ -24,7 +24,7 @@
  * existing `api.*` calls unchanged.
  */
 
-import api from "../api";
+import { api } from "../api";
 import { endpointSchemas } from "./endpointSchemas";
 
 /**

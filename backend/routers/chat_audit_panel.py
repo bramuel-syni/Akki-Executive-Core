@@ -23,7 +23,12 @@ caller to own the chat.
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
-from contracts.responses import ItemsListResponse, OkResponse
+from contracts.responses import (
+    ChatAuditAggregateResponse,
+    ChatAuditPanelResponse,
+    ItemsListResponse,
+    OkResponse,
+)
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
@@ -362,7 +367,7 @@ def _intervention_prose(event: Optional[Dict[str, Any]]) -> str:
 # ─────────────────────────────────────────────────────────────────────
 # Audit panel — single message.
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/chats/{chat_id}/audit-panel", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/chats/{chat_id}/audit-panel", response_model=Optional[ChatAuditPanelResponse])
 async def get_audit_panel(
     chat_id: str,
     message_id: str = Query(..., description="The assistant message_id whose audit to render."),
@@ -468,7 +473,7 @@ async def get_audit_panel(
 # ─────────────────────────────────────────────────────────────────────
 # Audit panel — per-conversation aggregate strip.
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/chats/{chat_id}/audit-panel/aggregate", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/chats/{chat_id}/audit-panel/aggregate", response_model=Optional[ChatAuditAggregateResponse])
 async def get_audit_panel_aggregate(
     chat_id: str,
     current: Dict[str, Any] = Depends(get_current_account),

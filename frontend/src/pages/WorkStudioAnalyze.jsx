@@ -19,7 +19,8 @@ import AppShell from "@/components/layout/AppShell";
 import WorkStudioMasterTabs from "@/components/work_studio/WorkStudioMasterTabs";
 import useAnalyzeStages from "@/components/work_studio/useAnalyzeStages";
 import AnalyzeStageStrip from "@/components/work_studio/AnalyzeStageStrip";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 

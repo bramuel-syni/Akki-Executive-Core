@@ -18,7 +18,11 @@ import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
-from contracts.responses import OkResponse
+from contracts.responses import (
+    CohortPreviewResponse,
+    OkResponse,
+    TokenIssueResponse,
+)
 
 import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -116,7 +120,7 @@ async def _require_admin(current: Dict[str, Any] = Depends(get_current_account))
     return current
 
 
-@router.post("/issue", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/issue", response_model=Optional[TokenIssueResponse])
 async def issue_magic_link(
     body: IssueIn,
     admin: Dict[str, Any] = Depends(_require_admin),
@@ -169,7 +173,7 @@ async def issue_magic_link(
 
 
 # ─── /preview (public) ───────────────────────────────────────────────
-@router.get("/preview/{token}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/preview/{token}", response_model=Optional[CohortPreviewResponse])
 async def preview_magic_link(token: str):
     row = await _find_link_record(token)
     if row:

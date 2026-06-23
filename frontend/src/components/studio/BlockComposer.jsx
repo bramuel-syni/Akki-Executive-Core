@@ -31,7 +31,8 @@ import {
   Minus, Table as TableIcon, Image as ImageIcon, AlertTriangle, ChevronUp,
   ChevronDown, Trash2, Plus, Send, CheckCircle2, FileText, Lock,
 } from "lucide-react";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import PreviewDrawer from "@/components/synisense/PreviewDrawer";
 

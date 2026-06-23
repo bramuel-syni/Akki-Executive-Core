@@ -14,7 +14,10 @@ import io
 import os
 import zipfile
 from typing import Any, Dict, List, Optional
-from contracts.responses import ItemsListResponse
+from contracts.responses import (
+    GovernancePanelResponse,
+    ItemsListResponse,
+)
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import Response
@@ -198,7 +201,7 @@ async def _build_synisense_block(
 # ---------------------------------------------------------------------------
 # GET /api/me/governance  (the main panel)
 # ---------------------------------------------------------------------------
-@router.get("", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("", response_model=Optional[GovernancePanelResponse])
 async def governance_panel(current: Dict[str, Any] = Depends(get_current_account)):
     ctx_ids = await _user_context_ids(current["id"])
     ctx_names = await _context_name_map(ctx_ids)

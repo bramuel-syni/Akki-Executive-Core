@@ -30,7 +30,13 @@ import re
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-from contracts.responses import ObjectiveSourceResponse, OkResponse, TaskHashResponse
+from contracts.responses import (
+    ObjectiveSourceResponse,
+    OkResponse,
+    TaskCirculationResponse,
+    TaskContributeResponse,
+    TaskHashResponse,
+)
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, conint, conlist
@@ -670,7 +676,7 @@ async def list_task_drafts(
 # ─────────────────────────────────────────────────────────────────────
 # PATCH /api/tasks/{task_id}/contributions/{contributor_id} — status
 # ─────────────────────────────────────────────────────────────────────
-@router.patch("/tasks/{task_id}/contributions/{contributor_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.patch("/tasks/{task_id}/contributions/{contributor_id}", response_model=Optional[TaskHashResponse])
 async def patch_contribution(
     task_id: str, contributor_id: str,
     body: _ContributionPatchIn,
@@ -939,7 +945,7 @@ async def send_compile_circulation(
 # ─────────────────────────────────────────────────────────────────────
 # GET /api/tasks/circulation/{token} — PUBLIC reviewer landing
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/tasks/circulation/{token}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/tasks/circulation/{token}", response_model=Optional[TaskCirculationResponse])
 async def circulation_view(token: str):
     """Public — no auth. Magic-link token is the only credential."""
     row = await db.task_circulation_tokens.find_one(
@@ -1132,7 +1138,7 @@ async def _resolve_contributor_token(token: str) -> Dict[str, Any]:
 # ─────────────────────────────────────────────────────────────────────
 # GET /api/tasks/contribute/{token} — PUBLIC contributor landing
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/tasks/contribute/{token}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/tasks/contribute/{token}", response_model=Optional[TaskContributeResponse])
 async def contributor_view(token: str):
     """Public — no auth header. Magic-link token IS the credential.
     Returns task summary + this contributor's specific contribution

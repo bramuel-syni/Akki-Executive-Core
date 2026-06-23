@@ -18,7 +18,8 @@ import React, { useCallback, useEffect, useMemo, useReducer, useState } from "re
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import AppShell from "@/components/layout/AppShell";
-import { api, API_BASE } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { API_BASE } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 // Phase L.b.3 (2026-05-27) — Backend-driven SSE for synthesis turn.
 import useStreamingProgress from "@/hooks/useStreamingProgress";
