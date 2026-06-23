@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from contracts.responses import OkResponse
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -144,7 +145,7 @@ async def get_onboarding_briefs(
     }
 
 
-@router.post("/onboarding-briefs/complete", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/onboarding-briefs/complete", response_model=Optional[OkResponse])
 async def complete_onboarding_briefs(
     request: Request,
     current: Dict[str, Any] = Depends(get_current_account),

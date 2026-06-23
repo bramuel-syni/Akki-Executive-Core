@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import uuid
 from typing import Any, Dict, List, Optional
+from contracts.responses import CompilationStartResponse, ItemsListResponse
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
@@ -127,7 +128,7 @@ async def create_compilation(
     return _sanitize(rec)
 
 
-@router.get("/contexts/{context_id}/work-studio/compilations", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/contexts/{context_id}/work-studio/compilations", response_model=Optional[ItemsListResponse])
 async def list_compilations(
     context_id: str,
     status: Optional[str] = None,
@@ -196,7 +197,7 @@ async def get_compilation(
 # essential because the wizard's "Commission" button is a common
 # double-click target.
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/contexts/{context_id}/work-studio/compilations/{compilation_id}/start", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/work-studio/compilations/{compilation_id}/start", response_model=Optional[CompilationStartResponse])
 async def start_compilation(
     context_id: str,
     compilation_id: str,

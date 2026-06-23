@@ -30,6 +30,7 @@ import re
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from contracts.responses import IdResponse, ItemsListResponse
 
 from fastapi import (
     APIRouter, Depends, File, Form, HTTPException, Query, Response,
@@ -250,7 +251,7 @@ async def _save_analysis(analysis: WorkbookAnalysis) -> None:
 # ─────────────────────────────────────────────────────────────────
 
 
-@router.post("/upload", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/upload", response_model=Optional[IdResponse])
 async def upload_workbook(
     file: UploadFile = File(...),
     current: Dict[str, Any] = Depends(get_current_account),
@@ -307,7 +308,7 @@ async def upload_workbook(
 # ─────────────────────────────────────────────────────────────────
 
 
-@router.get("/analyses", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/analyses", response_model=Optional[ItemsListResponse])
 async def list_analyses(current: Dict[str, Any] = Depends(get_current_account)):
     cursor = db.workbook_analyses.find(
         {"account_id": current["id"]},
@@ -661,7 +662,7 @@ async def report_xlsx_endpoint(aid: str, current: Dict[str, Any] = Depends(get_c
 # ─────────────────────────────────────────────────────────────────
 
 
-@router.post("/upload-multi", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/upload-multi", response_model=Optional[IdResponse])
 async def upload_workbook_multi(
     files: List[UploadFile] = File(..., description="One or more xlsx/csv files"),
     title: Optional[str] = Form(None),

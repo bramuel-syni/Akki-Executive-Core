@@ -30,6 +30,7 @@ import re
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from contracts.responses import ObjectiveSourceResponse, OkResponse, TaskHashResponse
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, conint, conlist
@@ -561,7 +562,7 @@ def _template_lookup(name: str) -> Optional[Dict[str, str]]:
     return None
 
 
-@router.post("/tasks/agent-prefill", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/tasks/agent-prefill", response_model=Optional[ObjectiveSourceResponse])
 async def agent_prefill(
     body: _AgentPrefillIn,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -780,7 +781,7 @@ async def get_task_intelligence(
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/{task_id}/intelligence/regenerate — force rebuild
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/{task_id}/intelligence/regenerate", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/tasks/{task_id}/intelligence/regenerate", response_model=Optional[TaskHashResponse])
 async def regenerate_task_intelligence(
     task_id: str,
     background_tasks: BackgroundTasks,
@@ -1198,7 +1199,7 @@ async def contributor_view(token: str):
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/contribute/{token}/upload — PUBLIC file upload
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/contribute/{token}/upload", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/tasks/contribute/{token}/upload", response_model=Optional[OkResponse])
 async def contributor_upload(
     token: str,
     file: UploadFile = File(...),
@@ -1254,7 +1255,7 @@ async def contributor_upload(
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/contribute/{token}/comment — PUBLIC comment add
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/contribute/{token}/comment", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/tasks/contribute/{token}/comment", response_model=Optional[OkResponse])
 async def contributor_comment(token: str, body: _ContributorCommentIn):
     row = await _resolve_contributor_token(token)
     cmt = {
@@ -1274,7 +1275,7 @@ async def contributor_comment(token: str, body: _ContributorCommentIn):
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/contribute/{token}/submit — PUBLIC finalize
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/contribute/{token}/submit", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/tasks/contribute/{token}/submit", response_model=Optional[OkResponse])
 async def contributor_submit(token: str, body: _ContributorSubmitIn):
     """Flip the contributor's status to `submitted` + fire audit."""
     row = await _resolve_contributor_token(token)
@@ -1323,7 +1324,7 @@ async def contributor_submit(token: str, body: _ContributorSubmitIn):
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/{task_id}/contributors/{contributor_id}/reinvite
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/{task_id}/contributors/{contributor_id}/reinvite", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/tasks/{task_id}/contributors/{contributor_id}/reinvite", response_model=Optional[OkResponse])
 async def reinvite_contributor(
     task_id: str, contributor_id: str,
     current: Dict[str, Any] = Depends(get_current_account),

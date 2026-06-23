@@ -11,6 +11,7 @@ import secrets
 import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Literal, Optional
+from contracts.responses import AccountWrapResponse
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr, Field
@@ -97,7 +98,7 @@ async def update_account(
     return {"account": sanitize_account(refreshed)}
 
 
-@router.post("/accounts/me/default-context", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/accounts/me/default-context", response_model=Optional[AccountWrapResponse])
 async def set_default_context(
     body: SetDefaultContextIn, current: Dict[str, Any] = Depends(get_current_account)
 ):

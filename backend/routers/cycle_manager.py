@@ -41,6 +41,7 @@ import logging
 import re
 import uuid
 from typing import Any, Dict, List, Optional
+from contracts.responses import AsyncJobResponse, ItemsListResponse, OkResponse
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, model_validator
@@ -310,7 +311,7 @@ async def upsert_team_member(
     return rec
 
 
-@router.delete("/contexts/{context_id}/cycle/team/{member_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.delete("/contexts/{context_id}/cycle/team/{member_id}", response_model=Optional[OkResponse])
 async def delete_team_member(
     context_id: str, member_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
@@ -606,7 +607,7 @@ async def _build_combined_contribution_text(
 # ──────────────────────────────────────────────────────────────────────
 # Readiness scoreboard
 # ──────────────────────────────────────────────────────────────────────
-@router.get("/contexts/{context_id}/cycle/readiness", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/contexts/{context_id}/cycle/readiness", response_model=Optional[ItemsListResponse])
 async def get_readiness(
     context_id: str,
     cycle_id: Optional[str] = Query(default=None),
@@ -846,7 +847,7 @@ async def approve_followup(
     return rec
 
 
-@router.post("/contexts/{context_id}/cycle/follow-ups/{followup_id}/send", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/cycle/follow-ups/{followup_id}/send", response_model=Optional[OkResponse])
 async def send_followup(
     context_id: str, followup_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
@@ -939,7 +940,7 @@ async def send_followup(
 # ──────────────────────────────────────────────────────────────────────
 # Draft Compilation Output — Phase D.1 rebuild
 # ──────────────────────────────────────────────────────────────────────
-@router.post("/contexts/{context_id}/cycle/draft-compilation", status_code=202, response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/cycle/draft-compilation", status_code=202, response_model=Optional[AsyncJobResponse])
 async def draft_compilation(
     context_id: str,
     cycle_id: Optional[str] = Query(default=None),

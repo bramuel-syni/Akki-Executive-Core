@@ -36,6 +36,7 @@ import secrets
 import string
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
+from contracts.responses import OkResponse
 
 import bcrypt
 import pyotp
@@ -164,7 +165,7 @@ async def enroll_start(
     }
 
 
-@router.post("/enroll/confirm", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/enroll/confirm", response_model=Optional[OkResponse])
 async def enroll_confirm(
     body: MFAConfirmIn,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -217,7 +218,7 @@ async def enroll_confirm(
     }
 
 
-@router.post("/verify", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/verify", response_model=Optional[OkResponse])
 async def verify(
     body: MFAVerifyIn,
     response: Response,
@@ -304,7 +305,7 @@ async def verify(
     }
 
 
-@router.post("/disable", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/disable", response_model=Optional[OkResponse])
 async def disable(
     body: MFADisableIn,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -340,7 +341,7 @@ async def disable(
     return {"ok": True, "mfa_enabled": False}
 
 
-@router.post("/recovery/regenerate", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/recovery/regenerate", response_model=Optional[OkResponse])
 async def regenerate_recovery(
     body: MFAConfirmIn,
     current: Dict[str, Any] = Depends(get_current_account),

@@ -34,6 +34,7 @@ import hashlib
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Literal, Tuple
+from contracts.responses import DraftLifecycleResponse, ExportStartResponse
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import Response
@@ -1637,7 +1638,7 @@ async def _run_enhance(
 # =============================================================================
 # Endpoints
 # =============================================================================
-@router.post("/contexts/{context_id}/work-studio/export/{kind}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/work-studio/export/{kind}", response_model=Optional[ExportStartResponse])
 async def start_export(
     context_id: str,
     kind: str,
@@ -1956,7 +1957,7 @@ async def stream_export_progress(
     return StreamingResponse(_gen(), headers=sse_headers())
 
 
-@router.get("/contexts/{context_id}/work-studio/exports/{export_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/contexts/{context_id}/work-studio/exports/{export_id}", response_model=Optional[ExportStartResponse])
 async def get_export_status(
     context_id: str,
     export_id: str,
@@ -2081,7 +2082,7 @@ async def download_export(
 # source_artefact_id (Form, optional). One of file/source_artefact_id
 # must be provided.
 # =============================================================================
-@router.post("/contexts/{context_id}/work-studio/enhance/{kind}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/work-studio/enhance/{kind}", response_model=Optional[ExportStartResponse])
 async def start_enhance(
     context_id: str,
     kind: str,
@@ -2266,7 +2267,7 @@ class _SaveDraftIn(BaseModel):
     document_id: Optional[str] = None  # link back to the source document (W5 path)
 
 
-@router.post("/contexts/{context_id}/work-studio/documents/save-draft", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/work-studio/documents/save-draft", response_model=Optional[DraftLifecycleResponse])
 async def save_draft(
     context_id: str,
     body: _SaveDraftIn,

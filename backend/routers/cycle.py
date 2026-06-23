@@ -85,6 +85,7 @@ import re
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Literal, Optional
+from contracts.responses import CommitteesResponse, OkResponse, ScheduleResponse
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, EmailStr, Field
@@ -1383,7 +1384,7 @@ async def polish_report(
 # Committees — list endpoint scoped to user's context (used by Cycle filter)
 # ---------------------------------------------------------------------------
 
-@router.get("/contexts/{context_id}/cycle/committees", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/contexts/{context_id}/cycle/committees", response_model=Optional[CommitteesResponse])
 async def list_cycle_committees(
     context_id: str,
     membership: Dict[str, Any] = Depends(require_context_membership()),
@@ -1592,7 +1593,7 @@ async def _spawn_auto_launched_play(
     return new_id
 
 
-@router.get("/contexts/{context_id}/cycle/schedule", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/contexts/{context_id}/cycle/schedule", response_model=Optional[ScheduleResponse])
 async def get_cycle_schedule(
     context_id: str,
     membership: Dict[str, Any] = Depends(require_context_membership()),
@@ -1601,7 +1602,7 @@ async def get_cycle_schedule(
     return {"schedule": s}
 
 
-@router.put("/contexts/{context_id}/cycle/schedule", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.put("/contexts/{context_id}/cycle/schedule", response_model=Optional[ScheduleResponse])
 async def upsert_cycle_schedule(
     context_id: str,
     body: CycleScheduleIn,
@@ -1633,7 +1634,7 @@ async def upsert_cycle_schedule(
     return {"schedule": rec}
 
 
-@router.delete("/contexts/{context_id}/cycle/schedule", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.delete("/contexts/{context_id}/cycle/schedule", response_model=Optional[OkResponse])
 async def disable_cycle_schedule(
     context_id: str,
     current: Dict[str, Any] = Depends(get_current_account),

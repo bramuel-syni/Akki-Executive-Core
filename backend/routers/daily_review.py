@@ -27,6 +27,7 @@ import base64
 import logging
 import uuid
 from typing import Any, Dict, List, Optional
+from contracts.responses import ByContextSummaryResponse, ItemsListResponse, OkResponse
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -170,7 +171,7 @@ def _studio_payload(a: Dict[str, Any], subkind: str) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # GET /api/me/review-queue
 # ---------------------------------------------------------------------------
-@router.get("", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("", response_model=Optional[ItemsListResponse])
 async def list_review_queue(
     limit: int = 50,
     cursor: Optional[str] = None,
@@ -309,7 +310,7 @@ async def list_review_queue(
 # ---------------------------------------------------------------------------
 # GET /api/me/review-queue/counts
 # ---------------------------------------------------------------------------
-@router.get("/counts", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/counts", response_model=Optional[ByContextSummaryResponse])
 async def review_queue_counts(
     account: Dict[str, Any] = Depends(get_current_account),
 ):
@@ -896,7 +897,7 @@ async def _edit_solva_cycle(
     return await _approve_solva_cycle(iid, account, note=note, questions_override=cleaned)
 
 
-@router.post("/items/{kind}/{item_id}/approve", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/items/{kind}/{item_id}/approve", response_model=Optional[OkResponse])
 async def approve_review_item(
     kind: str, item_id: str,
     body: Optional[ApproveIn] = None,
@@ -918,7 +919,7 @@ async def approve_review_item(
     return {"ok": True, "kind": kind, "id": iid, "next_item_id": next_id, **result}
 
 
-@router.post("/items/{kind}/{item_id}/reject", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/items/{kind}/{item_id}/reject", response_model=Optional[OkResponse])
 async def reject_review_item(
     kind: str, item_id: str,
     body: Optional[RejectIn] = None,
@@ -940,7 +941,7 @@ async def reject_review_item(
     return {"ok": True, "kind": kind, "id": iid, "next_item_id": next_id, **result}
 
 
-@router.post("/items/{kind}/{item_id}/edit", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/items/{kind}/{item_id}/edit", response_model=Optional[OkResponse])
 async def edit_review_item(
     kind: str, item_id: str,
     body: Optional[SolvaCycleEditIn] = None,

@@ -52,6 +52,7 @@ A phase is `DONE` only when all of:
 - Ambiguity not resolvable from existing docs.
 - A `GATED` phase trigger has fired (Phase 6: scale or signed sale. Phase 7: paying customer).
 - A discipline rail would have to be broken to make progress.
+- Mid-dispatch ambiguity → surface as deviation in post-completion report. Builder MUST NOT use `ask_human` mid-build; orchestrator-channel resolves clarifications.
 
 When escalating: state the ask in one sentence + give a 2-3 option menu. Do not block on yes/no philosophical debates.
 

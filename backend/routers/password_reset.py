@@ -31,6 +31,7 @@ import os
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
+from contracts.responses import OkResponse
 
 import bcrypt
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
@@ -154,7 +155,7 @@ def _send_reset_email_async(*, to_email: str, rendered: Dict[str, str]) -> None:
 # POST /api/auth/forgot-password
 # ─────────────────────────────────────────────────────────────────────
 
-@router.post("/forgot-password", status_code=200, response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/forgot-password", status_code=200, response_model=Optional[OkResponse])
 async def forgot_password(
     body: ForgotPasswordIn,
     request: Request,
@@ -264,7 +265,7 @@ async def get_reset_token(token: str):
 # POST /api/auth/reset-password/{token}
 # ─────────────────────────────────────────────────────────────────────
 
-@router.post("/reset-password/{token}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/reset-password/{token}", response_model=Optional[OkResponse])
 async def consume_reset_token(
     token: str, body: ResetPasswordIn,
     _rl: None = Depends(rate_limit("auth_reset")),

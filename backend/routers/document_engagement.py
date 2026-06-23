@@ -22,6 +22,7 @@ import os
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from contracts.responses import OkResponse
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr, Field
@@ -37,7 +38,7 @@ router = APIRouter(prefix="/api")
 # -----------------------------------------------------------------------------
 # Read receipts
 # -----------------------------------------------------------------------------
-@router.post("/contexts/{context_id}/documents/{doc_id}/view", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/documents/{doc_id}/view", response_model=Optional[OkResponse])
 async def record_view(
     context_id: str, doc_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),

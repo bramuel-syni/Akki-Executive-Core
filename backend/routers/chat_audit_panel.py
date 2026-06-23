@@ -23,6 +23,7 @@ caller to own the chat.
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
+from contracts.responses import ItemsListResponse, OkResponse
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
@@ -536,7 +537,7 @@ async def get_audit_panel_aggregate(
 # Archived chats — list + permanent delete.
 # (Existing /restore endpoint lives in routers/chat.py.)
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/chats/archived", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/chats/archived", response_model=Optional[ItemsListResponse])
 async def list_archived_chats(
     limit: int = Query(50, ge=1, le=200),
     skip: int = Query(0, ge=0),
@@ -556,7 +557,7 @@ async def list_archived_chats(
     return {"items": rows, "total": total, "limit": limit, "skip": skip}
 
 
-@router.delete("/chats/{chat_id}/permanent", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.delete("/chats/{chat_id}/permanent", response_model=Optional[OkResponse])
 async def permanent_delete_chat(
     chat_id: str,
     body: Dict[str, Any] = Body(default_factory=dict),

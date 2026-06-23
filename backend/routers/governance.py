@@ -14,6 +14,7 @@ import io
 import os
 import zipfile
 from typing import Any, Dict, List, Optional
+from contracts.responses import ItemsListResponse
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import Response
@@ -317,7 +318,7 @@ async def governance_panel(current: Dict[str, Any] = Depends(get_current_account
 # ---------------------------------------------------------------------------
 # GET /api/me/governance/audit — paginated, filterable
 # ---------------------------------------------------------------------------
-@router.get("/audit", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/audit", response_model=Optional[ItemsListResponse])
 async def governance_audit(
     current: Dict[str, Any] = Depends(get_current_account),
     action: Optional[str] = Query(None),

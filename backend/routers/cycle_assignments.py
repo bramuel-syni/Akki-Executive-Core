@@ -31,6 +31,7 @@ from __future__ import annotations
 import logging
 import uuid
 from typing import Any, Dict, List, Optional
+from contracts.responses import BriefsCountResponse
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -644,7 +645,7 @@ async def decline_assignment(
 # ─────────────────────────────────────────────────────────────────────
 # 6. Submitter-side rollup view (Should-have)
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/me/submitted-briefs", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/me/submitted-briefs", response_model=Optional[BriefsCountResponse])
 async def my_submitted_briefs(
     current: Dict[str, Any] = Depends(get_current_account),
 ):

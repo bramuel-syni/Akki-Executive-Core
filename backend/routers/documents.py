@@ -5,6 +5,7 @@ import logging
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional
+from contracts.responses import DocumentMetaResponse, ThreadAncestryResponse
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 from datetime import datetime, timezone
@@ -261,7 +262,7 @@ class DocumentMetaGenerateIn(BaseModel):
     preview_text: Optional[str] = Field(default=None, max_length=8_000)
 
 
-@router.post("/contexts/{context_id}/documents/generate-meta", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/documents/generate-meta", response_model=Optional[DocumentMetaResponse])
 async def generate_document_meta(
     context_id: str, body: DocumentMetaGenerateIn,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
@@ -597,7 +598,7 @@ async def upload_document(
     return sanitize_doc(doc)
 
 
-@router.get("/contexts/{context_id}/documents/{doc_id}/thread", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/contexts/{context_id}/documents/{doc_id}/thread", response_model=Optional[ThreadAncestryResponse])
 async def document_thread(
     doc_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),

@@ -18,6 +18,7 @@ import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
+from contracts.responses import OkResponse
 
 import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -205,7 +206,7 @@ async def preview_magic_link(token: str):
 
 
 # ─── /consume (public) ───────────────────────────────────────────────
-@router.post("/consume", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/consume", response_model=Optional[OkResponse])
 async def consume_magic_link(body: ConsumeIn, response: Response):
     row = await _find_link_record(body.token)
     if not row:

@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Dict, Optional
+from contracts.responses import StatusKindResponse
 
 from fastapi import APIRouter, Body, Depends, HTTPException
 
@@ -134,7 +135,7 @@ async def _run_diff_job(
 # ─────────────────────────────────────────────────────────────────────
 # 4 async endpoints.
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/contexts/{context_id}/documents/generate-meta/async", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/documents/generate-meta/async", response_model=Optional[StatusKindResponse])
 async def generate_meta_async(
     context_id: str,
     body: Dict[str, Any] = Body(default_factory=dict),
@@ -150,7 +151,7 @@ async def generate_meta_async(
     return {"job_id": job_id, "status": "queued", "kind": _KINDS["meta"]}
 
 
-@router.post("/contexts/{context_id}/documents/{doc_id}/summary/async", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/documents/{doc_id}/summary/async", response_model=Optional[StatusKindResponse])
 async def generate_summary_async(
     context_id: str, doc_id: str,
     refresh: bool = False,
@@ -167,7 +168,7 @@ async def generate_summary_async(
     return {"job_id": job_id, "status": "queued", "kind": _KINDS["summary"]}
 
 
-@router.post("/contexts/{context_id}/documents/{doc_id}/journal-commentary/async", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/documents/{doc_id}/journal-commentary/async", response_model=Optional[StatusKindResponse])
 async def generate_commentary_async(
     context_id: str, doc_id: str,
     refresh: bool = False,
@@ -184,7 +185,7 @@ async def generate_commentary_async(
     return {"job_id": job_id, "status": "queued", "kind": _KINDS["commentary"]}
 
 
-@router.post("/contexts/{context_id}/documents/{doc_id}/evolution-diff/async", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/contexts/{context_id}/documents/{doc_id}/evolution-diff/async", response_model=Optional[StatusKindResponse])
 async def evolution_diff_async(
     context_id: str, doc_id: str,
     refresh: bool = False,

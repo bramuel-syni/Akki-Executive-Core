@@ -25,6 +25,7 @@ from __future__ import annotations
 import re
 import uuid
 from typing import Any, Dict, List, Optional
+from contracts.responses import ItemsListResponse
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -77,7 +78,7 @@ def _strip(rec: Dict[str, Any]) -> Dict[str, Any]:
 # -----------------------------------------------------------------------------
 # Cross-context: questions assigned to ME
 # -----------------------------------------------------------------------------
-@router.get("/me/questions", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/me/questions", response_model=Optional[ItemsListResponse])
 async def my_questions(
     status: str = "open",
     page: int = 1,

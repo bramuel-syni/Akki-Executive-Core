@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
+from contracts.responses import OkResponse
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -99,7 +100,7 @@ async def auth_events(
 # rather than enumerating individual JTIs (we don't track per-account JTI
 # lists; the access-token TTL of 8h means the user's session will fully
 # clear within that window even without intervention).
-@router.post("/revoke-all/{account_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/revoke-all/{account_id}", response_model=Optional[OkResponse])
 async def revoke_all_sessions(
     account_id: str,
     actor: Dict[str, Any] = Depends(_require_superadmin),
