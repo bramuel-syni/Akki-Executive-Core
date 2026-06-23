@@ -219,7 +219,7 @@ async def update_goal(
         {"id": goal_id, "context_id": context_id}, {"$set": set_payload},
     )
     await write_audit(context_id, ctx["account"]["id"], "strategic_goal.updated", "strategic_goal", goal_id, updates)
-    fresh = await db.strategic_goals.find_one({"id": goal_id}, {"_id": 0})
+    fresh = await db.strategic_goals.find_one({"id": goal_id}, {"_id": 0})  # tenancy:allow-no-account-id — row-id-targeted readback after L218-219 validated write with context_id
     return sanitize(fresh)
 
 

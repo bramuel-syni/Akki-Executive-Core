@@ -82,7 +82,7 @@ async def add_catalogue_member(
     if existing:
         if existing.get("deleted_at"):
             # Resurrect a previously-soft-deleted entry.
-            await db.team_catalogue.update_one(
+            await db.team_catalogue.update_one(  # tenancy:allow-no-account-id — existing row pre-validated by upstream find_one with context_id (L77); row-id-targeted resurrect-update
                 {"id": existing["id"]},
                 {"$set": {
                     "name": body.name.strip(),
@@ -90,14 +90,14 @@ async def add_catalogue_member(
                     "updated_at": now_iso,
                 }},
             )
-            return await db.team_catalogue.find_one({"id": existing["id"]}, {"_id": 0})
+            return await db.team_catalogue.find_one({"id": existing["id"]}, {"_id": 0})  # tenancy:allow-no-account-id — existing row pre-validated by upstream find_one with context_id (L77); row-id-targeted readback
         # Already active — upsert name if changed.
         if existing.get("name") != body.name.strip():
-            await db.team_catalogue.update_one(
+            await db.team_catalogue.update_one(  # tenancy:allow-no-account-id — existing row pre-validated by upstream find_one with context_id (L77); row-id-targeted name update
                 {"id": existing["id"]},
                 {"$set": {"name": body.name.strip(), "updated_at": now_iso}},
             )
-        return await db.team_catalogue.find_one({"id": existing["id"]}, {"_id": 0})
+        return await db.team_catalogue.find_one({"id": existing["id"]}, {"_id": 0})  # tenancy:allow-no-account-id — existing row pre-validated by upstream find_one with context_id (L77); row-id-targeted readback
 
     row = {
         "id": str(uuid.uuid4()),
@@ -159,13 +159,13 @@ async def patch_catalogue_member(
             )
     if update:
         update["updated_at"] = iso(now())
-        await db.team_catalogue.update_one({"id": member_id}, {"$set": update})
+        await db.team_catalogue.update_one({"id": member_id}, {"$set": update})  # tenancy:allow-no-account-id — row pre-validated by upstream find_one with context_id (L132); row-id-targeted patch update
         await write_audit(
             context_id, ctx["account"]["id"],
             "team_catalogue.patched", "catalogue_member", member_id,
             {"fields_changed": list(update.keys())},
         )
-    return await db.team_catalogue.find_one({"id": member_id}, {"_id": 0})
+    return await db.team_catalogue.find_one({"id": member_id}, {"_id": 0})  # tenancy:allow-no-account-id — row pre-validated by upstream find_one with context_id (L132); row-id-targeted readback
 
 
 # ─────────────────────────────────────────────────────────────────────

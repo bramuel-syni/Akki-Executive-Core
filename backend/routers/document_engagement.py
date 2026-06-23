@@ -169,7 +169,7 @@ async def share_document(
         )
         record["email_send_id"] = send_result.get("id")
         record["email_send_mode"] = send_result.get("mode")
-        await db.document_shares.update_one(
+        await db.document_shares.update_one(  # tenancy:allow-no-account-id — share record pre-validated by upstream find_one with context_id; row-id-targeted email-send-id backfill
             {"id": record["id"]},
             {"$set": {"email_send_id": send_result.get("id"), "email_send_mode": send_result.get("mode")}},
         )

@@ -242,7 +242,7 @@ async def promote_intelligence_questions_to_q4y(
         #   • Status is NEVER blindly reset to "open" — a question
         #     marked answered by the user must not regress on a
         #     re-extraction. We only set status=open on insert.
-        await db.cycle_questions.update_one(
+        await db.cycle_questions.update_one(  # tenancy:allow-no-account-id — promoter invoked after doc validated with account_id+context_id upstream; upsert stamps context_id in $set payload (L249); row-id-targeted upsert
             {"id": q_id},
             {
                 "$set": {
@@ -277,7 +277,7 @@ async def promote_intelligence_questions_to_q4y(
     # The full id format is `q4y:from_intel:{doc_id}:{idx}` so
     # `^q4y:from_intel:{doc_id}:` is the unambiguous prefix.
     prefix = f"q4y:from_intel:{doc_id}:"
-    cur = db.cycle_questions.find(
+    cur = db.cycle_questions.find(  # tenancy:allow-no-account-id — orphan close-out: walks rows with id matching the validated doc's prefix (q4y:from_intel:{doc_id}:*); by design rows owned by the upstream-validated doc
         {"id": {"$regex": f"^{re.escape(prefix)}"}},
         {"_id": 0, "id": 1, "status": 1, "history": 1},
     )
@@ -300,7 +300,7 @@ async def promote_intelligence_questions_to_q4y(
             "actor_id": account_id,
             "note":   "superseded_by_reextraction",
         })
-        await db.cycle_questions.update_one(
+        await db.cycle_questions.update_one(  # tenancy:allow-no-account-id — orphan close-out: update against row already visited in the doc-prefix-anchored cursor (L280); row-id-targeted close
             {"id": row["id"]},
             {"$set": {"status": "closed", "history": history}},
         )

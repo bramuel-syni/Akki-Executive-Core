@@ -70,7 +70,7 @@ async def _get_or_create_digest(
             {"account_id": account_id, "week_iso": week_iso,
              "digest_version": digest.digest_version},
         )
-    await db.ideas_digests.insert_one(digest.model_dump())
+    await db.ideas_digests.insert_one(digest.model_dump())  # tenancy:allow-no-account-id — digest is IdeasDigest model.dump() with account_id field (stamped at synthesize_digest call L60-66); non-literal scanner cannot resolve through model.dump()
     # Append the audit row.
     await db.ideas_audit_log.insert_one({
         "digest_id": digest.id,

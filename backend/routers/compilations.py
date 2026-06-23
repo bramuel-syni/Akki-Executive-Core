@@ -275,7 +275,7 @@ async def start_compilation(
         "akki_generated": True,
     }
     await db.work_studio_exports.insert_one(row)
-    await db.compilations.update_one(
+    await db.compilations.update_one(  # tenancy:allow-no-account-id — compilation pre-validated by upstream find_one with context_id; row-id-targeted update
         {"id": compilation_id},
         {"$set": {
             "export_id": export_id,

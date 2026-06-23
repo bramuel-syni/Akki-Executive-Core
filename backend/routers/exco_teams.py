@@ -249,10 +249,10 @@ async def update_exco_team(
     if not updates:
         return await _hydrate_team(team, account_id)
     updates["updated_at"] = _iso(_now())
-    await db.exco_teams.update_one({"id": team_id}, {"$set": updates})
+    await db.exco_teams.update_one({"id": team_id}, {"$set": updates})  # tenancy:allow-no-account-id — team pre-validated by upstream find_one with context_id (L239); row-id-targeted update
     event = "exco.archived" if updates.get("status") == "archived" else "exco.updated"
     await write_audit(context_id, account_id, event, "exco_team", team_id, updates)
-    refreshed = await db.exco_teams.find_one({"id": team_id}, {"_id": 0})
+    refreshed = await db.exco_teams.find_one({"id": team_id}, {"_id": 0})  # tenancy:allow-no-account-id — team pre-validated by upstream find_one with context_id (L239); row-id-targeted readback
     return await _hydrate_team(refreshed, account_id)
 
 
@@ -272,7 +272,7 @@ async def add_exco_member(
     if body.account_id in (team.get("member_account_ids") or []):
         return await _hydrate_team(team, account_id)
     await _validate_members_in_context(context_id, [body.account_id])
-    await db.exco_teams.update_one(
+    await db.exco_teams.update_one(  # tenancy:allow-no-account-id — team pre-validated by upstream find_one with context_id (L269); row-id-targeted member add
         {"id": team_id},
         {
             "$addToSet": {"member_account_ids": body.account_id},
@@ -283,7 +283,7 @@ async def add_exco_member(
         context_id, account_id, "exco.member_added", "exco_team", team_id,
         {"member": body.account_id},
     )
-    refreshed = await db.exco_teams.find_one({"id": team_id}, {"_id": 0})
+    refreshed = await db.exco_teams.find_one({"id": team_id}, {"_id": 0})  # tenancy:allow-no-account-id — team pre-validated by upstream find_one with context_id (L269); row-id-targeted readback
     return await _hydrate_team(refreshed, account_id)
 
 
@@ -302,7 +302,7 @@ async def remove_exco_member(
         raise HTTPException(status_code=404, detail="ExCo team not found")
     if member_id not in (team.get("member_account_ids") or []):
         return await _hydrate_team(team, account_id)
-    await db.exco_teams.update_one(
+    await db.exco_teams.update_one(  # tenancy:allow-no-account-id — team pre-validated by upstream find_one with context_id; row-id-targeted member remove
         {"id": team_id},
         {
             "$pull": {"member_account_ids": member_id},
@@ -313,7 +313,7 @@ async def remove_exco_member(
         context_id, account_id, "exco.member_removed", "exco_team", team_id,
         {"member": member_id},
     )
-    refreshed = await db.exco_teams.find_one({"id": team_id}, {"_id": 0})
+    refreshed = await db.exco_teams.find_one({"id": team_id}, {"_id": 0})  # tenancy:allow-no-account-id — team pre-validated by upstream find_one with context_id; row-id-targeted readback
     return await _hydrate_team(refreshed, account_id)
 
 
@@ -332,14 +332,14 @@ async def archive_exco_team(
         raise HTTPException(status_code=404, detail="ExCo team not found")
     if team.get("status") == "archived":
         return await _hydrate_team(team, account_id)
-    await db.exco_teams.update_one(
+    await db.exco_teams.update_one(  # tenancy:allow-no-account-id — team pre-validated by upstream find_one with context_id; row-id-targeted ownership change
         {"id": team_id},
         {"$set": {"status": "archived", "updated_at": _iso(_now())}},
     )
     await write_audit(
         context_id, account_id, "exco.archived", "exco_team", team_id, {},
     )
-    refreshed = await db.exco_teams.find_one({"id": team_id}, {"_id": 0})
+    refreshed = await db.exco_teams.find_one({"id": team_id}, {"_id": 0})  # tenancy:allow-no-account-id — team pre-validated by upstream find_one with context_id; row-id-targeted readback
     return await _hydrate_team(refreshed, account_id)
 
 

@@ -46,7 +46,7 @@ async def signal_action_heatmap(_: Dict[str, Any] = Depends(_require_superadmin)
           "recent_actions": [{...}, ... 25],
         }
     """
-    cursor = db.signal_actions.find({}, {"_id": 0}).sort("created_at", -1)
+    cursor = db.signal_actions.find({}, {"_id": 0}).sort("created_at", -1)  # tenancy:allow-no-account-id — admin-only route (super-admin gate at file entry); cross-tenant KPI aggregation
     actions: List[Dict[str, Any]] = [a async for a in cursor]
 
     # Pull each action's signal so we can group by recommendation bucket

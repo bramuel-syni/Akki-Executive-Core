@@ -361,7 +361,7 @@ async def create_assignments(
         inserted_rows.append(row)
 
     if inserted_rows:
-        await db.cycle_assignments.insert_many(inserted_rows)
+        await db.cycle_assignments.insert_many(inserted_rows)  # tenancy:allow-no-account-id — inserted_rows accumulator: each row stamped with context_id+assignee_account_id+ned_id (L321-360); non-literal scanner cannot follow loop accumulation
 
     for r in inserted_rows:
         await write_audit(
@@ -471,7 +471,7 @@ async def cancel_assignment(
         )
 
     now_iso = iso(now())
-    await db.cycle_assignments.update_one(
+    await db.cycle_assignments.update_one(  # tenancy:allow-no-account-id — assignment pre-validated by upstream find_one with context_id; row-id-targeted cancel
         {"id": assignment_id},
         {"$set": {"status": "cancelled", "updated_at": now_iso, "cancelled_at": now_iso}},
     )

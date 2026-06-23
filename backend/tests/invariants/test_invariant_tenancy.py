@@ -336,20 +336,10 @@ _CONTEXT_HELPER_FUNCTIONS: FrozenSet[str] = frozenset({
 # hybrid (Upgrade D helper-fusion + helper-body exemption + markers).
 # Phase 2.5a adds 7 more: `inbound_queue`, `tasks`, `chat_messages`,
 # `user_calendar_credentials`, `signals`, `cycles`, `solva_v2_sessions`.
-_ENFORCE_MODE_COLLECTIONS: FrozenSet[str] = frozenset({
-    "chats",
-    "documents",
-    "work_studio_exports",
-    "contexts",
-    # Phase 2.5a additions (all 7 reached 0 via alt-key widening + markers).
-    "inbound_queue",
-    "tasks",
-    "chat_messages",
-    "user_calendar_credentials",
-    "signals",
-    "cycles",
-    "solva_v2_sessions",
-})
+# Phase 2.5b adds the long-tail + `studio_blocks` (Phase 2.5a held-over)
+# — bringing every tenant-scoped collection into enforce mode. Phase 2
+# is DONE at this point.
+_ENFORCE_MODE_COLLECTIONS: FrozenSet[str] = frozenset(TENANT_SCOPED_COLLECTIONS)
 
 
 # ───────────────────────── Phase 2.5a — cross-tenant whitelist ─────────

@@ -123,7 +123,7 @@ async def sweep_account(
         lenses_enabled=prefs.lenses_enabled,
         custom_instructions=prefs.custom_instructions,
     )
-    await db.ideas_digests.insert_one(digest.model_dump())
+    await db.ideas_digests.insert_one(digest.model_dump())  # tenancy:allow-no-account-id — digest is IdeasDigest model.dump() with account_id field (stamped at synthesize_digest call L118-125); non-literal scanner cannot resolve through model.dump()
     await db.ideas_audit_log.insert_one({
         "digest_id": digest.id,
         "account_id": account_id,

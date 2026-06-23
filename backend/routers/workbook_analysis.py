@@ -119,7 +119,7 @@ _MATRIX_CACHE: Dict[str, Dict[str, List[List[Any]]]] = {}
 async def _load_matrices(analysis_id: str) -> Dict[str, List[List[Any]]]:
     if analysis_id in _MATRIX_CACHE:
         return _MATRIX_CACHE[analysis_id]
-    blob_row = await db.workbook_blobs.find_one({"analysis_id": analysis_id}, {"_id": 0})
+    blob_row = await db.workbook_blobs.find_one({"analysis_id": analysis_id}, {"_id": 0})  # tenancy:allow-no-account-id — blob fetched by analysis_id; parent workbook_analyses row validated with account_id upstream (L88-95)
     if not blob_row:
         raise HTTPException(404, "workbook_blob_missing")
     blob = base64.b64decode(blob_row["data_b64"])
@@ -284,7 +284,7 @@ async def upload_workbook(
         status="parsed",
         sheets=sheets,
     )
-    await db.workbook_analyses.insert_one(analysis.model_dump())
+    await db.workbook_analyses.insert_one(analysis.model_dump())  # tenancy:allow-no-account-id — model.dump() insert: analysis carries account_id+context_id fields stamped at WorkbookAnalysis(...) constructor (L274-286); non-literal scanner cannot resolve through model.dump()
     await db.workbook_blobs.insert_one({
         "analysis_id": analysis_id,
         "account_id": current["id"],
@@ -714,9 +714,9 @@ async def upload_workbook_multi(
         files=accepted,
         objective=(objective or "").strip(),
     )
-    await db.analyses.insert_one(analysis.model_dump())
+    await db.analyses.insert_one(analysis.model_dump())  # tenancy:allow-no-account-id — model.dump() insert: analysis carries account_id+context_id fields stamped at build_analysis_from_uploads(account_id, context_id) call (L710-716); non-literal scanner cannot resolve through model.dump()
     if blob_docs:
-        await db.analysis_blobs.insert_many(blob_docs)
+        await db.analysis_blobs.insert_many(blob_docs)  # tenancy:allow-no-account-id — blob_docs accumulator: each blob stamped with account_id+context_id at build_analysis_from_uploads; non-literal scanner cannot resolve through list accumulation
 
     return {
         "id": analysis.id,

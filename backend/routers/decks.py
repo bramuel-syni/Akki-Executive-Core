@@ -660,7 +660,7 @@ async def resolve_deck_context(
     deck_id: str,
     account: Dict[str, Any] = Depends(get_current_account),
 ):
-    deck = await db.decks.find_one({"id": deck_id}, {"_id": 0, "id": 1, "context_id": 1})
+    deck = await db.decks.find_one({"id": deck_id}, {"_id": 0, "id": 1, "context_id": 1})  # tenancy:allow-no-account-id — deep-link resolver: deck fetched by id THEN membership verified against deck.context_id (L666-671); resolver IS the tenancy contract
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found.")
     member = await db.memberships.find_one(

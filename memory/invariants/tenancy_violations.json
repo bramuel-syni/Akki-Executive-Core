@@ -1,5 +1,5 @@
 {
-  "scan_timestamp": "2026-06-23T07:31:31.046791+00:00",
+  "scan_timestamp": "2026-06-23T07:43:23.775758+00:00",
   "scan_roots": [
     "/app/backend/services",
     "/app/backend/routers"
@@ -246,17 +246,53 @@
     ]
   },
   "enforce_mode_collections": [
+    "analyses",
+    "analysis_blobs",
+    "briefings",
+    "chat_attachments",
     "chat_messages",
     "chats",
+    "comments",
+    "compilations",
+    "context_assignments",
     "contexts",
+    "cycle_assignments",
+    "cycle_questions",
+    "cycle_responses",
     "cycles",
+    "decks",
+    "document_engagement",
+    "document_shares",
     "documents",
+    "events",
+    "exco_teams",
+    "feedback",
+    "highlights",
+    "ideas_audit_log",
+    "ideas_digests",
     "inbound_queue",
+    "influence_maps",
+    "monitor_status",
+    "ned_assignments",
+    "pulse_ideas",
+    "questions",
+    "shared_links",
+    "signal_actions",
+    "signal_events",
     "signals",
     "solva_v2_sessions",
+    "strategic_goals",
+    "studio_blocks",
+    "studio_documents",
     "tasks",
+    "tasks_initiatives",
+    "team_catalogue",
     "user_calendar_credentials",
-    "work_studio_exports"
+    "user_recent_views",
+    "work_studio_exports",
+    "work_studio_phase_c_exports",
+    "workbook_analyses",
+    "workbook_blobs"
   ],
   "filter_methods_inspected": [
     "count_documents",
@@ -277,234 +313,9 @@
     "insert_one"
   ],
   "escape_hatch_marker": "tenancy:allow-no-account-id",
-  "violations": [
-    {
-      "file": "/app/backend/routers/admin_signal_kpi.py",
-      "line": 49,
-      "collection": "signal_actions",
-      "method": "find",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/compilations.py",
-      "line": 278,
-      "collection": "compilations",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/cycle_assignments.py",
-      "line": 474,
-      "collection": "cycle_assignments",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/cycle_assignments.py",
-      "line": 364,
-      "collection": "cycle_assignments",
-      "method": "insert_many",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/routers/decks.py",
-      "line": 663,
-      "collection": "decks",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/document_engagement.py",
-      "line": 172,
-      "collection": "document_shares",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/exco_teams.py",
-      "line": 252,
-      "collection": "exco_teams",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/exco_teams.py",
-      "line": 255,
-      "collection": "exco_teams",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/exco_teams.py",
-      "line": 275,
-      "collection": "exco_teams",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/exco_teams.py",
-      "line": 286,
-      "collection": "exco_teams",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/exco_teams.py",
-      "line": 305,
-      "collection": "exco_teams",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/exco_teams.py",
-      "line": 316,
-      "collection": "exco_teams",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/exco_teams.py",
-      "line": 335,
-      "collection": "exco_teams",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/exco_teams.py",
-      "line": 342,
-      "collection": "exco_teams",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/ideas.py",
-      "line": 73,
-      "collection": "ideas_digests",
-      "method": "insert_one",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/routers/solva_v2.py",
-      "line": 218,
-      "collection": "questions",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/solva_v2.py",
-      "line": 2102,
-      "collection": "cycle_questions",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/strategic_goals.py",
-      "line": 222,
-      "collection": "strategic_goals",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/team_catalogue.py",
-      "line": 168,
-      "collection": "team_catalogue",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/team_catalogue.py",
-      "line": 100,
-      "collection": "team_catalogue",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/team_catalogue.py",
-      "line": 162,
-      "collection": "team_catalogue",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/team_catalogue.py",
-      "line": 85,
-      "collection": "team_catalogue",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/team_catalogue.py",
-      "line": 93,
-      "collection": "team_catalogue",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/team_catalogue.py",
-      "line": 96,
-      "collection": "team_catalogue",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/workbook_analysis.py",
-      "line": 122,
-      "collection": "workbook_blobs",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/workbook_analysis.py",
-      "line": 287,
-      "collection": "workbook_analyses",
-      "method": "insert_one",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/routers/workbook_analysis.py",
-      "line": 717,
-      "collection": "analyses",
-      "method": "insert_one",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/routers/workbook_analysis.py",
-      "line": 719,
-      "collection": "analysis_blobs",
-      "method": "insert_many",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/services/documents/intelligence_service.py",
-      "line": 280,
-      "collection": "cycle_questions",
-      "method": "find",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/services/documents/intelligence_service.py",
-      "line": 245,
-      "collection": "cycle_questions",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/services/documents/intelligence_service.py",
-      "line": 303,
-      "collection": "cycle_questions",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/services/ideas_engine/scheduler.py",
-      "line": 126,
-      "collection": "ideas_digests",
-      "method": "insert_one",
-      "kind": "non_literal"
-    }
-  ],
-  "violation_count": 32,
-  "definite_violation_count": 26,
+  "violations": [],
+  "violation_count": 0,
+  "definite_violation_count": 0,
   "phase": "2.1_per_collection_enforce",
   "phase_2_enforce_target": "definite_violation_count == 0 for enforce_mode_collections"
 }

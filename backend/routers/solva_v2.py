@@ -215,7 +215,7 @@ async def _resolve_intake_seed(
         summary = (doc.get("preview") or doc.get("extracted_text") or "")[:600]
 
     elif kind == "cycle_question":
-        ques = await db.questions.find_one(
+        ques = await db.questions.find_one(  # tenancy:allow-no-account-id — seed resolver: question fetched by id THEN explicit context_id cross-check at L223 (resolver IS the tenancy contract)
             {"id": sid}, {"_id": 0, "title": 1, "body": 1, "source_doc_id": 1, "context_id": 1},
         )
         if not ques:
@@ -2099,7 +2099,7 @@ async def fetch_take_to_solva_seed(
         # cycle_questions rows carry `context_id`; the caller must
         # be a member of that context. Citation_label format:
         #   "Question · {first 60 chars of text}…"
-        rec = await db.cycle_questions.find_one(
+        rec = await db.cycle_questions.find_one(  # tenancy:allow-no-account-id — Use-in-Solva handler: question fetched by id THEN explicit membership verified against rec.context_id at L2108-2114
             {"id": sid_in}, {"_id": 0},
         )
         if not rec:
