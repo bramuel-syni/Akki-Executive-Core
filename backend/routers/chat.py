@@ -1267,7 +1267,7 @@ async def patch_chat(
         account_id=current["id"], chat_id=chat_id, action="chat.updated",
         request=request, payload=audit_payload,
     )
-    chat = await db.chats.find_one({"id": chat_id}, {"_id": 0})
+    chat = await db.chats.find_one({"id": chat_id, "account_id": current["id"]}, {"_id": 0})
     return _sanitize(chat)
 
 
@@ -1323,7 +1323,7 @@ async def soft_delete_chat(
         # Preserve the audit chain — only remove the chat + messages.
         msg_count = await db.chat_messages.count_documents({"chat_id": chat_id})
         await db.chat_messages.delete_many({"chat_id": chat_id})
-        await db.chats.delete_one({"id": chat_id})
+        await db.chats.delete_one({"id": chat_id, "account_id": current["id"]})
         await _append_audit(
             account_id=current["id"], chat_id=chat_id,
             action="chat.hard_deleted", request=request,
@@ -1423,7 +1423,7 @@ async def run_chat_retention_sweep() -> Dict[str, Any]:
         "scanned": 0, "hard_deleted": 0, "messages_removed": 0,
         "errors": 0, "audit_rows_written": 0,
     }
-    cursor = db.chats.find(
+    cursor = db.chats.find(  # tenancy:allow-no-account-id — retention sweep is a cross-tenant operational task (cron); each row is then processed under its own account_id, see L1430+.
         {"status": "archived", "deleted_at": {"$lte": cutoff_iso}},
         {"_id": 0, "id": 1, "account_id": 1},
     )
@@ -2101,7 +2101,7 @@ async def send_message(
 
     # ── Update chat metadata (preview, count, last_message_at).
     await db.chats.update_one(
-        {"id": chat_id},
+        {"id": chat_id, "account_id": current["id"]},
         {
             "$set": {
                 "last_message_at": reply_at,
@@ -2971,7 +2971,7 @@ async def stream_message(
                     },
                 )
                 await db.chats.update_one(
-                    {"id": chat_id},
+                    {"id": chat_id, "account_id": current["id"]},
                     {
                         "$set": {
                             "last_message_at": reply_at,
@@ -3766,7 +3766,7 @@ async def stream_message(
             },
         )
         await db.chats.update_one(
-            {"id": chat_id},
+            {"id": chat_id, "account_id": current["id"]},
             {
                 "$set": {
                     "last_message_at": reply_at,

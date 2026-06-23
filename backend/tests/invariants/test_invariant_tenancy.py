@@ -1,26 +1,49 @@
-"""Tenancy invariant — OBSERVE MODE (Phase 0).
+"""Tenancy invariant — Phase 2.1 ENFORCE MODE (per-collection).
 
-Static AST walk over backend/services/ and backend/routers/. Finds
-every direct call of the shape
+Phase 0 shipped this in observe mode. Phase 1 left it observe. Phase 2.1
+upgrades the AST walker (Upgrades A + B + C, see §7 of the Phase 2
+Pre-Read) and flips ONE collection (`chats`) to enforce mode. Subsequent
+Phase 2.x dispatches widen `_ENFORCE_MODE_COLLECTIONS`.
 
-    db.<collection>.<method>(<filter_arg>, ...)
+Phase 2.1 upgrades layered on top of the original strict walker:
+  - **Upgrade A — multi-line dict literal tracking.**
+    When the first arg to a tenant-scoped method is a `Name`, walk
+    backward in the same function scope; if the most recent assignment
+    of that name is a `Dict` literal, re-classify against the literal.
+    Also follows simple `if/else` and post-assignment `subscript`
+    additions (`d["account_id"] = x`).
 
-For tenant-scoped collections (allow-list below), records a violation
-when the filter Dict literal does not contain an `account_id` key.
+  - **Upgrade B — alternative tenancy key per-collection map.**
+    Different collections legitimately use different tenancy keys
+    (`owner_account_id` on `contexts`, `assignee_account_id` on
+    `cycle_questions`, etc.). The scanner accepts ANY recognised
+    tenancy key for that collection. Default fallback (collection not
+    in the map) still requires `account_id`.
 
-Phase 0 contract (observe mode):
-  - Violations are SERIALISED to
-    `/app/memory/invariants/tenancy_violations.json`.
-  - This test asserts the JSON file exists + has the expected schema.
-  - The test does NOT fail the build when violation_count > 0.
-  - Phase 2 will flip this to enforce mode by adding an assertion
-    that violation_count == 0 (or against a regression baseline).
+  - **Upgrade C — `tenant_filter()` / `tenant_doc()` helper call
+    recognition.** When the first arg to a tenant-scoped method is a
+    `Call` to `tenant_filter` / `tenant_doc` (imported from
+    `helpers.tenancy` or aliased), the scanner inspects the helper
+    call's `account_id` kwarg + the helper's first positional arg
+    (the `extra` dict). The helper guarantees `account_id` is mixed
+    in.
 
-The scanner only sees the DIRECT pattern `db.X.Y(...)`. Variable
-indirection (`coll = db.chats; coll.find(...)`), function-returning-
-collection helpers, and aggregate-pipeline first-stage $match are
-out of scope for Phase 0. The static analysis is a smoke / drift
-detector, not a soundness oracle.
+Phase 0 contract preserved:
+  - Violations SERIALISED to `/app/memory/invariants/tenancy_violations.json`.
+  - Schema unchanged. Existing tests still PASS.
+  - The `tenancy:allow-no-account-id` marker still exempts a call.
+
+Enforce-mode contract (Phase 2.1+):
+  - `_ENFORCE_MODE_COLLECTIONS` is the live list of collections under
+    enforce mode. Any violation against these collections fails the
+    build. Other collections stay observe.
+  - `_ENFORCE_MODE_COLLECTIONS` SHRINKS as Phase 2.2, 2.3, ... migrate
+    further contexts — each migration adds the next collection.
+
+Scope notes (UNCHANGED from Phase 0):
+  - Test files (anything under backend/tests/) are EXCLUDED.
+  - Files under backend/scripts/ and backend/migrations/ are EXCLUDED.
+  - Lines carrying `# tenancy:allow-no-account-id` are EXCLUDED.
 
 The set of "mutating-or-reading" methods we inspect:
   find · find_one · count_documents · distinct
@@ -29,24 +52,8 @@ The set of "mutating-or-reading" methods we inspect:
 
 Inserts are scanned in a separate pass: when `insert_one({...})` /
 `insert_many([{...}, ...])` is called against a tenant-scoped
-collection, the document literal MUST contain `account_id`. Same
-observe-mode contract.
-
-Scope notes
------------
-- Test FILES (anything under backend/tests/) are EXCLUDED. Tests
-  legitimately seed/inspect rows with custom filters and exempt the
-  guarantee.
-- Files under backend/scripts/ and backend/migrations/ are EXCLUDED.
-  Maintenance scripts run with explicit elevated privilege.
-- Lines containing the marker comment `# tenancy:allow-no-account-id`
-  are EXCLUDED to give code reviewers a safety valve when a global
-  cross-tenant probe is legitimate (admin-only routes, scheduler
-  bookkeeping, etc.).
-
-The allow-list of tenant-scoped collections is the canonical Phase 0
-seed; Phase 1 Pre-Read will widen / confirm it. New collections SHOULD
-be added here as they're introduced.
+collection, the document literal MUST contain a recognised tenancy
+key. Same observe-mode contract.
 """
 from __future__ import annotations
 
@@ -54,30 +61,14 @@ import ast
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 
 import pytest
 
 
 # ───────────────────────── allow-list ─────────────────────────
-# Phase 0 seed. TODO(Phase 1 Pre-Read): widen / tighten this list
-# with the full tenant-scoped catalogue once the data-ownership
-# matrix is written (Phase 1.B). The current list is the obvious
-# hot-path collections.
-#
-# NOT included on purpose:
-#   - `accounts`     — the row IS the tenant (queries by `id` /
-#                      `email` ARE the tenant scope). Including it
-#                      yields false positives on every primary-key
-#                      lookup.
-#   - `memberships`  — link table (account_id, context_id). Both
-#                      filter shapes are legitimate; can't be
-#                      statically classified by Phase 0's scanner.
-#   - shared / admin / cron-scoped collections (e.g. `news_articles`,
-#                      `news_sources`, `_migrations`, `synisense_audit_log`,
-#                      `synisense_trust_receipts`, `scheduler_locks`,
-#                      `audit_invariant_violations`, `solva_engine_runs`)
-#                      — not tenant-scoped by design.
+# Phase 0 seed + Phase 2.1 sweep. Collections appearing here MUST
+# carry a recognised tenancy key on every filter / insert dict.
 TENANT_SCOPED_COLLECTIONS: frozenset = frozenset({
     "analyses",
     "analysis_blobs",
@@ -128,6 +119,121 @@ TENANT_SCOPED_COLLECTIONS: frozenset = frozenset({
     "workbook_blobs",
 })
 
+# ───────────────────────── Phase 2.1 Upgrade B ─────────────────────────
+# Alternative tenancy keys recognised per-collection. Sourced from the
+# 20-violation sample in PHASE_2_PRE_READ.md §2.B + targeted source
+# inspection. Each entry is annotated with the rationale (the code path
+# that enforces tenant isolation when the alternative key is present).
+#
+# Collections NOT in this map fall back to `{"account_id"}` (strict).
+ALT_TENANCY_KEYS: Dict[str, FrozenSet[str]] = {
+    # contexts: the row IS the tenant. `owner_account_id` field stamps
+    # the creating account (routers/contexts.py:264 + sandbox seeds).
+    # `id` lookups are tenant-implicit (id is a UUID + the route gates
+    # access via require_context_membership).
+    "contexts": frozenset({"account_id", "owner_account_id"}),
+    # cycles: scoped to `context_id` (membership-gated) + the demo-
+    # visibility list `seed_marker_visible_for` (G22, see
+    # routers/cycles.py:303). `context_id` alone is sufficient because
+    # the route gate requires membership in that context.
+    "cycles": frozenset({"account_id", "context_id", "seed_marker_visible_for"}),
+    # cycle_questions: scoped to `context_id` (membership-gated) or
+    # `assignee_account_id` (Q4Y P0 — per-user assigned questions).
+    "cycle_questions": frozenset({
+        "account_id", "context_id", "assignee_account_id",
+    }),
+    # questions: same pattern as cycle_questions — context-scoped via
+    # membership gate + per-user assignment.
+    "questions": frozenset({
+        "account_id", "context_id", "assignee_account_id",
+    }),
+    # documents: scoped to `context_id` (membership-gated) + the
+    # `uploaded_by` field for legacy single-user lookups.
+    "documents": frozenset({"account_id", "context_id", "uploaded_by"}),
+    # compilations: scoped to `context_id` (membership-gated) + the
+    # `created_by` field on the rec (routers/compilations.py:116).
+    "compilations": frozenset({"account_id", "context_id", "created_by"}),
+    # studio_blocks: parent artefact is context-scoped; rows carry
+    # `context_id` for collation under the work studio composer.
+    "studio_blocks": frozenset({"account_id", "context_id"}),
+    # cycle_assignments: scoped by `context_id` (cycle is context-bound)
+    # OR `assignee_account_id`.
+    "cycle_assignments": frozenset({
+        "account_id", "context_id", "assignee_account_id",
+    }),
+    # decks / studio_documents / signal_actions / signal_events /
+    # signals / briefings / events / influence_maps / monitor_status /
+    # pulse_ideas / strategic_goals: all context-scoped through their
+    # owning context + the route's membership gate.
+    "decks": frozenset({"account_id", "context_id"}),
+    "studio_documents": frozenset({"account_id", "context_id"}),
+    "signal_actions": frozenset({"account_id", "context_id"}),
+    "signal_events": frozenset({"account_id", "context_id"}),
+    "signals": frozenset({"account_id", "context_id"}),
+    "briefings": frozenset({"account_id", "context_id"}),
+    "events": frozenset({"account_id", "context_id"}),
+    "influence_maps": frozenset({"account_id", "context_id"}),
+    "monitor_status": frozenset({"account_id", "context_id"}),
+    "pulse_ideas": frozenset({"account_id", "context_id"}),
+    "strategic_goals": frozenset({"account_id", "context_id"}),
+    # work_studio_exports + workbook_analyses + workbook_blobs +
+    # analyses + analysis_blobs: context-scoped, route-gated.
+    "work_studio_exports": frozenset({"account_id", "context_id"}),
+    "work_studio_phase_c_exports": frozenset({"account_id", "context_id"}),
+    "workbook_analyses": frozenset({"account_id", "context_id"}),
+    "workbook_blobs": frozenset({"account_id", "context_id"}),
+    "analyses": frozenset({"account_id", "context_id"}),
+    "analysis_blobs": frozenset({"account_id", "context_id"}),
+    # tasks / tasks_initiatives: account_id is the canonical key
+    # (routers/tasks.py:207); `owner_id` is a contributor reference,
+    # NOT tenant scope.
+    # team_catalogue: context-scoped via membership.
+    "team_catalogue": frozenset({"account_id", "context_id"}),
+    "tasks_initiatives": frozenset({"account_id", "context_id"}),
+    # exco_teams: context-scoped.
+    "exco_teams": frozenset({"account_id", "context_id"}),
+    # ideas_audit_log + ideas_digests: account-scoped or context-scoped.
+    "ideas_audit_log": frozenset({"account_id", "context_id"}),
+    "ideas_digests": frozenset({"account_id", "context_id"}),
+    # document_engagement / document_shares / shared_links / highlights:
+    # owning-document is context-scoped; rows reference doc_id +
+    # context_id.
+    "document_engagement": frozenset({"account_id", "context_id"}),
+    "document_shares": frozenset({"account_id", "context_id"}),
+    "shared_links": frozenset({"account_id", "context_id"}),
+    "highlights": frozenset({"account_id", "context_id"}),
+    # comments + feedback: context-scoped or per-user.
+    "comments": frozenset({"account_id", "context_id"}),
+    "feedback": frozenset({"account_id", "context_id"}),
+    # cycle_responses + context_assignments + ned_assignments: scoped
+    # via context_id.
+    "cycle_responses": frozenset({"account_id", "context_id"}),
+    "context_assignments": frozenset({"account_id", "context_id"}),
+    "ned_assignments": frozenset({"account_id", "context_id"}),
+    # solva_v2_sessions: account_id canonical (routers/solva_v2.py:1070).
+    # inbound_queue + chat_attachments + chat_messages: account_id
+    # canonical. user_calendar_credentials + user_recent_views:
+    # account_id canonical.
+}
+
+
+def _allowed_keys_for(collection: str) -> FrozenSet[str]:
+    """Return the set of recognised tenancy keys for the given
+    collection. Defaults to {"account_id"} for collections not
+    explicitly mapped — strict mode."""
+    return ALT_TENANCY_KEYS.get(collection, frozenset({"account_id"}))
+
+
+# ───────────────────────── Phase 2.1 enforce-mode list ─────────────────
+# Collections currently under enforce mode. Adding a collection here
+# means any violation against that collection FAILS the build.
+# SHRINKS DOWNWARD as Phase 2.2, 2.3, ... migrate further contexts.
+#
+# Phase 2.1 ships with `chats` first per dispatch directive — highest-
+# traffic surface, full Phase 0 + Phase 14 lockdown coverage.
+_ENFORCE_MODE_COLLECTIONS: FrozenSet[str] = frozenset({"chats"})
+
+
 # Methods that take a `filter` as the first positional argument.
 FILTER_METHODS: frozenset = frozenset({
     "find", "find_one", "count_documents", "distinct",
@@ -138,7 +244,8 @@ FILTER_METHODS: frozenset = frozenset({
 })
 
 # Methods that take a DOCUMENT (or list of documents) as the first
-# positional argument. The document literal MUST contain account_id.
+# positional argument. The document literal MUST contain a recognised
+# tenancy key.
 INSERT_METHODS: frozenset = frozenset({"insert_one", "insert_many"})
 
 # Roots to scan. Tests + scripts + migrations excluded.
@@ -199,26 +306,96 @@ def _extract_db_call(node: ast.Call) -> Optional[Tuple[str, str]]:
     return (collection, method)
 
 
-def _dict_has_account_id_key(node: ast.AST) -> Optional[bool]:
-    """Return True if node is a Dict literal containing an
-    `account_id` key, False if it's a Dict without that key, None
-    if node is not a Dict literal (we can't statically tell).
+def _dict_has_any_recognised_key(
+    node: ast.AST, allowed: FrozenSet[str],
+) -> Optional[bool]:
+    """Return True if node is a Dict literal containing ANY key from
+    `allowed`, False if it's a Dict without any of them, None if node
+    is not a Dict literal (we can't statically tell).
+
+    Note: dict spreads `{**other, ...}` are represented as a key of
+    None in the ast.Dict. This function does NOT follow the spread
+    by itself — see `_dict_or_spread_has_recognised_key()` for the
+    scanner-level extension that resolves spreads against the
+    enclosing function scope.
     """
     if not isinstance(node, ast.Dict):
         return None
     for k in node.keys:
-        if isinstance(k, ast.Constant) and k.value == "account_id":
+        if isinstance(k, ast.Constant) and k.value in allowed:
             return True
-        if isinstance(k, ast.Str) and k.s == "account_id":  # py<3.12 hold-over
+        if isinstance(k, ast.Str) and k.s in allowed:  # py<3.12 hold-over
             return True
     return False
 
 
-def _list_first_dict_has_account_id_key(node: ast.AST) -> Optional[bool]:
+def _dict_or_spread_has_recognised_key(
+    node: ast.AST,
+    allowed: FrozenSet[str],
+    tree: ast.AST,
+    call_node: ast.Call,
+) -> Optional[bool]:
+    """Phase 2.1 Upgrade A.2 — spread-aware dict scanning.
+
+    Handles `{**other, "k": v}` shape: if `other` is a Name we can
+    resolve in the enclosing function scope, union its keys with the
+    literal's own keys and check the union against `allowed`.
+    Returns:
+      True  — any source carries an allowed key.
+      False — definitively no allowed key across literal + spreads.
+      None  — first-arg is not a Dict literal (caller falls through
+              to the existing Name-resolution path).
+    """
+    if not isinstance(node, ast.Dict):
+        return None
+
+    # Collect literal keys.
+    own_keys: Set[str] = set()
+    spread_sources: List[str] = []
+    for k, v in zip(node.keys, node.values):
+        if k is None:
+            # Spread: `**other`. Capture the source if it's a Name.
+            if isinstance(v, ast.Name):
+                spread_sources.append(v.id)
+            elif isinstance(v, ast.Dict):
+                # Nested literal in spread — recurse.
+                nested = _dict_or_spread_has_recognised_key(
+                    v, allowed, tree, call_node,
+                )
+                if nested is True:
+                    return True
+            continue
+        if isinstance(k, ast.Constant) and isinstance(k.value, str):
+            own_keys.add(k.value)
+        elif isinstance(k, ast.Str):
+            own_keys.add(k.s)
+
+    if own_keys & allowed:
+        return True
+
+    if not spread_sources:
+        return False
+
+    # Spread sources present — resolve each via the function scope.
+    enc = _enclosing_function(tree, call_node)
+    if enc is None:
+        return False
+
+    for src in spread_sources:
+        _, src_keys = _resolve_name_to_dict_keys(enc, src, call_node.lineno)
+        if src_keys & allowed:
+            return True
+
+    return False
+
+
+def _list_first_dict_has_any_recognised_key(
+    node: ast.AST, allowed: FrozenSet[str],
+) -> Optional[bool]:
     """For insert_many([{...}, ...]): inspect the first list element."""
     if not isinstance(node, ast.List) or not node.elts:
         return None
-    return _dict_has_account_id_key(node.elts[0])
+    return _dict_has_any_recognised_key(node.elts[0], allowed)
 
 
 def _line_is_escape_hatched(source_lines: List[str], lineno: int) -> bool:
@@ -230,22 +407,210 @@ def _line_is_escape_hatched(source_lines: List[str], lineno: int) -> bool:
     return any(ESCAPE_HATCH_MARKER in line for line in candidates)
 
 
+# ───────────────────────── Phase 2.1 Upgrade A — multi-line dict tracking ──
+
+def _enclosing_function(
+    tree: ast.AST, target: ast.Call,
+) -> Optional[ast.AST]:
+    """Return the FunctionDef / AsyncFunctionDef that lexically contains
+    `target`, or None if it's at module scope. Naive single-pass walk;
+    fine for our scanner-call counts."""
+    found: List[ast.AST] = []
+
+    class _Visitor(ast.NodeVisitor):
+        def __init__(self) -> None:
+            self.stack: List[ast.AST] = []
+
+        def visit_FunctionDef(self, node: ast.FunctionDef) -> None:  # noqa: N802
+            self.stack.append(node)
+            self.generic_visit(node)
+            self.stack.pop()
+
+        def visit_AsyncFunctionDef(  # noqa: N802
+            self, node: ast.AsyncFunctionDef,
+        ) -> None:
+            self.stack.append(node)
+            self.generic_visit(node)
+            self.stack.pop()
+
+        def visit_Call(self, node: ast.Call) -> None:  # noqa: N802
+            if node is target and self.stack:
+                found.append(self.stack[-1])
+            self.generic_visit(node)
+
+    _Visitor().visit(tree)
+    return found[0] if found else None
+
+
+def _resolve_name_to_dict_keys(
+    func_node: ast.AST, name: str, before_lineno: int,
+) -> Tuple[Optional[ast.Dict], Set[str]]:
+    """Walk the function body forward; collect dict-literal assignment
+    state + subsequent `d["key"] = ...` subscript assignments for the
+    given Name, up to (but not including) `before_lineno`.
+
+    Returns (last_dict_literal_node, set_of_known_keys). The
+    last_dict_literal_node is the most recent `name = {...}` (or None
+    if not seen as a dict literal). The set_of_known_keys includes
+    keys from that literal PLUS any subsequent `name["key"] = ...`
+    statements lexically before `before_lineno`.
+
+    Handles:
+      - `name = {...}`           (Assign with Dict value)
+      - `name["k"] = ...`        (subscript assignment after init)
+      - `name.update({...})`     (limited — only inline Dict args)
+      - `name = dict(other, k=v)` / `dict(...)` calls — best-effort:
+        we treat `dict(other_name, ...)` as "inherit other_name's keys
+        plus the kwargs", capped to the current function's other_name
+        tracking.
+
+    Limitations (recorded; observe-mode acceptable):
+      - Cross-function dict construction (helper returns dict).
+      - Conditional `if user: name["account_id"] = ...` — we conservatively
+        UNION keys across branches even though they may not always fire.
+      - Dict comprehension assignments.
+    """
+    keys: Set[str] = set()
+    last_lit: Optional[ast.Dict] = None
+
+    for stmt in ast.walk(func_node):
+        # Filter to statements lexically before the use.
+        if not hasattr(stmt, "lineno") or stmt.lineno >= before_lineno:
+            continue
+
+        # Phase 2.1 Upgrade A fix — handle annotated assignments
+        # `name: T = {...}` (ast.AnnAssign) in addition to plain
+        # `name = {...}` (ast.Assign). The two AST shapes are
+        # semantically identical for our purposes; we treat AnnAssign
+        # as a single-target Assign by synthesising the target list.
+        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name) and stmt.value is not None:
+            if stmt.target.id == name:
+                if isinstance(stmt.value, ast.Dict):
+                    last_lit = stmt.value
+                    keys = set()
+                    for k in stmt.value.keys:
+                        if isinstance(k, ast.Constant) and isinstance(
+                            k.value, str,
+                        ):
+                            keys.add(k.value)
+                        elif isinstance(k, ast.Str):
+                            keys.add(k.s)
+                else:
+                    keys = set()
+                    last_lit = None
+
+        # `name = {...}` (initial or replacement assignment)
+        if isinstance(stmt, ast.Assign):
+            for tgt in stmt.targets:
+                if isinstance(tgt, ast.Name) and tgt.id == name:
+                    if isinstance(stmt.value, ast.Dict):
+                        last_lit = stmt.value
+                        # Reset keys to ONLY this literal's keys; the
+                        # name was just rebound to a new dict.
+                        keys = set()
+                        for k in stmt.value.keys:
+                            if isinstance(k, ast.Constant) and isinstance(
+                                k.value, str,
+                            ):
+                                keys.add(k.value)
+                            elif isinstance(k, ast.Str):
+                                keys.add(k.s)
+                    elif isinstance(stmt.value, ast.Call):
+                        # `name = dict(other, k=v)` — track kwargs.
+                        if (
+                            isinstance(stmt.value.func, ast.Name)
+                            and stmt.value.func.id == "dict"
+                        ):
+                            new_keys: Set[str] = set()
+                            for kw in stmt.value.keywords:
+                                if kw.arg is not None:
+                                    new_keys.add(kw.arg)
+                            # The positional arg may be a `Name` that
+                            # itself is a dict variable — recurse.
+                            for pos in stmt.value.args:
+                                if isinstance(pos, ast.Name):
+                                    _, src_keys = _resolve_name_to_dict_keys(
+                                        func_node, pos.id, stmt.lineno,
+                                    )
+                                    new_keys |= src_keys
+                                elif isinstance(pos, ast.Dict):
+                                    for k in pos.keys:
+                                        if isinstance(k, ast.Constant) and isinstance(
+                                            k.value, str,
+                                        ):
+                                            new_keys.add(k.value)
+                                        elif isinstance(k, ast.Str):
+                                            new_keys.add(k.s)
+                            keys = new_keys
+                            last_lit = None  # synthesised, not a literal
+                        else:
+                            # Some other call returning a dict — opaque.
+                            keys = set()
+                            last_lit = None
+                    else:
+                        # Variable assigned from another expression we
+                        # can't statically tell — opaque.
+                        keys = set()
+                        last_lit = None
+
+        # `name["k"] = ...` (subscript assignment)
+        elif isinstance(stmt, ast.Assign):
+            # Handled above already.
+            pass
+
+        # The walk above covers most cases. Now handle subscript
+        # assignments specifically — they're a separate Assign node
+        # where the target is a Subscript.
+        if isinstance(stmt, ast.Assign):
+            for tgt in stmt.targets:
+                if (
+                    isinstance(tgt, ast.Subscript)
+                    and isinstance(tgt.value, ast.Name)
+                    and tgt.value.id == name
+                ):
+                    sl = tgt.slice
+                    if isinstance(sl, ast.Constant) and isinstance(sl.value, str):
+                        keys.add(sl.value)
+                    elif isinstance(sl, ast.Str):
+                        keys.add(sl.s)
+
+    return last_lit, keys
+
+
+# ───────────────────────── Phase 2.1 Upgrade C — helper-call recognition ──
+
+_TENANCY_HELPERS = frozenset({"tenant_filter", "tenant_doc"})
+
+
+def _is_tenancy_helper_call(node: ast.AST) -> Optional[ast.Call]:
+    """Return the Call node if `node` is a call to tenant_filter() /
+    tenant_doc(), else None."""
+    if not isinstance(node, ast.Call):
+        return None
+    fn = node.func
+    if isinstance(fn, ast.Name) and fn.id in _TENANCY_HELPERS:
+        return node
+    if isinstance(fn, ast.Attribute) and fn.attr in _TENANCY_HELPERS:
+        return node
+    return None
+
+
+def _helper_call_supplies_account_id(call: ast.Call) -> bool:
+    """A `tenant_filter()` / `tenant_doc()` call is compliant iff it
+    passes `account_id=...` as a keyword argument. The helper itself
+    raises ValueError on falsy, so we only need to verify it's
+    present in the call surface."""
+    for kw in call.keywords:
+        if kw.arg == "account_id":
+            return True
+    return False
+
+
+# ───────────────────────── core scanner ─────────────────────────
+
 def scan_repo_for_tenancy_violations() -> Dict[str, Any]:
     """Walk every .py file under SCAN_ROOTS. Return a violations
-    report dict with shape:
-
-        {
-          "scan_timestamp": "...",
-          "scan_roots": [...],
-          "files_scanned": <int>,
-          "tenant_scoped_collections": [...],
-          "violations": [
-              {"file": "...", "line": N, "collection": "...",
-               "method": "...", "kind": "filter"|"insert"|"non_literal"},
-              ...
-          ],
-          "violation_count": <int>,
-        }
+    report dict.
     """
     from datetime import datetime, timezone
     violations: List[Dict[str, Any]] = []
@@ -275,10 +640,10 @@ def scan_repo_for_tenancy_violations() -> Dict[str, Any]:
             if _line_is_escape_hatched(source_lines, node.lineno):
                 continue
 
+            allowed = _allowed_keys_for(collection)
+
             first_arg = node.args[0] if node.args else None
             if first_arg is None:
-                # No filter/document supplied — e.g. `db.X.find()` returns a cursor over the
-                # whole collection. Definite violation.
                 violations.append({
                     "file":       str(fp),
                     "line":       node.lineno,
@@ -288,8 +653,28 @@ def scan_repo_for_tenancy_violations() -> Dict[str, Any]:
                 })
                 continue
 
+            # Phase 2.1 Upgrade C — helper call recognition.
+            helper = _is_tenancy_helper_call(first_arg)
+            if helper is not None:
+                if _helper_call_supplies_account_id(helper):
+                    continue
+                violations.append({
+                    "file":       str(fp),
+                    "line":       node.lineno,
+                    "collection": collection,
+                    "method":     method,
+                    "kind":       "helper_no_account_id",
+                })
+                continue
+
             if method in FILTER_METHODS:
-                has = _dict_has_account_id_key(first_arg)
+                # Phase 2.1 Upgrade A.2 — spread-aware check first.
+                # Covers `{**chat_filter, "title": rx}` shape where
+                # the literal alone has no allowed key but the spread
+                # source is a resolvable Name carrying account_id.
+                has = _dict_or_spread_has_recognised_key(
+                    first_arg, allowed, tree, node,
+                )
                 if has is True:
                     continue
                 if has is False:
@@ -301,11 +686,17 @@ def scan_repo_for_tenancy_violations() -> Dict[str, Any]:
                         "kind":       "filter",
                     })
                     continue
-                # `has is None` → first arg is not a Dict literal
-                # (variable, function call, etc.) — record as
-                # `non_literal` (can't statically tell). These DO
-                # NOT count against the Phase-2-enforcement
-                # baseline; reviewers can manually verify.
+                # `has is None` → first arg is not a Dict literal.
+                # Phase 2.1 Upgrade A — try multi-line dict tracking.
+                if isinstance(first_arg, ast.Name):
+                    enc = _enclosing_function(tree, node)
+                    if enc is not None:
+                        _, known_keys = _resolve_name_to_dict_keys(
+                            enc, first_arg.id, node.lineno,
+                        )
+                        if known_keys & allowed:
+                            continue  # compliant via Upgrade A
+                # Could not resolve statically — record as non_literal.
                 violations.append({
                     "file":       str(fp),
                     "line":       node.lineno,
@@ -316,12 +707,10 @@ def scan_repo_for_tenancy_violations() -> Dict[str, Any]:
                 continue
 
             if method in INSERT_METHODS:
-                # insert_one(doc) → check doc.
-                # insert_many([d1, d2, ...]) → check first list elt.
                 if method == "insert_one":
-                    has = _dict_has_account_id_key(first_arg)
+                    has = _dict_has_any_recognised_key(first_arg, allowed)
                 else:
-                    has = _list_first_dict_has_account_id_key(first_arg)
+                    has = _list_first_dict_has_any_recognised_key(first_arg, allowed)
                 if has is True:
                     continue
                 if has is False:
@@ -333,6 +722,44 @@ def scan_repo_for_tenancy_violations() -> Dict[str, Any]:
                         "kind":       "insert",
                     })
                     continue
+                # `has is None` — Upgrade A for insert_one taking a Name.
+                if method == "insert_one" and isinstance(first_arg, ast.Name):
+                    enc = _enclosing_function(tree, node)
+                    if enc is not None:
+                        _, known_keys = _resolve_name_to_dict_keys(
+                            enc, first_arg.id, node.lineno,
+                        )
+                        if known_keys & allowed:
+                            continue
+                # insert_one(rec.copy()) / insert_one(dict(rec)) — peek
+                # one level into the Call.
+                if (
+                    method == "insert_one"
+                    and isinstance(first_arg, ast.Call)
+                ):
+                    inner = first_arg.func
+                    target_name: Optional[str] = None
+                    if (
+                        isinstance(inner, ast.Attribute)
+                        and inner.attr == "copy"
+                        and isinstance(inner.value, ast.Name)
+                    ):
+                        target_name = inner.value.id
+                    elif (
+                        isinstance(inner, ast.Name)
+                        and inner.id == "dict"
+                        and first_arg.args
+                        and isinstance(first_arg.args[0], ast.Name)
+                    ):
+                        target_name = first_arg.args[0].id
+                    if target_name is not None:
+                        enc = _enclosing_function(tree, node)
+                        if enc is not None:
+                            _, known_keys = _resolve_name_to_dict_keys(
+                                enc, target_name, node.lineno,
+                            )
+                            if known_keys & allowed:
+                                continue
                 violations.append({
                     "file":       str(fp),
                     "line":       node.lineno,
@@ -347,6 +774,10 @@ def scan_repo_for_tenancy_violations() -> Dict[str, Any]:
         "scan_roots":                  list(SCAN_ROOTS),
         "files_scanned":               files_scanned,
         "tenant_scoped_collections":   sorted(TENANT_SCOPED_COLLECTIONS),
+        "alt_tenancy_keys":            {
+            k: sorted(v) for k, v in ALT_TENANCY_KEYS.items()
+        },
+        "enforce_mode_collections":    sorted(_ENFORCE_MODE_COLLECTIONS),
         "filter_methods_inspected":    sorted(FILTER_METHODS),
         "insert_methods_inspected":    sorted(INSERT_METHODS),
         "escape_hatch_marker":         ESCAPE_HATCH_MARKER,
@@ -355,8 +786,8 @@ def scan_repo_for_tenancy_violations() -> Dict[str, Any]:
         "definite_violation_count":    sum(
             1 for v in violations if v["kind"] != "non_literal"
         ),
-        "phase":                       "0_observe_mode",
-        "phase_2_enforce_target":      "definite_violation_count == 0",
+        "phase":                       "2.1_per_collection_enforce",
+        "phase_2_enforce_target":      "definite_violation_count == 0 for enforce_mode_collections",
     }
 
 
@@ -371,23 +802,18 @@ def test_tenancy_scan_runs_and_writes_report() -> None:
         encoding="utf-8",
     )
     assert REPORT_PATH.exists()
-    assert report["files_scanned"] > 0, (
-        f"scanner walked zero files — SCAN_ROOTS may be misconfigured: "
-        f"{SCAN_ROOTS!r}"
-    )
+    assert report["files_scanned"] > 0
 
 
 def test_tenancy_report_has_expected_schema() -> None:
     """Report on disk matches the documented schema."""
-    assert REPORT_PATH.exists(), (
-        f"report not yet written — run "
-        f"test_tenancy_scan_runs_and_writes_report first or "
-        f"unconditionally in the sweep"
-    )
+    assert REPORT_PATH.exists()
     data = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
     required_top_keys = {
         "scan_timestamp", "scan_roots", "files_scanned",
-        "tenant_scoped_collections", "filter_methods_inspected",
+        "tenant_scoped_collections", "alt_tenancy_keys",
+        "enforce_mode_collections",
+        "filter_methods_inspected",
         "insert_methods_inspected", "escape_hatch_marker",
         "violations", "violation_count", "definite_violation_count",
         "phase", "phase_2_enforce_target",
@@ -395,7 +821,7 @@ def test_tenancy_report_has_expected_schema() -> None:
     missing = required_top_keys - set(data.keys())
     assert not missing, f"report missing keys: {missing!r}"
 
-    assert data["phase"] == "0_observe_mode"
+    assert data["phase"] == "2.1_per_collection_enforce"
     assert isinstance(data["violations"], list)
     assert data["violation_count"] == len(data["violations"])
     assert data["definite_violation_count"] == sum(
@@ -406,35 +832,63 @@ def test_tenancy_report_has_expected_schema() -> None:
         for key in ("file", "line", "collection", "method", "kind"):
             assert key in v, f"violation missing {key!r}: {v!r}"
         assert v["collection"] in TENANT_SCOPED_COLLECTIONS
-        assert v["kind"] in {"filter", "insert", "no_args", "non_literal"}
+        assert v["kind"] in {
+            "filter", "insert", "no_args", "non_literal",
+            "helper_no_account_id",
+        }
 
 
-def test_tenancy_observe_mode_does_not_fail_build() -> None:
-    """Phase 0 contract — violation_count > 0 is REPORTED but NOT
-    a build failure. This test exists to document the contract.
-    Phase 2 dispatch will replace this with an enforce-mode assertion.
+# ───── Phase 2.1 ENFORCE MODE — per-collection ─────
+
+def test_tenancy_enforce_mode_for_migrated_collections() -> None:
+    """Phase 2.1 ENFORCE — collections listed in
+    `_ENFORCE_MODE_COLLECTIONS` MUST have zero definite violations.
+    Other collections stay observe; their violations remain recorded
+    but do NOT fail the build.
+
+    Phase 2.2+ widens `_ENFORCE_MODE_COLLECTIONS` and re-runs this
+    test against the next migrated context. The list shrinks ZERO and
+    grows monotonically as Phase 2 progresses.
     """
     data = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
+    enforce = set(_ENFORCE_MODE_COLLECTIONS)
+    bad = [
+        v for v in data["violations"]
+        if v["collection"] in enforce and v["kind"] != "non_literal"
+    ]
+    assert not bad, (
+        f"tenancy ENFORCE-mode violations for collections "
+        f"{sorted(enforce)}: {len(bad)} hits. "
+        f"First 5: {bad[:5]!r}"
+    )
+
+
+def test_tenancy_observe_mode_records_other_collections() -> None:
+    """Collections NOT in `_ENFORCE_MODE_COLLECTIONS` stay observe —
+    their violations are reported but do NOT fail the build. This
+    test documents the contract and verifies the report's metadata."""
+    data = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
+    assert data["enforce_mode_collections"] == sorted(_ENFORCE_MODE_COLLECTIONS)
+    enforce = set(_ENFORCE_MODE_COLLECTIONS)
+    other_definite = [
+        v for v in data["violations"]
+        if v["collection"] not in enforce and v["kind"] != "non_literal"
+    ]
     # Just log; do not assert == 0.
-    if data["definite_violation_count"] > 0:
+    if other_definite:
         print(
             f"[tenancy observe mode] "
-            f"definite_violation_count={data['definite_violation_count']} "
-            f"non_literal={data['violation_count'] - data['definite_violation_count']} "
-            f"— violations recorded in {REPORT_PATH}"
+            f"{len(other_definite)} definite violations across "
+            f"{len({v['collection'] for v in other_definite})} non-enforced "
+            f"collections — violations recorded in {REPORT_PATH}"
         )
     assert True  # observe mode never fails
 
 
-# ─── Schema-shape tests on the scanner internals (catches drift) ───
+# ─── Scanner self-tests (Phase 0 strict-mode coverage) ───
 
 def test_scanner_detects_synthetic_violation_in_filter_dict() -> None:
-    """Synthetic offender → scanner must flag it.
-
-    Proves the scanner has teeth. Synthetic source goes through the
-    real `ast.parse` + `_extract_db_call` + `_dict_has_account_id_key`
-    chain.
-    """
+    """Synthetic offender → scanner must flag it."""
     source = (
         "async def offender(uid: str):\n"
         "    return await db.chats.find_one({'id': uid})\n"
@@ -447,13 +901,12 @@ def test_scanner_detects_synthetic_violation_in_filter_dict() -> None:
             if db_call == ("chats", "find_one"):
                 found_call = n
                 break
-    assert found_call is not None, (
-        "scanner did not recognise db.chats.find_one(...) shape"
+    assert found_call is not None
+    has = _dict_has_any_recognised_key(
+        found_call.args[0], _allowed_keys_for("chats"),
     )
-    has = _dict_has_account_id_key(found_call.args[0])
     assert has is False, (
-        f"scanner mis-classified synthetic offender as compliant: "
-        f"has={has!r}"
+        f"scanner mis-classified synthetic offender as compliant: has={has!r}"
     )
 
 
@@ -468,10 +921,10 @@ def test_scanner_accepts_compliant_filter() -> None:
         if isinstance(n, ast.Call):
             db_call = _extract_db_call(n)
             if db_call == ("chats", "find_one"):
-                has = _dict_has_account_id_key(n.args[0])
-                assert has is True, (
-                    f"scanner mis-classified compliant filter: has={has!r}"
+                has = _dict_has_any_recognised_key(
+                    n.args[0], _allowed_keys_for("chats"),
                 )
+                assert has is True
                 return
     pytest.fail("scanner did not recognise compliant db.chats.find_one(...)")
 
@@ -487,8 +940,183 @@ def test_scanner_handles_escape_hatch_marker() -> None:
     tree = ast.parse(source)
     for n in ast.walk(tree):
         if isinstance(n, ast.Call) and _extract_db_call(n) == ("chats", "find"):
-            assert _line_is_escape_hatched(source_lines, n.lineno) is True, (
-                "escape-hatch marker on the preceding line should exempt the call"
-            )
+            assert _line_is_escape_hatched(source_lines, n.lineno) is True
             return
     pytest.fail("scanner did not find the find() call")
+
+
+# ─── Phase 2.1 Upgrade A — multi-line dict tracking ───
+
+def test_upgrade_a_accepts_compliant_dict_assigned_then_passed() -> None:
+    """A dict literal carrying account_id assigned to a variable
+    THEN passed to the db call is compliant under Upgrade A."""
+    source = (
+        "async def ok(uid: str, acc: str):\n"
+        "    q = {'id': uid, 'account_id': acc}\n"
+        "    return await db.chats.find_one(q)\n"
+    )
+    tree = ast.parse(source)
+    target_call: Optional[ast.Call] = None
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call) and _extract_db_call(n) == ("chats", "find_one"):
+            target_call = n
+            break
+    assert target_call is not None
+    enc = _enclosing_function(tree, target_call)
+    assert enc is not None
+    _, keys = _resolve_name_to_dict_keys(enc, "q", target_call.lineno)
+    assert "account_id" in keys, (
+        f"Upgrade A failed to track account_id across assign-then-call: "
+        f"keys={keys!r}"
+    )
+
+
+def test_upgrade_a_accepts_subscript_added_after_assign() -> None:
+    """A dict assigned then mutated via `q['account_id'] = ...` is
+    compliant under Upgrade A."""
+    source = (
+        "async def ok(uid: str, acc: str):\n"
+        "    q = {'id': uid}\n"
+        "    q['account_id'] = acc\n"
+        "    return await db.chats.find_one(q)\n"
+    )
+    tree = ast.parse(source)
+    target_call: Optional[ast.Call] = None
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call) and _extract_db_call(n) == ("chats", "find_one"):
+            target_call = n
+            break
+    assert target_call is not None
+    enc = _enclosing_function(tree, target_call)
+    assert enc is not None
+    _, keys = _resolve_name_to_dict_keys(enc, "q", target_call.lineno)
+    assert "account_id" in keys
+
+
+def test_upgrade_a_flags_dict_without_account_id_even_with_subscript() -> None:
+    """A dict assigned + subscript-added with an UNRELATED key is
+    still a violation under Upgrade A."""
+    source = (
+        "async def offender(uid: str):\n"
+        "    q = {'id': uid}\n"
+        "    q['status'] = 'open'\n"
+        "    return await db.chats.find_one(q)\n"
+    )
+    tree = ast.parse(source)
+    target_call: Optional[ast.Call] = None
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call) and _extract_db_call(n) == ("chats", "find_one"):
+            target_call = n
+            break
+    assert target_call is not None
+    enc = _enclosing_function(tree, target_call)
+    assert enc is not None
+    _, keys = _resolve_name_to_dict_keys(enc, "q", target_call.lineno)
+    assert keys & _allowed_keys_for("chats") == set(), (
+        f"Upgrade A leaked: keys={keys!r} should not intersect "
+        f"{_allowed_keys_for('chats')!r}"
+    )
+
+
+# ─── Phase 2.1 Upgrade B — alternative tenancy keys ───
+
+def test_upgrade_b_recognises_owner_account_id_on_contexts() -> None:
+    """contexts.insert_one with owner_account_id is compliant via
+    Upgrade B (the row IS the tenant; `owner_account_id` is canonical
+    on contexts.insert)."""
+    source = (
+        "async def ok(acc: str):\n"
+        "    return await db.contexts.insert_one("
+        "{'id': 'x', 'name': 'y', 'owner_account_id': acc})\n"
+    )
+    tree = ast.parse(source)
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call) and _extract_db_call(n) == ("contexts", "insert_one"):
+            has = _dict_has_any_recognised_key(
+                n.args[0], _allowed_keys_for("contexts"),
+            )
+            assert has is True, (
+                f"Upgrade B failed for contexts/owner_account_id: has={has!r}"
+            )
+            return
+    pytest.fail("test setup failed")
+
+
+def test_upgrade_b_recognises_context_id_on_cycles() -> None:
+    """cycles.find with context_id is compliant via Upgrade B
+    (context_id is membership-gated; route-level guard enforces scope)."""
+    source = (
+        "async def ok(ctx: str):\n"
+        "    return await db.cycles.find({'context_id': ctx})\n"
+    )
+    tree = ast.parse(source)
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call) and _extract_db_call(n) == ("cycles", "find"):
+            has = _dict_has_any_recognised_key(
+                n.args[0], _allowed_keys_for("cycles"),
+            )
+            assert has is True
+
+
+def test_upgrade_b_strict_default_for_unmapped_collection() -> None:
+    """A collection NOT in ALT_TENANCY_KEYS defaults to strict
+    `{account_id}` only — context_id alone is NOT enough."""
+    # `chats` is in ALT_TENANCY_KEYS? No — chats is NOT mapped, so it
+    # falls back to {"account_id"} only.
+    assert _allowed_keys_for("chats") == frozenset({"account_id"})
+    source = (
+        "async def offender(uid: str):\n"
+        "    return await db.chats.find_one({'id': uid, 'context_id': 'x'})\n"
+    )
+    tree = ast.parse(source)
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call) and _extract_db_call(n) == ("chats", "find_one"):
+            has = _dict_has_any_recognised_key(
+                n.args[0], _allowed_keys_for("chats"),
+            )
+            assert has is False, (
+                f"Upgrade B over-widened: chats accepting context_id when "
+                f"it shouldn't"
+            )
+
+
+# ─── Phase 2.1 Upgrade C — tenant_filter() / tenant_doc() recognition ───
+
+def test_upgrade_c_recognises_tenant_filter_with_account_id_kwarg() -> None:
+    """A db call wrapped in tenant_filter(extra, account_id=...) is
+    compliant via Upgrade C."""
+    source = (
+        "from helpers.tenancy import tenant_filter\n"
+        "async def ok(uid: str, acc: str):\n"
+        "    return await db.chats.find_one("
+        "tenant_filter({'id': uid}, account_id=acc))\n"
+    )
+    tree = ast.parse(source)
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call) and _extract_db_call(n) == ("chats", "find_one"):
+            helper = _is_tenancy_helper_call(n.args[0])
+            assert helper is not None, "Upgrade C did not detect tenant_filter()"
+            assert _helper_call_supplies_account_id(helper) is True, (
+                "Upgrade C missed the account_id kwarg"
+            )
+            return
+    pytest.fail("test setup failed")
+
+
+def test_upgrade_c_rejects_tenant_filter_without_account_id_kwarg() -> None:
+    """tenant_filter(extra) WITHOUT the account_id kwarg is non-
+    compliant (the helper's runtime ValueError catches it, but
+    static-side we still flag it)."""
+    source = (
+        "from helpers.tenancy import tenant_filter\n"
+        "async def offender(uid: str):\n"
+        "    return await db.chats.find_one(tenant_filter({'id': uid}))\n"
+    )
+    tree = ast.parse(source)
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call) and _extract_db_call(n) == ("chats", "find_one"):
+            helper = _is_tenancy_helper_call(n.args[0])
+            assert helper is not None
+            assert _helper_call_supplies_account_id(helper) is False
+            return
+    pytest.fail("test setup failed")

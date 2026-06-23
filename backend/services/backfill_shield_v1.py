@@ -273,7 +273,7 @@ async def _backfill_chat(
     # ── Mark chat as IN_PROGRESS before writing audit rows so a
     # mid-chat crash leaves a partial marker on re-run. ──
     if not dry_run:
-        await db.chats.update_one(
+        await db.chats.update_one(  # tenancy:allow-no-account-id — backfill service processes a single chat scoped via `id` (UUID); each chat already loaded by the runner with its account_id.
             {"id": chat_id},
             {"$set": {"backfill_metadata": {
                 "batch_id": batch_id,
@@ -330,13 +330,13 @@ async def _backfill_chat(
         }
         if audit_ids:
             # $push with $each so we append without losing any pre-existing.
-            await db.chats.update_one(
+            await db.chats.update_one(  # tenancy:allow-no-account-id — see comment at L276; chat already loaded in batch outer scope.
                 {"id": chat_id},
                 {"$set": update_doc,
                  "$push": {"synisense_audit_ids": {"$each": audit_ids}}},
             )
         else:
-            await db.chats.update_one(
+            await db.chats.update_one(  # tenancy:allow-no-account-id — see comment at L276.
                 {"id": chat_id}, {"$set": update_doc},
             )
 
@@ -408,7 +408,7 @@ async def run_backfill(
             "errors_count": 0,
         })
 
-    cursor = db.chats.find(query, {"_id": 0}).sort([("created_at", 1)])
+    cursor = db.chats.find(query, {"_id": 0}).sort([("created_at", 1)])  # tenancy:allow-no-account-id — admin backfill runner; `query` selects pre-v1 chats globally for the batch job per design.
     if limit:
         cursor = cursor.limit(limit)
 

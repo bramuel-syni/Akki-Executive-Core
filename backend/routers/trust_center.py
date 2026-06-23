@@ -77,6 +77,7 @@ async def _is_superadmin_in_context(account_id: str, context_id: str) -> bool:
 async def _load_chat_or_403(chat_id: str, account_id: str) -> Dict[str, Any]:
     """Returns the chat row if the caller has access to its context.
     Raises 404 if missing, 403 if not in context."""
+    # tenancy:allow-no-account-id — lookup is intentionally chat_id-only; the membership check below at L84-90 enforces tenant scope. A direct account_id filter here would convert 403 → 404 for foreign chats, masking the existence check the Trust Center needs.
     chat = await db.chats.find_one({"id": chat_id}, {"_id": 0})
     if not chat:
         raise HTTPException(status_code=404, detail="Chat not found.")
@@ -710,7 +711,7 @@ async def activity_export(
                if r.get("message_id")]
     if msg_ids:
         chat_ids = list({r["chat_id"] for r in activity_resp.get("rows", [])})
-        chats_in_scope = await db.chats.find(
+        chats_in_scope = await db.chats.find(  # tenancy:allow-no-account-id — `chat_ids` were sourced from `activity()` above which is tenant-filtered via accessible_context_ids; this read is a lookup-by-id of an already-filtered set.
             {"id": {"$in": chat_ids}},
             {"_id": 0, "id": 1, "synisense_audit_ids": 1},
         ).to_list(length=None)

@@ -158,7 +158,7 @@ async def search_chats(
                 continue
             if m["chat_id"] not in chat_by_id:
                 row = await db.chats.find_one(
-                    {"id": m["chat_id"]},
+                    {"id": m["chat_id"], "account_id": account_id},
                     {"_id": 0, "id": 1, "title": 1, "last_message_at": 1, "created_at": 1},
                 )
                 if row:

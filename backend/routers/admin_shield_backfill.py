@@ -124,6 +124,7 @@ async def latest_status(
             "estimated_remaining_seconds": 0,
         }
 
+    # tenancy:allow-no-account-id — admin-wide pending-count probe; super-admin only (route gate at L62-79 enforces this).
     pending = await db.chats.count_documents({
         "$or": [
             {"synisense_audit_ids": {"$exists": False}},
