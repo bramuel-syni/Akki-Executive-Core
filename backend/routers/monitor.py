@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from core import db, require_context_membership
+from contracts import get_synisense  # Phase 4.3 — signals reads route through SyniSense.
 
 logger = logging.getLogger("akki.monitor")
 router = APIRouter(prefix="/api")

@@ -1,7 +1,274 @@
 {
   "class": "SyniSenseContract",
-  "method_count": 6,
+  "method_count": 25,
   "methods": {
+    "add_signal_comment": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "signal_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "comment",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Dict[str, Any]",
+          "has_default": false
+        }
+      ],
+      "return": "bool"
+    },
+    "aggregate_signals_by_type": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "since_iso",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        }
+      ],
+      "return": "Dict[str, int]"
+    },
+    "bookmark_signal": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "signal_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "bookmarked_by",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "bool"
+    },
+    "count_signals": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "context_ids",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "type_in",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "since_iso",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "until_iso",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "status",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "status_in",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "committee_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        }
+      ],
+      "return": "int"
+    },
+    "delete_signal_comment": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "signal_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "comment_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "commenter_account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "bool"
+    },
+    "delete_signals_in_context": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "int"
+    },
+    "dismiss_signal": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "signal_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "bool"
+    },
+    "find_signal_by_content_hash": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "content_hash",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "Optional[Signal]"
+    },
+    "find_signal_by_external_ref": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "source",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "source_ref",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "Optional[Signal]"
+    },
     "get_audit_events": {
       "parameters": [
         {
@@ -57,6 +324,12 @@
           "has_default": false
         },
         {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
           "name": "untenanted",
           "kind": "KEYWORD_ONLY",
           "annotation": "bool",
@@ -81,6 +354,239 @@
         }
       ],
       "return": "Optional[TrustReceipt]"
+    },
+    "insert_signal": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "signal_row",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Dict[str, Any]",
+          "has_default": false
+        }
+      ],
+      "return": "str"
+    },
+    "insert_signals_for_context": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "signal_rows",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "List[Dict[str, Any]]",
+          "has_default": false
+        }
+      ],
+      "return": "int"
+    },
+    "list_signals": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "context_ids",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "type_in",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "ids",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "status",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "status_in",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "committee_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "since_iso",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "sort_by",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": true
+        },
+        {
+          "name": "order",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": true
+        },
+        {
+          "name": "limit",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "int",
+          "has_default": true
+        }
+      ],
+      "return": "List[Signal]"
+    },
+    "list_signals_by_ids": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "signal_ids",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "List[str]",
+          "has_default": false
+        },
+        {
+          "name": "admin_cross_tenant",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "bool",
+          "has_default": true
+        }
+      ],
+      "return": "List[Signal]"
+    },
+    "mark_signal_resolved": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "signal_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "resolution_note",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": false
+        },
+        {
+          "name": "resolved_by",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "bool"
+    },
+    "mark_signal_unresolved": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "signal_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "bool"
+    },
+    "merge_signal_dedup": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "signal_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "content_hash",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "merge_count",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "int",
+          "has_default": false
+        },
+        {
+          "name": "last_seen_at",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "bool"
     },
     "refresh_tenant_entities_cache": {
       "parameters": [
@@ -145,6 +651,75 @@
         }
       ],
       "return": "ShieldResult"
+    },
+    "unbookmark_signal": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "signal_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "bool"
+    },
+    "unset_signals_committee": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "committee_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "int"
+    },
+    "upsert_signal_intelligence": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "signal_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "signal_doc",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Dict[str, Any]",
+          "has_default": false
+        }
+      ],
+      "return": "bool"
     }
   }
 }

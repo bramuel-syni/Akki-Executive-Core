@@ -24,6 +24,7 @@ from core import (
     db, now as _now, iso as _iso, write_audit,
     get_current_account, require_context_membership,
 )
+from contracts import get_synisense  # Phase 4.3 — signals reads route through SyniSense.
 from email_service import send_email
 from services.privacy_wall import project_for_pulse
 
@@ -55,7 +56,13 @@ def _sanitize_share(s: Dict[str, Any]) -> Dict[str, Any]:
 
 async def _load_artefact(item_type: str, item_id: str, context_id: str) -> Optional[Dict[str, Any]]:
     if item_type == "signal":
-        return await db.signals.find_one({"id": item_id, "context_id": context_id}, {"_id": 0})
+        _s = await get_synisense().get_signal(
+            account_id="",
+            signal_id=item_id,
+            context_id=context_id,
+            untenanted=True,
+        )
+        return _s.raw if _s else None
     if item_type == "briefing":
         return await db.boardpacks.find_one({"id": item_id, "context_id": context_id}, {"_id": 0})
     if item_type == "brief":

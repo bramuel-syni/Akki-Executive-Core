@@ -13,6 +13,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from briefings_service import build_briefing_prompt, render_pdf, render_docx, render_board_deck_pdf
+from contracts import get_synisense  # Phase 4.3 — signals reads route through SyniSense contract.
 from llm_service import call_llm as llm_call_llm, parse_json_response
 from citation_refs import build_references
 
@@ -70,10 +71,12 @@ async def create_briefing(
 
     # Cheap pre-flight: surface "no signals" synchronously so the user
     # sees the error immediately instead of after a polling round-trip.
-    q: Dict[str, Any] = {"context_id": context_id, "status": "active"}
-    if body.signal_ids:
-        q["id"] = {"$in": body.signal_ids}
-    signal_count = await db.signals.count_documents(q)
+    signal_count = await get_synisense().count_signals(
+        account_id=ctx["account"]["id"],
+        context_id=context_id,
+        status="active",
+        ids=list(body.signal_ids) if body.signal_ids else None,
+    )
     if signal_count == 0:
         raise HTTPException(
             status_code=400,
@@ -124,10 +127,16 @@ async def _create_briefing_worker(
     )
     my_role = (my_membership or {}).get("role") or "executive"
 
-    q: Dict[str, Any] = {"context_id": context_id, "status": "active"}
-    if body.signal_ids:
-        q["id"] = {"$in": body.signal_ids}
-    signals = await db.signals.find(q, {"_id": 0}).sort("created_at", -1).to_list(20)
+    _signals_dto = await get_synisense().list_signals(
+        account_id=account_id,
+        context_id=context_id,
+        status="active",
+        ids=list(body.signal_ids) if body.signal_ids else None,
+        sort_by="created_at",
+        order="desc",
+        limit=20,
+    )
+    signals = [s.raw for s in _signals_dto if s.raw]
     if not signals:
         raise HTTPException(
             status_code=400,

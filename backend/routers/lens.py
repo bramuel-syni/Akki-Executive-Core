@@ -26,6 +26,7 @@ from core import (
     db, now, iso, write_audit, require_context_membership,
     gather_context_object,
 )
+from contracts import get_synisense  # Phase 4.3 — signals reads route through SyniSense.
 
 router = APIRouter(prefix="/api")
 
@@ -86,10 +87,13 @@ async def run_lens(
     # Optional signal grounding
     signal = None
     if body.signal_id:
-        signal = await db.signals.find_one(
-            {"id": body.signal_id, "context_id": context_id, "status": "active"},
-            {"_id": 0, "id": 1, "type": 1, "headline": 1, "summary": 1, "sources": 1},
+        _sig_dto = await get_synisense().get_signal(
+            account_id=ctx["account"]["id"],
+            signal_id=body.signal_id,
+            context_id=context_id,
+            untenanted=True,
         )
+        signal = _sig_dto.raw if _sig_dto and (_sig_dto.raw or {}).get("status") == "active" else None
 
     my_membership = await db.memberships.find_one(
         {"context_id": context_id, "account_id": ctx["account"]["id"], "status": "active"},

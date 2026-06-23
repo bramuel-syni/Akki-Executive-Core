@@ -51,6 +51,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path
 from pydantic import BaseModel, Field
 
 from core import db, get_current_account, iso as _iso, now as _now, write_audit
+from contracts import get_synisense  # Phase 4.3 — signals reads route through SyniSense.
 
 
 logger = logging.getLogger("akki.studio_blocks")

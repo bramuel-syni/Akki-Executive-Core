@@ -73,26 +73,19 @@ AKKI_OWNED_COLLECTIONS: FrozenSet[str] = frozenset({
     "chat_messages",
     "briefings",
     "documents",
-    "signals",
     "objectives",
 })
 
-# Phase 4.2 reclassification kept as-is (signals remains Akki-owned).
-# The original Phase 4.2 design proposed reclassifying signals as
-# SyniSense-owned (matches the conceptual ownership: signals are
-# derived by `services/synisense/engine/signal_derivation.py`). But
-# scanning the codebase under that classification surfaces 45
-# net-new akki→signals call sites in Akki routers (briefings, chat,
-# pulse, comments, lens, decks, etc.) that have no equivalent
-# typed contract methods on `SyniSenseContract`. Adding count /
-# find / aggregate / update methods to mirror those reads would
-# expand the SyniSense contract surface to ~45 methods and
-# effectively re-introduce a find() passthrough — which the Phase
-# 4.2 dispatch explicitly forbade. Cleaner reversibility: keep
-# signals Akki-owned (legacy invariant view); 5 SyniSense self-
-# reads of signals are recorded as carry-forward escape hatches
-# (see sprint memo §3 Deviation #1).
-SYNISENSE_OWNED_COLLECTIONS: FrozenSet[str] = frozenset()
+# Phase 4.3 — `signals` reclassified as SyniSense-owned. SyniSense's
+# primary artefact is derived by `services/synisense/engine/
+# signal_derivation.py`. Akki / Solva readers go through
+# `SyniSenseContract.{count,list,get,...}_signal*(...)`; SyniSense
+# self-reads are now same-context (no escape hatch needed). The
+# 5 retained Phase 4.2 Deviation #1 hatches are dissolved by this
+# reclassification + the new typed methods on `SyniSenseContract`.
+SYNISENSE_OWNED_COLLECTIONS: FrozenSet[str] = frozenset({
+    "signals",
+})
 
 # File path → owning context.
 SYNISENSE_ROUTER_PREFIXES: Tuple[str, ...] = (
@@ -382,8 +375,8 @@ def test_cross_context_calls_scanner_writes_report() -> None:
         "escape_hatch_marker":        ESCAPE_HATCH_MARKER,
         "violations":                 violations,
         "violation_count":            len(violations),
-        "phase":                      "4_2_enforce_mode",
-        "phase_4_2_enforce_target":   "violation_count == 0 AND escape_hatch_count == 0",
+        "phase":                      "4_3_enforce_mode",
+        "phase_4_3_enforce_target":   "violation_count == 0 AND escape_hatch_count == 0",
     }
     REPORT_PATH.write_text(
         json.dumps(payload, indent=2, ensure_ascii=False),
@@ -400,10 +393,10 @@ def test_cross_context_calls_report_has_expected_schema() -> None:
         "scan_timestamp", "scan_roots", "primitives_inspected",
         "akki_owned_collections", "escape_hatch_marker",
         "violations", "violation_count", "phase",
-        "phase_4_2_enforce_target",
+        "phase_4_3_enforce_target",
     }
     assert required.issubset(data.keys())
-    assert data["phase"] == "4_2_enforce_mode"
+    assert data["phase"] == "4_3_enforce_mode"
     for v in data["violations"]:
         for k in ("file", "line", "kind", "name", "owner", "caller_ctx"):
             assert k in v, f"violation missing {k!r}: {v!r}"

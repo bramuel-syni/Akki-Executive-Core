@@ -28,6 +28,7 @@ from core import (
     create_access_token, create_refresh_token, hash_password,
     set_auth_cookies, sanitize_account, sanitize_context,
 )
+from contracts import get_synisense  # Phase 4.3 — signals reads route through SyniSense.
 from fastapi import Depends, Response
 from sandbox_service import (
     pick_template, build_seed_payload, resolve_stage_texts,

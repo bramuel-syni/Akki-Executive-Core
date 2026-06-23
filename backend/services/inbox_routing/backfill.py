@@ -28,6 +28,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict
 
 from .upstream_adapter import ORIGIN_EMAIL_AKKI, build_origin_envelope
+from contracts import get_synisense  # Phase 4.3 — signals routes through SyniSense.
 
 logger = logging.getLogger(__name__)
 

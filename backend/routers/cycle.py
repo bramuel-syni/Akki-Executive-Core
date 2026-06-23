@@ -100,6 +100,7 @@ from core import (
     db, now as _now, iso as _iso, write_audit,
     get_current_account, require_context_membership,
 )
+from contracts import get_synisense  # Phase 4.3 — signals reads route through SyniSense.
 from email_service import (
     configured as resend_configured,
     send_email, render_checklist_email_html,
@@ -1735,10 +1736,13 @@ async def cycle_manager_actions(
         if not sid or sid in seen_signal_ids:
             continue
         seen_signal_ids.add(sid)
-        sig = await db.signals.find_one(
-            {"id": sid, "context_id": cid},
-            {"_id": 0, "headline": 1, "title": 1, "type": 1},
+        _sig_dto = await get_synisense().get_signal(
+            account_id="",
+            signal_id=sid,
+            context_id=cid,
+            untenanted=True,
         )
+        sig = _sig_dto.raw if _sig_dto else None
         if not sig:
             continue
         title = (

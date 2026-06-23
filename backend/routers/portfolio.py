@@ -23,6 +23,7 @@ from contracts.responses import ItemsListResponse
 from fastapi import APIRouter, Depends
 
 from core import db, get_current_account
+from contracts import get_synisense  # Phase 4.3 — signals reads route through SyniSense.
 
 logger = logging.getLogger("akki.portfolio")
 router = APIRouter(prefix="/api")

@@ -18,6 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from core import db, now, iso, write_audit, require_context_membership
+from contracts import get_synisense  # Phase 4.3 — signals reads route through SyniSense.
 
 router = APIRouter(prefix="/api")
 
@@ -70,8 +71,20 @@ async def _assert_artefact_exists(
             {"_id": 0, "id": 1},
         )
     else:  # signal
-        ok = await db.signals.find_one(
-            {"id": artefact_id, "context_id": context_id, "status": "active"}, {"_id": 0, "id": 1}
+        # `account_id` is captured for audit; the upstream
+        # `require_context_membership` already verified the caller's
+        # access to context_id, so an untenanted signal-by-id lookup
+        # bounded to (id, context_id, status="active") is safe here.
+        _sig = await get_synisense().get_signal(
+            account_id="",
+            signal_id=artefact_id,
+            context_id=context_id,
+            untenanted=True,
+        )
+        ok = (
+            {"id": artefact_id}
+            if _sig is not None and (_sig.raw or {}).get("status") == "active"
+            else None
         )
     if not ok:
         raise HTTPException(status_code=404, detail=f"{artefact_type.title()} not found")

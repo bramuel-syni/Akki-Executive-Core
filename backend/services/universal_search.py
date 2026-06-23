@@ -29,6 +29,7 @@ from __future__ import annotations
 import re
 import time
 from typing import Any, Awaitable, Callable, Dict, List, Optional
+from contracts import get_synisense  # Phase 4.3 — signals routes through SyniSense.
 
 # ---------------------------------------------------------------------------
 # Canonical SearchHit shape

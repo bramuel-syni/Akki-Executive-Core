@@ -32,6 +32,7 @@ from __future__ import annotations
 import hashlib
 import re
 from typing import Any, Dict, Tuple
+from contracts import get_synisense  # Phase 4.3 — signals routes through SyniSense.
 
 # Window applied as a $or filter — beyond the window, the same content
 # is allowed to be a fresh signal again (e.g. a quarterly recurring

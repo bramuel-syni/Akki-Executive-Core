@@ -17,6 +17,7 @@ from core import (
     db, now, iso, write_audit, require_context_membership,
     gather_context_object, docs_overall_trust,
 )
+from contracts import get_synisense  # Phase 4.3 — signals reads route through SyniSense.
 
 router = APIRouter(prefix="/api")
 

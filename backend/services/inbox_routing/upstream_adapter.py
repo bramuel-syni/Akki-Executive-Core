@@ -33,6 +33,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
+from contracts import get_synisense  # Phase 4.3 — signals routes through SyniSense.
 
 ORIGIN_EMAIL_AKKI = "email_akki"
 

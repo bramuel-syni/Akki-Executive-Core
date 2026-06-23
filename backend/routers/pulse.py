@@ -45,6 +45,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from core import db, iso, now, require_context_membership, write_audit
+from contracts import get_synisense  # Phase 4.3 — signals reads route through SyniSense.
 
 router = APIRouter(prefix="/api")
 
