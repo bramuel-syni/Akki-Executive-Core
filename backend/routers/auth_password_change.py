@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, Response
@@ -48,7 +48,7 @@ class PasswordChangeIn(BaseModel):
     new_password:     str = Field(min_length=10, max_length=200)
 
 
-@router.post("/password/change")
+@router.post("/password/change", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def change_password(
     body: PasswordChangeIn,
     response: Response,

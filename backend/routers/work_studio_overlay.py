@@ -49,7 +49,7 @@ router = APIRouter(prefix="/api")
 # ─────────────────────────────────────────────────────────────────────
 # GET — list overlay artefacts in a context (used by render-smoke + future Work Studio list)
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/contexts/{context_id}/work-studio/documents")
+@router.get("/contexts/{context_id}/work-studio/documents", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def list_documents(
     context_id: str,
     limit: int = 20,
@@ -77,7 +77,7 @@ async def list_documents(
 # ─────────────────────────────────────────────────────────────────────
 # GET — overlay payload
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/contexts/{context_id}/work-studio/documents/{artefact_id}")
+@router.get("/contexts/{context_id}/work-studio/documents/{artefact_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_document(
     context_id: str,
     artefact_id: str,
@@ -106,7 +106,7 @@ class DocumentPatchIn(BaseModel):
     structured_content: Optional[Dict[str, Any]] = None
 
 
-@router.patch("/contexts/{context_id}/work-studio/documents/{artefact_id}")
+@router.patch("/contexts/{context_id}/work-studio/documents/{artefact_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def patch_document(
     context_id: str,
     artefact_id: str,
@@ -148,7 +148,7 @@ class SaveIn(BaseModel):
     label: Optional[str] = Field(default=None, max_length=80)
 
 
-@router.post("/contexts/{context_id}/work-studio/documents/{artefact_id}/save")
+@router.post("/contexts/{context_id}/work-studio/documents/{artefact_id}/save", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def save_document(
     context_id: str,
     artefact_id: str,
@@ -180,7 +180,7 @@ async def save_document(
 # ─────────────────────────────────────────────────────────────────────
 # POST /move-to-review — Draft → In Review (owner only)
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/contexts/{context_id}/work-studio/documents/{artefact_id}/move-to-review")
+@router.post("/contexts/{context_id}/work-studio/documents/{artefact_id}/move-to-review", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def move_to_review(
     context_id: str,
     artefact_id: str,
@@ -207,7 +207,7 @@ async def move_to_review(
 # ─────────────────────────────────────────────────────────────────────
 # POST /commit — Pre-commit snapshot + Committed lock
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/contexts/{context_id}/work-studio/documents/{artefact_id}/commit")
+@router.post("/contexts/{context_id}/work-studio/documents/{artefact_id}/commit", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def commit_document(
     context_id: str,
     artefact_id: str,
@@ -351,7 +351,7 @@ async def commit_document(
 # states refuse with 409 to preserve the existing commit-and-lock
 # semantics.
 # ─────────────────────────────────────────────────────────────────────
-@router.delete("/contexts/{context_id}/work-studio/documents/{artefact_id}")
+@router.delete("/contexts/{context_id}/work-studio/documents/{artefact_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def delete_draft_document(
     context_id: str,
     artefact_id: str,
@@ -383,7 +383,7 @@ async def delete_draft_document(
 # ─────────────────────────────────────────────────────────────────────
 # POST /create-new-version — clone Committed → new Draft row
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/contexts/{context_id}/work-studio/documents/{artefact_id}/create-new-version")
+@router.post("/contexts/{context_id}/work-studio/documents/{artefact_id}/create-new-version", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def create_new_version(
     context_id: str,
     artefact_id: str,
@@ -432,7 +432,7 @@ async def create_new_version(
 # ─────────────────────────────────────────────────────────────────────
 # GET /versions — list snapshots
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/contexts/{context_id}/work-studio/documents/{artefact_id}/versions")
+@router.get("/contexts/{context_id}/work-studio/documents/{artefact_id}/versions", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_versions(
     context_id: str,
     artefact_id: str,
@@ -458,7 +458,7 @@ async def get_versions(
     }
 
 
-@router.get("/contexts/{context_id}/work-studio/documents/{artefact_id}/versions/{version_id}")
+@router.get("/contexts/{context_id}/work-studio/documents/{artefact_id}/versions/{version_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_version_detail(
     context_id: str,
     artefact_id: str,
@@ -474,7 +474,7 @@ async def get_version_detail(
     return row
 
 
-@router.post("/contexts/{context_id}/work-studio/documents/{artefact_id}/versions/{version_id}/restore")
+@router.post("/contexts/{context_id}/work-studio/documents/{artefact_id}/versions/{version_id}/restore", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def restore_version(
     context_id: str,
     artefact_id: str,
@@ -532,7 +532,7 @@ class ReviseIn(BaseModel):
     section_index: Optional[int] = Field(default=None, ge=0, le=200)
 
 
-@router.post("/contexts/{context_id}/work-studio/documents/{artefact_id}/revise")
+@router.post("/contexts/{context_id}/work-studio/documents/{artefact_id}/revise", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def revise_document(
     context_id: str,
     artefact_id: str,

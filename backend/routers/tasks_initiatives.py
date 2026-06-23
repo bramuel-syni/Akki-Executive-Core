@@ -481,7 +481,7 @@ async def _bg_extract(
         )
 
 
-@router.post("/contexts/{context_id}/documents/{doc_id}/extract", status_code=202)
+@router.post("/contexts/{context_id}/documents/{doc_id}/extract", status_code=202, response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def trigger_extraction(
     context_id: str,
     doc_id: str,

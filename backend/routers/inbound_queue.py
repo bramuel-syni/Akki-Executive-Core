@@ -66,7 +66,7 @@ async def list_inbound_queue(
 # the caller is a member of. Used by the Home card so we don't N+1 the list
 # endpoint per context on every Home render.
 # ---------------------------------------------------------------------------
-@router.get("/api/me/inbound-queue/counts")
+@router.get("/api/me/inbound-queue/counts", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def my_inbound_queue_counts(
     account: Dict[str, Any] = Depends(get_current_account),
 ):

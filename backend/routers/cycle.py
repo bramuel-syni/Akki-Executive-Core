@@ -1383,7 +1383,7 @@ async def polish_report(
 # Committees — list endpoint scoped to user's context (used by Cycle filter)
 # ---------------------------------------------------------------------------
 
-@router.get("/contexts/{context_id}/cycle/committees")
+@router.get("/contexts/{context_id}/cycle/committees", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def list_cycle_committees(
     context_id: str,
     membership: Dict[str, Any] = Depends(require_context_membership()),
@@ -1592,7 +1592,7 @@ async def _spawn_auto_launched_play(
     return new_id
 
 
-@router.get("/contexts/{context_id}/cycle/schedule")
+@router.get("/contexts/{context_id}/cycle/schedule", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_cycle_schedule(
     context_id: str,
     membership: Dict[str, Any] = Depends(require_context_membership()),
@@ -1601,7 +1601,7 @@ async def get_cycle_schedule(
     return {"schedule": s}
 
 
-@router.put("/contexts/{context_id}/cycle/schedule")
+@router.put("/contexts/{context_id}/cycle/schedule", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def upsert_cycle_schedule(
     context_id: str,
     body: CycleScheduleIn,
@@ -1633,7 +1633,7 @@ async def upsert_cycle_schedule(
     return {"schedule": rec}
 
 
-@router.delete("/contexts/{context_id}/cycle/schedule")
+@router.delete("/contexts/{context_id}/cycle/schedule", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def disable_cycle_schedule(
     context_id: str,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -1709,7 +1709,7 @@ async def cron_run_schedules(
 # and assembles `href` deep-links so the frontend ActionsTab can
 # route the user back to the source artefact in one click.
 # ---------------------------------------------------------------------------
-@router.get("/contexts/{context_id}/cycle/actions")
+@router.get("/contexts/{context_id}/cycle/actions", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def cycle_manager_actions(
     context_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),

@@ -656,7 +656,7 @@ def _detect_voice_violation(text: str) -> Optional[str]:
 # -----------------------------------------------------------------------------
 # Routes
 # -----------------------------------------------------------------------------
-@router.get("/chat/models")
+@router.get("/chat/models", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def list_models(_: Dict[str, Any] = Depends(get_current_account)):
     return {"models": SUPPORTED_MODELS, "default_model_id": DEFAULT_MODEL_ID}
 
@@ -790,7 +790,7 @@ _ATTACH_ACCEPT_EXT = {
 }
 
 
-@router.post("/chats/{chat_id}/attach")
+@router.post("/chats/{chat_id}/attach", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def attach_to_chat(
     chat_id: str,
     request: Request,
@@ -1022,7 +1022,7 @@ def _escape_regex(q: str) -> str:
     return _REGEX_META.sub(lambda m: "\\" + m.group(0), q)
 
 
-@router.get("/chats/search")
+@router.get("/chats/search", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def search_chats(
     request: Request,
     q: str = Query(..., min_length=2, max_length=200,
@@ -1144,7 +1144,7 @@ async def search_chats(
     return {"items": items, "count": len(items)}
 
 
-@router.get("/chats/{chat_id}")
+@router.get("/chats/{chat_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_chat(
     chat_id: str, request: Request,
     include_archived: bool = Query(False),
@@ -1178,7 +1178,7 @@ async def get_chat(
     return chat
 
 
-@router.patch("/chats/{chat_id}")
+@router.patch("/chats/{chat_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def patch_chat(
     chat_id: str, body: ChatPatchIn, request: Request,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -1271,7 +1271,7 @@ async def patch_chat(
     return _sanitize(chat)
 
 
-@router.delete("/chats/{chat_id}")
+@router.delete("/chats/{chat_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def soft_delete_chat(
     chat_id: str, request: Request,
     hard: bool = Query(False, description="When true, hard-delete immediately. Audit chain is preserved."),
@@ -1353,7 +1353,7 @@ async def soft_delete_chat(
     return {"ok": True, "deleted_at": now_iso, "retention_days": 30}
 
 
-@router.post("/chats/{chat_id}/restore")
+@router.post("/chats/{chat_id}/restore", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def restore_chat(
     chat_id: str, request: Request,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -3846,7 +3846,7 @@ async def stream_message(
     )
 
 
-@router.get("/chats/{chat_id}/audit")
+@router.get("/chats/{chat_id}/audit", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_chat_audit(
     chat_id: str, current: Dict[str, Any] = Depends(get_current_account),
 ):
@@ -3881,7 +3881,7 @@ async def get_chat_audit(
 # the full 16-slide diagnostic" CTA. Writes a chat_audit_log row;
 # Trust Center > Reasoning aggregates `offered` vs `accepted`.
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/chats/{chat_id}/governance/solva-escalation-clicked")
+@router.post("/chats/{chat_id}/governance/solva-escalation-clicked", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def record_solva_escalation_click(
     chat_id: str, request: Request,
     current: Dict[str, Any] = Depends(get_current_account),

@@ -197,7 +197,7 @@ async def _build_synisense_block(
 # ---------------------------------------------------------------------------
 # GET /api/me/governance  (the main panel)
 # ---------------------------------------------------------------------------
-@router.get("")
+@router.get("", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def governance_panel(current: Dict[str, Any] = Depends(get_current_account)):
     ctx_ids = await _user_context_ids(current["id"])
     ctx_names = await _context_name_map(ctx_ids)
@@ -317,7 +317,7 @@ async def governance_panel(current: Dict[str, Any] = Depends(get_current_account
 # ---------------------------------------------------------------------------
 # GET /api/me/governance/audit — paginated, filterable
 # ---------------------------------------------------------------------------
-@router.get("/audit")
+@router.get("/audit", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def governance_audit(
     current: Dict[str, Any] = Depends(get_current_account),
     action: Optional[str] = Query(None),

@@ -93,7 +93,7 @@ def _sanitize(rec: Dict[str, Any]) -> Dict[str, Any]:
     return rec
 
 
-@router.post("/contexts/{context_id}/work-studio/compilations")
+@router.post("/contexts/{context_id}/work-studio/compilations", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def create_compilation(
     context_id: str,
     body: CompilationCreate,
@@ -127,7 +127,7 @@ async def create_compilation(
     return _sanitize(rec)
 
 
-@router.get("/contexts/{context_id}/work-studio/compilations")
+@router.get("/contexts/{context_id}/work-studio/compilations", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def list_compilations(
     context_id: str,
     status: Optional[str] = None,
@@ -162,7 +162,7 @@ async def list_compilations(
     }
 
 
-@router.get("/contexts/{context_id}/work-studio/compilations/{compilation_id}")
+@router.get("/contexts/{context_id}/work-studio/compilations/{compilation_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_compilation(
     context_id: str,
     compilation_id: str,
@@ -196,7 +196,7 @@ async def get_compilation(
 # essential because the wizard's "Commission" button is a common
 # double-click target.
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/contexts/{context_id}/work-studio/compilations/{compilation_id}/start")
+@router.post("/contexts/{context_id}/work-studio/compilations/{compilation_id}/start", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def start_compilation(
     context_id: str,
     compilation_id: str,

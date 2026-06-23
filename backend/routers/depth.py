@@ -128,12 +128,12 @@ async def _build_status(current: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-@router.get("")
+@router.get("", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_depth_status(current: Dict[str, Any] = Depends(get_current_account)):
     return await _build_status(current)
 
 
-@router.post("/dismiss")
+@router.post("/dismiss", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def dismiss_offer(current: Dict[str, Any] = Depends(get_current_account)):
     """Sticky dismissal — flag persists until manually cleared from
     `db.accounts.{id}.depth_offer_dismissed_at`. For v1 we don't re-offer

@@ -138,7 +138,7 @@ class MFADisableIn(BaseModel):
 
 
 # ─── Endpoints ───────────────────────────────────────────────────────
-@router.post("/enroll/start")
+@router.post("/enroll/start", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def enroll_start(
     current: Dict[str, Any] = Depends(get_current_account),
 ):
@@ -164,7 +164,7 @@ async def enroll_start(
     }
 
 
-@router.post("/enroll/confirm")
+@router.post("/enroll/confirm", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def enroll_confirm(
     body: MFAConfirmIn,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -217,7 +217,7 @@ async def enroll_confirm(
     }
 
 
-@router.post("/verify")
+@router.post("/verify", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def verify(
     body: MFAVerifyIn,
     response: Response,
@@ -304,7 +304,7 @@ async def verify(
     }
 
 
-@router.post("/disable")
+@router.post("/disable", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def disable(
     body: MFADisableIn,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -340,7 +340,7 @@ async def disable(
     return {"ok": True, "mfa_enabled": False}
 
 
-@router.post("/recovery/regenerate")
+@router.post("/recovery/regenerate", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def regenerate_recovery(
     body: MFAConfirmIn,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -368,7 +368,7 @@ async def regenerate_recovery(
     return {"ok": True, "recovery_codes": recovery_codes, "code_count": len(recovery_codes)}
 
 
-@router.get("/status")
+@router.get("/status", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def status(current: Dict[str, Any] = Depends(get_current_account)):
     """Lightweight status endpoint for the frontend to render the
     Account → Security panel."""

@@ -45,7 +45,7 @@ class RecentViewIn(BaseModel):
     deep_link:     Optional[str] = Field(None, max_length=400)
 
 
-@router.post("/me/recent-views")
+@router.post("/me/recent-views", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def post_recent_view(
     body: RecentViewIn,
     me: Dict[str, Any] = Depends(get_current_account),
@@ -78,7 +78,7 @@ async def post_recent_view(
     return {"ok": True}
 
 
-@router.get("/me/recent-views")
+@router.get("/me/recent-views", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_recent_views(
     limit: int = 3,
     me: Dict[str, Any] = Depends(get_current_account),

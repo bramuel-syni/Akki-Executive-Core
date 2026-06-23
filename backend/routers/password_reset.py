@@ -154,7 +154,7 @@ def _send_reset_email_async(*, to_email: str, rendered: Dict[str, str]) -> None:
 # POST /api/auth/forgot-password
 # ─────────────────────────────────────────────────────────────────────
 
-@router.post("/forgot-password", status_code=200)
+@router.post("/forgot-password", status_code=200, response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def forgot_password(
     body: ForgotPasswordIn,
     request: Request,
@@ -221,7 +221,7 @@ async def forgot_password(
 # GET /api/auth/reset-password/{token}
 # ─────────────────────────────────────────────────────────────────────
 
-@router.get("/reset-password/{token}")
+@router.get("/reset-password/{token}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_reset_token(token: str):
     """Validate token. Returns 200 + {email, valid: true} for the
     form to display the masked email. 410 if expired, 401 if not
@@ -264,7 +264,7 @@ async def get_reset_token(token: str):
 # POST /api/auth/reset-password/{token}
 # ─────────────────────────────────────────────────────────────────────
 
-@router.post("/reset-password/{token}")
+@router.post("/reset-password/{token}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def consume_reset_token(
     token: str, body: ResetPasswordIn,
     _rl: None = Depends(rate_limit("auth_reset")),

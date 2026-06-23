@@ -160,7 +160,7 @@ async def _exco_membership_summary(context_id: str, account_id: str) -> Dict[str
 
 
 # ─── Route ─────────────────────────────────────────────────────────────
-@router.get("/me/portfolio")
+@router.get("/me/portfolio", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def me_portfolio(current: Dict[str, Any] = Depends(get_current_account)):
     """One row per active membership the calling account holds."""
     account_id = current["id"]

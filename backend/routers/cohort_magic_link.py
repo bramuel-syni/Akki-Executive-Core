@@ -115,7 +115,7 @@ async def _require_admin(current: Dict[str, Any] = Depends(get_current_account))
     return current
 
 
-@router.post("/issue")
+@router.post("/issue", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def issue_magic_link(
     body: IssueIn,
     admin: Dict[str, Any] = Depends(_require_admin),
@@ -168,7 +168,7 @@ async def issue_magic_link(
 
 
 # ─── /preview (public) ───────────────────────────────────────────────
-@router.get("/preview/{token}")
+@router.get("/preview/{token}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def preview_magic_link(token: str):
     row = await _find_link_record(token)
     if row:
@@ -205,7 +205,7 @@ async def preview_magic_link(token: str):
 
 
 # ─── /consume (public) ───────────────────────────────────────────────
-@router.post("/consume")
+@router.post("/consume", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def consume_magic_link(body: ConsumeIn, response: Response):
     row = await _find_link_record(body.token)
     if not row:

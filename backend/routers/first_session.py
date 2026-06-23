@@ -292,7 +292,7 @@ async def _write_context_object_from_intake(
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
-@router.get("")
+@router.get("", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_first_session(current: Dict[str, Any] = Depends(get_current_account)):
     state = _sanitize_state(current.get("first_session"))
     return {
@@ -301,7 +301,7 @@ async def get_first_session(current: Dict[str, Any] = Depends(get_current_accoun
     }
 
 
-@router.post("/start")
+@router.post("/start", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def start_first_session(current: Dict[str, Any] = Depends(get_current_account)):
     state = _sanitize_state(current.get("first_session"))
     if state["status"] in ("completed", "skipped"):
@@ -319,7 +319,7 @@ async def start_first_session(current: Dict[str, Any] = Depends(get_current_acco
     return {"state": state}
 
 
-@router.post("/intake")
+@router.post("/intake", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def submit_intake(
     body: IntakeIn,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -419,7 +419,7 @@ async def submit_intake(
     return {"state": state, "context_id": ctx_id}
 
 
-@router.post("/choose-door")
+@router.post("/choose-door", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def choose_door(
     body: DoorIn,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -568,7 +568,7 @@ async def choose_door(
     return {"state": state}
 
 
-@router.post("/complete")
+@router.post("/complete", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def complete_first_session(
     body: CompleteIn,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -615,7 +615,7 @@ async def complete_first_session(
     return {"state": state}
 
 
-@router.post("/skip")
+@router.post("/skip", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def skip_first_session(current: Dict[str, Any] = Depends(get_current_account)):
     state = _sanitize_state(current.get("first_session"))
     if state["status"] == "completed":

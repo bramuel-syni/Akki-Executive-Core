@@ -97,7 +97,7 @@ async def update_account(
     return {"account": sanitize_account(refreshed)}
 
 
-@router.post("/accounts/me/default-context")
+@router.post("/accounts/me/default-context", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def set_default_context(
     body: SetDefaultContextIn, current: Dict[str, Any] = Depends(get_current_account)
 ):
@@ -133,7 +133,7 @@ async def leave_context(
     return {"ok": True}
 
 
-@router.get("/accounts/me/consent-decisions")
+@router.get("/accounts/me/consent-decisions", response_model=Optional[List[Dict[str, Any]]])  # phase-3.0:narrow-in-3.1
 async def list_consent_decisions(current: Dict[str, Any] = Depends(get_current_account)):
     decisions = await db.consent_decisions.find(
         {"account_id": current["id"]}, {"_id": 0}

@@ -190,7 +190,7 @@ class FollowUpsDraftIn(BaseModel):
 # ──────────────────────────────────────────────────────────────────────
 # Agenda endpoints
 # ──────────────────────────────────────────────────────────────────────
-@router.get("/contexts/{context_id}/cycle/agenda")
+@router.get("/contexts/{context_id}/cycle/agenda", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_agenda(
     context_id: str,
     cycle_id: Optional[str] = Query(default=None),
@@ -214,7 +214,7 @@ async def get_agenda(
     return agenda
 
 
-@router.post("/contexts/{context_id}/cycle/agenda")
+@router.post("/contexts/{context_id}/cycle/agenda", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def upsert_agenda(
     context_id: str, body: AgendaIn,
     cycle_id: Optional[str] = Query(default=None),
@@ -252,7 +252,7 @@ async def upsert_agenda(
 # ──────────────────────────────────────────────────────────────────────
 # Team endpoints
 # ──────────────────────────────────────────────────────────────────────
-@router.get("/contexts/{context_id}/cycle/team")
+@router.get("/contexts/{context_id}/cycle/team", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def list_team(
     context_id: str,
     cycle_id: Optional[str] = Query(default=None),
@@ -266,7 +266,7 @@ async def list_team(
     return {"agenda_id": agenda["id"], "cycle_id": agenda["id"], "members": members}
 
 
-@router.post("/contexts/{context_id}/cycle/team")
+@router.post("/contexts/{context_id}/cycle/team", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def upsert_team_member(
     context_id: str, body: TeamMemberIn,
     cycle_id: Optional[str] = Query(default=None),
@@ -310,7 +310,7 @@ async def upsert_team_member(
     return rec
 
 
-@router.delete("/contexts/{context_id}/cycle/team/{member_id}")
+@router.delete("/contexts/{context_id}/cycle/team/{member_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def delete_team_member(
     context_id: str, member_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
@@ -341,7 +341,7 @@ class TeamMemberPatch(BaseModel):
     owns_item_ids: Optional[List[str]] = None
 
 
-@router.patch("/contexts/{context_id}/cycle/team/{member_id}")
+@router.patch("/contexts/{context_id}/cycle/team/{member_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def patch_team_member(
     context_id: str, member_id: str, body: TeamMemberPatch,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
@@ -389,7 +389,7 @@ async def patch_team_member(
 # ──────────────────────────────────────────────────────────────────────
 # Contributions
 # ──────────────────────────────────────────────────────────────────────
-@router.get("/contexts/{context_id}/cycle/contributions")
+@router.get("/contexts/{context_id}/cycle/contributions", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def list_contributions(
     context_id: str,
     cycle_id: Optional[str] = Query(default=None),
@@ -402,7 +402,7 @@ async def list_contributions(
     return {"agenda_id": agenda["id"], "cycle_id": agenda["id"], "contributions": rows}
 
 
-@router.post("/contexts/{context_id}/cycle/contributions")
+@router.post("/contexts/{context_id}/cycle/contributions", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def add_contribution(
     context_id: str, body: ContributionIn,
     cycle_id: Optional[str] = Query(default=None),
@@ -499,7 +499,7 @@ def _heuristic_score(body_text: Optional[str], description: Optional[str]) -> Di
     }
 
 
-@router.post("/contexts/{context_id}/cycle/contributions/{contribution_id}/score")
+@router.post("/contexts/{context_id}/cycle/contributions/{contribution_id}/score", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def score_contribution(
     context_id: str, contribution_id: str, body: ScoreIn,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
@@ -606,7 +606,7 @@ async def _build_combined_contribution_text(
 # ──────────────────────────────────────────────────────────────────────
 # Readiness scoreboard
 # ──────────────────────────────────────────────────────────────────────
-@router.get("/contexts/{context_id}/cycle/readiness")
+@router.get("/contexts/{context_id}/cycle/readiness", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_readiness(
     context_id: str,
     cycle_id: Optional[str] = Query(default=None),
@@ -732,7 +732,7 @@ def _draft_email_text(*, exec_name: str, member_name: str, item_label: str,
     return {"subject": subject, "body": body, "html": html}
 
 
-@router.post("/contexts/{context_id}/cycle/follow-ups/draft")
+@router.post("/contexts/{context_id}/cycle/follow-ups/draft", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def draft_followups(
     context_id: str, body: FollowUpsDraftIn,
     cycle_id: Optional[str] = Query(default=None),
@@ -810,7 +810,7 @@ async def draft_followups(
     return {"drafts": drafts, "count": len(drafts)}
 
 
-@router.get("/contexts/{context_id}/cycle/follow-ups")
+@router.get("/contexts/{context_id}/cycle/follow-ups", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def list_followups(
     context_id: str,
     cycle_id: Optional[str] = Query(default=None),
@@ -823,7 +823,7 @@ async def list_followups(
     return {"agenda_id": agenda["id"], "cycle_id": agenda["id"], "followups": rows}
 
 
-@router.post("/contexts/{context_id}/cycle/follow-ups/{followup_id}/approve")
+@router.post("/contexts/{context_id}/cycle/follow-ups/{followup_id}/approve", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def approve_followup(
     context_id: str, followup_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
@@ -846,7 +846,7 @@ async def approve_followup(
     return rec
 
 
-@router.post("/contexts/{context_id}/cycle/follow-ups/{followup_id}/send")
+@router.post("/contexts/{context_id}/cycle/follow-ups/{followup_id}/send", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def send_followup(
     context_id: str, followup_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
@@ -939,7 +939,7 @@ async def send_followup(
 # ──────────────────────────────────────────────────────────────────────
 # Draft Compilation Output — Phase D.1 rebuild
 # ──────────────────────────────────────────────────────────────────────
-@router.post("/contexts/{context_id}/cycle/draft-compilation", status_code=202)
+@router.post("/contexts/{context_id}/cycle/draft-compilation", status_code=202, response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def draft_compilation(
     context_id: str,
     cycle_id: Optional[str] = Query(default=None),

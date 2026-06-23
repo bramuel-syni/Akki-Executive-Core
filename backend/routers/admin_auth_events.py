@@ -15,7 +15,7 @@ Read-only. Superadmin-only. Same pattern as /admin/llm/spend.
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -30,7 +30,7 @@ async def _require_superadmin(account: Dict[str, Any] = Depends(get_current_acco
     return account
 
 
-@router.get("/events")
+@router.get("/events", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def auth_events(
     hours: int = Query(24, ge=1, le=720),
     account: Dict[str, Any] = Depends(_require_superadmin),
@@ -99,7 +99,7 @@ async def auth_events(
 # rather than enumerating individual JTIs (we don't track per-account JTI
 # lists; the access-token TTL of 8h means the user's session will fully
 # clear within that window even without intervention).
-@router.post("/revoke-all/{account_id}")
+@router.post("/revoke-all/{account_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def revoke_all_sessions(
     account_id: str,
     actor: Dict[str, Any] = Depends(_require_superadmin),

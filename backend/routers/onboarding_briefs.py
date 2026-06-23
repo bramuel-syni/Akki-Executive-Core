@@ -127,7 +127,7 @@ async def _build_slides(account_id: str) -> List[Dict[str, Any]]:
     return [dict(s) for s in ONBOARDING_SLIDES_DEFAULT]
 
 
-@router.get("/onboarding-briefs")
+@router.get("/onboarding-briefs", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_onboarding_briefs(
     request: Request,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -144,7 +144,7 @@ async def get_onboarding_briefs(
     }
 
 
-@router.post("/onboarding-briefs/complete")
+@router.post("/onboarding-briefs/complete", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def complete_onboarding_briefs(
     request: Request,
     current: Dict[str, Any] = Depends(get_current_account),

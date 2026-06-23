@@ -103,7 +103,7 @@ def _is_expired(iso_str: str) -> bool:
 # ═════════════════════════════════════════════════════════════════════
 # GET /api/auth/magic/{token} — consume a cohort invite
 # ═════════════════════════════════════════════════════════════════════
-@router.get("/magic/{token}")
+@router.get("/magic/{token}")  # phase-3.0: returns RedirectResponse (not JSON) — no response_model
 async def consume_magic_link(
     token: str,
     request: Request,

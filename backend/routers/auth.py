@@ -68,7 +68,7 @@ class MFAVerifyIn(BaseModel):
     code: str = Field(min_length=6, max_length=6)
 
 
-@router.post("/auth/register")
+@router.post("/auth/register", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def register(
     body: RegisterIn,
     response: Response,
@@ -113,7 +113,7 @@ async def register(
     }
 
 
-@router.post("/auth/login")
+@router.post("/auth/login", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def login(
     body: LoginIn, request: Request, response: Response,
     _rl: None = Depends(rate_limit("auth_login")),
@@ -169,7 +169,7 @@ async def login(
     }
 
 
-@router.post("/auth/logout")
+@router.post("/auth/logout", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def logout(
     request: Request, response: Response,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -211,7 +211,7 @@ async def logout(
     return {"ok": True, "revoked_jti": bool(jti_to_revoke)}
 
 
-@router.post("/auth/refresh")
+@router.post("/auth/refresh", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def refresh_token(request: Request, response: Response):
     token = request.cookies.get("refresh_token")
     if not token:
@@ -231,7 +231,7 @@ async def refresh_token(request: Request, response: Response):
     return {"ok": True}
 
 
-@router.get("/auth/me")
+@router.get("/auth/me", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def me(current: Dict[str, Any] = Depends(get_current_account)):
     memberships = await db.memberships.find(
         {"account_id": current["id"], "status": "active"}, {"_id": 0}
@@ -294,7 +294,7 @@ async def me(current: Dict[str, Any] = Depends(get_current_account)):
     return {"account": sanitize_account(current), "contexts": decorated}
 
 
-@router.post("/auth/declare-role")
+@router.post("/auth/declare-role", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def declare_role(
     body: DeclareRoleIn, current: Dict[str, Any] = Depends(get_current_account)
 ):
@@ -311,7 +311,7 @@ async def declare_role(
 # -----------------------------------------------------------------------------
 # C1-revised Phase A (2026-02) — POST /api/auth/set-password
 # -----------------------------------------------------------------------------
-@router.post("/auth/set-password")
+@router.post("/auth/set-password", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def set_password(
     body: SetPasswordIn,
     current: Dict[str, Any] = Depends(get_current_account),

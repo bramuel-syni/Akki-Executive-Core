@@ -313,7 +313,7 @@ async def create_share(
 # -----------------------------------------------------------------------------
 # Inbox — shares received by me
 # -----------------------------------------------------------------------------
-@router.get("/me/shares/inbox")
+@router.get("/me/shares/inbox", response_model=Optional[List[Dict[str, Any]]])  # phase-3.0:narrow-in-3.1
 async def shares_inbox(
     current: Dict[str, Any] = Depends(get_current_account),
     include_revoked: bool = False,
@@ -329,7 +329,7 @@ async def shares_inbox(
 # -----------------------------------------------------------------------------
 # Outbox — shares I've created
 # -----------------------------------------------------------------------------
-@router.get("/me/shares/outbox")
+@router.get("/me/shares/outbox", response_model=Optional[List[Dict[str, Any]]])  # phase-3.0:narrow-in-3.1
 async def shares_outbox(
     current: Dict[str, Any] = Depends(get_current_account),
     include_revoked: bool = True,

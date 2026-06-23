@@ -361,7 +361,7 @@ def _intervention_prose(event: Optional[Dict[str, Any]]) -> str:
 # ─────────────────────────────────────────────────────────────────────
 # Audit panel — single message.
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/chats/{chat_id}/audit-panel")
+@router.get("/chats/{chat_id}/audit-panel", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_audit_panel(
     chat_id: str,
     message_id: str = Query(..., description="The assistant message_id whose audit to render."),
@@ -467,7 +467,7 @@ async def get_audit_panel(
 # ─────────────────────────────────────────────────────────────────────
 # Audit panel — per-conversation aggregate strip.
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/chats/{chat_id}/audit-panel/aggregate")
+@router.get("/chats/{chat_id}/audit-panel/aggregate", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_audit_panel_aggregate(
     chat_id: str,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -536,7 +536,7 @@ async def get_audit_panel_aggregate(
 # Archived chats — list + permanent delete.
 # (Existing /restore endpoint lives in routers/chat.py.)
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/chats/archived")
+@router.get("/chats/archived", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def list_archived_chats(
     limit: int = Query(50, ge=1, le=200),
     skip: int = Query(0, ge=0),
@@ -556,7 +556,7 @@ async def list_archived_chats(
     return {"items": rows, "total": total, "limit": limit, "skip": skip}
 
 
-@router.delete("/chats/{chat_id}/permanent")
+@router.delete("/chats/{chat_id}/permanent", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def permanent_delete_chat(
     chat_id: str,
     body: Dict[str, Any] = Body(default_factory=dict),

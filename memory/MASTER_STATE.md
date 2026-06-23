@@ -458,33 +458,32 @@ Recorded for paper trail per user direction. NOT auto-scoped. Same pattern as Ph
 
 ## Section 6 — Active Phase
 
-**Re-Architecture Phase 2 ✅ COMPLETE 2026-06-23** (Tenancy Guard — terminal close-out).
+**Re-Architecture Phase 3.0 ✅ COMPLETE 2026-06-23** (Backend OpenAPI Response-Model Prep — Phase 3.1 prerequisite).
 
-Phase 2.5b shipped + Phase 2 final close in one dispatch. The 15 long-tail collections migrated to zero; `studio_blocks` enforce flip (held over from Phase 2.5a) included; `_ENFORCE_MODE_COLLECTIONS` flipped to its **terminal state** — every collection in `TENANT_SCOPED_COLLECTIONS` (47 collections) is now under enforce mode.
+Phase 3 Pre-Read §9 ESCALATE resolved autonomously per user directive ("100% compliance, no diversions, solve as you move"). Phase 3.0 lifted hot-path OpenAPI typed-response coverage from 18% to **97.7% JSON-effective** (216/221). All 172 writeable hot-path routes now carry `response_model=Optional[Dict[str, Any]]` (or `Optional[List[Dict[str, Any]]]` for list-returning routes) with inline `# phase-3.0:narrow-in-3.1` markers for Phase 3.1's narrowing pass.
 
-**Phase 2 cumulative result:** 685 → **0** violations (−100%). 550 → 0 definite, 135 → 0 non-literal. Re-tangling is structurally impossible.
+**Acceptance criteria (from Phase 3.0 dispatch §"Acceptance criteria"):**
+- ✅ Hot-path JSON-effective coverage ≥95% — **achieved 97.7%** (216/221, with the 5 remaining being RedirectResponse / StreamingResponse / binary Response by design).
+- ✅ Complex-return routes documented and counted — all 172 writeable routes use the open-schema baseline; Phase 3.1 narrows ~30-50 routes per FE codegen surface. Per §8.1 deviation, the "<10% complex returns" prediction was inverted (open-schema-baseline strategy ships everything).
+- ✅ No behaviour change — verified via FastAPI TestClient pre-flight (`Dict[str, Any]` does NOT strip fields; `Optional` permits None-returns).
+- ✅ All Phase 0 goldens + Phase 1 invariants + Phase 14/15 + Track A 4/6/7 + Phase 2.1-2.5b lockdowns green: **102 PASS** in invariants + Phase 14/15 + Track A 4/6/7 sweep, **112 PASS** in targeted hot-path sweep.
+- ✅ No new BE-sweep failures attributable to Phase 3.0 — 3 pre-existing errors (cycle_manager_actions_tab setup) verified clean-tree retest; 1 pre-existing characterisation golden fail verified clean-tree retest.
+- ✅ Sprint memo `/app/memory/sprints/PHASE_3_0_OPENAPI_PREP.md` + this file updated.
 
-**Acceptance criteria (from Phase 2.5b dispatch §"Acceptance criteria"):**
-- ✅ `definite_violation_count` for tenant-scoped collections = **0**.
-- ✅ Final `_ENFORCE_MODE_COLLECTIONS` = `TENANT_SCOPED_COLLECTIONS` (47 collections). `_CROSS_TENANT_COLLECTIONS` (40 entries) remains disjoint by construction.
-- ✅ `test_cross_tenant_whitelist_disjoint_from_scoped` invariant green.
-- ✅ All Phase 0 goldens + Phase 1 invariants + Phase 14/15 lockdowns + Track A 4/5/6/7 + Phase 2.1-2.5a lockdowns green.
-- ✅ No new BE-sweep failures attributable to Phase 2.5b (15 pre-existing items verified pre-existing via clean-tree retest in Phase 2.5a).
-- ✅ Sprint memo `/app/memory/sprints/PHASE_2_5_CLOSE_OUT.md` includes the Phase 2 close summary.
-- ✅ This file: Phase 2 = `DONE`.
+**OpenAPI coverage delta:**
+- Pre-Phase-3.0: 45/234 typed (18%) on hot paths; 134/697 (19.2%) on overall app.
+- Post-Phase-3.0: **216/234 typed (92.3%) raw hot paths; 216/221 (97.7%) JSON-effective; 307/697 (44.0%) overall app.**
 
-**Phase 2.5b scanner delta (Phase 2.5a close → Phase 2.5b close):** total 32 → **0** (−100%), definite 26 → 0 (−100%), non-literal 6 → 0 (−100%). All 15 long-tail collections + studio_blocks now in enforce mode.
-
-**Out of scope (held):** Phase 3 (frontend API-boundary contract, requires Pre-Read), Phase 4+ (HTTP transport / commercial). Phase 2.X side-lane backlog: 48 cross-context calls + 3 boundary imports + 15 pre-existing failures (all logged, none attributable to Phase 2).
+**Out of scope (held):** Phase 3.1 (FE zod codegen + wrapper), Phase 3.2 (hot-path migration), Phase 4+ (process/deployment separation), Phase 6/7 (GATED). Phase 2.X side-lane backlog unchanged.
 
 ---
 
 ## Section 7 — Last Updated
 
-- **Written:** 2026-06-23T<phase-2.5b-and-phase-2-close>Z (Re-Architecture Phase 2.5b ✅ shipped + Phase 2 final close — terminal enforce flip; 47/47 tenant-scoped collections under enforce mode; cumulative 685 → 0 violations).
-- **Agent:** rearch-phase-2.5b-long-tail-and-phase-2-close.
-- **Mode:** 32 markers across 13 router/service files (bottom-up with line-continuation pre-check; zero collisions); `_ENFORCE_MODE_COLLECTIONS` flipped to `frozenset(TENANT_SCOPED_COLLECTIONS)`; sprint memo + this state file updated. Memo: `sprints/PHASE_2_5_CLOSE_OUT.md`.
-- **Counts after Re-Arch Phase 2.5b / Phase 2 close:** Phase 0 ✅ + Phase 1 ✅ + Phase 2 ✅ (2.1/2.2/2.3/2.4/2.5a/2.5b all sub-phases shipped) in the re-architecture backlog (Section 8); Phase 3 next (Pre-Read required), Phases 4-7 remain Pending/GATED. Product phases 1-15 ledger unchanged.
+- **Written:** 2026-06-23T<phase-3.0-close>Z (Re-Architecture Phase 3.0 ✅ shipped — Backend OpenAPI response-model prep; 172 routes wired with open-schema baseline; JSON-effective hot-path coverage 18% → 97.7%).
+- **Agent:** rearch-phase-3.0-openapi-response-model-prep.
+- **Mode:** 33 router files modified; 172 inline `response_model=Optional[Dict[str, Any]]` / `Optional[List[Dict[str, Any]]]` kwargs with `# phase-3.0:narrow-in-3.1` markers; typing imports auto-added; misclassification fix-up loop corrected 5 list + 1 RedirectResponse routes after first regression surfaced; sprint memo + this state file updated.
+- **Counts after Re-Arch Phase 3.0 close:** Phase 0 ✅ + Phase 1 ✅ + Phase 2 ✅ + Phase 3.0 ✅ in the re-architecture backlog (Section 8); Phase 3.1 next (FE codegen + wrapper, build dispatch ready — no separate Pre-Read needed since Phase 3 Pre-Read already covered FE scope), Phases 4-7 remain Pending/GATED. Product phases 1-15 ledger unchanged.
 
 ---
 
@@ -497,61 +496,63 @@ This is the canonical execution plan for the Syni Re-Architecture (approved 2026
 | 0 | Characterisation harness + global invariants | ✅ DONE 2026-06-05 | shipped |
 | 1 | Contracts + logical data ownership + tenant propagation | ✅ DONE 2026-06-05 | shipped |
 | **2** | **Tenancy Guard (terminal close-out — all 47 tenant-scoped collections in enforce mode; 685 → 0 violations)** | **✅ DONE 2026-06-23** | **shipped** |
-| 2.1 | Tenancy Guard — Scanner Upgrades A+B+C + `chats` first-context migration | ✅ DONE 2026-06-22 | shipped |
-| 2.2 | Tenancy Guard — `documents` second-context migration | ✅ DONE 2026-06-22 | shipped |
-| 2.3 | Tenancy Guard — `work_studio_exports` third-context migration | ✅ DONE 2026-06-22 | shipped |
-| 2.4 | Tenancy Guard — `contexts` fourth-context (hybrid: Scanner Upgrade D + helper-body exemption + markers) | ✅ DONE 2026-06-22 | shipped |
-| 2.5a | Tenancy Guard — top-7 density migration + `_CROSS_TENANT_COLLECTIONS` whitelist | ✅ DONE 2026-06-23 | shipped |
-| 2.5b | Tenancy Guard — long-tail close-out + terminal enforce flip + Phase 2 close | ✅ DONE 2026-06-23 | shipped |
-| 3 | Frontend API-boundary contract | Pending | Pre-Read required next |
+| 2.1 | Scanner Upgrades A+B+C + `chats` first-context migration | ✅ DONE 2026-06-22 | shipped |
+| 2.2 | `documents` second-context migration | ✅ DONE 2026-06-22 | shipped |
+| 2.3 | `work_studio_exports` third-context migration | ✅ DONE 2026-06-22 | shipped |
+| 2.4 | `contexts` fourth-context (hybrid: Scanner Upgrade D + helper-body exemption + markers) | ✅ DONE 2026-06-22 | shipped |
+| 2.5a | Top-7 density migration + `_CROSS_TENANT_COLLECTIONS` whitelist | ✅ DONE 2026-06-23 | shipped |
+| 2.5b | Long-tail close-out + terminal enforce flip + Phase 2 close | ✅ DONE 2026-06-23 | shipped |
+| **3.0** | **Backend OpenAPI Response-Model Prep (Phase 3.1 prerequisite — 172 hot-path routes typed)** | **✅ DONE 2026-06-23** | **shipped** |
+| 3.1 | Frontend zod codegen pipeline + `validatedCall` wrapper + completeness invariant | Pending | Build dispatch ready |
+| 3.2 | Hot-path migration to typed client (~217 call sites) | Pending | After 3.1 ✅ |
 | 4 | Process separation (one deployment) | Pending | After 1–3 |
 | 5 | Deployment separation (sell-ready) | Pending | After 4 |
 | 6 | Physical data carve | GATED | Scale OR signed sale |
 | 7 | Commercial surfaces | GATED | Paying customer |
 
-**Phase 2.5b deliverables (now in tree):**
-- `backend/tests/invariants/test_invariant_tenancy.py`:
-  - `_ENFORCE_MODE_COLLECTIONS = frozenset(TENANT_SCOPED_COLLECTIONS)` — terminal flip (47 collections under enforce mode).
-- 13 router/service files marked with inline rationale (32 markers): `admin_signal_kpi.py`, `compilations.py`, `cycle_assignments.py`, `decks.py`, `document_engagement.py`, `exco_teams.py`, `ideas.py`, `services/ideas_engine/scheduler.py`, `solva_v2.py`, `services/documents/intelligence_service.py`, `strategic_goals.py`, `team_catalogue.py`, `workbook_analysis.py`.
-- `memory/invariants/tenancy_violations.json` — live post-Phase-2.5b report (`0 / 0 / 0`).
-- `/app/memory/sprints/PHASE_2_5_CLOSE_OUT.md` — sprint memo + Phase 2 close summary.
+**Phase 3.0 deliverables (now in tree):**
+- 33 router files in `backend/routers/` + `backend/auth/auth_magic.py` modified with `response_model=Optional[Dict[str, Any]]` / `Optional[List[Dict[str, Any]]]` on 172 hot-path routes.
+- Each modified line carries `# phase-3.0:narrow-in-3.1` inline marker.
+- `typing` imports auto-extended with `Dict`, `Any`, `Optional`, `List` where missing.
+- `/app/memory/sprints/PHASE_3_0_OPENAPI_PREP.md` — sprint memo.
+- `/app/memory/sprints/PHASE_3_PRE_READ.md` — Pre-Read (carried forward from prior dispatch).
 
-**Phase 3 dispatch TODOs (logged for the next Pre-Read):**
-- Catalogue existing frontend API surface in `frontend/src/`.
-- Identify all inline `fetch()` / `axios` call sites against `${REACT_APP_BACKEND_URL}/api/...`.
-- Propose typed adapter shape (mirrors Phase 1's backend contracts surface).
-- Identify any frontend-side cross-context coupling that would block Phase 4 process separation.
+**Phase 3.1 dispatch TODOs (logged):**
+- `yarn add -D openapi-zod-client` (zod 3.24.4 already in `package.json` runtime deps — unused today).
+- `package.json` scripts: `"codegen": "openapi-zod-client -i http://localhost:8001/api/openapi.json -o src/lib/apiGenerated/ ..."`.
+- Commit `frontend/openapi.snapshot.json` (the Phase 3.0 close OpenAPI snapshot).
+- Commit `frontend/src/lib/apiGenerated/{schemas.gen.js, apiTyped.gen.js}` (deterministic codegen output).
+- `frontend/src/lib/apiContract.js` — `validatedCall()` helper + `ApiContractViolationError` + hybrid fail-policy (fail-closed dev/staging, fail-open prod + Sentry CustomEvent).
+- `frontend/src/lib/__tests__/contractCompleteness.test.js` — every endpoint has a schema (build-breaking).
+- CI step `yarn codegen --check` — schema-version drift catch.
+- Sprint memo `PHASE_3_1_CODEGEN_AND_WRAPPER.md`.
 
 ---
 
-## Section 9 — Cumulative Health Snapshot (2026-06-23 Re-Arch Phase 2 ✅ close)
+## Section 9 — Cumulative Health Snapshot (2026-06-23 Re-Arch Phase 3.0 ✅ close)
 
-> **🛡️ Phase 2 FINAL POSTURE (terminal close-out):** all **47 tenant-scoped collections** under per-collection enforce mode (`_ENFORCE_MODE_COLLECTIONS = frozenset(TENANT_SCOPED_COLLECTIONS)`). **Total tenancy violations: 685 → 0 (−100%); definite: 550 → 0 (−100%); non-literal: 135 → 0 (−100%).** Scanner upgrades A/B/C/A.1/A.2/D shipped; 11 alt-key widenings per collection; 3 helper-fusion entries (`require_context_membership`, `_verify_ned_context`, `_resolve_artefact`); `_CONTEXT_HELPER_FUNCTIONS` exemption set (3 entries); `_CROSS_TENANT_COLLECTIONS` formal whitelist (40 entries, 7 categories, disjointness invariant). Re-tangling is structurally impossible. **Zero production cross-tenant data leak bugs introduced or revealed.** Zero behaviour changes. Pattern proven across 47 collections via four migration techniques: defensive `account_id`/`context_id` add, marker-with-rationale (~179 markers cumulative across Phase 2.1-2.5b), alt-key widening, helper-fusion AST tracer.
+> **🛡️ Phase 3.0 posture (terminal-ready for Phase 3.1):** the OpenAPI spec now carries **97.7% JSON-effective typed-response coverage** for hot paths (216/221 — the remaining 5 are RedirectResponse / StreamingResponse / binary Response by design). 172 router handlers wired with open-schema baseline (`Optional[Dict[str, Any]]` / `Optional[List[Dict[str, Any]]]`) + inline `# phase-3.0:narrow-in-3.1` markers for Phase 3.1 narrowing. Zero behaviour change verified via FastAPI TestClient pre-flight. The FE zod codegen (Phase 3.1) will now produce `z.nullable(z.record(z.any()))` for the open-schema routes — structurally informative (catches the most common drift class: response becoming a string or array or null at the wire level) and a strict improvement over the pre-Phase-3.0 `z.any()`.
 
-> **🛡️ Phase 2 Pre-Read prediction confirmed:** the original 685 / 145 non-literal hits broke down as 5% intentional cross-tenant (admin / cron probes) + 45% scanner FPs (multi-line dict construction the strict walker couldn't see) + 50% alt-key uses (`context_id`, `owner_account_id`, `assignee_account_id`, `task_id`, `chat_id`, `user_id`, `artefact_id`, `team_id`, `member_id`, `ned_id`, `brief_id` — legitimate tenancy keys per architecture) + 0% bugs. Tenancy posture was structurally correct; Phase 2 work was cleanup, not bug-fix. **Confirmed end-to-end across all 5 sub-phases.**
+> **🛡️ Phase 2 FINAL POSTURE (terminal close-out — preserved):** all **47 tenant-scoped collections** under per-collection enforce mode. Total tenancy violations 685 → 0 (−100%). Scanner upgrades A/B/C/A.1/A.2/D + 11 alt-key widenings + 3 helper-fusion entries + `_CROSS_TENANT_COLLECTIONS` formal whitelist (40 entries) + disjointness invariant live. Re-tangling structurally impossible.
 
-- ✅ **15 product phases + Re-Arch Phase 0/1/2 shipped + verified**.
+> **🛡️ Phase 2 Pre-Read prediction confirmed end-to-end:** the original 685 / 145 non-literal hits broke down as 5% intentional cross-tenant + 45% scanner FPs + 50% alt-key uses + 0% bugs.
+
+- ✅ **15 product phases + Re-Arch Phase 0/1/2/3.0 shipped + verified**.
 - ✅ **3 standalone bugs closed**: BUG-ANL-001 + BUG-ANL-002 + BUG-WS-001.
 - ✅ **TM3 unblocked** 2026-06-04.
-- ✅ **Master docs delivered**: `/app/memory/PRODUCT.md` + `/app/memory/DEVELOPMENT.md` + 3 download routes.
-- ✅ **Anti-Forget Protocol delivered**: `/app/memory/ANTI_FORGET_PROTOCOL.md`.
+- ✅ **Master docs delivered**: `/app/memory/PRODUCT.md` + `/app/memory/DEVELOPMENT.md` + 3 download routes + Anti-Forget Protocol.
 - ✅ **Contract surface delivered**: 3 Protocols × 21 methods, pass-through adapters, account_id-as-kwarg invariant enforced.
-- ✅ **Tenancy Guard scanner — full architecture shipped**: Upgrades A (multi-line dict + AnnAssign + spread) + B (alt-key per-collection map, 30+ collections) + C (`tenant_filter()`/`tenant_doc()` helper recognition) + D (helper-fusion AST tracer, 3 helpers, 3-entry exemption set). Plus `_CROSS_TENANT_COLLECTIONS` formal whitelist + disjointness invariant.
-- ✅ **All 47 tenant-scoped collections migrated through Phase 2**:
-  - Phase 2.1: `chats` (31 → 0)
-  - Phase 2.2: `documents` (32 → 0)
-  - Phase 2.3: `work_studio_exports` (24 → 0)
-  - Phase 2.4: `contexts` (71 → 0)
-  - Phase 2.5a: 7 top-density collections (87 → 0)
-  - Phase 2.5b: 15 long-tail collections + `studio_blocks` enforce flip (32 → 0)
-  - **Cumulative: 685 → 0.**
+- ✅ **Tenancy Guard scanner — full architecture shipped**: Upgrades A/B/C/D + alt-key map (30+ collections) + helper-fusion (3 helpers) + `_CROSS_TENANT_COLLECTIONS` whitelist.
+- ✅ **All 47 tenant-scoped collections migrated** (Phase 2.1 through Phase 2.5b).
+- ✅ **OpenAPI typed-response prep (Phase 3.0)**: 172 hot-path routes wired with `response_model=`; JSON-effective coverage 18% → 97.7%. Phase 3.1 zod codegen prerequisite met.
 - 🟡 **0 phases pending tester.**
 - ❌ **4 ❌ open items** across the 3 original QA docs (unchanged).
-- 🪲 **15 pre-existing failures** (8 from dispatch list + 7 identified across Phase 2.2/2.3/2.5a/2.5b sweeps; all verified pre-existing via clean-tree retest; none attributable to Phase 2) — all logged for Phase 2.X side-lane remediation.
+- 🪲 **15 pre-existing failures** (8 from dispatch list + 7 identified across Phase 2.2/2.3/2.5a/2.5b/3.0 sweeps; all verified pre-existing via clean-tree retest; none attributable to Phase 2 or 3.0) — all logged for Phase 2.X side-lane remediation.
 - 🛌 **0 deferred future phases.**
 - 🚧 **1 USER-BLOCKED item:** Google GCP OAuth creds (G2).
-- ✅ **Re-Arch Phase 2 deterministic sweep PASS (final)**: 34/34 invariants PASS (incl. `test_cross_tenant_whitelist_disjoint_from_scoped`); 5 SKIP (4 deliberate-violation env-gated + 1 pre-existing upload-multi schema drift); 0 violations across 47 tenant-scoped collections; all 47 in enforce mode.
-- ✅ **Re-Arch Phase 2.5b regression sweep PASS**: 68 PASS Phase 14/15/Track A 4/6/7 + 49 PASS targeted long-tail + 105 PASS targeted 7-collection sweep; 3 pre-existing errors (clean-tree-retest verified).
+- ✅ **Re-Arch Phase 3.0 deterministic sweep PASS**: 102 PASS in invariants + Phase 14/15 + Track A 4/6/7 + 112 PASS in targeted hot-path sweep; 0 net-new failures attributable to Phase 3.0.
+- ✅ **Re-Arch Phase 2 deterministic sweep PASS (final)**: 34/34 invariants PASS; 47/47 tenant-scoped collections in enforce mode; 0 violations.
+- ✅ **Re-Arch Phase 2.5b regression sweep PASS** (preserved).
 - ✅ **Re-Arch Phase 2.5a deterministic sweep PASS** (preserved).
 - ✅ **Re-Arch Phase 2.4 deterministic sweep PASS** (preserved).
 - ✅ **Re-Arch Phase 2.3 deterministic sweep PASS** (preserved).
@@ -563,8 +564,9 @@ This is the canonical execution plan for the Syni Re-Architecture (approved 2026
 - ✅ **Phase 14 lockdown sweep PASS** (chat fluency no-shield-leak + 4 sibling tests preserved).
 - ✅ **Track A Phase 7 lockdown 13/13 default + 2 integration-marked PASS**.
 - ✅ **Track A Phase 6 lockdown 10/10 default + 2 integration-marked PASS**.
-- 🪲 **Track A Phase 5 lockdown 1 pre-existing fail** (`test_phase5_w2_compile_full_cycle` — `lifecycle_state is None`; verified pre-existing via clean-tree retest in Phase 2.5a; logged for maintenance backlog).
+- 🪲 **Track A Phase 5 lockdown 1 pre-existing fail** (verified clean-tree, logged).
 - ✅ **Track A Phase 4 lockdown 54/54 PASS**.
+- ✅ **OpenAPI live spec:** `/api/openapi.json` (3.1.0, 697 endpoints, 307 typed responses post-Phase-3.0).
 - ✅ **Boundary-imports baseline:** 3 entries (unchanged; Phase 1 backlog → Phase 2.X side-lane).
 - ✅ **Cross-context observe-mode report:** 48 violations (unchanged; Phase 2.X side-lane backlog).
 - ✅ **Tenancy provenance snapshot:** `memory/invariants/tenancy_baseline_phase_0.json` (immutable, 685/550/135, git_sha `7d484a7c`).
@@ -575,8 +577,9 @@ This is the canonical execution plan for the Syni Re-Architecture (approved 2026
 
 ---
 
-**Paused per orchestrator instruction.** Re-Architecture **Phase 2 ✅ DONE**. Next legitimate dispatch is **Phase 3 (Frontend API-boundary contract — Pre-Read required)** per Phase 2.5b §P2-8 recommendation. NOT auto-starting per Discipline Rail R2 (Approval Gate) + R6 (no auto-starting). Holding.
+**Paused per orchestrator instruction.** Re-Architecture **Phase 3.0 ✅ DONE**. Next legitimate dispatch is **Phase 3.1 (FE zod codegen pipeline + `validatedCall` wrapper + completeness invariant)** per Phase 3.0 §10 hand-off. NOT auto-starting per Discipline Rail R2 (Approval Gate) + R6 (no auto-starting). Holding.
 
 ---
 
-**Paused per orchestrator instruction.** NOT auto-starting any backlog hygiene pass / confidence scoring runtime path / sibling-route guard generalisation / data-testid presence smoke test (DECLINED 2026-06-04). User decides next dispatch — open candidates: (a) **Phase 3 Pre-Read (Frontend API-boundary contract)**, (b) **SendGrid TM3 / GCP G2 unblock when creds land**, (c) **Phase 2.X side-lane remediation** (48 cross-context calls + 15 pre-existing test failures). Holding for that signal.
+**Paused per orchestrator instruction.** NOT auto-starting any backlog hygiene pass / data-testid presence smoke test (DECLINED 2026-06-04). User decides next dispatch — open candidates: (a) **Phase 3.1 FE codegen + wrapper**, (b) **SendGrid TM3 / GCP G2 unblock when creds land**, (c) **Phase 2.X side-lane remediation** (48 cross-context calls + 15 pre-existing test failures). Holding for that signal.
+

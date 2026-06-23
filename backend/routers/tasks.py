@@ -292,7 +292,7 @@ async def list_tasks(
 # ═════════════════════════════════════════════════════════════════════
 
 
-@router.post("/tasks/{tid}/commission")
+@router.post("/tasks/{tid}/commission", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def commission_task(
     tid: str, current: Dict[str, Any] = Depends(get_current_account),
 ):
@@ -353,7 +353,7 @@ async def commission_task(
     return _sanitize_task(fresh)
 
 
-@router.post("/tasks/{tid}/close")
+@router.post("/tasks/{tid}/close", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def close_task(
     tid: str, current: Dict[str, Any] = Depends(get_current_account),
 ):
@@ -410,7 +410,7 @@ async def close_task(
 # ═════════════════════════════════════════════════════════════════════
 
 
-@router.get("/tasks/counts")
+@router.get("/tasks/counts", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def tasks_counts(
     context_id: Optional[str] = None,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -429,7 +429,7 @@ async def tasks_counts(
 # ═════════════════════════════════════════════════════════════════════
 # GET /api/tasks/{task_id}
 # ═════════════════════════════════════════════════════════════════════
-@router.get("/tasks/{task_id}")
+@router.get("/tasks/{task_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_task(
     task_id: str,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -443,7 +443,7 @@ async def get_task(
 # ═════════════════════════════════════════════════════════════════════
 # PATCH /api/tasks/{task_id} — inline edits
 # ═════════════════════════════════════════════════════════════════════
-@router.patch("/tasks/{task_id}")
+@router.patch("/tasks/{task_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def patch_task(
     task_id: str,
     body: _TaskPatch,
@@ -561,7 +561,7 @@ def _template_lookup(name: str) -> Optional[Dict[str, str]]:
     return None
 
 
-@router.post("/tasks/agent-prefill")
+@router.post("/tasks/agent-prefill", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def agent_prefill(
     body: _AgentPrefillIn,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -647,7 +647,7 @@ def _find_contributor(team: List[Dict[str, Any]], contributor_id: str) -> Option
 # ─────────────────────────────────────────────────────────────────────
 # GET /api/tasks/{task_id}/drafts — task-linked documents
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/tasks/{task_id}/drafts")
+@router.get("/tasks/{task_id}/drafts", response_model=Optional[List[Dict[str, Any]]])  # phase-3.0:narrow-in-3.1
 async def list_task_drafts(
     task_id: str,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -669,7 +669,7 @@ async def list_task_drafts(
 # ─────────────────────────────────────────────────────────────────────
 # PATCH /api/tasks/{task_id}/contributions/{contributor_id} — status
 # ─────────────────────────────────────────────────────────────────────
-@router.patch("/tasks/{task_id}/contributions/{contributor_id}")
+@router.patch("/tasks/{task_id}/contributions/{contributor_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def patch_contribution(
     task_id: str, contributor_id: str,
     body: _ContributionPatchIn,
@@ -749,7 +749,7 @@ async def patch_contribution(
 # ─────────────────────────────────────────────────────────────────────
 # GET /api/tasks/{task_id}/intelligence — cached or pending
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/tasks/{task_id}/intelligence")
+@router.get("/tasks/{task_id}/intelligence", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_task_intelligence(
     task_id: str,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -780,7 +780,7 @@ async def get_task_intelligence(
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/{task_id}/intelligence/regenerate — force rebuild
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/{task_id}/intelligence/regenerate")
+@router.post("/tasks/{task_id}/intelligence/regenerate", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def regenerate_task_intelligence(
     task_id: str,
     background_tasks: BackgroundTasks,
@@ -858,7 +858,7 @@ def _resolve_base_url(provided: Optional[str]) -> str:
 # ─────────────────────────────────────────────────────────────────────
 # GET /api/tasks/{task_id}/compile — current session state
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/tasks/{task_id}/compile")
+@router.get("/tasks/{task_id}/compile", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_compile_state(
     task_id: str,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -873,7 +873,7 @@ async def get_compile_state(
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/{task_id}/compile/draft — Stage 1
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/{task_id}/compile/draft")
+@router.post("/tasks/{task_id}/compile/draft", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def start_compile_drafting(
     task_id: str,
     background_tasks: BackgroundTasks,
@@ -900,7 +900,7 @@ async def start_compile_drafting(
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/{task_id}/compile/review/complete — Stage 2 → 3/4
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/{task_id}/compile/review/complete")
+@router.post("/tasks/{task_id}/compile/review/complete", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def complete_review_stage(
     task_id: str,
     body: _ReviewCompleteIn,
@@ -918,7 +918,7 @@ async def complete_review_stage(
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/{task_id}/compile/circulation/send — Stage 3 start
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/{task_id}/compile/circulation/send")
+@router.post("/tasks/{task_id}/compile/circulation/send", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def send_compile_circulation(
     task_id: str,
     body: _CirculationSendIn,
@@ -938,7 +938,7 @@ async def send_compile_circulation(
 # ─────────────────────────────────────────────────────────────────────
 # GET /api/tasks/circulation/{token} — PUBLIC reviewer landing
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/tasks/circulation/{token}")
+@router.get("/tasks/circulation/{token}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def circulation_view(token: str):
     """Public — no auth. Magic-link token is the only credential."""
     row = await db.task_circulation_tokens.find_one(
@@ -977,7 +977,7 @@ async def circulation_view(token: str):
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/circulation/{token}/comment — PUBLIC reviewer route
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/circulation/{token}/comment")
+@router.post("/tasks/circulation/{token}/comment", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def circulation_comment(
     token: str,
     body: _CirculationCommentIn,
@@ -1002,7 +1002,7 @@ async def circulation_comment(
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/{task_id}/compile/circulation/close — Stage 3 → 4
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/{task_id}/compile/circulation/close")
+@router.post("/tasks/{task_id}/compile/circulation/close", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def close_compile_circulation(
     task_id: str,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -1017,7 +1017,7 @@ async def close_compile_circulation(
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/{task_id}/compile/final-production/apply-comment
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/{task_id}/compile/final-production/apply-comment")
+@router.post("/tasks/{task_id}/compile/final-production/apply-comment", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def apply_final_comment(
     task_id: str,
     body: _ApplyCommentIn,
@@ -1036,7 +1036,7 @@ async def apply_final_comment(
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/{task_id}/compile/final-production/complete — Stage 4 → 5
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/{task_id}/compile/final-production/complete")
+@router.post("/tasks/{task_id}/compile/final-production/complete", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def complete_final_production_stage(
     task_id: str,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -1051,7 +1051,7 @@ async def complete_final_production_stage(
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/{task_id}/compile/commit — Stage 5
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/{task_id}/compile/commit")
+@router.post("/tasks/{task_id}/compile/commit", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def commit_compile(
     task_id: str,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -1131,7 +1131,7 @@ async def _resolve_contributor_token(token: str) -> Dict[str, Any]:
 # ─────────────────────────────────────────────────────────────────────
 # GET /api/tasks/contribute/{token} — PUBLIC contributor landing
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/tasks/contribute/{token}")
+@router.get("/tasks/contribute/{token}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def contributor_view(token: str):
     """Public — no auth header. Magic-link token IS the credential.
     Returns task summary + this contributor's specific contribution
@@ -1198,7 +1198,7 @@ async def contributor_view(token: str):
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/contribute/{token}/upload — PUBLIC file upload
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/contribute/{token}/upload")
+@router.post("/tasks/contribute/{token}/upload", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def contributor_upload(
     token: str,
     file: UploadFile = File(...),
@@ -1254,7 +1254,7 @@ async def contributor_upload(
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/contribute/{token}/comment — PUBLIC comment add
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/contribute/{token}/comment")
+@router.post("/tasks/contribute/{token}/comment", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def contributor_comment(token: str, body: _ContributorCommentIn):
     row = await _resolve_contributor_token(token)
     cmt = {
@@ -1274,7 +1274,7 @@ async def contributor_comment(token: str, body: _ContributorCommentIn):
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/contribute/{token}/submit — PUBLIC finalize
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/contribute/{token}/submit")
+@router.post("/tasks/contribute/{token}/submit", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def contributor_submit(token: str, body: _ContributorSubmitIn):
     """Flip the contributor's status to `submitted` + fire audit."""
     row = await _resolve_contributor_token(token)
@@ -1323,7 +1323,7 @@ async def contributor_submit(token: str, body: _ContributorSubmitIn):
 # ─────────────────────────────────────────────────────────────────────
 # POST /api/tasks/{task_id}/contributors/{contributor_id}/reinvite
 # ─────────────────────────────────────────────────────────────────────
-@router.post("/tasks/{task_id}/contributors/{contributor_id}/reinvite")
+@router.post("/tasks/{task_id}/contributors/{contributor_id}/reinvite", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def reinvite_contributor(
     task_id: str, contributor_id: str,
     current: Dict[str, Any] = Depends(get_current_account),

@@ -250,7 +250,7 @@ async def _save_analysis(analysis: WorkbookAnalysis) -> None:
 # ─────────────────────────────────────────────────────────────────
 
 
-@router.post("/upload")
+@router.post("/upload", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def upload_workbook(
     file: UploadFile = File(...),
     current: Dict[str, Any] = Depends(get_current_account),
@@ -307,7 +307,7 @@ async def upload_workbook(
 # ─────────────────────────────────────────────────────────────────
 
 
-@router.get("/analyses")
+@router.get("/analyses", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def list_analyses(current: Dict[str, Any] = Depends(get_current_account)):
     cursor = db.workbook_analyses.find(
         {"account_id": current["id"]},
@@ -333,7 +333,7 @@ async def list_analyses(current: Dict[str, Any] = Depends(get_current_account)):
 # ─────────────────────────────────────────────────────────────────
 
 
-@router.get("/analyses/{aid}")
+@router.get("/analyses/{aid}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_analysis(aid: str, current: Dict[str, Any] = Depends(get_current_account)):
     a = await _load_analysis(aid, current["id"])
     return a.model_dump()
@@ -344,7 +344,7 @@ async def get_analysis(aid: str, current: Dict[str, Any] = Depends(get_current_a
 # ─────────────────────────────────────────────────────────────────
 
 
-@router.post("/analyses/{aid}/signals/extract")
+@router.post("/analyses/{aid}/signals/extract", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def extract_signals_endpoint(
     aid: str, current: Dict[str, Any] = Depends(get_current_account),
 ):
@@ -387,7 +387,7 @@ class SimulateRequest(BaseModel):
     seed: int = 42
 
 
-@router.post("/analyses/{aid}/simulate")
+@router.post("/analyses/{aid}/simulate", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def simulate_endpoint(
     aid: str,
     body: SimulateRequest,
@@ -459,7 +459,7 @@ class ForecastRequest(BaseModel):
     horizon_periods: int = 8
 
 
-@router.post("/analyses/{aid}/forecast")
+@router.post("/analyses/{aid}/forecast", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def forecast_endpoint(
     aid: str,
     body: ForecastRequest,
@@ -528,7 +528,7 @@ class AnomaliesRequest(BaseModel):
     iqr_multiplier: float = 1.5
 
 
-@router.post("/analyses/{aid}/anomalies")
+@router.post("/analyses/{aid}/anomalies", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def anomalies_endpoint(
     aid: str,
     body: AnomaliesRequest,
@@ -661,7 +661,7 @@ async def report_xlsx_endpoint(aid: str, current: Dict[str, Any] = Depends(get_c
 # ─────────────────────────────────────────────────────────────────
 
 
-@router.post("/upload-multi")
+@router.post("/upload-multi", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def upload_workbook_multi(
     files: List[UploadFile] = File(..., description="One or more xlsx/csv files"),
     title: Optional[str] = Form(None),
@@ -728,7 +728,7 @@ async def upload_workbook_multi(
     }
 
 
-@router.get("/v2/analyses/{aid}")
+@router.get("/v2/analyses/{aid}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def get_analysis_v2(aid: str, current: Dict[str, Any] = Depends(get_current_account)):
     """Read endpoint for the new `Analysis` entity. Tenant-scoped:
     cross-tenant returns 404 (no existence leak).
@@ -745,7 +745,7 @@ async def get_analysis_v2(aid: str, current: Dict[str, Any] = Depends(get_curren
         raise HTTPException(404, "analysis_not_found")
     return _strip_phase6_bc_mirrors(row)
 
-@router.post("/v2/analyses/{aid}/synthesize")
+@router.post("/v2/analyses/{aid}/synthesize", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def synthesize_v2_endpoint(
     aid: str,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -1148,7 +1148,7 @@ async def synthesize_v2_endpoint(
 
 
 
-@router.post("/v2/analyses/{aid}/session-close")
+@router.post("/v2/analyses/{aid}/session-close", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def session_close_endpoint(
     aid: str, current: Dict[str, Any] = Depends(get_current_account),
 ):
@@ -1195,7 +1195,7 @@ class _AnalysisNoteIn(BaseModel):
     body: str = Field(..., min_length=0, max_length=4000)
 
 
-@router.get("/v2/analyses")
+@router.get("/v2/analyses", response_model=Optional[List[Dict[str, Any]]])  # phase-3.0:narrow-in-3.1
 async def list_analyses_v2(
     context_id: Optional[str] = Query(None),
     current: Dict[str, Any] = Depends(get_current_account),
@@ -1228,7 +1228,7 @@ async def list_analyses_v2(
     return summarized
 
 
-@router.patch("/v2/analyses/{aid}/objective")
+@router.patch("/v2/analyses/{aid}/objective", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def patch_analysis_objective(
     aid: str,
     body: _AnalysisObjectivePatch,
@@ -1257,7 +1257,7 @@ async def patch_analysis_objective(
     return _strip_phase6_bc_mirrors(fresh)
 
 
-@router.post("/v2/analyses/{aid}/notes")
+@router.post("/v2/analyses/{aid}/notes", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def post_analysis_note(
     aid: str,
     body: _AnalysisNoteIn,

@@ -77,7 +77,7 @@ def _strip(rec: Dict[str, Any]) -> Dict[str, Any]:
 # -----------------------------------------------------------------------------
 # Cross-context: questions assigned to ME
 # -----------------------------------------------------------------------------
-@router.get("/me/questions")
+@router.get("/me/questions", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def my_questions(
     status: str = "open",
     page: int = 1,

@@ -644,7 +644,7 @@ async def decline_assignment(
 # ─────────────────────────────────────────────────────────────────────
 # 6. Submitter-side rollup view (Should-have)
 # ─────────────────────────────────────────────────────────────────────
-@router.get("/me/submitted-briefs")
+@router.get("/me/submitted-briefs", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
 async def my_submitted_briefs(
     current: Dict[str, Any] = Depends(get_current_account),
 ):
