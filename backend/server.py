@@ -179,235 +179,34 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
 )
 
-# Register routers (all share /api prefix internally)
-app.include_router(auth_router.router)
-app.include_router(contexts_router.router)
-app.include_router(documents_router.router)
-app.include_router(misc_router.router)
-app.include_router(briefings_router.router)
-app.include_router(work_studio_export_router.router)
-app.include_router(work_studio_phase_c_router.router)
-app.include_router(work_studio_phase_c2_router.router)
-app.include_router(work_studio_from_source_router.router)
-# Chunk 8 (2026-05-18) — Document Overlay (QA-2026-05-16-029…-036).
-app.include_router(work_studio_overlay_router.router)
-app.include_router(work_studio_render_router.router)  # T4.1 (G6) — DOCX/PDF/PPTX on-the-fly render
-app.include_router(learn_router.router)
-app.include_router(committees_router.router)
-app.include_router(simulate_router.router)
-app.include_router(comments_router.router)
-app.include_router(signals_ask_router.router)
-app.include_router(lens_router.router)
-app.include_router(pipeline_router.router)
-app.include_router(audit_router.router)
-app.include_router(synisense_router.router)
-app.include_router(shares_router.router)
-app.include_router(sandbox_router.router)
-app.include_router(cycle_router.router)
-# Phase F (2026-05-26) — Task Manager (rename of Cycle Manager UI).
-# Distinct collection `tasks`. Legacy `cycle*` collections + routers
-# stay untouched for the Reporting Cycle surface.
-from routers import tasks as tasks_router  # noqa: E402
-app.include_router(tasks_router.router)
-app.include_router(blog_router.router)
-app.include_router(admin_email_provider_router.router)
-app.include_router(portfolio_data_router.router)
-app.include_router(company_home_router.router)
-app.include_router(events_router.router)
-app.include_router(oauth_google_router.router)
-app.include_router(admin_cohort_router.router)
-app.include_router(auth_magic_router.router)
-app.include_router(auth_oauth_router.router)  # Phase U — Google + Microsoft (mock) OAuth sign-in
-app.include_router(billing_router.router)
-# Phase Y (2026-05-27) — onboarding briefs.
-app.include_router(onboarding_briefs_router.router)
-# Phase V (2026-05-27) — admin user CRUD portal.
-app.include_router(admin_users_router.router)
-app.include_router(admin_extractions_router.router)
-app.include_router(admin_tenants_router.router)
-app.include_router(account_deletion_router.router)
-app.include_router(strategic_goal_evolution_router.router)
-# Phase S (2026-05-27) — password reset.
-app.include_router(password_reset_router.router)
-# CLEANUP B2 (2026-05-26): plays_router include removed — see archive note above.
-app.include_router(agenda_router.router)
-app.include_router(document_engagement_router.router)
-app.include_router(monitor_router.router)
-app.include_router(strategic_goals_router.router)
-# Phase C — chat-audit-panel router includes `/api/chats/archived`
-# which would be shadowed by `/api/chats/{chat_id}` in `chat_router`.
-# Registering BEFORE the parameterised chat router so FastAPI matches
-# the exact path first.
-from routers import chat_audit_panel as _chat_audit_panel  # noqa: E402
-app.include_router(_chat_audit_panel.router)
-# Phase D — Solva 5-layer pipeline mounted at /api/contexts/{cid}/solva/v2/*
-# Distinct from the legacy /api/solva/v2/* paths in routers/solva_v2.py.
-from routers import solva_phase_d as _solva_phase_d  # noqa: E402
-app.include_router(_solva_phase_d.router)
-# Phase D.1 (2026-05-26) — Solva briefing-deck state.
-from routers import solva_briefing as _solva_briefing  # noqa: E402
-app.include_router(_solva_briefing.router)
-# Phase D.2 audit-correction (2026-05-26) — Solva variant-cycle +
-# key-usage admin telemetry endpoints.
-from routers import solva_telemetry_admin as _solva_telemetry_admin  # noqa: E402
-app.include_router(_solva_telemetry_admin.router)
-# Phase E (2026-05-16) — observability + migration + export + PDF.
-from routers import synisense_observability as _syn_obs  # noqa: E402
-from routers import solva_phase_e_polish as _solva_pe  # noqa: E402
-app.include_router(_syn_obs.router)
-app.include_router(_solva_pe.admin_router)
-app.include_router(_solva_pe.solva_export_router)
-app.include_router(_solva_pe.chat_pdf_router)
+# -----------------------------------------------------------------------------
+# Phase 4.1 — Router composition via context-bound FastAPI apps.
+# The three apps (`synisense_app`, `solva_app`, `akki_app`) each
+# declare their owned routers in an exported `ROUTERS` list. We mount
+# every entry from all three into this master `app` so the existing
+# single-process `/api/*` surface stays byte-identical. Phase 4.3 will
+# run each app as its own uvicorn process; Phase 4.4 will dual-mount
+# `/v1/<context>/*` versioned paths.
+#
+# Order: SyniSense (12 routers) → Solva (9 routers) → Akki (113
+# routers). Within Akki, `chat_audit_panel` mounts BEFORE `chat` so
+# the exact `/api/chats/archived` path beats the parameterised
+# `/api/chats/{chat_id}` match (the same ordering the original
+# server.py L237-242 comment called out). All Solva/SyniSense paths
+# under `/api/chats/*` are fully-qualified specific paths (e.g.
+# `/api/chats/{chat_id}/privacy-report.pdf`) and do not shadow Akki
+# chat routes.
+# -----------------------------------------------------------------------------
+from synisense_app import ROUTERS as _SYNISENSE_ROUTERS  # noqa: E402
+from solva_app import ROUTERS as _SOLVA_ROUTERS  # noqa: E402
+from akki_app import ROUTERS as _AKKI_ROUTERS  # noqa: E402
 
-# Solva v2 (Slice 2a 2026-05-29) — structured artefact-payload endpoint
-# behind the `SOLVA_V2_ENABLED` feature flag.
-from routers import solva_v2_artefact as _solva_v2_artefact  # noqa: E402
-app.include_router(_solva_v2_artefact.router)
-app.include_router(chat_router.router)
-app.include_router(influence_map_router.router)
-app.include_router(admin_health_router.router)
-app.include_router(admin_sandbox_kpi_router.router)
-app.include_router(signal_actions_router.router)
-app.include_router(pulse_router.router)
-app.include_router(cycle_manager_router.router)
-app.include_router(cycles_router.router)  # Cycle v2 — multi-cycle master
-app.include_router(quick_actions_router.router)  # Cycle Feel pass — Quick Action telemetry
-app.include_router(team_catalogue_router.router)  # Cycle v2 — team catalogue
-app.include_router(cycle_assignments_router.router)  # Cycle sprint — submit/assign/inbox/accept/decline
-app.include_router(ned_cycle_router.router)  # Phase E — NED Cycle Manager
-app.include_router(admin_signal_kpi_router.router)
-app.include_router(prepare_router.router)
-app.include_router(inbound_email_router.router)
-# Phase B (2026-05-21) — back-compat /api/webhooks/postmark/inbound mount.
-app.include_router(inbound_email_router.backcompat_router)
-app.include_router(inbound_queue_router.router)
-app.include_router(enterprise_router.router)
-app.include_router(llm_quota_router.router)
-app.include_router(admin_llm_spend_router.router)
-app.include_router(decks_router.router)
-# M.4: solva_router + solva_engine_router include_router calls removed.
-app.include_router(walkin_router.router)
-app.include_router(admin_auth_events_router.router)
-app.include_router(admin_journal_router.router)
-app.include_router(admin_audit_invariant_router.router)  # H2.5 — Audit-invariant violations panel
-app.include_router(healthz_shield_router.router)  # H2.5 follow-up Part B — Shield readiness probe
-app.include_router(healthz_clamav_router.router)  # Hardening Step 1 — ClamAV daemon status probe
-app.include_router(trust_center_router.router)  # H3 — Trust Center v1
-app.include_router(observability_router.router)  # ZZ.4 — Reasoning velocity
-app.include_router(observability_router.public_router)  # M.3 — Public mirror for /trust
-app.include_router(cohort_applications_router.router)  # M.0c — Cohort applications scaffold
-app.include_router(admin_shield_backfill_router.router)  # H4 — Shield back-fill
-# Phase test-harness (2026-02) — admin-gated QA hooks (first-session
-# reset + Continue-card recent-doc seed). Production-safe (super-admin
-# gated, MFA-grace via MFA_ADMIN_GRACE_EMAILS).
-from routers import admin_qa_hooks as admin_qa_hooks_router  # noqa: E402
-app.include_router(admin_qa_hooks_router.router)
-app.include_router(onboarding_status_router.router)  # J1 — re-intro banner + tooltips
-app.include_router(active_context_router.router)
-app.include_router(studio_router.router)
-app.include_router(studio_blocks_router.router)
-app.include_router(product_features_router.router)
-app.include_router(help_router.router)  # Phase E — /api/help/features
-app.include_router(early_access_router.router)
-# CLEANUP B2 (2026-05-26): cycle_config_router include removed — see archive note above.
-app.include_router(daily_review_router.router)
-app.include_router(first_session_router.router)
-app.include_router(depth_router.router)
-app.include_router(governance_router.router)
-# Phase 15 (2026-06-05) — Master Documentation download surface.
-# Three endpoints: GET /api/docs/product, /development, /bundle.zip
-app.include_router(docs_download_router.router)
-
-# Solva v2 — production reasoning surface. Open to every authenticated
-# account. Registered AFTER all v1 routers so nothing is shadowed.
-app.include_router(solva_v2_router.router)
-app.include_router(search_router.router)  # Phase F0 — Universal Search
-app.include_router(website_router.router)  # Phase I1 — Pre-login website
-# Phase J (2026-05-12) — Generative Sandbox MVP + Synisense audit metrics.
-app.include_router(sandbox_gen_router.router)
-app.include_router(synisense_metrics_router.router)
-# Phase A — Synisense Foundation under /api/v1/.
-app.include_router(synisense_shield_router.router)
-app.include_router(synisense_engine_router.router)
-# Phase C — Chat Protective Layer + Audit Panel.
-# Track A Phase 4 (2026-06-04) — `chat_audit_panel` previously
-# imported + included twice (here AND at line ~239 earlier in this
-# file), generating duplicate operation_ids `get_audit_panel`,
-# `get_audit_panel_aggregate`, `list_archived_chats`,
-# `permanent_delete_chat`. Removed the duplicate include here; the
-# earlier registration at line ~239 is the canonical one.
-from routers import documents_async_mirror as _docs_async_mirror  # noqa: E402
-app.include_router(_docs_async_mirror.router)
-# HOME sprint (2026-05-12) — ExCo teams grouping function.
-app.include_router(exco_teams_router.router)
-app.include_router(portfolio_router.router)
-app.include_router(compilations_router.router)  # Patch 2B.2 — Compilation Wizard
-app.include_router(home_router.router)  # Patch 3 — Home v2
-app.include_router(monitor_v2_router.router)  # Patch 5 — Monitor v2
-app.include_router(monitor_status_router.router)  # Phase F — Monitor "Update goal"
-app.include_router(strategic_goal_assessment_router.router)  # Chunk 12 — Strategic Goal "Update Goal"
-app.include_router(streaming_v9_router.router)  # Patch 9 — Streaming phase events
-app.include_router(feedback_router.router)  # Phase R.4 — Feedback widget
-app.include_router(trial_status_router.router)  # Phase R.5.a — Trial status + early-access
-app.include_router(questions_router.router)  # Patch 14 — Questions UI
-app.include_router(news_router.router)  # Patch 21 — News feed
-app.include_router(profile_router.router)  # Patch 25C — /me/profile country
-# Phase AA-slice-1 (2026-05-27) — tasks/initiatives CRUD.
-app.include_router(tasks_initiatives_router.router)
-# Chunk 2 (2026-05-13) — async job polling for the three long-running
-# QA-blocking endpoints (DJ-R03 brief, DJ-R05 signals, CM-R04 cycle
-# compilation). Single GET /api/jobs/{job_id}; scoped per-account.
-from routers import async_jobs as async_jobs_router  # noqa: E402
-app.include_router(async_jobs_router.router)
-
-# Phase P2 B.4 (2026-02) — In-app password change.
-from routers import auth_password_change as auth_password_change_router  # noqa: E402
-app.include_router(auth_password_change_router.router)
-
-# Phase P2 D.2 (2026-02) — Hybrid status page composite health probe.
-from routers import health_composite as health_composite_router  # noqa: E402
-app.include_router(health_composite_router.router)
-
-# Phase P3.1 (2026-02) — CSRF mint endpoint.
-from routers import csrf as csrf_router  # noqa: E402
-app.include_router(csrf_router.router)
-
-# Phase P3.3 (2026-02) — MFA enrolment + verify + recovery codes.
-from routers import mfa as mfa_router  # noqa: E402
-app.include_router(mfa_router.router)
-
-# Phase P4 (2026-02) — Cohort funnel live-wiring.
-from routers import cohort_magic_link as cohort_magic_link_router  # noqa: E402
-app.include_router(cohort_magic_link_router.router)
-from routers import admin_cohort_applications as admin_cohort_apps_router  # noqa: E402
-app.include_router(admin_cohort_apps_router.router)
-from routers import cohort_waitlist as cohort_waitlist_router  # noqa: E402  P5.7.6
-app.include_router(cohort_waitlist_router.router)
-from routers import cohort_email_events as cohort_email_events_router  # noqa: E402  P5.7.5
-app.include_router(cohort_email_events_router.router)
-from routers import admin_inbox as admin_inbox_router  # noqa: E402  P5.8.2
-app.include_router(admin_inbox_router.router)
-# Phase P5.14 — Work Studio Analyze tab (workbook upload + Monte
-# Carlo + forecast + anomalies + cited PPTX report). Sibling system
-# to Solva v2 — does not touch the v2 engine. Namespace
-# `/api/workbook/*` is intentionally NOT on the CSRF allowlist; the
-# frontend tab passes `X-CSRF-Token` via `ensureCsrfToken()` on every
-# POST. Tenant isolation: every read/write is scoped on `account_id`.
-from routers import workbook_analysis as workbook_analysis_router  # noqa: E402  P5.14
-app.include_router(workbook_analysis_router.router)
-# Phase P5.15 — Pulse Ideas by Akki (weekly cited synthesis across
-# 4 lenses). Sibling system to Solva v2; Pulse Signals surface
-# untouched. Namespace `/api/ideas/*` is intentionally NOT on the
-# CSRF allowlist; the SPA injects `X-CSRF-Token` via the axios
-# interceptor.
-from routers import ideas as ideas_router  # noqa: E402  P5.15
-app.include_router(ideas_router.router)
-# Phase P5.17 — Non-admin source-message preview (tenant-scoped
-# read-only view that the origin-chip on a routed item links into).
-# GET-only; no CSRF needed. Existence-leak guard: cross-tenant
-# access lands on 404 (never 403).
-from routers import inbox_message_preview as inbox_message_preview_router  # noqa: E402  P5.17
-app.include_router(inbox_message_preview_router.router)
+for _r in _SYNISENSE_ROUTERS:
+    app.include_router(_r)
+for _r in _SOLVA_ROUTERS:
+    app.include_router(_r)
+for _r in _AKKI_ROUTERS:
+    app.include_router(_r)
 
 
 # -----------------------------------------------------------------------------

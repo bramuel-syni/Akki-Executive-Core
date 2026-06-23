@@ -458,7 +458,45 @@ Recorded for paper trail per user direction. NOT auto-scoped. Same pattern as Ph
 
 ## Section 6 — Active Phase
 
-**Re-Architecture Phase 4.0 ✅ DONE 2026-06-23** (Phase-2.X Contract Wiring Recovery + 2-Method Widening — Pre-Read §11 ESCALATE resolved).
+**Re-Architecture Phase 4.1 ✅ DONE 2026-06-23** (Three FastAPI App Entrypoints + Router Redistribution).
+
+Phase 4.1 broke the 134-router monolith inside `backend/server.py` into three context-bound FastAPI apps — `backend/synisense_app.py` (12 routers), `backend/solva_app.py` (9 routers), `backend/akki_app.py` (113 routers) — each exporting a `ROUTERS` list that the master `server.py` composes via three mount loops. Single-process composition preserved; `/api/*` surface byte-identical (621 paths, 697 ops, `paths_sha256 = cdcb23322bb82895` before & after); Phase 4.3 will run each app as its own uvicorn process; Phase 4.4 will dual-mount `/v1/<context>/*` versioned paths.
+
+**Acceptance criteria:**
+- ✅ Three FastAPI apps shipped with `ROUTERS` exports (12 + 9 + 113 = 134 routers redistributed).
+- ✅ `server.py` refactored: 228 lines of individual `app.include_router(...)` calls replaced with a 27-line three-app composition block (net −201 lines).
+- ✅ OpenAPI surface byte-identical (621 paths, 697 ops, hash `cdcb23322bb82895`).
+- ✅ Invariants suite 36/36 (0 failures); deliberate cross-context violation smoke 3/3 PASS (teeth retained).
+- ✅ Broader regression sweep 139/140 (1 pre-existing Track A phase5 lifecycle fail — not Phase-4.1 induced; no `routers/*` or `services/*` files were modified in this dispatch).
+- ✅ Mount ordering preserved (chat_audit_panel BEFORE chat; inbound_email.router BEFORE backcompat_router; chat_pdf_router fully-qualified path no-collide with chat_router parameterised path).
+- ✅ Anti-Forget Protocol §5 honoured — zero `ask_human` mid-build.
+- ✅ Sprint memo `/app/memory/sprints/PHASE_4_1_THREE_APPS.md` + this file updated.
+
+**Phase 4.1 numbers:**
+
+| Aspect | Phase 4.0 close baseline | Phase 4.1 close | Δ |
+|---|---:|---:|---:|
+| FastAPI app entrypoints | 1 (server.py) | **4** (server master + 3 context apps) | +3 |
+| Routers in server.py direct includes | 134 | **0** (3 mount loops over composed lists) | −134 |
+| `/api/*` paths | 621 | **621** | 0 |
+| `/api/*` operations | 697 | **697** | 0 |
+| `paths_sha256[:16]` | `cdcb23322bb82895` | **`cdcb23322bb82895`** | identical |
+| Cross-context violations (unannotated) | 0 | **0** | 0 |
+| Cross-context escape-hatch annotations | 58 | **58** | 0 — see Deviation §1 in sprint memo |
+| Phase 4.1 net-new failures | — | **0** | — |
+
+**🚨 Deviation surfaced (Honesty R5):** the dispatch predicted "43 router-internal escape hatches dissolve as same-context after redistribution." This prediction is **incorrect**. The cross-context invariant's `_file_context()` attributes context by file path prefix (e.g., `routers/solva_v2.py` → `solva`), not by FastAPI app composition. Phase 4.1 did not move any router file on disk, so the 43 escape hatches remain valid + annotated. They are dissolved in Phase 4.2 via typed count/filter endpoint additions + `get_akki()` adapter migration (mirroring Phase 4.0 pattern). Full analysis in sprint memo §3.
+
+**Out of scope (held — Phase 4.2+ candidates):**
+- **Phase 4.2 (HTTP transport for cross-context adapters + typed count endpoints + 58-hatch dissolution)** — UNGATED now that Phase 4.1 substrate is in place. Scope expanded to include the 43 router-internal hatches per Deviation §1.
+- Phase 4.3 (Container topology + healthcheck triad).
+- Phase 4.4 (Versioned `/v1/<context>/*` dual-mount paths).
+- Phase 5 (Deployment separation, sell-ready).
+- Phase 6/7 — GATED on scale/sale/paying customer.
+
+---
+
+## Section 6.x — Historical: Re-Arch Phase 4.0 (✅ DONE 2026-06-23, preserved for ledger)
 
 Phase 4.0 closed Phase 1's deferred call-site migration: all 48 cross-context call sites are now routed through the `get_synisense() / get_solva() / get_akki()` adapters; cross-context invariant flipped from observe-mode to enforce-mode with `violation_count == 0` as build-breaking gate. Contract surface widened 21 → 23 methods (added `SolvaContract.narrate_analysis` + `AkkiContract.list_memberships`).
 
@@ -501,10 +539,10 @@ Phase 4.0 closed Phase 1's deferred call-site migration: all 48 cross-context ca
 
 ## Section 7 — Last Updated
 
-- **Written:** 2026-06-23T<phase-4.0-close>Z (Re-Architecture Phase 4.0 ✅ shipped — contract wiring + 2-method widening + enforce-mode flip; Phase 1 contracts fully wired in production for the first time).
-- **Agent:** rearch-phase-4.0-contract-wiring.
-- **Mode:** Part A (2-method contract widening: `SolvaContract.narrate_analysis` + `AkkiContract.list_memberships` + new `Membership` DTO + adapter pass-through + snapshot re-bless) + Part B (48 cross-context call sites: 31 migrated through contracts + 15 escape-hatched + 2 reclassified) + Part C (`test_enforce_mode_zero_violations` build-breaking + 3 deliberate-violation smoke tests + adapter `system_msg=None` landmine fix + 5 module-level shield_invoke shims for test compatibility) + Part D (sprint memo + this state file updated).
-- **Counts after Re-Arch Phase 4.0 close:** Phase 0 ✅ + Phase 1 ✅ + Phase 2 ✅ + Phase 3 ✅ (3.0+3.1+3.2) + Phase 4.0 ✅ in the re-architecture backlog (Section 8); **Phase 4.1 UNGATED** as next legitimate dispatch (three FastAPI app entrypoints), Phases 4.2-4.4 + 5-7 remain Pending/GATED. Product phases 1-15 ledger unchanged.
+- **Written:** 2026-06-23T<phase-4.1-close>Z (Re-Architecture Phase 4.1 ✅ shipped — three FastAPI app entrypoints + 134 routers redistributed + master `server.py` composes via 3 mount loops; OpenAPI surface byte-identical).
+- **Agent:** rearch-phase-4.1-build-dispatch.
+- **Mode:** Part A (built `solva_app.py` with 9 routers + `FastAPI(title="Solva")`) + Part B (built `akki_app.py` with 113 routers + `FastAPI(title="Akki")` + ordering safeguards) + Part C (refactored `server.py` L182-L410 → 27-line composition block; net −201 lines) + Part D (baseline-vs-post OpenAPI hash check `cdcb23322bb82895` identical + invariants 36/36 + deliberate violation smoke 3/3 + 139/140 regression sweep with 1 carry-forward Track A fail) + Part E (sprint memo + this state file updated + Deviation §1 logged: dispatch's "43 hatches dissolve" prediction is wrong — analysis in sprint memo §3).
+- **Counts after Re-Arch Phase 4.1 close:** Phase 0 ✅ + Phase 1 ✅ + Phase 2 ✅ + Phase 3 ✅ (3.0+3.1+3.2) + Phase 4.0 ✅ + Phase 4.1 ✅ in the re-architecture backlog (Section 8); **Phase 4.2 UNGATED** as next legitimate dispatch (HTTP transport + typed count endpoints + 58-hatch dissolution), Phases 4.3-4.4 + 5-7 remain Pending/GATED. Product phases 1-15 ledger unchanged.
 
 ---
 
@@ -523,13 +561,31 @@ This is the canonical execution plan for the Syni Re-Architecture (approved 2026
 | **3.2** | **FE call-site migration (283 sites via `apiV2` wrapper) + 37 final singleton narrowings + ratchet flip 92 → 55** | **✅ DONE 2026-06-23** | **shipped** |
 | **3** | **Phase 3 (Frontend API-Boundary Contract) — overall** | **✅ FULLY CLOSED 2026-06-23** | **shipped** |
 | **4.0** | **Phase-2.X Contract Wiring Recovery + 2-Method Widening (48 cross-context call sites migrated through `get_*()` adapters; cross-context invariant flipped to enforce mode = 0; contract surface 21 → 23)** | **✅ DONE 2026-06-23** | **shipped** |
-| 4.1 | Three FastAPI app entrypoints + router redistribution by context (still one process initially) | Pending — **UNGATED** | Build dispatch ready |
-| 4.2 | HTTP transport for cross-context adapters + typed count endpoints (re-migrates 15 Phase-4.0 escape-hatched sites) | Pending | After 4.1 |
+| **4.1** | **Three FastAPI app entrypoints + router redistribution by context (134 routers split 12 SyniSense + 9 Solva + 113 Akki; master `server.py` composes via 3 mount loops; OpenAPI surface byte-identical)** | **✅ DONE 2026-06-23** | **shipped** |
+| 4.2 | HTTP transport for cross-context adapters + typed count endpoints + **58-hatch dissolution** (15 SyniSense engine + 43 router-internal — Deviation §1 expanded 4.2 scope) | Pending — **UNGATED** | Build dispatch ready |
 | 4.3 | Container topology shift (supervisord 3-process) + healthcheck triad | Pending | After 4.2 |
 | 4.4 | Dual-mount versioned paths `/v1/<context>/*` + FE codegen regen | Pending | After 4.3 |
 | 5 | Deployment separation (sell-ready) | Pending | After 4.4 |
 | 6 | Physical data carve | GATED | Scale OR signed sale |
 | 7 | Commercial surfaces | GATED | Paying customer |
+
+**Phase 4.1 deliverables (added to tree):**
+- `backend/solva_app.py` — NEW `FastAPI(title="Solva")` + ordered `ROUTERS` list of 9 routers (solva_v2, solva_v2_artefact, solva_phase_d, solva_briefing, solva_telemetry_admin, solva_phase_e_polish.admin/export/chat_pdf, workbook_analysis)
+- `backend/akki_app.py` — NEW `FastAPI(title="Akki")` + ordered `ROUTERS` list of 113 routers (preserves original `server.py` mount sequence; `chat_audit_panel` BEFORE `chat`; `inbound_email.router` BEFORE `backcompat_router`)
+- `backend/synisense_app.py` — unchanged from earlier dispatch start (12 routers)
+- `backend/server.py` — L182-L410 (228 lines of `app.include_router(...)` + inline shims) replaced with a 27-line three-app composition block (`from <app> import ROUTERS as _<APP>_ROUTERS` × 3 + 3 mount loops). Net delta: −201 lines.
+- `/app/memory/sprints/PHASE_4_1_THREE_APPS.md` — sprint memo with router distribution table, OpenAPI byte-identical proof, escape-hatch deviation log (§3), test results, file inventory, MASTER_STATE diff summary, and Phase 4.2 handoff notes.
+
+**Phase 4.2 dispatch TODOs (next legitimate scope):**
+- Add typed count + filter adapter methods on Akki side (`count_documents`, `list_documents_by_context`, `count_chats`, `count_memberships`) and SyniSense side (`count_signals`, `list_signals_filtered`).
+- Migrate the 58 escape-hatched call sites (15 SyniSense engine + 43 router-internal) through `get_akki()` / `get_synisense()` adapters.
+- After all 58 routes go through `contracts/`, delete the `# boundary:allow-direct-call` annotations en-masse.
+- Optionally introduce HTTP transport: each adapter gets two impls (`_in_process` + `_http`); an env var selects which one — preparation for Phase 4.3 per-process uvicorn.
+- Sprint memo `/app/memory/sprints/PHASE_4_2_HTTP_TRANSPORT.md` on close.
+
+---
+
+## Section 8.x — Historical: Phase 4.0 deliverables (preserved for ledger)
 
 **Phase 4.0 deliverables (added to tree):**
 - `backend/contracts/solva.py` — `SolvaContract.narrate_analysis` added (1 new method)
@@ -548,7 +604,7 @@ This is the canonical execution plan for the Syni Re-Architecture (approved 2026
 - `/app/memory/invariants/cross_context_violations.json` — flipped to `phase: 4_0_enforce_mode`, `violation_count: 0`
 - `/app/memory/sprints/PHASE_4_0_CONTRACT_WIRING.md` — Phase 4.0 sprint memo
 
-**Phase 4.1 dispatch TODOs (next legitimate scope):**
+**Phase 4.1 dispatch TODOs (historical — superseded by §"Phase 4.1 deliverables" above; preserved for ledger):**
 - New file `backend/synisense_app.py` — `FastAPI(title="SyniSense")` instance + mount the ~11 SyniSense routers (`synisense_*`, `healthz_shield`, `trust_*`, `signal*`, `admin_shield_*`, `admin_signal_*`). Lifespan: spaCy warm-up, engine scheduler arm, `/healthz` + `/healthz/live` + `/healthz/ready` endpoints.
 - New file `backend/solva_app.py` — `FastAPI(title="Solva")` instance + mount the ~8 Solva routers (`solva_*` family). Lifespan: Solva v2 admin flag flip, stale-session scheduler arm, `/healthz` triad.
 - Refactor `backend/server.py` → drop the SyniSense + Solva router includes; Akki keeps the remaining ~117 routers + the remaining 6 cron jobs.
@@ -558,9 +614,11 @@ This is the canonical execution plan for the Syni Re-Architecture (approved 2026
 
 ---
 
-## Section 9 — Cumulative Health Snapshot (2026-06-23 Re-Arch Phase 4.0 ✅ DONE)
+## Section 9 — Cumulative Health Snapshot (2026-06-23 Re-Arch Phase 4.1 ✅ DONE)
 
-> **🛡️ Phase 4.0 posture (contract substrate live):** the Phase 1 contract surface (now 23 methods across SyniSense + Solva + Akki) is FULLY WIRED into production code paths for the first time. All 48 originally-reported cross-context call sites are migrated through `get_synisense() / get_solva() / get_akki()` adapters (31 direct + 5 module-level shims for test compatibility + 15 escape-hatched for Phase 4.2 typed count endpoints). `cross_context_violations.json` flipped from observe-mode to **enforce-mode = 0 unannotated violations**. Build fails on any new direct cross-context primitive call OR Akki-collection direct read outside `contracts/`. Deliberate-violation smoke (3 tests) proves teeth. **7 build-breaking fitness functions total** (2 BE response-model + 4 FE drift-catch + 1 CI codegen + 1 BE cross-context).
+> **🏗️ Phase 4.1 posture (three-app composition live):** the 134-router monolith is split into three context-bound FastAPI apps — `synisense_app.py` (12), `solva_app.py` (9), `akki_app.py` (113) — each exporting a `ROUTERS` list. Master `server.py` composes via 3 mount loops; **`/api/*` surface byte-identical: 621 paths, 697 ops, hash `cdcb23322bb82895` before & after**. Each app declares an ownership contract in its docstring + `FastAPI(title=...)`. Phase 4.3 will run each app as its own uvicorn process; Phase 4.4 will dual-mount `/v1/<context>/*` paths. The 58 escape-hatch annotations remain unchanged — Phase 4.1's predicted "43 dissolve as same-context" was wrong (see Section 6 Deviation + sprint memo §3); the 58 are scheduled for Phase 4.2 dissolution via typed count/filter endpoints + adapter migration.
+
+> **🛡️ Phase 4.0 posture (contract substrate live — preserved):** the Phase 1 contract surface (now 23 methods across SyniSense + Solva + Akki) is FULLY WIRED into production code paths for the first time. All 48 originally-reported cross-context call sites are migrated through `get_synisense() / get_solva() / get_akki()` adapters (31 direct + 5 module-level shims for test compatibility + 15 escape-hatched for Phase 4.2 typed count endpoints). `cross_context_violations.json` flipped from observe-mode to **enforce-mode = 0 unannotated violations**. Build fails on any new direct cross-context primitive call OR Akki-collection direct read outside `contracts/`. Deliberate-violation smoke (3 tests) proves teeth. **7 build-breaking fitness functions total** (2 BE response-model + 4 FE drift-catch + 1 CI codegen + 1 BE cross-context).
 
 > **🛡️ Phase 3 posture (drift-catch LIVE end-to-end — preserved):** 117 narrowed hot-path routes + 283 FE call sites zod-validated + 6 build-breaking fitness functions.
 
@@ -568,7 +626,7 @@ This is the canonical execution plan for the Syni Re-Architecture (approved 2026
 
 > **🛡️ Phase 3.0 posture (preserved):** OpenAPI typed-response coverage at 97.7% JSON-effective on hot paths (216/221).
 
-- ✅ **15 product phases + Re-Arch Phase 0/1/2/3.0/3.1/3.2/4.0 shipped + verified**.
+- ✅ **15 product phases + Re-Arch Phase 0/1/2/3.0/3.1/3.2/4.0/4.1 shipped + verified**.
 - ✅ **3 standalone bugs closed**: BUG-ANL-001 + BUG-ANL-002 + BUG-WS-001.
 - ✅ **Anti-Forget Protocol** §5 "no mid-dispatch ask_human" rule honoured across Phase 3.0, 3.1, 3.2, 4.0 (4 dispatches).
 - ✅ **Contract surface delivered**: 3 Protocols × 23 methods (5 SyniSense + 6 Solva + 12 Akki) + 51 shared response models + 117 narrowed BE routes + 283 zod-validated FE call sites. Surface is fully wired and snapshot-pinned.
@@ -581,7 +639,8 @@ This is the canonical execution plan for the Syni Re-Architecture (approved 2026
 - 🪲 **15 pre-existing failures** verified clean-tree across Phase 2.2-4.0 sweeps; all logged for Phase 2.X side-lane.
 - 🛌 **0 deferred future phases.**
 - 🚧 **1 USER-BLOCKED item:** Google GCP OAuth creds (G2).
-- ✅ **Re-Arch Phase 4.0 deterministic sweep PASS**: 34 PASS in BE invariants (+1 new enforce test, +1 new smoke suite with 3 tests SKIPPED-by-default, all 3 PASS unskipped) + 168 PASS Phase 3/4/6/7/14 + Track A 1-7 + chat fluency + spaCy + tenant-entities + QA chunks 12+. 22/22 FE PASS preserved. 3 pre-existing failures (clean-tree verified) unchanged. **Zero net-new failures attributable to Phase 4.0.**
+- ✅ **Re-Arch Phase 4.1 deterministic sweep PASS**: 36 PASS in BE invariants (0 net new failures) + 3 PASS deliberate cross-context violation smoke (teeth retained under enforce mode) + 139 PASS in broader regression (Track A 3-7 + Track B 3 + chat + Phase 4 iter2 + spaCy + tenant-entities + engagement); 1 pre-existing Track A phase5 lifecycle fail unchanged (no `routers/*` or `services/*` files modified in this dispatch). OpenAPI surface byte-identical: 621 paths, 697 ops, `paths_sha256 = cdcb23322bb82895` before & after. **Zero net-new failures attributable to Phase 4.1.**
+- ✅ **Re-Arch Phase 4.0 deterministic sweep PASS** (preserved).
 - ✅ **Re-Arch Phase 3.2 deterministic sweep PASS** (preserved).
 - ✅ **Re-Arch Phase 3.1 deterministic sweep PASS** (preserved).
 - ✅ **Re-Arch Phase 3.0 deterministic sweep PASS** (preserved).
@@ -611,6 +670,6 @@ This is the canonical execution plan for the Syni Re-Architecture (approved 2026
 
 ---
 
-**Paused per orchestrator instruction.** Re-Architecture **Phase 4.0 ✅ DONE**. Next legitimate dispatch is **Phase 4.1 (Three FastAPI app entrypoints + router redistribution)** per Section 8 — now UNGATED. NOT auto-starting per Discipline Rail R2 (Approval Gate) + R6 (no auto-starting). Holding.
+**Paused per orchestrator instruction.** Re-Architecture **Phase 4.1 ✅ DONE**. Next legitimate dispatch is **Phase 4.2 (HTTP transport for cross-context adapters + typed count endpoints + 58-hatch dissolution)** per Section 8 — now UNGATED. NOT auto-starting per Discipline Rail R2 (Approval Gate) + R6 (no auto-starting). Holding.
 
-Historical sub-phase acceptance criteria live in the per-phase sprint memos under `/app/memory/sprints/PHASE_{0,1,2,3,4}_*.md`. Aggregate Phase 3 close-out summary in `PHASE_3_2_FE_MIGRATION_CLOSE.md` §6; Phase 4.0 close-out in `PHASE_4_0_CONTRACT_WIRING.md`.
+Historical sub-phase acceptance criteria live in the per-phase sprint memos under `/app/memory/sprints/PHASE_{0,1,2,3,4}_*.md`. Aggregate Phase 3 close-out summary in `PHASE_3_2_FE_MIGRATION_CLOSE.md` §6; Phase 4.0 close-out in `PHASE_4_0_CONTRACT_WIRING.md`; Phase 4.1 close-out in `PHASE_4_1_THREE_APPS.md`.
