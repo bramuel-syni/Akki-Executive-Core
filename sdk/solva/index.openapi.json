@@ -1,0 +1,3804 @@
+{
+  "components": {
+    "schemas": {
+      "AnomaliesRequest": {
+        "properties": {
+          "column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "If omitted, runs anomaly detection on every numeric column in the sheet",
+            "title": "Column"
+          },
+          "iqr_multiplier": {
+            "default": 1.5,
+            "title": "Iqr Multiplier",
+            "type": "number"
+          },
+          "sheet": {
+            "title": "Sheet",
+            "type": "string"
+          },
+          "z_threshold": {
+            "default": 3.0,
+            "title": "Z Threshold",
+            "type": "number"
+          }
+        },
+        "required": [
+          "sheet"
+        ],
+        "title": "AnomaliesRequest",
+        "type": "object"
+      },
+      "AnomaliesResponse": {
+        "additionalProperties": true,
+        "description": "Anomalies extraction shape: `{anomalies}`.",
+        "properties": {
+          "anomalies": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anomalies"
+          }
+        },
+        "title": "AnomaliesResponse",
+        "type": "object"
+      },
+      "ArtefactFromSolvaIn": {
+        "properties": {
+          "session_id": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id"
+        ],
+        "title": "ArtefactFromSolvaIn",
+        "type": "object"
+      },
+      "AttachDocumentIn": {
+        "properties": {
+          "document_id": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Document Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "document_id"
+        ],
+        "title": "AttachDocumentIn",
+        "type": "object"
+      },
+      "Body_restore_one_v1_solva_8c5580bc": {
+        "properties": {
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id"
+        ],
+        "title": "Body_restore_one_v1_solva_8c5580bc",
+        "type": "object"
+      },
+      "Body_upload_workbook_multi_v1_solva_3618fa53": {
+        "properties": {
+          "context_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Id"
+          },
+          "files": {
+            "description": "One or more xlsx/csv files",
+            "items": {
+              "format": "binary",
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "objective": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Objective"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "files"
+        ],
+        "title": "Body_upload_workbook_multi_v1_solva_3618fa53",
+        "type": "object"
+      },
+      "Body_upload_workbook_v1_solva_21384245": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_workbook_v1_solva_21384245",
+        "type": "object"
+      },
+      "CreateSessionIn": {
+        "properties": {
+          "seed_payload": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SeedPayload"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sub_module": {
+            "maxLength": 40,
+            "minLength": 4,
+            "title": "Sub Module",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sub_module"
+        ],
+        "title": "CreateSessionIn",
+        "type": "object"
+      },
+      "ForecastRequest": {
+        "properties": {
+          "date_column": {
+            "title": "Date Column",
+            "type": "string"
+          },
+          "horizon_periods": {
+            "default": 8,
+            "title": "Horizon Periods",
+            "type": "integer"
+          },
+          "sheet": {
+            "title": "Sheet",
+            "type": "string"
+          },
+          "value_column": {
+            "title": "Value Column",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sheet",
+          "date_column",
+          "value_column"
+        ],
+        "title": "ForecastRequest",
+        "type": "object"
+      },
+      "ForkV2In": {
+        "description": "Phase 15.2 \u2014 fork an in-flight or completed session into a new session\nunder a different sub-module. The new session inherits intent + accumulated\nuser turns + key claims, sets parent_session_id, and starts at framing.",
+        "properties": {
+          "persona": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Persona"
+          },
+          "to_submodule": {
+            "maxLength": 40,
+            "minLength": 4,
+            "title": "To Submodule",
+            "type": "string"
+          }
+        },
+        "required": [
+          "to_submodule"
+        ],
+        "title": "ForkV2In",
+        "type": "object"
+      },
+      "FrameAuditDecisionIn": {
+        "description": "Wave 2.1 \u2014 Layer 0 Frame Audit user choice. After the audit\nscreen, the user picks one of three CTAs.",
+        "properties": {
+          "decision": {
+            "pattern": "^(proceed|get_more|pause)$",
+            "title": "Decision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "title": "FrameAuditDecisionIn",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HandoffCycleIn": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 400,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "title": "HandoffCycleIn",
+        "type": "object"
+      },
+      "IdResponse": {
+        "additionalProperties": true,
+        "description": "Row-id-returning shape: `{\"id\": \"...\", optional_extras}` or\n`{\"deleted\": True, \"id\": \"...\"}` for tombstone returns.",
+        "properties": {
+          "deleted": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deleted"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          }
+        },
+        "title": "IdResponse",
+        "type": "object"
+      },
+      "IntentClassifyIn": {
+        "description": "Phase 15.2 \u2014 single tier=fast LLM classification of the user's intent\ninto one of the 4 sub-modules. Fronts the picker's suggestion chip.",
+        "properties": {
+          "intent": {
+            "maxLength": 1200,
+            "minLength": 20,
+            "title": "Intent",
+            "type": "string"
+          }
+        },
+        "required": [
+          "intent"
+        ],
+        "title": "IntentClassifyIn",
+        "type": "object"
+      },
+      "ItemsListResponse": {
+        "additionalProperties": true,
+        "description": "Paged-list shape: `{\"items\": [...], \"next_cursor\": ..., \"total\": ...}`.\nUsed by portfolio / recent-views / work-studio document lists / etc.",
+        "properties": {
+          "items": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          },
+          "total_pending": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Pending"
+          }
+        },
+        "title": "ItemsListResponse",
+        "type": "object"
+      },
+      "RefuseIn": {
+        "properties": {
+          "operator_reason": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operator Reason"
+          }
+        },
+        "title": "RefuseIn",
+        "type": "object"
+      },
+      "SeedPayload": {
+        "description": "Phase E.5 \u2014 handoff payload from Cycle / Work Studio / Document Journal.\n\nPre-populates the framing text, attaches referenced docs/artefacts as\nLayer 0 evidence anchors (real grounding, not placeholders), and\noptionally suggests a sub_module. Source provenance lives on the\nsession as `source_handoff` for traceability.",
+        "properties": {
+          "attached_references": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Attached References",
+            "type": "array"
+          },
+          "preview_text": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Preview Text",
+            "type": "string"
+          },
+          "source": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          },
+          "source_id": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Source Id",
+            "type": "string"
+          },
+          "sub_module_hint": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sub Module Hint"
+          }
+        },
+        "required": [
+          "source",
+          "source_id"
+        ],
+        "title": "SeedPayload",
+        "type": "object"
+      },
+      "SignalsResponse": {
+        "additionalProperties": true,
+        "description": "Signals extraction shape: `{signals}`.",
+        "properties": {
+          "signals": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signals"
+          }
+        },
+        "title": "SignalsResponse",
+        "type": "object"
+      },
+      "SimulateRequest": {
+        "properties": {
+          "column": {
+            "description": "The column-name to fit the input distribution to",
+            "title": "Column",
+            "type": "string"
+          },
+          "distribution": {
+            "title": "Distribution",
+            "type": "string"
+          },
+          "formula": {
+            "default": "=x",
+            "title": "Formula",
+            "type": "string"
+          },
+          "iterations": {
+            "default": 5000,
+            "title": "Iterations",
+            "type": "integer"
+          },
+          "params": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Params",
+            "type": "object"
+          },
+          "seed": {
+            "default": 42,
+            "title": "Seed",
+            "type": "integer"
+          },
+          "sheet": {
+            "title": "Sheet",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sheet",
+          "column",
+          "distribution",
+          "params"
+        ],
+        "title": "SimulateRequest",
+        "type": "object"
+      },
+      "StartV2In": {
+        "properties": {
+          "auto_cluster": {
+            "default": true,
+            "title": "Auto Cluster",
+            "type": "boolean"
+          },
+          "cluster_id": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cluster Id"
+          },
+          "context_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Id"
+          },
+          "intake_seed": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intake Seed"
+          },
+          "intent": {
+            "maxLength": 1200,
+            "minLength": 20,
+            "title": "Intent",
+            "type": "string"
+          },
+          "persona": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Persona"
+          },
+          "pro_tier": {
+            "default": false,
+            "title": "Pro Tier",
+            "type": "boolean"
+          },
+          "sandbox": {
+            "default": false,
+            "title": "Sandbox",
+            "type": "boolean"
+          },
+          "submodule": {
+            "default": "seek_clarity",
+            "title": "Submodule",
+            "type": "string"
+          }
+        },
+        "required": [
+          "intent"
+        ],
+        "title": "StartV2In",
+        "type": "object"
+      },
+      "SubmitAnswerIn": {
+        "properties": {
+          "answer_text": {
+            "maxLength": 4000,
+            "minLength": 2,
+            "title": "Answer Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "answer_text"
+        ],
+        "title": "SubmitAnswerIn",
+        "type": "object"
+      },
+      "SubmitFramingIn": {
+        "properties": {
+          "framing_text": {
+            "maxLength": 4000,
+            "minLength": 20,
+            "title": "Framing Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "framing_text"
+        ],
+        "title": "SubmitFramingIn",
+        "type": "object"
+      },
+      "TurnV2In": {
+        "properties": {
+          "user_text": {
+            "maxLength": 4000,
+            "minLength": 2,
+            "title": "User Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_text"
+        ],
+        "title": "TurnV2In",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "WorkbookAnalysisResponse": {
+        "additionalProperties": true,
+        "description": "Workbook analysis shape: stable `id / context_id / account_id / status` core fields.",
+        "properties": {
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "context_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Id"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "title": "WorkbookAnalysisResponse",
+        "type": "object"
+      },
+      "_AnalysisNoteIn": {
+        "description": "Body schema for `POST /v2/analyses/{aid}/notes`.\n\nTrack A Phase 4 iter-2 (2026-06-04) \u2014 `min_length=0` allows the\nempty-body deletion event per the Pre-Read contract:\n\n    \"Empty PATCH ({notes: ''}) appends a {body: ''} entry \u2014\n     explicit deletion is a history event, not a void.\"\n\nIdempotency: identical-body re-POST (including empty-body) still\nno-ops via the handler's tail-entry check.",
+        "properties": {
+          "body": {
+            "maxLength": 4000,
+            "minLength": 0,
+            "title": "Body",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "_AnalysisNoteIn",
+        "type": "object"
+      },
+      "_AnalysisObjectivePatch": {
+        "description": "Body schema for `PATCH /v2/analyses/{aid}/objective`.",
+        "properties": {
+          "objective": {
+            "maxLength": 4000,
+            "title": "Objective",
+            "type": "string"
+          }
+        },
+        "required": [
+          "objective"
+        ],
+        "title": "_AnalysisObjectivePatch",
+        "type": "object"
+      },
+      "_PostBody": {
+        "properties": {
+          "action": {
+            "enum": [
+              "increment",
+              "suppress",
+              "unsuppress"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "area": {
+            "title": "Area",
+            "type": "string"
+          }
+        },
+        "required": [
+          "area",
+          "action"
+        ],
+        "title": "_PostBody",
+        "type": "object"
+      },
+      "_UpdateSessionTitleIn": {
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "_UpdateSessionTitleIn",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Versioned `/v1/solva/*` SDK surface for the Solva bounded context.\n\nGenerated by `scripts/generate_sdk_slices.py` against the live OpenAPI document at Phase 5 close. See `/app/memory/API_VERSIONING.md` for the versioning contract.",
+    "title": "Solva API",
+    "version": "1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/v1/solva/admin/solva/key-usage": {
+      "get": {
+        "description": "Return a sorted list `[{key, count}]` of question-key emission\nfrequencies, descending. Useful for bank-content maintenance:\nkeys with high emission counts but only one variant (the generic\nfallback) are the priority for variant expansion.",
+        "operationId": "get_key_usage_v1_solva_cb9a2ba2",
+        "parameters": [
+          {
+            "description": "ISO-8601 timestamp. Only emissions at-or-after this moment are counted. Omit for all-time.",
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ISO-8601 timestamp. Only emissions at-or-after this moment are counted. Omit for all-time.",
+              "title": "Since"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Key Usage V1 Solva Cb9A2Ba2",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Key Usage V1 Solva Cb9A2Ba2",
+        "tags": [
+          "admin",
+          "solva",
+          "telemetry"
+        ]
+      }
+    },
+    "/v1/solva/admin/solva/legacy/orphan-count": {
+      "get": {
+        "operationId": "orphan_count_v1_solva_e0d84dc0",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Orphan Count V1 Solva E0D84Dc0",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Orphan Count V1 Solva E0D84Dc0",
+        "tags": [
+          "admin-solva-migration"
+        ]
+      }
+    },
+    "/v1/solva/admin/solva/legacy/restore": {
+      "post": {
+        "operationId": "restore_one_v1_solva_8c5580bc",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_restore_one_v1_solva_8c5580bc"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Restore One V1 Solva 8C5580Bc",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore One V1 Solva 8C5580Bc",
+        "tags": [
+          "admin-solva-migration"
+        ]
+      }
+    },
+    "/v1/solva/admin/solva/legacy/soft-archive": {
+      "post": {
+        "description": "Soft-delete legacy `solva_sessions` rows that have no\n`context_id` AND are not already archived. Reversible via\n`/legacy/restore?session_id=...`. Adds an `archived_at` timestamp\nand `archived_by_admin_id` for audit.",
+        "operationId": "soft_archive_orphans_v1_solva_e30a7163",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Soft Archive Orphans V1 Solva E30A7163",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Soft Archive Orphans V1 Solva E30A7163",
+        "tags": [
+          "admin-solva-migration"
+        ]
+      }
+    },
+    "/v1/solva/admin/solva/variant-coverage": {
+      "get": {
+        "description": "Companion endpoint: returns `[{question_key, variants_seen, total_in_bank}]`\nso analytics can spot users approaching cycle-complete on a key.\nWhen called without `user_id` returns global per-key coverage\naggregated across all users.",
+        "operationId": "get_variant_coverage_v1_solva_f3b6ae5e",
+        "parameters": [
+          {
+            "description": "Account id to inspect. Omit to report bank-level coverage across all users (still admin-only).",
+            "in": "query",
+            "name": "user_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Account id to inspect. Omit to report bank-level coverage across all users (still admin-only).",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Variant Coverage V1 Solva F3B6Ae5E",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Variant Coverage V1 Solva F3B6Ae5E",
+        "tags": [
+          "admin",
+          "solva",
+          "telemetry"
+        ]
+      }
+    },
+    "/v1/solva/briefing/state": {
+      "get": {
+        "description": "Return current visit_count + suppressed for (user, area).\n\nSide-effect-free; safe to call on every deck render.",
+        "operationId": "get_state_v1_solva_c683bdc6",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "area",
+            "required": true,
+            "schema": {
+              "title": "Area",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get State V1 Solva C683Bdc6",
+        "tags": [
+          "solva_briefing"
+        ]
+      },
+      "post": {
+        "description": "Mutate (user, area) state. Idempotent within a single deck open\nonly for `suppress` / `unsuppress`; `increment` always bumps.\n\nReturns the post-mutation snapshot in the same shape as\nGET /state so the frontend can short-circuit without re-fetching.",
+        "operationId": "mutate_state_v1_solva_c683bdc6",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_PostBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mutate State V1 Solva C683Bdc6",
+        "tags": [
+          "solva_briefing"
+        ]
+      }
+    },
+    "/v1/solva/chats/{chat_id}/privacy-report.pdf": {
+      "get": {
+        "description": "Generate a privacy-report PDF for one chat. Streams as\n`application/pdf`. Strict scoping: the chat must belong to the\nrequesting account.\n\nFor each Shield audit row, fetches the matching `synisense_trust_\nreceipts` row WITHOUT excluding `signature` / `payload_hash` \u2014\nthose are the fields a tenant uses to self-verify the HMAC chain.",
+        "operationId": "chat_privacy_report_pdf_v1_solva_e69b039f",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "title": "Chat Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Chat Privacy Report Pdf V1 Solva E69B039F",
+        "tags": [
+          "chat-privacy-report"
+        ]
+      }
+    },
+    "/v1/solva/contexts/{context_id}/solva/v2/sessions": {
+      "get": {
+        "description": "Strict context+account scoping.",
+        "operationId": "solva_phase_d_list_sessions_v1_solva_48afb058",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "context_id",
+            "required": true,
+            "schema": {
+              "title": "Context Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Sessions V1 Solva 48Afb058",
+        "tags": [
+          "solva-phase-d"
+        ]
+      },
+      "post": {
+        "operationId": "create_session_v1_solva_48afb058",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "context_id",
+            "required": true,
+            "schema": {
+              "title": "Context Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSessionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Session V1 Solva 48Afb058",
+        "tags": [
+          "solva-phase-d"
+        ]
+      }
+    },
+    "/v1/solva/contexts/{context_id}/solva/v2/sessions/{session_id}": {
+      "get": {
+        "operationId": "solva_phase_d_get_session_v1_solva_3d5476a8",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "context_id",
+            "required": true,
+            "schema": {
+              "title": "Context Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Session V1 Solva 3D5476A8",
+        "tags": [
+          "solva-phase-d"
+        ]
+      }
+    },
+    "/v1/solva/contexts/{context_id}/solva/v2/sessions/{session_id}/answer": {
+      "post": {
+        "description": "Advance the state machine by one answer.",
+        "operationId": "submit_answer_v1_solva_61a4ffb7",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "context_id",
+            "required": true,
+            "schema": {
+              "title": "Context Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitAnswerIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Answer V1 Solva 61A4Ffb7",
+        "tags": [
+          "solva-phase-d"
+        ]
+      }
+    },
+    "/v1/solva/contexts/{context_id}/solva/v2/sessions/{session_id}/attach-document": {
+      "post": {
+        "description": "Mid-session document anchor.\n\nTwo modes, dispatched by Content-Type:\n  - multipart/form-data with `file=...` \u2192 upload pipeline runs\n    (ClamAV \u2192 extract_text \u2192 storage save \u2192 documents row insert)\n    and the resulting doc is anchored.\n  - application/json with `{\"document_id\": \"...\"}` \u2192 link an\n    existing doc by id (context-scoped) and anchor it.",
+        "operationId": "attach_document_v1_solva_5ada4e72",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "context_id",
+            "required": true,
+            "schema": {
+              "title": "Context Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Attach Document V1 Solva 5Ada4E72",
+        "tags": [
+          "solva-phase-d"
+        ]
+      }
+    },
+    "/v1/solva/contexts/{context_id}/solva/v2/sessions/{session_id}/attachments": {
+      "get": {
+        "description": "List anchors currently bound to a session. Lightweight view \u2014\nexcludes the full `excerpt` field so the UI list stays small.",
+        "operationId": "list_session_attachments_v1_solva_1262fdea",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "context_id",
+            "required": true,
+            "schema": {
+              "title": "Context Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Session Attachments V1 Solva 1262Fdea",
+        "tags": [
+          "solva-phase-d"
+        ]
+      }
+    },
+    "/v1/solva/contexts/{context_id}/solva/v2/sessions/{session_id}/audit-panel/timeline": {
+      "get": {
+        "description": "Compose a per-session privacy-provenance timeline.\n\nReads the session's `synisense_audit_ids` array, fetches each\n`synisense_audit_log` row, and groups by purpose (layer label).\nReturns ONE step per audit row plus an aggregate footer.",
+        "operationId": "audit_panel_timeline_v1_solva_98e99565",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "context_id",
+            "required": true,
+            "schema": {
+              "title": "Context Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Audit Panel Timeline V1 Solva 98E99565",
+        "tags": [
+          "solva-phase-d"
+        ]
+      }
+    },
+    "/v1/solva/contexts/{context_id}/solva/v2/sessions/{session_id}/framing": {
+      "post": {
+        "description": "Submit initial framing \u2192 kicks off Layer 0 (silent FAR) \u2192 Layer 1.",
+        "operationId": "submit_framing_v1_solva_68137fc0",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "context_id",
+            "required": true,
+            "schema": {
+              "title": "Context Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitFramingIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Framing V1 Solva 68137Fc0",
+        "tags": [
+          "solva-phase-d"
+        ]
+      }
+    },
+    "/v1/solva/contexts/{context_id}/solva/v2/sessions/{session_id}/refuse": {
+      "post": {
+        "description": "Operator-driven refusal path. Sets status=refused without\nrunning the weighting engine.",
+        "operationId": "refuse_session_v1_solva_ef46f4f7",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "context_id",
+            "required": true,
+            "schema": {
+              "title": "Context Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefuseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Refuse Session V1 Solva Ef46F4F7",
+        "tags": [
+          "solva-phase-d"
+        ]
+      }
+    },
+    "/v1/solva/contexts/{context_id}/solva/v2/sessions/{session_id}/title": {
+      "patch": {
+        "description": "Save a user-edited session title.\n\nStrict ownership: the underlying `_get_session` already enforces\n`account_id == ctx.account.id` AND `context_id == ctx.context.id`\nso cross-tenant overwrites are impossible. Stores `title_source =\n\"user\"` so a future re-run of `submit_framing` won't clobber the\nuser's choice (see the idempotency guard there).",
+        "operationId": "update_session_title_v1_solva_9142e739",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "context_id",
+            "required": true,
+            "schema": {
+              "title": "Context Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_UpdateSessionTitleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Session Title V1 Solva 9142E739",
+        "tags": [
+          "solva-phase-d"
+        ]
+      }
+    },
+    "/v1/solva/contexts/{context_id}/work-studio/artefacts/from-solva": {
+      "post": {
+        "description": "Create a Work Studio brief artefact pre-populated with a Phase D\nSolva session's synthesis. Strict scoping: session must belong to\nthe active context AND the requesting account.",
+        "operationId": "create_artefact_from_solva_v1_solva_0b85cf6d",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "context_id",
+            "required": true,
+            "schema": {
+              "title": "Context Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArtefactFromSolvaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Create Artefact From Solva V1 Solva 0B85Cf6D",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Artefact From Solva V1 Solva 0B85Cf6D",
+        "tags": [
+          "work-studio-from-solva"
+        ]
+      }
+    },
+    "/v1/solva/sessions/{sid}/v2/chair_notes": {
+      "get": {
+        "operationId": "get_v2_chair_notes_v1_solva_a712e543",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get V2 Chair Notes V1 Solva A712E543",
+        "tags": [
+          "solva-v2-artefact"
+        ]
+      }
+    },
+    "/v1/solva/sessions/{sid}/v2/export.pptx": {
+      "get": {
+        "description": "Stream a native .pptx file rendered from the 16-element\nartefact schema.\n\nAuth + feature-flag gates mirror `/v2/payload` exactly. On every\nsuccessful export, write a `solva_v2_pptx_export` row to\n`db.audit_log` carrying session id + account id + slide count.",
+        "operationId": "export_v2_pptx_v1_solva_b087799e",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export V2 Pptx V1 Solva B087799E",
+        "tags": [
+          "solva-v2-artefact"
+        ]
+      }
+    },
+    "/v1/solva/sessions/{sid}/v2/payload": {
+      "get": {
+        "description": "Return the Slice 1 `ArtefactPayload` for this session as JSON.\n\nGates:\n  \u2022 Session must exist + belong to the authenticated account\n  \u2022 Feature flag must be ON for this account (or globally via env)\n  \u2022 All 4 integrity validators must pass; if not, HTTP 422 with\n    offender list\n\nResponse shape:\n  {\n    \"schema_version\": \"solva.v2.artefact.1.0\",\n    \"session_id\": \"...\",\n    \"payload\": <ArtefactPayload as JSON>,\n    \"validator_passes\": true,\n  }",
+        "operationId": "get_v2_artefact_payload_v1_solva_d791a820",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get V2 Artefact Payload V1 Solva D791A820",
+        "tags": [
+          "solva-v2-artefact"
+        ]
+      }
+    },
+    "/v1/solva/sessions/{sid}/v2/stream": {
+      "get": {
+        "description": "Server-Sent-Events stream of Solva's 5-layer reasoning pass.\n\nFor complete sessions, replays the deterministic synthesized event\nsequence in a 4-second rapid-burst so the founder gets the visceral\n\"watch it think\" experience whenever they open the artefact.\n\nFor in-flight sessions (status != \"completed\"), the stream returns\nonly the events that have happened so far + closes \u2014 live-mode\ninstrumentation lands in Slice 3a.next when the 5-layer engine\npipeline is wired to a per-session asyncio.Queue. Today the engines\nwrite to the audit log synchronously inside their long-op endpoints,\nso a parallel stream would need a refactor that's outside the\nSlice 3a scope.\n\nWire format (one SSE event per emitted SolvaStreamEvent):\n    event: solva.reasoning\n    data:  <SolvaStreamEvent JSON>\n\nCloses with:\n    event: complete\n    data:  {\"total_events\": N}",
+        "operationId": "stream_v2_reasoning_v1_solva_9b7d0648",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Stream V2 Reasoning V1 Solva 9B7D0648",
+        "tags": [
+          "solva-v2-artefact"
+        ]
+      }
+    },
+    "/v1/solva/v2/cron/stale-session-sweep": {
+      "post": {
+        "operationId": "stale_session_sweep_v1_solva_e8cb54c5",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Cron-Secret",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Cron-Secret"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Stale Session Sweep V1 Solva E8Cb54C5",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/intent/classify": {
+      "post": {
+        "description": "Phase 15.2 \u2014 soft-suggest the most-fitting sub-module for a user's\nintent. Single tier=fast LLM call. Returns\n    {submodule: <one of 4>, confidence: 0.0-1.0, reason: str}\nFront-end shows the chip when confidence >= 0.6 and hides otherwise.",
+        "operationId": "classify_intent_v1_solva_a9fba4f1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntentClassifyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Classify Intent V1 Solva A9Fba4F1",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/seed": {
+      "get": {
+        "operationId": "fetch_take_to_solva_seed_v1_solva_2a46115f",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Fetch Take To Solva Seed V1 Solva 2A46115F",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions": {
+      "get": {
+        "description": "List sessions for the caller, **strictly scoped to one workspace context**.\n\nPrivacy fix (WS-R16, 2026-05-13) \u2014 `context_id` is now a REQUIRED\nquery parameter. Previously this endpoint filtered by `account_id`\nonly, which meant a user with active memberships in multiple\nworkspaces (companies / boards) saw Solva sessions from ALL of their\ncontexts mixed together. Concretely, the Generate-Brief-from-Solva\npicker (`components/studio/SourceStep.jsx`) surfaced sessions from\nevery context the user had ever logged into, not the workspace they\nwere currently in. That is a data-segregation violation.\n\nDefense-in-depth applied here:\n  1. `context_id` is required (FastAPI raises 422 if missing).\n  2. The caller must have an **active membership** in `context_id`.\n     A 403 is returned if not \u2014 protects against a user passing\n     a workspace id they're not a member of.\n  3. The Mongo find filter combines `account_id` AND `context_id`.\n     Belt-and-braces \u2014 even if membership lookup is bypassed by a\n     future bug, the data filter still scopes correctly.\n  4. Sessions whose stored `context_id` is null / missing are\n     **excluded** from the response (legacy/orphan data \u2014 see\n     SYSTEM_STATE \u00a77 entry for the follow-up cleanup task).\n\nWave 3.3 (UAT pack) \u2014 `q` substring filter against `intent`\n(case-insensitive) is preserved.",
+        "operationId": "list_sessions_v1_solva_a1cf5dfc",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "context_id",
+            "required": true,
+            "schema": {
+              "title": "Context Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Sessions V1 Solva A1Cf5Dfc",
+        "tags": [
+          "solva_v2"
+        ]
+      },
+      "post": {
+        "operationId": "start_session_v1_solva_a1cf5dfc",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartV2In"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Session V1 Solva A1Cf5Dfc",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}": {
+      "get": {
+        "operationId": "get_session_v1_solva_26fd5f45",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "context_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Context Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Session V1 Solva 26Fd5F45",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}/abandon": {
+      "post": {
+        "operationId": "abandon_session_v1_solva_a290420c",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Abandon Session V1 Solva A290420C",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}/artefact-reasoning": {
+      "get": {
+        "operationId": "artefact_reasoning_v1_solva_3af9c124",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Artefact Reasoning V1 Solva 3Af9C124",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}/attach-document": {
+      "post": {
+        "operationId": "attach_session_document_v1_solva_9269d533",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachDocumentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Attach Session Document V1 Solva 9269D533",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}/attached-documents/{document_id}": {
+      "delete": {
+        "operationId": "detach_session_document_v1_solva_ba41787a",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Detach Session Document V1 Solva Ba41787A",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}/continue-chat": {
+      "post": {
+        "operationId": "solva_continue_in_chat_v1_solva_ac732474",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Solva Continue In Chat V1 Solva Ac732474",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}/export.docx": {
+      "get": {
+        "operationId": "export_session_docx_v1_solva_8bf1c433",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Session Docx V1 Solva 8Bf1C433",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}/export.pdf": {
+      "get": {
+        "operationId": "export_session_pdf_v1_solva_426cd4a8",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Session Pdf V1 Solva 426Cd4A8",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}/fork": {
+      "post": {
+        "description": "Phase 15.2 \u2014 fork a session into a new sub-module.\n\nInherits intent + accumulated user turns from the parent. Sets\nparent_session_id on the child so the lineage is auditable. Starts at\nframing layer with status=active. Does NOT abandon the parent \u2014 the\nuser can keep walking the parent if they want to.",
+        "operationId": "fork_session_v1_solva_2095865f",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForkV2In"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Fork Session V1 Solva 2095865F",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}/frame-audit": {
+      "post": {
+        "operationId": "run_frame_audit_v1_solva_1b08a96e",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "stream",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Stream",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Frame Audit V1 Solva 1B08A96E",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}/frame-audit-decision": {
+      "post": {
+        "operationId": "frame_audit_decision_v1_solva_5756c366",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FrameAuditDecisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Frame Audit Decision V1 Solva 5756C366",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}/handoff/cycle": {
+      "post": {
+        "operationId": "handoff_cycle_via_review_v1_solva_7ff95e02",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HandoffCycleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Handoff Cycle Via Review V1 Solva 7Ff95E02",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}/reasoning-log": {
+      "get": {
+        "operationId": "get_reasoning_log_v1_solva_6bd85639",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Reasoning Log V1 Solva 6Bd85639",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}/reasoning-log/summary": {
+      "get": {
+        "operationId": "reasoning_log_summary_v1_solva_abc3dc09",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reasoning Log Summary V1 Solva Abc3Dc09",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}/synisense-breakdown": {
+      "get": {
+        "description": "SOLVA sprint (2026-05-12) \u2014 per-section Synisense breakdown.\n\nReturns the total identifier count + three-layer breakdown grouped\nby Solva reasoning surface (framing / grounding / hypothesis /\nsynthesis / reflection). Powers the per-section badge on the\nartefact UI.\n\nFilter is on (session_id, surface) which is reliable once the\npipeline started threading session_id forward (SOLVA sprint).\nOlder sessions that pre-date the threading return an empty list \u2014\nthe UI degrades gracefully to \"\u2014\" badges. We also accept the\nsurface-by-time-window approximation for that historical bucket by\nreading the session's account_id + creation/update window.",
+        "operationId": "get_synisense_breakdown_v1_solva_84a92d99",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Synisense Breakdown V1 Solva 84A92D99",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Synisense Breakdown V1 Solva 84A92D99",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}/take-to-cycle": {
+      "post": {
+        "operationId": "take_to_cycle_v1_solva_6ae4ece5",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Take To Cycle V1 Solva 6Ae4Ece5",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/v2/sessions/{sid}/turn": {
+      "post": {
+        "operationId": "post_turn_v1_solva_475b2fb9",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sid",
+            "required": true,
+            "schema": {
+              "title": "Sid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnV2In"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Turn V1 Solva 475B2Fb9",
+        "tags": [
+          "solva_v2"
+        ]
+      }
+    },
+    "/v1/solva/workbook/analyses": {
+      "get": {
+        "operationId": "list_analyses_v1_solva_69ab64c2",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ItemsListResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response List Analyses V1 Solva 69Ab64C2"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Analyses V1 Solva 69Ab64C2",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    },
+    "/v1/solva/workbook/analyses/{aid}": {
+      "get": {
+        "operationId": "get_analysis_v1_solva_8b776dbe",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "aid",
+            "required": true,
+            "schema": {
+              "title": "Aid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Get Analysis V1 Solva 8B776Dbe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Analysis V1 Solva 8B776Dbe",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    },
+    "/v1/solva/workbook/analyses/{aid}/anomalies": {
+      "post": {
+        "operationId": "anomalies_endpoint_v1_solva_83e5e0c6",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "aid",
+            "required": true,
+            "schema": {
+              "title": "Aid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnomaliesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/AnomaliesResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Anomalies Endpoint V1 Solva 83E5E0C6"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Anomalies Endpoint V1 Solva 83E5E0C6",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    },
+    "/v1/solva/workbook/analyses/{aid}/forecast": {
+      "post": {
+        "operationId": "forecast_endpoint_v1_solva_2e8b7f60",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "aid",
+            "required": true,
+            "schema": {
+              "title": "Aid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForecastRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Forecast Endpoint V1 Solva 2E8B7F60"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Forecast Endpoint V1 Solva 2E8B7F60",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    },
+    "/v1/solva/workbook/analyses/{aid}/report.docx": {
+      "get": {
+        "operationId": "report_docx_endpoint_v1_solva_5aac46cc",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "aid",
+            "required": true,
+            "schema": {
+              "title": "Aid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Report Docx Endpoint V1 Solva 5Aac46Cc",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    },
+    "/v1/solva/workbook/analyses/{aid}/report.pptx": {
+      "get": {
+        "operationId": "report_endpoint_v1_solva_c606f396",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "aid",
+            "required": true,
+            "schema": {
+              "title": "Aid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Report Endpoint V1 Solva C606F396",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    },
+    "/v1/solva/workbook/analyses/{aid}/report.xlsx": {
+      "get": {
+        "operationId": "report_xlsx_endpoint_v1_solva_35bdcedd",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "aid",
+            "required": true,
+            "schema": {
+              "title": "Aid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Report Xlsx Endpoint V1 Solva 35Bdcedd",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    },
+    "/v1/solva/workbook/analyses/{aid}/signals/extract": {
+      "post": {
+        "operationId": "extract_signals_endpoint_v1_solva_8cddcfd6",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "aid",
+            "required": true,
+            "schema": {
+              "title": "Aid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/SignalsResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Extract Signals Endpoint V1 Solva 8Cddcfd6"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Extract Signals Endpoint V1 Solva 8Cddcfd6",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    },
+    "/v1/solva/workbook/analyses/{aid}/simulate": {
+      "post": {
+        "operationId": "simulate_endpoint_v1_solva_5ab14ddd",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "aid",
+            "required": true,
+            "schema": {
+              "title": "Aid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Simulate Endpoint V1 Solva 5Ab14Ddd"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Simulate Endpoint V1 Solva 5Ab14Ddd",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    },
+    "/v1/solva/workbook/upload": {
+      "post": {
+        "operationId": "upload_workbook_v1_solva_21384245",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_workbook_v1_solva_21384245"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/IdResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Upload Workbook V1 Solva 21384245"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Workbook V1 Solva 21384245",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    },
+    "/v1/solva/workbook/upload-multi": {
+      "post": {
+        "description": "Multi-file upload \u2192 creates ONE `Analysis` row with N source\nrefs. Per Pre-Read: accepts 1+ files in one request; 250MB cap\nPER FILE.\n\nTrack A Phase 2 (2026-06-04) \u2014 accepts an optional `objective`\ntext that is captured at the top of the Analyze drawer.",
+        "operationId": "upload_workbook_multi_v1_solva_3618fa53",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_workbook_multi_v1_solva_3618fa53"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/IdResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Upload Workbook Multi V1 Solva 3618Fa53"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Workbook Multi V1 Solva 3618Fa53",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    },
+    "/v1/solva/workbook/v2/analyses": {
+      "get": {
+        "description": "List the current account's Analyses. Tenant-scoped via\n`account_id`. Optional `context_id` filter for the in-context\njournal view.",
+        "operationId": "list_analyses_v2_v1_solva_b223a207",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "context_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Context Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "$ref": "#/components/schemas/WorkbookAnalysisResponse"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response List Analyses V2 V1 Solva B223A207"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Analyses V2 V1 Solva B223A207",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    },
+    "/v1/solva/workbook/v2/analyses/{aid}": {
+      "get": {
+        "description": "Read endpoint for the new `Analysis` entity. Tenant-scoped:\ncross-tenant returns 404 (no existence leak).\n\nTrack A Phase 6 (2026-06-04) \u2014 strips legacy top-level BC mirror\nfields (`narration`, `notes`, `notes_updated_at`) from the\nresponse so callers must consume `runs[-1]` / `notes_history[]`.",
+        "operationId": "get_analysis_v2_v1_solva_84a7aed1",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "aid",
+            "required": true,
+            "schema": {
+              "title": "Aid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Get Analysis V2 V1 Solva 84A7Aed1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Analysis V2 V1 Solva 84A7Aed1",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    },
+    "/v1/solva/workbook/v2/analyses/{aid}/notes": {
+      "post": {
+        "description": "Append a note to the Analysis. Auto-saved; FE typically\nsends one note per save-debounce window. Tenant-scoped.\n\nTrack A Phase 4 (2026-06-04) \u2014 notes are append-only history.\nIdempotency: if the most-recent note's body equals the new\nbody, no new entry is appended (autosave debounce safe \u2014 a\ndouble-fire on identical content is a no-op). On every accepted\nappend, top-level `notes` + `notes_updated_at` mirror the\nlatest entry for backwards-compat with consumers reading the\nsimple shape. `notes` mirror removal scheduled for Phase 5 \u2014\nsee MASTER_STATE Section 4.\n\nTrack A Phase 4 iter-2 (2026-06-04) \u2014 empty-body deletion\ncontract: an empty-body POST appends `{body: \"\"}` as an explicit\nhistory event (NOT a 422). The BC mirror `notes` is set to `\"\"`\non empty append (divergence from G6 `documents.notes` which\nclears to `null` on empty PATCH \u2014 analyses.notes_history is\nappend-only and never null; the empty string IS the event).\nSee Tightening 5 in sprints/TRACK_A_PHASE_4_*.md.",
+        "operationId": "post_analysis_note_v1_solva_8e5a4fe3",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "aid",
+            "required": true,
+            "schema": {
+              "title": "Aid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_AnalysisNoteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Post Analysis Note V1 Solva 8E5A4Fe3"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Analysis Note V1 Solva 8E5A4Fe3",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    },
+    "/v1/solva/workbook/v2/analyses/{aid}/objective": {
+      "patch": {
+        "description": "Save the drawer's \"objective\" text. Auto-save target; FE\ndebounces on the client side. Tenant-scoped; cross-tenant\nreturns 404.",
+        "operationId": "patch_analysis_objective_v1_solva_898df0af",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "aid",
+            "required": true,
+            "schema": {
+              "title": "Aid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_AnalysisObjectivePatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Patch Analysis Objective V1 Solva 898Df0Af"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Analysis Objective V1 Solva 898Df0Af",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    },
+    "/v1/solva/workbook/v2/analyses/{aid}/session-close": {
+      "post": {
+        "description": "Delete the excel binary on session close; retain the\nAnalysis row + sources + (Phase 3) observations + notes.",
+        "operationId": "session_close_endpoint_v1_solva_041d37c2",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "aid",
+            "required": true,
+            "schema": {
+              "title": "Aid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Session Close Endpoint V1 Solva 041D37C2"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Session Close Endpoint V1 Solva 041D37C2",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    },
+    "/v1/solva/workbook/v2/analyses/{aid}/synthesize": {
+      "post": {
+        "description": "Track A Phase 3 (2026-06-04) \u2014 Solva v2 Analyze narration.\n\nLoads the new `Analysis` entity (`ana-*`), runs deterministic\nanalyzers on the source blobs, asks Claude Sonnet via Shield\nfor a headline-first narration, validates citations against\nthe deterministic citation pool, persists to the entity.\n\nIdempotent \u2014 re-call with unchanged content returns the\ncached narration via `narration.cache_key`.\n\nBug #30 \u2014 uses `autopick_forecast_columns` so workbooks with\nvalid (date, value) pairs no longer trip\n`forecast_invalid: need at least 3 (date, value) pairs`.",
+        "operationId": "synthesize_v2_endpoint_v1_solva_33a93510",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "aid",
+            "required": true,
+            "schema": {
+              "title": "Aid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Synthesize V2 Endpoint V1 Solva 33A93510"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Synthesize V2 Endpoint V1 Solva 33A93510",
+        "tags": [
+          "workbook-analyze"
+        ]
+      }
+    }
+  }
+}

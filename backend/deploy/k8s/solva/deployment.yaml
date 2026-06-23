@@ -1,0 +1,61 @@
+# Phase 5 — Solva pod-per-context Kubernetes deployment skeleton.
+# Sibling to deploy/k8s/synisense/deployment.yaml. See that file for
+# placeholder + secret wiring notes.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: solva
+  labels:
+    app: solva
+    bounded-context: solva
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: solva
+  template:
+    metadata:
+      labels:
+        app: solva
+        bounded-context: solva
+    spec:
+      containers:
+        - name: solva
+          image: registry.example.com/akki/solva:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8012
+              protocol: TCP
+          env:
+            - name: MONGO_URL
+              valueFrom: { secretKeyRef: { name: akki-mongo, key: url } }
+            - name: DB_NAME
+              valueFrom: { secretKeyRef: { name: akki-mongo, key: db_name } }
+            - name: AKKI_PROCESS_NAME
+              value: "solva_app"
+            - name: BOUNDED_CONTEXT_TRANSPORT
+              value: "http"
+            - name: INTERNAL_TRANSPORT_BASE_URL_AKKI
+              value: "http://akki:8001"
+            - name: INTERNAL_TRANSPORT_BASE_URL_SYNISENSE
+              value: "http://synisense:8011"
+            - name: INTERNAL_TRANSPORT_BASE_URL_SOLVA
+              value: "http://solva:8012"
+            - name: INTERNAL_TRANSPORT_SECRET
+              valueFrom: { secretKeyRef: { name: akki-internal-transport, key: secret } }
+            - name: EMERGENT_LLM_KEY
+              valueFrom: { secretKeyRef: { name: akki-llm, key: emergent_llm_key } }
+          readinessProbe:
+            httpGet: { path: /api/healthz/solva, port: 8012 }
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: { path: /api/healthz/solva, port: 8012 }
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 5
+          resources:
+            requests: { cpu: "500m", memory: "1Gi"  }
+            limits:   { cpu: "2",    memory: "2Gi"  }

@@ -458,6 +458,62 @@ Recorded for paper trail per user direction. NOT auto-scoped. Same pattern as Ph
 
 ## Section 6 — Active Phase
 
+**Re-Architecture Phase 5 ✅ DONE 2026-06-23 (autonomous scope)** — Deployment Separation (Sell-Ready). External blockers (supervisor unlock, live Stripe productionisation, GCP OAuth creds) are not engineering-resolvable in this environment; everything that *can* be delivered autonomously *is* delivered.
+
+Phase 5 packages every Phase 4 primitive into a sell-ready bundle: (a) a rewritten Product Features Review covering all three products at honest maturity (`/app/memory/PRODUCT_FEATURE_REVIEW.md`), mirrored into `/api/docs/bundle.zip`; (b) per-context OpenAPI slice files (`/app/backend/openapi-sdk/{synisense,solva,akki}.openapi.json`) + a regeneration script + a build-breaking invariant that asserts slice ↔ live OpenAPI consistency; (c) three context-specific Dockerfiles + docker-compose.yml + K8s manifest skeletons (deployment + service + HPA per context) at `/app/backend/deploy/`; (d) per-context cron arming helpers at `/app/backend/crons/` so each `<ctx>_app.py` lifespan owns only its own background jobs in the multi-process topology while the bundled `server.py` keeps working unchanged; (e) a TypeScript SDK build pipeline at `/app/backend/scripts/build_sdk.py` producing `/app/sdk/{synisense,solva,akki}/` (synisense 40 ops, solva 62 ops, akki 593 ops); (f) commercial-posture + partner-onboarding documentation (`/app/memory/COMMERCIAL_POSTURE.md`, `/app/memory/PARTNER_ONBOARDING.md`). Public surface unchanged: `/api/*` hash `cdcb23322bb82895`, `/v1/*` hash `acc51822aa8818ae`, combined `ca9429c64e44570c`.
+
+**Acceptance criteria:**
+- ✅ `/app/memory/PRODUCT_FEATURE_REVIEW.md` rewritten (7 sections, all three products, honesty rule honoured).
+- ✅ Doc mirrored into `/api/docs/bundle.zip` — bundle now ships 3 markdown files; curl verification: `unzip -l /tmp/bundle.zip` shows AKKI_PRODUCT.md, AKKI_DEVELOPMENT.md, AKKI_PRODUCT_FEATURE_REVIEW.md.
+- ✅ `/app/backend/openapi-sdk/{synisense,solva,akki}.openapi.json` exist + lint-clean (internal light-validator passes; openapi-spec-validator absent in environment — deviation logged).
+- ✅ New invariant `tests/invariants/test_invariant_sdk_slices.py` asserts slice ↔ live OpenAPI consistency — 4/4 PASS.
+- ✅ Three per-context Dockerfiles + docker-compose.yml + K8s manifest skeletons + README at `/app/backend/deploy/`.
+- ✅ Cron supervisor split applied (additive — bundled topology preserved); 6/6 smoke tests PASS.
+- ✅ SDK build pipeline produces local TS SDKs for all 3 contexts; samples documented in sprint memo §5.
+- ✅ `/app/memory/PARTNER_ONBOARDING.md` + `/app/memory/COMMERCIAL_POSTURE.md` exist.
+- ✅ `pytest tests/invariants/` — 38 passed / 10 deliberate-skip / 0 failed.
+- ✅ Public OpenAPI surface untouched: `/api/*` sha `cdcb23322bb82895`, `/v1/*` sha `acc51822aa8818ae`, combined `ca9429c64e44570c`.
+- ✅ Cross-context invariant in `4_3_enforce_mode` — 0 violations, 0 annotations.
+- ✅ HTTP transport smoke 8/8, dual-mount smoke 37/37, deliberate-violation smokes 7/7.
+- ✅ Sprint memo `/app/memory/sprints/PHASE_5_SELL_READY.md` + this file updated.
+- ✅ External blockers surfaced in phase-close report.
+
+**Phase 5 numbers:**
+
+| Aspect | Phase 4.4 close baseline | Phase 5 close | Δ |
+|---|---:|---:|---:|
+| OpenAPI slice hashes (api / v1 / combined) | `cdcb23322bb82895` / `acc51822aa8818ae` / `ca9429c64e44570c` | unchanged | 0 |
+| Cross-context violations | 0 | 0 | 0 |
+| Docs in download bundle | 2 | 3 (+ PRODUCT_FEATURE_REVIEW.md) | +1 |
+| Per-context OpenAPI slice files | 0 | 3 (synisense / solva / akki) | +3 |
+| Per-context TS SDK packages | 0 | 3 (40 + 62 + 593 ops = 695) | +3 |
+| Dockerfiles | 0 (bundled) | 3 (per context) | +3 |
+| K8s manifest skeletons | 0 | 9 files (deployment/service per context × 3) | +9 |
+| Per-context cron arming helpers | 0 | 3 modules | +3 |
+| Sell-ready commercial docs | 0 (apart from internal PRODUCT.md) | 3 (FEATURE_REVIEW + COMMERCIAL_POSTURE + PARTNER_ONBOARDING) | +3 |
+| Phase 5 net-new failures | — | 0 | — |
+
+**🚨 Deviations surfaced (Honesty R5):**
+1. **Docs bundle path-count vs OpenAPI surface invariant** — adding a `/api/docs/features` endpoint would have broken the `cdcb23322bb82895` ratchet. Mirrored PRODUCT_FEATURE_REVIEW.md into the existing `bundle.zip` only; no new public endpoint.
+2. **`openapi-spec-validator` not installed in environment** — slice files validated via in-tree light-validator (top-level keys + dangling-ref scan + per-context prefix scan) instead. Future Phase 5 follow-up may add the strict validator after `pip install`.
+3. **Cron split is additive, not destructive** — moving crons literally would have broken the bundled `server.py` topology. Per-context helpers light up only when `AKKI_PROCESS_NAME==<ctx>_app` (standalone mode); bundled topology keeps its inline crons. Smoke tests assert both topologies are armed correctly.
+4. **In-tree TypeScript SDK generator vs `openapi-typescript`** — node toolchain not in environment; built a small in-tree generator that produces a complete TS SDK with type defs + per-operation methods + Client class. Documented in SDK READMEs that production-grade SDK generation uses `openapi-generator-cli` with the same slice files.
+
+Full analysis in sprint memo §11.
+
+**Out of scope (Phase 5 external blockers — surfaced):**
+- Platform supervisor unlock (READONLY) — gates multi-process activation.
+- Live Stripe productionisation — gated on first paying customer.
+- Google GCP OAuth creds — gated on user-supplied client ID + secret.
+
+**Out of scope (Phase 6/7 — gated):**
+- Phase 6 (Physical data carve) — gated on scale; trigger when single-Mongo write throughput becomes a ceiling.
+- Phase 7 (Commercial surfaces) — gated on paying customer.
+
+---
+
+## Section 6.x — Historical: Re-Arch Phase 4.4 (✅ DONE 2026-06-23, preserved for ledger)
+
 **Re-Architecture Phase 4.4 ✅ DONE 2026-06-23** (Dual-Mount Versioned Surface).
 
 Phase 4.4 mounts every existing `/api/*` route a second time under `/v1/{owning_context}/*` where owning_context ∈ {synisense, solva, akki} per the Phase 4.1 router classification (12+9+113). Both surfaces resolve to the **same** handler, dependencies, auth, shield wraps, and tenancy guards — pure route-table operation, no logic duplication. The `/api/*` slice hash stays pinned at `cdcb23322bb82895` (Phase 4.1 commitment held). A new `/v1/*` slice baseline (`acc51822aa8818ae`, 619 paths, 695 ops) is captured; combined hash baseline `ca9429c64e44570c` (1240 paths, 1392 ops). `/api/healthz/{clamav,shield}` and `/api/internal/v1/*` are deliberately excluded from `/v1/*` because they are operational/internal endpoints. New code lives in `routers/v1_dual_mount.py` (single helper + exclusion list) + three call sites in `server.py`. New documentation in `/app/memory/API_VERSIONING.md` declares `/v1/{context}/*` as the stable, versioned SDK surface going forward; `/api/*` is legacy-stable with no sunset date until ≥12 months notice plus parallel `Deprecation:` headers.

@@ -1,0 +1,76 @@
+# Phase 5 — SyniSense pod-per-context Kubernetes deployment skeleton.
+#
+# This is a SKELETON. Tune for your environment:
+#   - replicas: start at 1 for non-prod, scale per signal-traffic.
+#   - resources: requests + limits are placeholders. Profile under real
+#                Shield-invocation traffic before committing.
+#   - image: replace with your registry / tag once the synisense.Dockerfile
+#            has been pushed.
+#   - Secret references: provided as placeholder names — wire to the
+#                        secret backend of choice.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: synisense
+  labels:
+    app: synisense
+    bounded-context: synisense
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: synisense
+  template:
+    metadata:
+      labels:
+        app: synisense
+        bounded-context: synisense
+    spec:
+      containers:
+        - name: synisense
+          image: registry.example.com/akki/synisense:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8011
+              protocol: TCP
+          env:
+            - name: MONGO_URL
+              valueFrom:
+                secretKeyRef: { name: akki-mongo, key: url }
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef: { name: akki-mongo, key: db_name }
+            - name: AKKI_PROCESS_NAME
+              value: "synisense_app"
+            - name: BOUNDED_CONTEXT_TRANSPORT
+              value: "http"
+            - name: INTERNAL_TRANSPORT_BASE_URL_AKKI
+              value: "http://akki:8001"
+            - name: INTERNAL_TRANSPORT_BASE_URL_SYNISENSE
+              value: "http://synisense:8011"
+            - name: INTERNAL_TRANSPORT_BASE_URL_SOLVA
+              value: "http://solva:8012"
+            - name: INTERNAL_TRANSPORT_SECRET
+              valueFrom:
+                secretKeyRef: { name: akki-internal-transport, key: secret }
+            - name: EMERGENT_LLM_KEY
+              valueFrom:
+                secretKeyRef: { name: akki-llm, key: emergent_llm_key }
+          readinessProbe:
+            httpGet:
+              path: /api/healthz/synisense
+              port: 8011
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /api/healthz/synisense
+              port: 8011
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 5
+          resources:
+            requests: { cpu: "250m", memory: "512Mi" }
+            limits:   { cpu: "1",    memory: "1Gi"   }

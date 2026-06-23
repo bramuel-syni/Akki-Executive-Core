@@ -36,12 +36,14 @@ def _resolve_doc_paths() -> Dict[str, Path]:
     return {
         "product":     memory_dir / "PRODUCT.md",
         "development": memory_dir / "DEVELOPMENT.md",
+        "features":    memory_dir / "PRODUCT_FEATURE_REVIEW.md",
     }
 
 
 _DOWNLOAD_FILENAMES: Dict[str, str] = {
     "product":     "AKKI_PRODUCT.md",
     "development": "AKKI_DEVELOPMENT.md",
+    "features":    "AKKI_PRODUCT_FEATURE_REVIEW.md",
 }
 
 

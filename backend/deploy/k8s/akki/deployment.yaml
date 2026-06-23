@@ -1,0 +1,66 @@
+# Phase 5 — Akki pod-per-context Kubernetes deployment skeleton.
+# Akki is the public-facing app and the ingress target.
+# Sibling to deploy/k8s/synisense/deployment.yaml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: akki
+  labels:
+    app: akki
+    bounded-context: akki
+spec:
+  replicas: 2  # public-facing — keep at least 2 for rolling updates
+  selector:
+    matchLabels:
+      app: akki
+  template:
+    metadata:
+      labels:
+        app: akki
+        bounded-context: akki
+    spec:
+      containers:
+        - name: akki
+          image: registry.example.com/akki/akki:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8001
+              protocol: TCP
+          env:
+            - name: MONGO_URL
+              valueFrom: { secretKeyRef: { name: akki-mongo, key: url } }
+            - name: DB_NAME
+              valueFrom: { secretKeyRef: { name: akki-mongo, key: db_name } }
+            - name: AKKI_PROCESS_NAME
+              value: "akki_app"
+            - name: BOUNDED_CONTEXT_TRANSPORT
+              value: "http"
+            - name: INTERNAL_TRANSPORT_BASE_URL_AKKI
+              value: "http://akki:8001"
+            - name: INTERNAL_TRANSPORT_BASE_URL_SYNISENSE
+              value: "http://synisense:8011"
+            - name: INTERNAL_TRANSPORT_BASE_URL_SOLVA
+              value: "http://solva:8012"
+            - name: INTERNAL_TRANSPORT_SECRET
+              valueFrom: { secretKeyRef: { name: akki-internal-transport, key: secret } }
+            - name: EMERGENT_LLM_KEY
+              valueFrom: { secretKeyRef: { name: akki-llm, key: emergent_llm_key } }
+          readinessProbe:
+            httpGet: { path: /api/healthz/akki, port: 8001 }
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: { path: /api/healthz/akki, port: 8001 }
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 5
+          # The composite probe is used by the dashboard / top-level
+          # monitor — pinned here for documentation; not wired as a
+          # liveness probe to avoid cascading restarts.
+          # GET /api/healthz/composite → 200 (all OK), 207 (degraded),
+          # 503 (all down).
+          resources:
+            requests: { cpu: "500m", memory: "1Gi"  }
+            limits:   { cpu: "2",    memory: "2Gi"  }

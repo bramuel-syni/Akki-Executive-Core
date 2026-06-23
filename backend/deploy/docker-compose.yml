@@ -1,0 +1,118 @@
+# Phase 5 — Triad deployment for local sell-readiness preview.
+#
+# Spins three FastAPI processes (akki/synisense/solva) + MongoDB.
+# Cross-context calls flow via the Phase 4.2 HTTP transport using the
+# `INTERNAL_TRANSPORT_BASE_URL_*` overrides set per service. Each
+# service exposes its `/api/healthz/<context>` probe to the docker
+# HEALTHCHECK; the Akki service also exposes `/api/healthz/composite`
+# which fans out to the siblings for a one-call triad status.
+#
+# This file is NOT used by the bundled platform supervisor — it's a
+# Phase 5 sell-readiness artefact that proves the multi-process
+# topology is buildable + bootable today, gated only on supervisor
+# unlock (see /app/memory/sprints/PHASE_4_3_TOPOLOGY.md §1 deviation).
+#
+# Usage:
+#     cd /app/backend/deploy
+#     INTERNAL_TRANSPORT_SECRET=$(openssl rand -hex 32) \
+#     EMERGENT_LLM_KEY=<your-key> \
+#         docker compose -f docker-compose.yml up --build
+
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 })"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  synisense:
+    build:
+      context: ../..
+      dockerfile: backend/deploy/synisense.Dockerfile
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      MONGO_URL: "mongodb://mongo:27017"
+      DB_NAME: "akki"
+      AKKI_PROCESS_NAME: "synisense_app"
+      BOUNDED_CONTEXT_TRANSPORT: "http"
+      INTERNAL_TRANSPORT_BASE_URL_AKKI: "http://akki:8001"
+      INTERNAL_TRANSPORT_BASE_URL_SYNISENSE: "http://synisense:8011"
+      INTERNAL_TRANSPORT_BASE_URL_SOLVA: "http://solva:8012"
+      INTERNAL_TRANSPORT_SECRET: "${INTERNAL_TRANSPORT_SECRET:?set INTERNAL_TRANSPORT_SECRET}"
+      EMERGENT_LLM_KEY: "${EMERGENT_LLM_KEY:?set EMERGENT_LLM_KEY}"
+    expose:
+      - "8011"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8011/api/healthz/synisense"]
+      interval: 15s
+      timeout: 3s
+      start_period: 20s
+      retries: 5
+
+  solva:
+    build:
+      context: ../..
+      dockerfile: backend/deploy/solva.Dockerfile
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      MONGO_URL: "mongodb://mongo:27017"
+      DB_NAME: "akki"
+      AKKI_PROCESS_NAME: "solva_app"
+      BOUNDED_CONTEXT_TRANSPORT: "http"
+      INTERNAL_TRANSPORT_BASE_URL_AKKI: "http://akki:8001"
+      INTERNAL_TRANSPORT_BASE_URL_SYNISENSE: "http://synisense:8011"
+      INTERNAL_TRANSPORT_BASE_URL_SOLVA: "http://solva:8012"
+      INTERNAL_TRANSPORT_SECRET: "${INTERNAL_TRANSPORT_SECRET:?set INTERNAL_TRANSPORT_SECRET}"
+      EMERGENT_LLM_KEY: "${EMERGENT_LLM_KEY:?set EMERGENT_LLM_KEY}"
+    expose:
+      - "8012"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8012/api/healthz/solva"]
+      interval: 15s
+      timeout: 3s
+      start_period: 20s
+      retries: 5
+
+  akki:
+    build:
+      context: ../..
+      dockerfile: backend/deploy/akki.Dockerfile
+    depends_on:
+      synisense:
+        condition: service_healthy
+      solva:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    environment:
+      MONGO_URL: "mongodb://mongo:27017"
+      DB_NAME: "akki"
+      AKKI_PROCESS_NAME: "akki_app"
+      BOUNDED_CONTEXT_TRANSPORT: "http"
+      INTERNAL_TRANSPORT_BASE_URL_AKKI: "http://akki:8001"
+      INTERNAL_TRANSPORT_BASE_URL_SYNISENSE: "http://synisense:8011"
+      INTERNAL_TRANSPORT_BASE_URL_SOLVA: "http://solva:8012"
+      INTERNAL_TRANSPORT_SECRET: "${INTERNAL_TRANSPORT_SECRET:?set INTERNAL_TRANSPORT_SECRET}"
+      EMERGENT_LLM_KEY: "${EMERGENT_LLM_KEY:?set EMERGENT_LLM_KEY}"
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8001/api/healthz/composite"]
+      interval: 15s
+      timeout: 3s
+      start_period: 30s
+      retries: 5
+
+volumes:
+  mongo_data:

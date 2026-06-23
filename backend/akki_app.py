@@ -308,4 +308,16 @@ app.include_router(make_context_healthz_router("akki"))
 app.include_router(make_composite_healthz_router())
 
 
+# Phase 5 Part D — Arm Akki-owned crons when running standalone.
+@app.on_event("startup")
+async def _arm_akki_crons_if_standalone() -> None:
+    import logging as _logging
+    import os as _os
+    if _os.environ.get("AKKI_PROCESS_NAME") != "akki_app":
+        return
+    from core import db as _db
+    from crons.akki_crons import arm as _arm
+    _arm(app, _db, _logging.getLogger("akki.akki"))
+
+
 __all__ = ["app", "ROUTERS", "INTERNAL_ROUTER"]

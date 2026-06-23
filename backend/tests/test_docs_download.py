@@ -6,7 +6,7 @@ NO @pytest.mark.integration — these test the routes, not LLM behaviour.
 Acceptance per Phase 15 dispatch §D:
   1. /api/docs/product → 200, text/markdown, attachment, body > 5000 bytes
   2. /api/docs/development → same shape
-  3. /api/docs/bundle.zip → 200, zip parses, exactly 2 members
+  3. /api/docs/bundle.zip → 200, zip parses, exactly 3 members (Phase 5: + PRODUCT_FEATURE_REVIEW.md)
      (AKKI_PRODUCT.md + AKKI_DEVELOPMENT.md), each non-empty
   4. Missing source file → 503 with documented JSON shape
 """
@@ -67,7 +67,7 @@ def test_development_download_streams_markdown(client: TestClient) -> None:
     assert b"# Akki" in body[:300], "DEVELOPMENT.md heading not found"
 
 
-def test_bundle_zip_contains_both_files(client: TestClient) -> None:
+def test_bundle_zip_contains_all_files(client: TestClient) -> None:
     r = client.get("/api/docs/bundle.zip")
     assert r.status_code == 200, (
         f"expected 200 for /api/docs/bundle.zip, got {r.status_code}: {r.text[:200]}"
@@ -82,7 +82,12 @@ def test_bundle_zip_contains_both_files(client: TestClient) -> None:
     buf = io.BytesIO(r.content)
     with zipfile.ZipFile(buf, mode="r") as zf:
         names = sorted(zf.namelist())
-        assert names == ["AKKI_DEVELOPMENT.md", "AKKI_PRODUCT.md"], (
+        # Phase 5 — bundle gained PRODUCT_FEATURE_REVIEW.md
+        assert names == [
+            "AKKI_DEVELOPMENT.md",
+            "AKKI_PRODUCT.md",
+            "AKKI_PRODUCT_FEATURE_REVIEW.md",
+        ], (
             f"zip members mismatch — got {names}"
         )
         for n in names:
@@ -92,8 +97,9 @@ def test_bundle_zip_contains_both_files(client: TestClient) -> None:
                 "likely a stub or truncation"
             )
             content = zf.read(n)
-            assert content.startswith(b"# Akki"), (
-                f"zip member {n} doesn't start with expected heading"
+            # Each Markdown doc opens with a top-level `# ` heading.
+            assert content.startswith(b"# "), (
+                f"zip member {n} doesn't start with a Markdown H1 heading"
             )
 
 

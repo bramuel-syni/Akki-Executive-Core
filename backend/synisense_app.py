@@ -91,4 +91,19 @@ from routers.healthz_context import make_context_healthz_router  # noqa: E402
 app.include_router(make_context_healthz_router("synisense"))
 
 
+# Phase 5 Part D — Arm SyniSense-owned crons when running standalone.
+# In the bundled `server.py` topology these are armed inline by the
+# main app's startup hook; this module-level handler is only active
+# when this app is the entry point (AKKI_PROCESS_NAME == synisense_app).
+@app.on_event("startup")
+async def _arm_synisense_crons_if_standalone() -> None:
+    import logging as _logging
+    import os as _os
+    if _os.environ.get("AKKI_PROCESS_NAME") != "synisense_app":
+        return
+    from core import db as _db
+    from crons.synisense_crons import arm as _arm
+    _arm(app, _db, _logging.getLogger("akki.synisense"))
+
+
 __all__ = ["app", "ROUTERS", "INTERNAL_ROUTER"]

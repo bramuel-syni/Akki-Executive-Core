@@ -1,0 +1,15 @@
+{
+  "name": "@akki/synisense-sdk",
+  "version": "1.0.0",
+  "description": "AKKI Synisense bounded-context SDK. Generated from /v1/synisense/* OpenAPI slice.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.ts",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc index.ts --target ES2020 --module ESNext --moduleResolution Node --declaration --strict"
+  },
+  "license": "UNLICENSED"
+}
