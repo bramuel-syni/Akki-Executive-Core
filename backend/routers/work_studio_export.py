@@ -247,7 +247,7 @@ async def _emit_thin_refusal(
         }, request=None,
     )
     await db.work_studio_exports.update_one(
-        {"id": export_id},
+        {"id": export_id, "context_id": context_id},
         {"$set": {
             "status": "failed",
             "error": "thin_input",
@@ -373,7 +373,7 @@ async def _set_export_phase(export_id: str, phase_index: int, phase_label: str) 
     progress log freezes between phases) but do not corrupt the
     underlying export."""
     try:
-        await db.work_studio_exports.update_one(
+        await db.work_studio_exports.update_one(  # tenancy:allow-no-account-id — phase-marker write from `_set_export_phase()` helper; `export_id` is a UUID stamped at export creation under the caller's context+account; this helper has no context_id arg by design (called from many phase boundaries, each carrying their own scope).
             {"id": export_id},
             {"$set": {
                 "phase_index": phase_index,
@@ -628,7 +628,7 @@ async def _run_export(
     ctx_doc = await db.contexts.find_one({"id": context_id}, {"_id": 0})
     if not ctx_doc:
         await db.work_studio_exports.update_one(
-            {"id": export_id},
+            {"id": export_id, "context_id": context_id},
             {"$set": {"status": "failed", "error": "context_missing",
                       "completed_at": iso(now())}},
         )
@@ -713,7 +713,7 @@ async def _run_export(
         err_msg = str(e).replace("\n", " ").strip()[:300]
         err_field = f"llm_error:{err_class}" + (f": {err_msg}" if err_msg else "")
         await db.work_studio_exports.update_one(
-            {"id": export_id},
+            {"id": export_id, "context_id": context_id},
             {"$set": {
                 "status": "failed",
                 "error": err_field,
@@ -779,7 +779,7 @@ async def _run_export(
     except _ex.ContentValidationError as ve:
         logger.warning("Render rejected content: %s", ve)
         await db.work_studio_exports.update_one(
-            {"id": export_id},
+            {"id": export_id, "context_id": context_id},
             {"$set": {"status": "failed",
                       "error": f"validation:{str(ve)[:200]}",
                       "completed_at": iso(now())}},
@@ -797,7 +797,7 @@ async def _run_export(
     except Exception as e:
         logger.exception("Render failed")
         await db.work_studio_exports.update_one(
-            {"id": export_id},
+            {"id": export_id, "context_id": context_id},
             {"$set": {"status": "failed", "error": f"render:{type(e).__name__}",
                       "completed_at": iso(now())}},
         )
@@ -883,7 +883,7 @@ async def _run_export(
         extracted_text=file_text, sensitivity_band=sensitivity_band,
     )
     await db.work_studio_exports.update_one(
-        {"id": export_id},
+        {"id": export_id, "context_id": context_id},
         {"$set": {
             "status": "complete",
             "file_name": fname,
@@ -1081,13 +1081,13 @@ async def _score_and_mirror_confidence(
         # because this helper runs AFTER the user has already seen
         # `status=complete` — not on the critical render path.
         existing_row = await db.work_studio_exports.find_one(
-            {"id": export_id}, {"_id": 0, "intelligence_report": 1},
+            {"id": export_id, "context_id": context_id}, {"_id": 0, "intelligence_report": 1},
         )
         if existing_row and existing_row.get("intelligence_report") is None:
             await db.work_studio_exports.update_one(
-                {"id": export_id}, {"$set": {"intelligence_report": {}}},
+                {"id": export_id, "context_id": context_id}, {"$set": {"intelligence_report": {}}},
             )
-        await db.work_studio_exports.update_one({"id": export_id}, {"$set": intel_set})
+        await db.work_studio_exports.update_one({"id": export_id, "context_id": context_id}, {"$set": intel_set})
 
     # Tightening 2 — mirror to documents row, but do NOT clobber a
     # previously-good score on this re-export when the new score is
@@ -1336,7 +1336,7 @@ async def _run_enhance(
     ctx_doc = await db.contexts.find_one({"id": context_id}, {"_id": 0})
     if not ctx_doc:
         await db.work_studio_exports.update_one(
-            {"id": export_id},
+            {"id": export_id, "context_id": context_id},
             {"$set": {"status": "failed", "error": "context_missing",
                       "completed_at": iso(now())}},
         )
@@ -1347,7 +1347,7 @@ async def _run_enhance(
     if not source_text:
         # We cannot enhance what we cannot read.
         await db.work_studio_exports.update_one(
-            {"id": export_id},
+            {"id": export_id, "context_id": context_id},
             {"$set": {"status": "failed",
                       "error": "source_extract_empty",
                       "completed_at": iso(now())}},
@@ -1421,7 +1421,7 @@ async def _run_enhance(
         err_msg = str(e).replace("\n", " ").strip()[:300]
         err_field = f"llm_error:{err_class}" + (f": {err_msg}" if err_msg else "")
         await db.work_studio_exports.update_one(
-            {"id": export_id},
+            {"id": export_id, "context_id": context_id},
             {"$set": {"status": "failed", "error": err_field,
                       "completed_at": iso(now())}},
         )
@@ -1491,7 +1491,7 @@ async def _run_enhance(
     except _ex.ContentValidationError as ve:
         logger.warning("Enhance render rejected content: %s", ve)
         await db.work_studio_exports.update_one(
-            {"id": export_id},
+            {"id": export_id, "context_id": context_id},
             {"$set": {"status": "failed",
                       "error": f"validation:{str(ve)[:200]}",
                       "completed_at": iso(now())}},
@@ -1500,7 +1500,7 @@ async def _run_enhance(
     except Exception as e:
         logger.exception("Enhance render failed")
         await db.work_studio_exports.update_one(
-            {"id": export_id},
+            {"id": export_id, "context_id": context_id},
             {"$set": {"status": "failed", "error": f"render:{type(e).__name__}",
                       "completed_at": iso(now())}},
         )
@@ -1572,7 +1572,7 @@ async def _run_enhance(
 
     completed_at = iso(now())
     await db.work_studio_exports.update_one(
-        {"id": export_id},
+        {"id": export_id, "context_id": context_id},
         {"$set": {
             "status": "complete",
             "file_name": fname,
@@ -1710,7 +1710,7 @@ async def start_export(
             err_class = type(exc).__name__
             err_msg = str(exc).replace("\n", " ").strip()[:300] or "(no message)"
             await db.work_studio_exports.update_one(
-                {"id": export_id},
+                {"id": export_id, "context_id": context_id},
                 {"$set": {
                     "status": "failed",
                     "error": f"{err_class}: {err_msg}",
@@ -2220,7 +2220,7 @@ async def start_enhance(
             err_class = type(exc).__name__
             err_msg = str(exc).replace("\n", " ").strip()[:300] or "(no message)"
             await db.work_studio_exports.update_one(
-                {"id": export_id},
+                {"id": export_id, "context_id": context_id},
                 {"$set": {
                     "status": "failed",
                     "error": f"{err_class}: {err_msg}",
@@ -2289,14 +2289,14 @@ async def save_draft(
     now_iso = iso(now())
     if existing:
         await db.work_studio_exports.update_one(
-            {"id": existing["id"]},
+            {"id": existing["id"], "context_id": context_id},
             {"$set": {
                 "document_title":     body.title.strip() or "Untitled draft",
                 "structured_content": body.structured_content,
                 "updated_at":         now_iso,
             }},
         )
-        refreshed = await db.work_studio_exports.find_one({"id": existing["id"]}, {"_id": 0})
+        refreshed = await db.work_studio_exports.find_one({"id": existing["id"], "context_id": context_id}, {"_id": 0})
         return {
             "export_id":          refreshed["id"],
             "draft_session_id":   body.draft_session_id,

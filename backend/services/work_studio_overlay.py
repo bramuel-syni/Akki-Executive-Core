@@ -59,7 +59,7 @@ async def ensure_overlay_migration(db: AsyncIOMotorDatabase) -> Dict[str, int]:
     to call multiple times — only touches rows missing the field.
     """
     matcher = {"lifecycle_state": {"$exists": False}}
-    res = await db.work_studio_exports.update_many(
+    res = await db.work_studio_exports.update_many(  # tenancy:allow-no-account-id — one-shot backfill migration for legacy rows missing `lifecycle_state`; cross-tenant sweep is intentional for a maintenance worker (idempotent, only touches missing-field rows).
         matcher,
         {"$set": {
             "lifecycle_state": LEGACY_COMMITTED_DEFAULT,

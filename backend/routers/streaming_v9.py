@@ -295,7 +295,7 @@ async def work_studio_enhance_stream(
             source_label=source_label,
         )
         final = await db.work_studio_exports.find_one(
-            {"id": export_id}, {"_id": 0},
+            {"id": export_id, "context_id": context_id}, {"_id": 0},
         )
         return final or {"export_id": export_id, "status": "unknown"}
 

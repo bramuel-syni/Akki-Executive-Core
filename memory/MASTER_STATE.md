@@ -458,29 +458,29 @@ Recorded for paper trail per user direction. NOT auto-scoped. Same pattern as Ph
 
 ## Section 6 — Active Phase
 
-**Re-Architecture Phase 2.2 ✅ COMPLETE 2026-06-22** (Tenancy Guard — `documents` second-context migration).
+**Re-Architecture Phase 2.3 ✅ COMPLETE 2026-06-22** (Tenancy Guard — `work_studio_exports` third-context migration).
 
-Per Pre-Read §5.A.2 verbatim recommendation. Migrates the `documents` collection using the same data-access helper pattern that worked for `chats` in Phase 2.1 (marker + alt-key widening + per-collection enforce flip).
+Per Phase 2.2 sprint memo §8.A recommendation: 24 hits in a single primary file (`routers/work_studio_export.py`) with full Track A Phase 5 lockdown coverage — lowest blast radius / highest test confidence in the remaining backlog.
 
 **Acceptance criteria (from dispatch §"Acceptance criteria"):**
-- ✅ One context migrated. `documents` violations: 32 → **0** via `task_id` alt-key widening (6 hits) + 23 markers with inline rationale + 1 defensive `context_id` add at L2245.
-- ✅ Per-collection enforce mode now active for **both** `chats` AND `documents`: `_ENFORCE_MODE_COLLECTIONS = frozenset({"chats", "documents"})`.
-- ✅ All goldens + invariants + regression sweep green.
-- ✅ Sprint memo + MASTER_STATE updates land — `/app/memory/sprints/PHASE_2_2_DOCUMENTS.md` + this file.
-- ✅ No new BE-sweep failures outside the 8 known pre-existing. Targeted documents/shares/sandbox/tasks/studio regression: **133 PASS**, 44 SKIP (pre-quarantined), 3 ERROR (`test_phase_b_sandbox_upload.py` setup — verified pre-existing under `git stash`).
+- ✅ `work_studio_exports` violations: 24 → **0** via 20 defensive `context_id` adds (inside tenant-gated handlers and worker closures carrying `context_id`) + 4 markers (3 worker-runner helpers without `context_id` access by design + 1 maintenance backfill migration tool).
+- ✅ Per-collection enforce mode now active for **all three**: `_ENFORCE_MODE_COLLECTIONS = frozenset({"chats", "documents", "work_studio_exports"})`.
+- ✅ All goldens + invariants + regression sweep green. **Track A Phase 5 lockdown PASS** (dispatch acceptance criterion).
+- ✅ No new BE-sweep failures attributable to Phase 2.3. 6 failures + 1 error during targeted work-studio sweep verified PRE-EXISTING via `git stash` — fail identically without Phase 2.3 changes. Logged for the maintenance backlog.
+- ✅ Sprint memo `/app/memory/sprints/PHASE_2_3_WORK_STUDIO_EXPORTS.md` + this file updated.
 
-**Scanner delta (Phase 2.1 close → Phase 2.2 close):** total 262→**230 (−12%)**, definite 235→**206 (−12%)**, non-literal 27→**24 (−11%)**. Cumulative from Phase-0 baseline: total 685→230 (**−66%**), definite 550→206 (**−63%**).
+**Scanner delta (Phase 2.2 close → Phase 2.3 close):** total 230→**206 (−10%)**, definite 206→**184 (−11%)**, non-literal 24→**22 (−8%)**. Cumulative from Phase-0 baseline: total 685→206 (**−70%**), definite 550→184 (**−67%**).
 
-**Out of scope (held):** Phase 2.3+ (`work_studio_exports` recommended next), Phase 3 (frontend), Phase 4+ (HTTP transport / commercial). All deferred. `contexts` (71 hits) escalated to a separate Pre-Read because all 71 are `{"id": context_id}` lookups where `contexts.id` IS the tenant primary key — needs structural decision (see Phase 2.2 memo §8.B). Phase 1 backlog (48 cross-context calls + 3 boundary imports) still deferred.
+**Out of scope (held):** Phase 2.4 (`contexts` structural Pre-Read — orchestrator-confirmed next dispatch), Phase 2.5+ (`inbound_queue`, `solva_v2_sessions`, `tasks`, sandbox-distributed), Phase 3 (frontend), Phase 4+ (HTTP transport / commercial). Phase 1 backlog (48 cross-context calls + 3 boundary imports) still deferred.
 
 ---
 
 ## Section 7 — Last Updated
 
-- **Written:** 2026-06-22T<phase-2.2-close>Z (Re-Architecture Phase 2.2 ✅ shipped — `documents` second-context migration + per-collection enforce widened to two contexts).
-- **Agent:** rearch-phase-2.2-documents-migration.
-- **Mode:** 0 new test files (R4 budget conserved). 1 scanner refinement (`task_id` added to `documents` alt-key) + 26 markers across 11 router/service files + 1 defensive `context_id` add + sprint memo + this state file updated. Memo: `sprints/PHASE_2_2_DOCUMENTS.md`.
-- **Counts after Re-Arch Phase 2.2 close:** Phase 0 ✅ + Phase 1 ✅ + Phase 2.1 ✅ + Phase 2.2 ✅ in the re-architecture backlog (Section 8); Phase 2.3 next (`work_studio_exports` recommended), Phases 3-7 remain Pending/GATED. Product phases 1-15 ledger unchanged.
+- **Written:** 2026-06-22T<phase-2.3-close>Z (Re-Architecture Phase 2.3 ✅ shipped — `work_studio_exports` third-context migration; per-collection enforce mode now covers chats + documents + work_studio_exports).
+- **Agent:** rearch-phase-2.3-work-studio-exports-migration.
+- **Mode:** 0 new test files (R4 budget conserved). 1 line change in test_invariant_tenancy.py to widen `_ENFORCE_MODE_COLLECTIONS` + 20 defensive `context_id` adds across 4 router files + 4 markers + sprint memo + this state file. Memo: `sprints/PHASE_2_3_WORK_STUDIO_EXPORTS.md`.
+- **Counts after Re-Arch Phase 2.3 close:** Phase 0 ✅ + Phase 1 ✅ + Phase 2.1 ✅ + Phase 2.2 ✅ + Phase 2.3 ✅ in the re-architecture backlog (Section 8); Phase 2.4 Pre-Read (`contexts`) next, Phases 3-7 remain Pending/GATED. Product phases 1-15 ledger unchanged.
 
 ---
 
@@ -494,50 +494,54 @@ This is the canonical execution plan for the Syni Re-Architecture (approved 2026
 | 1 | Contracts + logical data ownership + tenant propagation | ✅ DONE 2026-06-05 | shipped |
 | 2.1 | Tenancy Guard — Scanner Upgrades A+B+C + `chats` first-context migration | ✅ DONE 2026-06-22 | shipped |
 | 2.2 | Tenancy Guard — `documents` second-context migration | ✅ DONE 2026-06-22 | shipped |
-| 2.3 | Tenancy Guard — `work_studio_exports` third-context migration (recommended) | Pending | After 2.2 ✅ |
-| 2.X | Tenancy Guard — `contexts` collection (needs separate Pre-Read for structural alt-key/helper decision) | Pre-Read GATED | After 2.3 |
-| 2.4+ | Tenancy Guard — `inbound_queue`, `solva_v2_sessions`, `signals`, `signal_actions`, ... | Pending | Sequential, density-ordered |
+| 2.3 | Tenancy Guard — `work_studio_exports` third-context migration | ✅ DONE 2026-06-22 | shipped |
+| 2.4 | Tenancy Guard — Pre-Read for `contexts` (structural alt-key vs helper-fusion vs marker decision) | Pending | After 2.3 ✅ |
+| 2.5+ | Tenancy Guard — `inbound_queue` / `solva_v2_sessions` / `tasks` / sandbox-distributed | Pending | Sequential, density-ordered |
 | 3 | Frontend API-boundary contract | Pending | After 1 ✅ (∥ 2) |
 | 4 | Process separation (one deployment) | Pending | After 1–3 |
 | 5 | Deployment separation (sell-ready) | Pending | After 4 |
 | 6 | Physical data carve | GATED | Scale OR signed sale |
 | 7 | Commercial surfaces | GATED | Paying customer |
 
-**Phase 2.2 deliverables (now in tree):**
-- `backend/tests/invariants/test_invariant_tenancy.py` — `documents` alt-key widened to add `task_id` (Phase 2.1 Upgrade B refinement); `_ENFORCE_MODE_COLLECTIONS = frozenset({"chats", "documents"})`.
-- 11 router/service files marked with inline rationale comments + 1 defensive `context_id` add (`routers/documents.py:2245`).
-- `memory/invariants/tenancy_violations.json` — live post-Phase-2.2 report (230/206).
+**Phase 2.3 deliverables (now in tree):**
+- `backend/tests/invariants/test_invariant_tenancy.py` — `_ENFORCE_MODE_COLLECTIONS` widened to 3 collections.
+- 4 router files + 1 service file edited: 20 defensive `context_id` adds + 4 markers with inline rationale.
+- `memory/invariants/tenancy_violations.json` — live report (206/184).
+- `/app/memory/sprints/PHASE_2_3_WORK_STUDIO_EXPORTS.md` — sprint memo.
 
-**Phase 2.3 dispatch TODOs (logged for the next dispatch):**
-- Migrate `work_studio_exports` (24 hits, 22 literal — single router, full Track A Phase 5 lockdown coverage; same shape as Phase 2.2).
-- Widen `_ENFORCE_MODE_COLLECTIONS` to `{"chats", "documents", "work_studio_exports"}` after migration.
-- Per Phase 2.2 sprint memo §4.D, Phase 2.4+ sequencing: `inbound_queue` (19) → `solva_v2_sessions` (14) → distributed `signals`/`signal_actions`/`exco_teams` cleanup.
-- **`contexts` (71 hits)** explicitly defers to a Phase 2.X Pre-Read — needs the "is `contexts.id` a tenancy key?" structural decision before code migration.
+**Phase 2.4 dispatch TODOs (logged for the next dispatch — orchestrator-confirmed):**
+- Pre-Read for `contexts` collection (71 hits). Three options to weigh per Phase 2.2 §8.B:
+  1. Add `id` as alt-key for `contexts` (semantically: `contexts.id` IS the tenancy boundary).
+  2. Introduce `get_context_or_403(context_id, account_id)` helper to fuse lookup + membership check.
+  3. Marker sweep across all 71 sites with per-site rationale.
+- Pre-Read OUTPUT only (READ-ONLY mode). Phase 2.4-Build dispatches separately after the Pre-Read decision.
 
 ---
 
-## Section 9 — Cumulative Health Snapshot (2026-06-22 Re-Arch Phase 2.2 ✅ close)
+## Section 9 — Cumulative Health Snapshot (2026-06-22 Re-Arch Phase 2.3 ✅ close)
 
-> **🛡️ Phase 2 cumulative posture (through Phase 2.2):** two collections (`chats`, `documents`) under per-collection enforce mode. Scanner Upgrades A/B/C/A.1/A.2 + `task_id` widening live. **Total tenancy violations down 66% (685→230) from Phase-0 baseline; definite down 63% (550→206).** Zero production cross-tenant bugs introduced; zero behaviour changes. Pattern proven across two contexts; Phase 2.3 (`work_studio_exports` recommended) will follow the same single-context single-dispatch shape.
+> **🛡️ Phase 2 cumulative posture (through Phase 2.3):** three collections (`chats`, `documents`, `work_studio_exports`) under per-collection enforce mode. Scanner Upgrades A/B/C/A.1/A.2 + `task_id` widening live. **Total tenancy violations down 70% (685→206) from Phase-0 baseline; definite down 67% (550→184).** Zero production cross-tenant bugs introduced; zero behaviour changes. Pattern proven across three contexts. Phase 2.4 dispatches a structural Pre-Read for `contexts` (71 hits — next-largest residual) — needs alt-key vs helper-fusion vs marker decision before code migration.
 
 > **🛡️ Phase 2 Pre-Read confirmed ZERO production cross-tenant data leak bugs.** The original 685 / 145 non-literal hits broke down as 5% intentional cross-tenant (admin / cron probes) + 45% scanner FPs (multi-line dict construction the strict walker couldn't see) + 50% alt-key uses (`context_id`, `owner_account_id`, `assignee_account_id` — legitimate tenancy keys per architecture) + 0% bugs. Tenancy posture is structurally correct; Phase 2 work is cleanup, not bug-fix.
 
-- ✅ **15 product phases + Re-Arch Phase 0 + Re-Arch Phase 1 + Re-Arch Phase 2.1 + Re-Arch Phase 2.2 shipped + verified**: Track A 1-7 + 14 + 15, Track B B1+B2+B3+B4+B5, plus Re-Arch Phase 0 + Phase 1 + Phase 2.1 + Phase 2.2.
+- ✅ **15 product phases + Re-Arch Phase 0/1/2.1/2.2/2.3 shipped + verified**.
 - ✅ **3 standalone bugs closed**: BUG-ANL-001 + BUG-ANL-002 + BUG-WS-001.
 - ✅ **TM3 unblocked** 2026-06-04.
 - ✅ **Master docs delivered**: `/app/memory/PRODUCT.md` + `/app/memory/DEVELOPMENT.md` + 3 download routes.
 - ✅ **Anti-Forget Protocol delivered**: `/app/memory/ANTI_FORGET_PROTOCOL.md`.
 - ✅ **Contract surface delivered**: 3 Protocols × 21 methods, pass-through adapters, account_id-as-kwarg invariant enforced.
-- ✅ **Tenancy Guard scanner upgrades delivered**: Upgrades A (multi-line dict + AnnAssign + spread) + B (alt-key per-collection map, refined for `documents` with `task_id` in Phase 2.2) + C (`tenant_filter()`/`tenant_doc()` helper recognition).
-- ✅ **First-context tenancy migration**: `chats` 31→0; enforce mode active.
-- ✅ **Second-context tenancy migration**: `documents` 32→0; enforce mode active.
+- ✅ **Tenancy Guard scanner upgrades delivered**: Upgrades A (multi-line dict + AnnAssign + spread) + B (alt-key per-collection map, `documents` widened with `task_id` in Phase 2.2) + C (`tenant_filter()`/`tenant_doc()` helper recognition).
+- ✅ **First-context tenancy migration (Phase 2.1)**: `chats` 31→0; enforce mode active.
+- ✅ **Second-context tenancy migration (Phase 2.2)**: `documents` 32→0; enforce mode active.
+- ✅ **Third-context tenancy migration (Phase 2.3)**: `work_studio_exports` 24→0; enforce mode active.
 - 🟡 **0 phases pending tester.**
 - ❌ **4 ❌ open items** across the 3 original QA docs (unchanged).
-- 🪲 **8 pre-existing failures** (unchanged) — `test_governance_endpoint` ×2, `test_backlog_b_seed` ×1, `test_chunk6_5_revised_endpoints` ×2, `test_home_cleanup_phase_e3` ×2, `test_track_a_phase2_drawer_journal` ×3 — plus 3 setup ERRORs in `test_phase_b_sandbox_upload.py` (env-config). All logged for Phase 2.X side-lane remediation.
+- 🪲 **8 known pre-existing failures from dispatch list + 11 additional pre-existing identified during Phase 2.2/2.3 sweeps** — all logged for Phase 2.X side-lane remediation. Detail in Phase 2.3 sprint memo §8.C.
 - 🛌 **0 deferred future phases.**
 - 🚧 **1 USER-BLOCKED item:** Google GCP OAuth creds (G2).
-- 🟠 **1 STRUCTURAL PRE-READ pending:** `contexts` collection migration (71 hits — needs alt-key vs helper-fusion decision).
-- ✅ **Re-Arch Phase 2.2 deterministic sweep PASS** (`documents` 32→0; chats stays at 0; cumulative 685→230 / 550→206 = 66%/63% reduction).
+- 🟠 **1 STRUCTURAL PRE-READ pending:** Phase 2.4 — `contexts` collection (71 hits — needs alt-key vs helper-fusion vs marker decision).
+- ✅ **Re-Arch Phase 2.3 deterministic sweep PASS** (`work_studio_exports` 24→0; chats + documents stay at 0; cumulative 685→206 / 550→184 = 70%/67% reduction).
+- ✅ **Re-Arch Phase 2.2 deterministic sweep PASS** (preserved).
 - ✅ **Re-Arch Phase 2.1 deterministic sweep 15/15 PASS** (tenancy invariant suite preserved).
 - ✅ **Re-Arch Phase 1 deterministic sweep 22/22 PASS** (`tests/invariants/`).
 - ✅ **Re-Arch Phase 0 deterministic sweep 8/8 PASS**.
@@ -545,20 +549,20 @@ This is the canonical execution plan for the Syni Re-Architecture (approved 2026
 - ✅ **Phase 14 lockdown sweep PASS** (chat fluency no-shield-leak preserved).
 - ✅ **Track A Phase 7 lockdown 13/13 default + 2 integration-marked PASS**.
 - ✅ **Track A Phase 6 lockdown 10/10 default + 2 integration-marked PASS**.
-- ✅ **Track A Phase 5 lockdown PASS**.
-- ✅ **Phase 2.2 targeted regression: 133 PASS** across documents/shares/sandbox/tasks/studio surfaces (the collections touched by Phase 2.2).
-- ✅ **Boundary-imports baseline:** 3 existing Solva→SyniSense direct imports captured (unchanged; Phase 1 backlog).
-- ✅ **Cross-context observe-mode report:** 48 violations recorded for Phase 2.X side-lane migration backlog.
+- ✅ **Track A Phase 5 lockdown PASS** (the lifecycle-restoration phase that gave `work_studio_exports` its strongest test coverage — dispatch acceptance criterion met).
+- ✅ **Phase 2.3 targeted regression: 192 PASS** across work_studio / compilations / overlay / streaming / governance-export surfaces.
+- ✅ **Boundary-imports baseline:** 3 entries (unchanged; Phase 1 backlog).
+- ✅ **Cross-context observe-mode report:** 48 violations (unchanged; Phase 2.X side-lane backlog).
 - ✅ **Tenancy provenance snapshot:** `memory/invariants/tenancy_baseline_phase_0.json` (immutable, 685/550, git_sha `7d484a7c`).
-- ✅ **Tenancy live report:** `memory/invariants/tenancy_violations.json` (post Phase 2.2, 230/206).
+- ✅ **Tenancy live report:** `memory/invariants/tenancy_violations.json` (post Phase 2.3, 206/184).
 - ✅ **Voice-lint clean** across customer-copy surfaces.
 - ✅ **ESLint clean** on every file touched.
 - ✅ **Ruff clean** on all backend files touched.
 
 ---
 
-**Paused per orchestrator instruction.** Re-Architecture Phase 2.2 ✅ DONE. Next legitimate dispatch is Phase 2.3 (`work_studio_exports`) per Phase 2.2 memo §4.D recommendation, OR the Phase 2.X `contexts` Pre-Read per memo §8.B. NOT auto-starting per Discipline Rail R2 (Approval Gate) + R6 (no auto-starting). Holding.
+**Paused per orchestrator instruction.** Re-Architecture Phase 2.3 ✅ DONE. Next legitimate dispatch is **Phase 2.4 Pre-Read for `contexts`** (orchestrator-confirmed in Phase 2.3 dispatch §"After this phase"). NOT auto-starting per Discipline Rail R2 (Approval Gate) + R6 (no auto-starting). Holding.
 
 ---
 
-**Paused per orchestrator instruction.** NOT auto-starting any backlog hygiene pass / confidence scoring runtime path / sibling-route guard generalisation / data-testid presence smoke test (DECLINED 2026-06-04 — same gold-plating pattern as per-source autopick table, minutes-template polish, `useFileInputResetOnInvoke` cross-cutting hook). User decides next dispatch — open candidates: (a) **Confidence scoring runtime path Pre-Read**, (b) **SendGrid TM3 / GCP G2 unblock when creds land**. Holding for that signal.
+**Paused per orchestrator instruction.** NOT auto-starting any backlog hygiene pass / confidence scoring runtime path / sibling-route guard generalisation / data-testid presence smoke test (DECLINED 2026-06-04). User decides next dispatch — open candidates: (a) **Phase 2.4 `contexts` Pre-Read**, (b) **SendGrid TM3 / GCP G2 unblock when creds land**. Holding for that signal.

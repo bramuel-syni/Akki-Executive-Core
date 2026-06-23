@@ -237,7 +237,7 @@ def _allowed_keys_for(collection: str) -> FrozenSet[str]:
 # Phase 2.2 adds `documents` — second-context per Pre-Read §5.A.2
 # verbatim recommendation; 32→0 via task_id alt-key widening + 23
 # markers.
-_ENFORCE_MODE_COLLECTIONS: FrozenSet[str] = frozenset({"chats", "documents"})
+_ENFORCE_MODE_COLLECTIONS: FrozenSet[str] = frozenset({"chats", "documents", "work_studio_exports"})
 
 
 # Methods that take a `filter` as the first positional argument.

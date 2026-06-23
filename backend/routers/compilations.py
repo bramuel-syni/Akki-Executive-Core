@@ -314,7 +314,7 @@ async def start_compilation(
             err_class = type(exc).__name__
             err_msg = str(exc).replace("\n", " ").strip()[:300] or "(no message)"
             await db.work_studio_exports.update_one(
-                {"id": export_id},
+                {"id": export_id, "context_id": context_id},
                 {"$set": {
                     "status": "failed",
                     "error": f"{err_class}: {err_msg}",

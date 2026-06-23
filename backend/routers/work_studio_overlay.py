@@ -422,7 +422,7 @@ async def create_new_version(
         "file_sha256": None,
         "status": "draft",
     }
-    await db.work_studio_exports.insert_one(dict(clone))
+    await db.work_studio_exports.insert_one(dict(clone))  # tenancy:allow-no-account-id — `clone` spreads `{**row, ...}` where `row` was loaded via the context_id-gated find at L390; account_id + context_id flow through the spread but the scanner can't trace into the variable.
     refreshed = await db.work_studio_exports.find_one(
         {"id": new_id, "context_id": context_id}, {"_id": 0},
     )

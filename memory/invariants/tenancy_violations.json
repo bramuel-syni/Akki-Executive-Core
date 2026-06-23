@@ -1,5 +1,5 @@
 {
-  "scan_timestamp": "2026-06-23T04:46:31.712544+00:00",
+  "scan_timestamp": "2026-06-23T04:59:25.477766+00:00",
   "scan_roots": [
     "/app/backend/services",
     "/app/backend/routers"
@@ -221,7 +221,8 @@
   },
   "enforce_mode_collections": [
     "chats",
-    "documents"
+    "documents",
+    "work_studio_exports"
   ],
   "filter_methods_inspected": [
     "count_documents",
@@ -408,13 +409,6 @@
       "file": "/app/backend/routers/compilations.py",
       "line": 278,
       "collection": "compilations",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/compilations.py",
-      "line": 316,
-      "collection": "work_studio_exports",
       "method": "update_one",
       "kind": "filter"
     },
@@ -1294,13 +1288,6 @@
       "kind": "filter"
     },
     {
-      "file": "/app/backend/routers/streaming_v9.py",
-      "line": 297,
-      "collection": "work_studio_exports",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
       "file": "/app/backend/routers/studio.py",
       "line": 589,
       "collection": "contexts",
@@ -1533,23 +1520,9 @@
     },
     {
       "file": "/app/backend/routers/work_studio_export.py",
-      "line": 249,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
       "line": 628,
       "collection": "contexts",
       "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 885,
-      "collection": "work_studio_exports",
-      "method": "update_one",
       "kind": "filter"
     },
     {
@@ -1560,144 +1533,11 @@
       "kind": "filter"
     },
     {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 1574,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 376,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 630,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 1083,
-      "collection": "work_studio_exports",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 1090,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 1338,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 1349,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 2291,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 2299,
-      "collection": "work_studio_exports",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 715,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 781,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 799,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 1087,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 1423,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 1493,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 1502,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 1712,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_export.py",
-      "line": 2222,
-      "collection": "work_studio_exports",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
       "file": "/app/backend/routers/work_studio_from_source.py",
       "line": 190,
       "collection": "chat_messages",
       "method": "find",
       "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_overlay.py",
-      "line": 425,
-      "collection": "work_studio_exports",
-      "method": "insert_one",
-      "kind": "non_literal"
     },
     {
       "file": "/app/backend/routers/work_studio_phase_c.py",
@@ -1845,17 +1685,10 @@
       "collection": "tasks",
       "method": "update_one",
       "kind": "filter"
-    },
-    {
-      "file": "/app/backend/services/work_studio_overlay.py",
-      "line": 62,
-      "collection": "work_studio_exports",
-      "method": "update_many",
-      "kind": "non_literal"
     }
   ],
-  "violation_count": 230,
-  "definite_violation_count": 206,
+  "violation_count": 206,
+  "definite_violation_count": 184,
   "phase": "2.1_per_collection_enforce",
   "phase_2_enforce_target": "definite_violation_count == 0 for enforce_mode_collections"
 }
