@@ -229,6 +229,24 @@ app.include_router(make_composite_healthz_router())
 
 
 # -----------------------------------------------------------------------------
+# Phase 4.4 — Dual-mount versioned surface (`/v1/<context>/*`).
+# Every existing `/api/*` public route is mounted a SECOND time under
+# `/v1/<owning_context>/*`. Same handler, same auth, same shield wraps.
+# Exclusions: `/api/openapi.json`, `/api/docs`, `/api/healthz/*`,
+# `/api/internal/v1/*`. See `routers/v1_dual_mount.py` for the convention.
+# -----------------------------------------------------------------------------
+from routers.v1_dual_mount import dual_mount_v1  # noqa: E402
+_v1_cloned_syni = dual_mount_v1(app, _SYNISENSE_ROUTERS, "synisense")
+_v1_cloned_solva = dual_mount_v1(app, _SOLVA_ROUTERS, "solva")
+_v1_cloned_akki = dual_mount_v1(app, _AKKI_ROUTERS, "akki")
+logger.info(
+    "Phase 4.4 dual-mount: synisense=%d, solva=%d, akki=%d, total=%d",
+    _v1_cloned_syni, _v1_cloned_solva, _v1_cloned_akki,
+    _v1_cloned_syni + _v1_cloned_solva + _v1_cloned_akki,
+)
+
+
+# -----------------------------------------------------------------------------
 # Phase P2 B.1 (2026-02) — Security headers middleware.
 # Adds HSTS/CSP/X-Frame/X-Content-Type-Options/Referrer-Policy/
 # Permissions-Policy to every response. Toggle via SECURITY_HEADERS_DISABLED=1.

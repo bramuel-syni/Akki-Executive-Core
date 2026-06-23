@@ -89,18 +89,24 @@ def test_internal_transport_endpoints_excluded_from_openapi() -> None:
 
 
 def test_internal_transport_openapi_hash_unchanged() -> None:
-    """The exact `paths_sha256[:16]` set by Phase 4.1 close must
-    remain stable through Phase 4.2. The sha is computed over the
-    sorted path list (no body, no methods)."""
-    EXPECTED = "cdcb23322bb82895"  # Phase 4.1 close ratchet
+    """The exact `paths_sha256[:16]` of the **/api/* slice** set by Phase
+    4.1 close must remain stable through Phase 4.2 / 4.3 / 4.4. The sha
+    is computed over the sorted /api/* path list (no body, no methods).
+
+    Phase 4.4 introduces a parallel /v1/<context>/* surface, so the
+    combined-schema hash now includes that slice — we check the /api/*
+    slice in isolation here to preserve the original byte-identical
+    ratchet.
+    """
+    EXPECTED = "cdcb23322bb82895"  # Phase 4.1 close ratchet (re-affirmed at 4.4)
     status, body = _http_get(f"{SUPERVISOR_HOST}/api/openapi.json")
     assert status == 200
     spec = json.loads(body)
-    paths = sorted(spec.get("paths", {}).keys())
-    h = hashlib.sha256("\n".join(paths).encode()).hexdigest()[:16]
+    api_paths = sorted(p for p in spec.get("paths", {}).keys() if p.startswith("/api/"))
+    h = hashlib.sha256("\n".join(api_paths).encode()).hexdigest()[:16]
     assert h == EXPECTED, (
-        f"OpenAPI surface drift! expected={EXPECTED} got={h} "
-        f"(paths={len(paths)})"
+        f"/api/* slice OpenAPI surface drift! expected={EXPECTED} "
+        f"got={h} (api_paths={len(api_paths)})"
     )
 
 

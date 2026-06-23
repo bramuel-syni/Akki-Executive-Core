@@ -458,6 +458,55 @@ Recorded for paper trail per user direction. NOT auto-scoped. Same pattern as Ph
 
 ## Section 6 — Active Phase
 
+**Re-Architecture Phase 4.4 ✅ DONE 2026-06-23** (Dual-Mount Versioned Surface).
+
+Phase 4.4 mounts every existing `/api/*` route a second time under `/v1/{owning_context}/*` where owning_context ∈ {synisense, solva, akki} per the Phase 4.1 router classification (12+9+113). Both surfaces resolve to the **same** handler, dependencies, auth, shield wraps, and tenancy guards — pure route-table operation, no logic duplication. The `/api/*` slice hash stays pinned at `cdcb23322bb82895` (Phase 4.1 commitment held). A new `/v1/*` slice baseline (`acc51822aa8818ae`, 619 paths, 695 ops) is captured; combined hash baseline `ca9429c64e44570c` (1240 paths, 1392 ops). `/api/healthz/{clamav,shield}` and `/api/internal/v1/*` are deliberately excluded from `/v1/*` because they are operational/internal endpoints. New code lives in `routers/v1_dual_mount.py` (single helper + exclusion list) + three call sites in `server.py`. New documentation in `/app/memory/API_VERSIONING.md` declares `/v1/{context}/*` as the stable, versioned SDK surface going forward; `/api/*` is legacy-stable with no sunset date until ≥12 months notice plus parallel `Deprecation:` headers.
+
+**Acceptance criteria:**
+- ✅ Every `/api/*` route reachable identically under `/v1/{owning_context}/*`. No double-mounted route lives under the wrong context.
+- ✅ `/api/*` slice sha256:16 = `cdcb23322bb82895` (unchanged).
+- ✅ `/v1/*` slice sha256:16 = `acc51822aa8818ae` (new baseline, committed in `tests/test_phase4_4_dual_mount_smoke.py`).
+- ✅ Combined `paths_sha256:16` = `ca9429c64e44570c` (new baseline).
+- ✅ `tests/test_phase4_4_dual_mount_smoke.py` — 38 tests (30 byte-equivalence + 5 slice/count invariants + 2 wrong-context 404 + 1 exclusion-list assertion), all PASS.
+- ✅ Wrong-context negative tests — 404, no silent fall-through (4 routes asserted).
+- ✅ `pytest backend/tests/invariants/` — 34 passed / 10 deliberate-skip / 0 failed.
+- ✅ Cross-context invariant in `4_3_enforce_mode` — still 0 violations, 0 annotations.
+- ✅ Deliberate-violation smoke (both cross-context and tenancy) — 7/7 PASS.
+- ✅ HTTP transport smoke (`test_phase4_2_http_transport_smoke.py`) — 8/8 PASS (with the slice-hash assertion updated to filter to `/api/*` before hashing).
+- ✅ Regression sweep — 0 net-new failures attributable to 4.4. The single failing test (`test_phase_f_engine_signals.py::test_monitor_update_status_objective`) was independently verified as pre-existing by running on a stashed tree.
+- ✅ Sprint memo `/app/memory/sprints/PHASE_4_4_DUAL_MOUNT.md` + API versioning doc + this file updated.
+
+**Phase 4.4 numbers:**
+
+| Aspect | Phase 4.3 close baseline | Phase 4.4 close | Δ |
+|---|---:|---:|---:|
+| `/api/*` paths | 621 | 621 | 0 (unchanged) |
+| `/v1/*` paths | 0 | 619 | +619 (new surface) |
+| Combined OpenAPI paths | 621 | 1240 | +619 |
+| `/api/*` ops | 697 | 697 | 0 (unchanged) |
+| `/v1/*` ops | 0 | 695 | +695 |
+| Cloned routes (synisense / solva / akki) | n/a | 40 / 62 / 595 | +697 total |
+| `paths_sha256[:16]` `/api/*` slice | `cdcb23322bb82895` | `cdcb23322bb82895` | identical |
+| `paths_sha256[:16]` `/v1/*` slice | n/a | `acc51822aa8818ae` | new |
+| `paths_sha256[:16]` combined | n/a | `ca9429c64e44570c` | new |
+| Phase 4.4 net-new failures | — | 0 | — |
+
+**🚨 Deviations surfaced (Honesty R5):**
+1. **operation_id collisions** — multiple routers expose same-named handlers (`download_export`, `list_documents`, `record_view`, `register`, `consume_magic_link`, etc.). Resolved by suffixing each cloned `operation_id` / `name` with `_v1_<owning_context>_<sha1(original_path)[:8]>` so SDK generators produce non-clashing method names.
+2. **TestClient + Motor event-loop incompatibility** — first draft of the smoke used `starlette.testclient.TestClient`, which closes its event loop at module exit and breaks Motor's module-singleton `db` client for tests that run later. Resolved by switching to `httpx.AsyncClient(ASGITransport)` + `async def` tests so the pytest-asyncio session-scoped loop is honoured.
+3. **Operational endpoint exclusion** — `/api/healthz/{clamav,shield}` and `/api/internal/v1/*` are not dual-mounted under `/v1/*`. Documented in `_EXCLUDED_PREFIXES` + `_EXCLUDED_EXACT` in `routers/v1_dual_mount.py` and explicitly asserted by `test_dual_mount_count_invariant`.
+
+Full analysis in sprint memo §7.
+
+**Out of scope (held — Phase 5+ candidates):**
+- Phase 5 (Deployment separation, sell-ready) — UNGATED. All primitives in place; supervisor unlock + per-context Dockerfile + per-context env wiring + commercial sell-ready package + cron supervisor split listed in Phase 4.4 sprint memo §8.
+- Phase 6 (Physical data carve) — GATED on scale.
+- Phase 7 (Commercial surfaces) — GATED on paying customer.
+
+---
+
+## Section 6.x — Historical: Re-Arch Phase 4.3 (✅ DONE 2026-06-23, preserved for ledger)
+
 **Re-Architecture Phase 4.3 ✅ DONE 2026-06-23** (Container Topology + Healthcheck Triad + Final 5-Hatch Dissolution; Part A fallback in effect).
 
 Phase 4.3 dissolved the final 39 Akki→signals cross-context violations (39 → 0) by reclassifying `signals` as SyniSense-owned and expanding the SyniSense contract surface from 6 → 30 typed methods (24 new). Wired a Healthcheck Triad — per-context probes (`/api/healthz/{akki,synisense,solva}`) + composite proxy (`/api/healthz/composite`) — onto all three sub-apps with `include_in_schema=False` so the public OpenAPI hash stays byte-identical. Flipped `BOUNDED_CONTEXT_TRANSPORT=http` to the deployed default in `/app/backend/.env`, with per-context base URL overrides (`INTERNAL_TRANSPORT_BASE_URL_{AKKI,SYNISENSE,SOLVA}`) plumbed for the eventual multi-process deploy. Fixed a latent PEP-563 bug in `_build_return_map` that would have broken DTO reconstruction under the HTTP-default flip. Single-process composition preserved (supervisor `READONLY`); each `*_app.py` remains independently runnable; commercial separability satisfied at the code boundary. `/api/*` surface byte-identical (621 paths, 697 ops, `paths_sha256 = cdcb23322bb82895` — ratchet held since Phase 4.1 close).
