@@ -202,7 +202,7 @@ async def get_agenda(
     # auto-scaffolded default-inbox cycle. Existing user-curated
     # cycles return the flag as `false` and render unchanged.
     try:
-        cycle_row = await db.cycles.find_one(
+        cycle_row = await db.cycles.find_one(  # tenancy:allow-no-account-id — handler is context-membership-gated upstream; cycle fetched by row id
             {"id": agenda["id"]},
             {"_id": 0, "is_default_inbox_cycle": 1},
         )

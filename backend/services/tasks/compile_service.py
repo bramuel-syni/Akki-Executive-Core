@@ -149,7 +149,7 @@ async def _audit(db, *, task_id: str, account_id: str, action: str,
 
 
 async def _set_session(db, *, task_id: str, session: Dict[str, Any]) -> None:
-    await db.tasks.update_one(
+    await db.tasks.update_one(  # tenancy:allow-no-account-id — service invoked by router with tenant-gated entry; row-id-targeted update
         {"id": task_id},
         {"$set": {"compile_session": session, "updated_at": _now_iso()}},
     )
@@ -386,7 +386,7 @@ async def add_circulation_comment(db, *, token: str, comment_text: str,
     if exp and exp < datetime.now(timezone.utc):
         return {"ok": False, "reason": "invalid_or_expired_token"}
     tid = row["task_id"]
-    t = await db.tasks.find_one({"id": tid})
+    t = await db.tasks.find_one({"id": tid})  # tenancy:allow-no-account-id — service invoked by router with tenant-gated entry; row-id-targeted readback
     if not t:
         return {"ok": False, "reason": "task_missing"}
     session = t.get("compile_session") or _empty_session()
@@ -556,7 +556,7 @@ async def run_commit(db, *, task: Dict[str, Any], account_id: str) -> Dict[str, 
     if other_drafts == 0:
         update_fields["state"] = "closed"
         task_closed = True
-    await db.tasks.update_one({"id": tid}, {"$set": update_fields})
+    await db.tasks.update_one({"id": tid}, {"$set": update_fields})  # tenancy:allow-no-account-id — service invoked by router with tenant-gated entry; row-id-targeted update
     if task_closed:
         await _audit(db, task_id=tid, account_id=account_id,
                      action="task.state.auto_closed", ctx_id=ctx_id,

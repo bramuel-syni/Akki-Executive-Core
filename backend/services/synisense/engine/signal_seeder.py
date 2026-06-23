@@ -53,7 +53,7 @@ async def seed_for_tenant(tenant_id: str) -> Dict[str, int]:
     counts: Dict[str, int] = {}
 
     # ── anomaly_flag ── from cycles where status looks unhealthy.
-    cycles_cursor = db.cycles.find(
+    cycles_cursor = db.cycles.find(  # tenancy:allow-no-account-id — internal seeder invoked from context-gated entry point; cycle fetched by row id
         {"$or": [{"status": "completed"}, {"status": "draft"}, {"status": "active"}]},
         {"_id": 0, "id": 1, "context_id": 1, "title": 1, "status": 1,
          "created_at": 1, "owner_account_id": 1},

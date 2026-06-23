@@ -482,6 +482,7 @@ async def aggregated_stream(
     # Phase 2b — read full rows then project. The Mongo projection is
     # NOT relied on for privacy; the wall is. We still strip `_id`
     # because Motor returns `ObjectId` which isn't JSON-safe.
+    # tenancy:allow-no-account-id — share token validated upstream; signals filtered by token-resolved context_id list (signals_q built at L473)
     raw_signals = await db.signals.find(signals_q, {"_id": 0}) \
         .sort("created_at", -1).limit(per_kind_cap).to_list(per_kind_cap)
     raw_briefings = await db.boardpacks.find(briefings_q, {"_id": 0}) \

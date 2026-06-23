@@ -416,7 +416,7 @@ async def _refresh_access_token(cred: Dict[str, Any]) -> Optional[str]:
     the credentials row with `last_sync_status='auth_expired'`."""
     if not cred.get("refresh_token_encrypted"):
         log.info("[oauth.google] no refresh token stored — re-consent required")
-        await db.user_calendar_credentials.update_one(
+        await db.user_calendar_credentials.update_one(  # tenancy:allow-no-account-id — cred resolved upstream by user_id+context_id; row-id-targeted write
             {"id": cred["id"]},
             {"$set": {"last_sync_status": "auth_expired",
                       "last_sync_error": "No refresh token; re-connect required"}},
@@ -433,7 +433,7 @@ async def _refresh_access_token(cred: Dict[str, Any]) -> Optional[str]:
         })
     if r.status_code != 200:
         log.warning("[oauth.google] refresh failed: %s %s", r.status_code, r.text[:200])
-        await db.user_calendar_credentials.update_one(
+        await db.user_calendar_credentials.update_one(  # tenancy:allow-no-account-id — cred resolved upstream by user_id+context_id; row-id-targeted write
             {"id": cred["id"]},
             {"$set": {"last_sync_status": "auth_expired",
                       "last_sync_error": f"Refresh failed: HTTP {r.status_code}"}},
@@ -444,7 +444,7 @@ async def _refresh_access_token(cred: Dict[str, Any]) -> Optional[str]:
     if not new_access:
         return None
     new_expires_in = int(tokens.get("expires_in") or 3600)
-    await db.user_calendar_credentials.update_one(
+    await db.user_calendar_credentials.update_one(  # tenancy:allow-no-account-id — cred resolved upstream by user_id+context_id; row-id-targeted write
         {"id": cred["id"]},
         {"$set": {
             "access_token_encrypted": token_vault.encrypt(new_access),
@@ -532,7 +532,7 @@ async def sync_calendar(
                 break
     except Exception as e:
         log.warning("[oauth.google] events.list failed: %s", e)
-        await db.user_calendar_credentials.update_one(
+        await db.user_calendar_credentials.update_one(  # tenancy:allow-no-account-id — cred resolved upstream by user_id+context_id; row-id-targeted write
             {"id": cred["id"]},
             {"$set": {
                 "last_sync_status": "error",
@@ -583,7 +583,7 @@ async def sync_calendar(
         })
         imported += 1
 
-    await db.user_calendar_credentials.update_one(
+    await db.user_calendar_credentials.update_one(  # tenancy:allow-no-account-id — cred resolved upstream by user_id+context_id; row-id-targeted write
         {"id": cred["id"]},
         {"$set": {
             "last_sync_at":    now_iso,

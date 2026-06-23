@@ -1,0 +1,87 @@
+{
+  "shape": {
+    "assistant_message": {
+      "account_id": "str",
+      "chat_id": "<dynamic>:str",
+      "citations": [
+        "list/empty"
+      ],
+      "content": "str",
+      "created_at": "<dynamic>:str",
+      "grounded_context_id": "None",
+      "id": "<dynamic>:str",
+      "latency_ms": "<dynamic>:int",
+      "mode": "str",
+      "model_id": "str",
+      "model_label": "str",
+      "role": "str",
+      "shield_audit_id": "str",
+      "synisense_stats": {
+        "audit_id": "<dynamic>:str",
+        "by_type": {},
+        "elapsed_ms": "<dynamic>:int",
+        "spans_redacted": "int",
+        "version": "<dynamic>:str"
+      }
+    },
+    "bypass_reason": "None",
+    "chat_system_prompt_injection_failed": "bool",
+    "protective_event": {
+      "annotation_anchors": [
+        "str",
+        "list/len>=2"
+      ],
+      "detector_scores": {
+        "A": "float",
+        "B": "float",
+        "C": "float"
+      },
+      "detectors_fired": [
+        "str",
+        "list/len>=1"
+      ],
+      "handoff_accepted": "None",
+      "intervention_text": "str",
+      "intervention_type": "str",
+      "message_id": "<dynamic>:str",
+      "template_id": "str",
+      "timestamp": "str",
+      "user_follow_through": "None"
+    },
+    "shielding": {
+      "by_category": {
+        "GPE": "int",
+        "PERSON": "int"
+      },
+      "identifiers_masked": "int",
+      "shielded_by": "str"
+    },
+    "user_message": {
+      "account_id": "str",
+      "bypass_reason": "None",
+      "chat_id": "<dynamic>:str",
+      "content": "str",
+      "content_sha256": "str",
+      "created_at": "<dynamic>:str",
+      "id": "<dynamic>:str",
+      "role": "str",
+      "shielded": "bool",
+      "shielding": {
+        "by_category": {
+          "GPE": "int",
+          "PERSON": "int"
+        },
+        "identifiers_masked": "int",
+        "shielded_by": "str"
+      },
+      "shielding_policy": "str",
+      "synisense_stats": {
+        "by_type": {},
+        "elapsed_ms": "<dynamic>:int",
+        "spans_redacted": "int"
+      }
+    },
+    "will_shield": "bool"
+  },
+  "blessed_at": "2026-06-23T07:25:21.961517+00:00"
+}

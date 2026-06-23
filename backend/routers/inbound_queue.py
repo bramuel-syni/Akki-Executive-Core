@@ -215,7 +215,7 @@ async def accept_inbound_queue_item(
                 detail={"error": "scanner_unavailable", "reason": "virus scanner offline"},
             )
         if not scan_result.clean:
-            await db.inbound_queue.update_one(
+            await db.inbound_queue.update_one(  # tenancy:allow-no-account-id — queue item pre-validated by upstream find_one with context_id; row-id-targeted update
                 {"id": queue_id},
                 {"$set": {"status": "rejected", "rejected_by": ctx["account"]["id"],
                           "rejected_at": iso(now()), "reject_reason": f"virus_scan · {scan_result.signature}"}},
@@ -296,7 +296,7 @@ async def accept_inbound_queue_item(
     }
     await db.documents.insert_one(doc)
 
-    await db.inbound_queue.update_one(
+    await db.inbound_queue.update_one(  # tenancy:allow-no-account-id — queue item pre-validated by upstream find_one with context_id; row-id-targeted update
         {"id": queue_id},
         {"$set": {
             "status": "accepted",
@@ -344,7 +344,7 @@ async def reject_inbound_queue_item(
         raise HTTPException(status_code=409, detail=f"Item already {row['status']}.")
 
     reason = (body.reason or "not_relevant").strip()[:200]
-    await db.inbound_queue.update_one(
+    await db.inbound_queue.update_one(  # tenancy:allow-no-account-id — queue item pre-validated by upstream find_one with context_id; row-id-targeted update
         {"id": queue_id},
         {"$set": {
             "status": "rejected",

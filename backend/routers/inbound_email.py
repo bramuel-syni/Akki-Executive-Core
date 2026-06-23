@@ -745,7 +745,7 @@ async def _handle_task_contributor_reply(
     # Add the cleaned body as a contributor comment on the task.
     if cleaned_body:
         try:
-            await db.tasks.update_one(
+            await db.tasks.update_one(  # tenancy:allow-no-account-id — contributor email reply: token validated upstream, then task updated by row id
                 {"id": row["task_id"]},
                 {"$push": {"contributor_comments": {
                     "id":         str(uuid.uuid4()),
@@ -761,7 +761,7 @@ async def _handle_task_contributor_reply(
             logger.warning("contributor_comments push failed: %s", e)
 
     # Flip status to "submitted" + recompute readiness.
-    t = await db.tasks.find_one({"id": row["task_id"]}, {"_id": 0})
+    t = await db.tasks.find_one({"id": row["task_id"]}, {"_id": 0})  # tenancy:allow-no-account-id — contributor email reply: token validated upstream, then task fetched by row id
     if t:
         team = list(t.get("team") or [])
         target = row["contributor_email"]
@@ -774,7 +774,7 @@ async def _handle_task_contributor_reply(
             try:
                 from services.tasks.intelligence_service import readiness_breakdown
                 rb = readiness_breakdown({**t, "team": team})
-                await db.tasks.update_one(
+                await db.tasks.update_one(  # tenancy:allow-no-account-id — contributor email reply: token validated upstream, then task updated by row id
                     {"id": row["task_id"]},
                     {"$set": {"team": team,
                               "readiness_score": rb["score"],

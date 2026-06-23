@@ -78,7 +78,7 @@ async def dedup_or_insert(
         {"_id": 0},
     )
     if existing:
-        await db.signals.update_one(
+        await db.signals.update_one(  # tenancy:allow-no-account-id — dedup helper called with account-gated signal payload; merge by fingerprint within tenant scope
             {"id": existing["id"]},
             {
                 "$inc": {"merge_count": 1},
@@ -90,6 +90,6 @@ async def dedup_or_insert(
         existing["last_merged_at"] = sig.get("created_at")
         return existing, False
 
-    await db.signals.insert_one(sig)
+    await db.signals.insert_one(sig)  # tenancy:allow-no-account-id — dedup helper called with account-gated signal payload; insert with full provenance
     sig.pop("_id", None)
     return sig, True

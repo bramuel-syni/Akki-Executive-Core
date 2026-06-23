@@ -52,7 +52,7 @@ async def signal_action_heatmap(_: Dict[str, Any] = Depends(_require_superadmin)
     # Pull each action's signal so we can group by recommendation bucket
     # (the bucket lives only on the signal, not on the action doc).
     signal_ids = list({a["signal_id"] for a in actions if a.get("signal_id")})
-    sig_cursor = db.signals.find(
+    sig_cursor = db.signals.find(  # tenancy:allow-no-account-id — admin-only route (super-admin gate at file entry); cross-tenant KPI aggregation
         {"id": {"$in": signal_ids}},
         {"_id": 0, "id": 1, "headline": 1, "tone": 1, "kind": 1,
          "signal_type": 1, "category": 1},

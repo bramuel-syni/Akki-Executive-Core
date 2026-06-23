@@ -446,7 +446,7 @@ async def _is_member(context_id: str, account_id: str) -> bool:
 async def _approve_inbound(qid: str, account: Dict[str, Any], note: Optional[str]) -> Dict[str, Any]:
     """Mirror of `inbound_queue.accept_inbound_queue_item` but reachable
     via the unified queue. Same DB writes + audit shape."""
-    row = await db.inbound_queue.find_one({"id": qid}, {"_id": 0})
+    row = await db.inbound_queue.find_one({"id": qid}, {"_id": 0})  # tenancy:allow-no-account-id — handler is context-membership-gated; queue item fetched/updated by row id
     if not row:
         raise HTTPException(status_code=404, detail="Queue item not found.")
     if not await _is_member(row["context_id"], account["id"]):
@@ -487,7 +487,7 @@ async def _approve_inbound(qid: str, account: Dict[str, Any], note: Optional[str
                 detail={"error": "scanner_unavailable", "reason": "virus scanner offline"},
             )
         if not scan_result.clean:
-            await db.inbound_queue.update_one({"id": qid}, {"$set": {
+            await db.inbound_queue.update_one({"id": qid}, {"$set": {  # tenancy:allow-no-account-id — handler is context-membership-gated; queue item updated by row id
                 "status": "rejected", "rejected_by": account["id"],
                 "rejected_at": iso(now()), "reject_reason": f"virus_scan · {scan_result.signature}",
             }})
@@ -549,7 +549,7 @@ async def _approve_inbound(qid: str, account: Dict[str, Any], note: Optional[str
         "inbound_promoted_note": note,
     }
     await db.documents.insert_one(doc)
-    await db.inbound_queue.update_one({"id": qid}, {"$set": {
+    await db.inbound_queue.update_one({"id": qid}, {"$set": {  # tenancy:allow-no-account-id — handler is context-membership-gated; queue item updated by row id
         "status": "accepted", "accepted_by": account["id"],
         "accepted_at": iso(now()), "promoted_doc_id": doc_id,
         "accept_via": "daily_review", "accept_note": note,
@@ -563,7 +563,7 @@ async def _approve_inbound(qid: str, account: Dict[str, Any], note: Optional[str
 
 
 async def _reject_inbound(qid: str, account: Dict[str, Any], reason: Optional[str]) -> Dict[str, Any]:
-    row = await db.inbound_queue.find_one({"id": qid}, {"_id": 0})
+    row = await db.inbound_queue.find_one({"id": qid}, {"_id": 0})  # tenancy:allow-no-account-id — handler is context-membership-gated; queue item fetched by row id
     if not row:
         raise HTTPException(status_code=404, detail="Queue item not found.")
     if not await _is_member(row["context_id"], account["id"]):
@@ -574,7 +574,7 @@ async def _reject_inbound(qid: str, account: Dict[str, Any], reason: Optional[st
             detail={"prior_decision": row["status"]},
         )
     reason_clean = (reason or "not_relevant").strip()[:200]
-    await db.inbound_queue.update_one({"id": qid}, {"$set": {
+    await db.inbound_queue.update_one({"id": qid}, {"$set": {  # tenancy:allow-no-account-id — handler is context-membership-gated; queue item updated by row id
         "status": "rejected", "rejected_by": account["id"],
         "rejected_at": iso(now()), "reject_reason": reason_clean,
         "reject_via": "daily_review",
@@ -956,7 +956,7 @@ async def edit_review_item(
     if kind == SOLVA_CYCLE_KIND:
         return await _edit_solva_cycle(iid, account, body)
     if kind == INBOUND_KIND:
-        row = await db.inbound_queue.find_one({"id": iid}, {"_id": 0, "id": 1, "context_id": 1, "status": 1})
+        row = await db.inbound_queue.find_one({"id": iid}, {"_id": 0, "id": 1, "context_id": 1, "status": 1})  # tenancy:allow-no-account-id — handler is context-membership-gated; queue item fetched by row id
         if not row:
             raise HTTPException(status_code=404, detail="Queue item not found.")
         if not await _is_member(row["context_id"], account["id"]):

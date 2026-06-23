@@ -492,9 +492,9 @@ async def patch_task(
     op: Dict[str, Any] = {"$set": update}
     if push:
         op["$push"] = push
-    await db.tasks.update_one({"id": task_id}, op)
+    await db.tasks.update_one({"id": task_id}, op)  # tenancy:allow-no-account-id — task pre-validated by upstream find_one with account_id; row-id-targeted update
 
-    t2 = await db.tasks.find_one({"id": task_id}, {"_id": 0})
+    t2 = await db.tasks.find_one({"id": task_id}, {"_id": 0})  # tenancy:allow-no-account-id — task pre-validated by upstream find_one with account_id; row-id-targeted readback
 
     # Audit + contributor notify when freshly commissioned.
     try:
@@ -715,7 +715,7 @@ async def patch_contribution(
     # Recompute readiness via the F.3 formula.
     from services.tasks.intelligence_service import readiness_breakdown
     rb = readiness_breakdown({**t, "team": team})
-    await db.tasks.update_one(
+    await db.tasks.update_one(  # tenancy:allow-no-account-id — task pre-validated by upstream find_one with account_id; row-id-targeted update
         {"id": task_id},
         {"$set": {"team": team, "updated_at": now_iso, "readiness_score": rb["score"]}},
     )
@@ -957,7 +957,7 @@ async def circulation_view(token: str):
         {"id": {"$in": doc_ids}},
         {"_id": 0, "id": 1, "name": 1, "extracted_text": 1, "doc_type": 1, "state": 1},
     ).to_list(length=20)
-    t = await db.tasks.find_one(
+    t = await db.tasks.find_one(  # tenancy:allow-no-account-id — contributor-token flow: token validated upstream, then task fetched by row id
         {"id": row["task_id"]},
         {"_id": 0, "name": 1, "objective": 1, "id": 1, "compile_session.circulation.comments": 1},
     )
@@ -1138,7 +1138,7 @@ async def contributor_view(token: str):
     + peers (names + roles only, no emails) + docs already uploaded
     under this token."""
     row = await _resolve_contributor_token(token)
-    t = await db.tasks.find_one(
+    t = await db.tasks.find_one(  # tenancy:allow-no-account-id — contributor-token flow: token validated upstream, then task fetched by row id
         {"id": row["task_id"]},
         {"_id": 0, "id": 1, "name": 1, "objective": 1, "success_criteria": 1,
          "due_date": 1, "team": 1, "output_spec": 1},
@@ -1264,7 +1264,7 @@ async def contributor_comment(token: str, body: _ContributorCommentIn):
         "kind":       "contributor",
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
-    await db.tasks.update_one(
+    await db.tasks.update_one(  # tenancy:allow-no-account-id — contributor-token flow: token validated upstream, then task updated by row id
         {"id": row["task_id"]},
         {"$push": {"contributor_comments": cmt}, "$set": {"updated_at": cmt["created_at"]}},
     )
@@ -1278,7 +1278,7 @@ async def contributor_comment(token: str, body: _ContributorCommentIn):
 async def contributor_submit(token: str, body: _ContributorSubmitIn):
     """Flip the contributor's status to `submitted` + fire audit."""
     row = await _resolve_contributor_token(token)
-    t = await db.tasks.find_one({"id": row["task_id"]}, {"_id": 0})
+    t = await db.tasks.find_one({"id": row["task_id"]}, {"_id": 0})  # tenancy:allow-no-account-id — contributor-token flow: task fetched by row id after token validation
     if not t:
         raise HTTPException(status_code=404, detail="Task not found")
     team = list(t.get("team") or [])
@@ -1297,7 +1297,7 @@ async def contributor_submit(token: str, body: _ContributorSubmitIn):
     now_iso = datetime.now(timezone.utc).isoformat()
     from services.tasks.intelligence_service import readiness_breakdown
     rb = readiness_breakdown({**t, "team": team})
-    await db.tasks.update_one(
+    await db.tasks.update_one(  # tenancy:allow-no-account-id — contributor-token flow: task updated by row id after token validation
         {"id": row["task_id"]},
         {"$set": {"team": team, "updated_at": now_iso, "readiness_score": rb["score"]}},
     )

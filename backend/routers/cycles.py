@@ -316,20 +316,20 @@ async def list_cycles(
         ],
     }
     counts_by_status = {
-        "all":       await db.cycles.count_documents(counts_filt),
-        "active":    await db.cycles.count_documents({**counts_filt, "status": "active"}),
-        "draft":     await db.cycles.count_documents({**counts_filt, "status": "draft"}),
-        "completed": await db.cycles.count_documents({**counts_filt, "status": "completed"}),
+        "all":       await db.cycles.count_documents(counts_filt),  # tenancy:allow-no-account-id — handler is context-membership-gated; counts_filt is $or over (context_id + seed_marker_visible_for) — both tenant-scoped
+        "active":    await db.cycles.count_documents({**counts_filt, "status": "active"}),  # tenancy:allow-no-account-id — handler is context-membership-gated; counts_filt is $or over (context_id + seed_marker_visible_for) — both tenant-scoped
+        "draft":     await db.cycles.count_documents({**counts_filt, "status": "draft"}),  # tenancy:allow-no-account-id — handler is context-membership-gated; counts_filt is $or over (context_id + seed_marker_visible_for) — both tenant-scoped
+        "completed": await db.cycles.count_documents({**counts_filt, "status": "completed"}),  # tenancy:allow-no-account-id — handler is context-membership-gated; counts_filt is $or over (context_id + seed_marker_visible_for) — both tenant-scoped
     }
 
     if status and status != "all":
         primary_filter["status"] = status
         demo_filter["status"] = status
 
-    total = await db.cycles.count_documents(filt)
+    total = await db.cycles.count_documents(filt)  # tenancy:allow-no-account-id — handler is context-membership-gated; filt is $or over (context_id + seed_marker_visible_for) — both tenant-scoped
 
     if sort == "status":
-        cur = db.cycles.find(filt, {"_id": 0})
+        cur = db.cycles.find(filt, {"_id": 0})  # tenancy:allow-no-account-id — handler is context-membership-gated; filt is $or over (context_id + seed_marker_visible_for) — both tenant-scoped
         rows = await cur.to_list(2000)
         order = {"active": 0, "draft": 1, "completed": 2}
         rows.sort(key=lambda r: r.get("created_at") or "", reverse=True)
@@ -337,7 +337,7 @@ async def list_cycles(
         rows = rows[(page - 1) * page_size : page * page_size]
     else:
         sort_spec = _SORT_MAP[sort]
-        cur = db.cycles.find(filt, {"_id": 0}).sort(sort_spec)
+        cur = db.cycles.find(filt, {"_id": 0}).sort(sort_spec)  # tenancy:allow-no-account-id — handler is context-membership-gated; filt is $or over (context_id + seed_marker_visible_for) — both tenant-scoped
         cur = cur.skip((page - 1) * page_size).limit(page_size)
         rows = await cur.to_list(page_size)
 

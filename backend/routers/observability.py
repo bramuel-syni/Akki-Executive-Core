@@ -37,7 +37,7 @@ async def _velocity_aggregate(filter_q: Dict[str, Any], window: str) -> Dict[str
     """Aggregate over solva_v2_sessions matching `filter_q`. Returns the
     locked ZZ.4 shape (session_count, slide_count, avg/p50/p95 ms,
     slowest/fastest engine kind+median)."""
-    sessions = await db.solva_v2_sessions.find(
+    sessions = await db.solva_v2_sessions.find(  # tenancy:allow-no-account-id — admin/observability cron route: cross-tenant by design; gated by admin-only invocation
         filter_q,
         {"_id": 0, "started_at": 1, "completed_at": 1, "reasoning_audit_log": 1},
     ).to_list(length=None)

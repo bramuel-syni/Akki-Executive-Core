@@ -251,7 +251,7 @@ async def _resolve_intake_seed(
         summary = body[:600]
 
     elif kind == "pulse_signal":
-        sig = await db.signals.find_one(
+        sig = await db.signals.find_one(  # tenancy:allow-no-account-id — session pre-validated by upstream find_one with account_id; signal fetched by row id
             {"id": sid}, {"_id": 0, "title": 1, "summary": 1, "context_id": 1},
         )
         if not sig:
@@ -442,7 +442,7 @@ async def _append_turn(
         "tier": tier,
         "created_at": iso(now()),
     }
-    await db.solva_v2_sessions.update_one(
+    await db.solva_v2_sessions.update_one(  # tenancy:allow-no-account-id — session pre-validated by upstream find_one with account_id; row-id-targeted update
         {"id": sid},
         {"$push": {"turns": turn}, "$set": {"updated_at": iso(now())}},
     )
@@ -452,7 +452,7 @@ async def _append_turn(
 async def _append_audit(sid: str, entries: List[Dict[str, Any]]) -> None:
     if not entries:
         return
-    await db.solva_v2_sessions.update_one(
+    await db.solva_v2_sessions.update_one(  # tenancy:allow-no-account-id — session pre-validated by upstream find_one with account_id; row-id-targeted update
         {"id": sid},
         {"$push": {"reasoning_audit_log": {"$each": entries}},
          "$set": {"updated_at": iso(now())}},
@@ -1170,7 +1170,7 @@ async def start_session(
         # turn to relax the validator.
         if decision.action == "therapy_redirect":
             guard_update["redirect_recovery"] = True
-        await db.solva_v2_sessions.update_one(
+        await db.solva_v2_sessions.update_one(  # tenancy:allow-no-account-id — session pre-validated by upstream find_one with account_id; row-id-targeted update
             {"id": session_id},
             {"$push": {
                 "turns": guard_solve_turn,
@@ -1201,7 +1201,7 @@ async def start_session(
         "tier": out["tier"],
         "created_at": iso(now()),
     }
-    await db.solva_v2_sessions.update_one(
+    await db.solva_v2_sessions.update_one(  # tenancy:allow-no-account-id — session pre-validated by upstream find_one with account_id; row-id-targeted update
         {"id": session_id},
         {"$push": {
             "turns": solve_turn,
@@ -2004,7 +2004,7 @@ async def fetch_take_to_solva_seed(
     citation_label = ""
 
     if kind == "signal":
-        sig = await db.signals.find_one({"id": sid_in}, {"_id": 0})
+        sig = await db.signals.find_one({"id": sid_in}, {"_id": 0})  # tenancy:allow-no-account-id — session pre-validated by upstream find_one with account_id; signal fetched by row id
         if not sig:
             raise HTTPException(status_code=404, detail="signal not found")
         # account-scoped read: signal must be in a context the user has membership in
@@ -2071,7 +2071,7 @@ async def fetch_take_to_solva_seed(
         citation_label = (s.get("framing") or "Solva session")[:80] + "…"
 
     elif kind == "chat_message":
-        msg = await db.chat_messages.find_one({"id": sid_in}, {"_id": 0})
+        msg = await db.chat_messages.find_one({"id": sid_in}, {"_id": 0})  # tenancy:allow-no-account-id — session pre-validated by upstream find_one with account_id; chat_message fetched by row id
         if not msg:
             raise HTTPException(status_code=404, detail="chat message not found")
         if msg.get("account_id") != aid:
@@ -2374,7 +2374,7 @@ async def stale_session_sweep(
 
     cutoff = _dt.now(_tz.utc) - _td(days=STALE_SESSION_AGE_DAYS)
     cutoff_iso = cutoff.isoformat().replace("+00:00", "Z")
-    result = await db.solva_v2_sessions.update_many(
+    result = await db.solva_v2_sessions.update_many(  # tenancy:allow-no-account-id — cron sweep: gated by x_cron_secret (admin-only); cross-tenant stale-session reaper by design
         {"status": "active", "updated_at": {"$lt": cutoff_iso}},
         {"$set": {
             "status": "abandoned",
@@ -2459,7 +2459,7 @@ async def post_turn(
         "tier": None,
         "created_at": iso(now()),
     }
-    await db.solva_v2_sessions.update_one(
+    await db.solva_v2_sessions.update_one(  # tenancy:allow-no-account-id — session pre-validated by upstream find_one with account_id; row-id-targeted update
         {"id": sid},
         {"$push": {"turns": user_turn}, "$set": {"updated_at": iso(now())}},
     )

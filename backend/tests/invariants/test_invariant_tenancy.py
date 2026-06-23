@@ -244,9 +244,18 @@ ALT_TENANCY_KEYS: Dict[str, FrozenSet[str]] = {
     "context_assignments": frozenset({"account_id", "context_id"}),
     "ned_assignments": frozenset({"account_id", "context_id"}),
     # solva_v2_sessions: account_id canonical (routers/solva_v2.py:1070).
-    # inbound_queue + chat_attachments + chat_messages: account_id
-    # canonical. user_calendar_credentials + user_recent_views:
-    # account_id canonical.
+    # inbound_queue: account_id canonical, but row is also stamped with
+    # `context_id` on every inbound write (routers/inbound_email.py
+    # produces `{context_id, account_id}` payloads via the mailbox
+    # router; routers/inbound_queue.py reads gate on
+    # `Depends(require_context_membership())`). Phase 2.5a widens to
+    # accept `context_id` as a recognised key.
+    "inbound_queue": frozenset({"account_id", "context_id"}),
+    # chat_attachments: account_id canonical (parent chat is account-
+    # gated; attachments inherit). Phase 2.5a adds `chat_id` for the
+    # parent-chat-gated lookups.
+    "chat_attachments": frozenset({"account_id", "chat_id"}),
+    # user_recent_views: account_id canonical.
 }
 
 
@@ -280,18 +289,34 @@ TENANT_GATE_HELPERS: Dict[str, FrozenSet[str]] = {
         # memberships and returns the resolved context row.
         "_verify_ned_context",
     }),
+    "studio_blocks": frozenset({
+        # routers/studio_blocks.py:444 — `_resolve_artefact(kind, aid,
+        # account)` finds the parent artefact row by id, verifies
+        # `context_id`, then verifies `(account_id, context_id,
+        # status=active)` in memberships; raises 403 on miss. Every
+        # `db.studio_blocks.<method>` call inside `studio_blocks.py`
+        # handlers happens AFTER this resolver succeeds, so the
+        # `artefact_id` (or parent-artefact-derived `context_id`) on the
+        # filter is already proven to belong to the caller. Same shape
+        # as the `contexts` helper-fusion contract; the alt-key
+        # `artefact_id` ALSO resolves these statically — the helper
+        # fusion is the architectural ground truth, alt-key is the
+        # belt-and-braces.
+        "_resolve_artefact",
+    }),
 }
 
 # Functions whose OWN body implements one of the helpers above. Their
 # `db.contexts.find_one({"id": context_id})` calls ARE the tenancy
-# contract — they're not consumers of it. The scanner skips contexts
-# checks inside these specific function bodies.
+# contract — they're not consumers of it. The scanner skips checks
+# inside these specific function bodies (per the collection they gate).
 #
 # Hard-coded set; growth requires a PR-reviewed scanner edit (treated as
 # documentation, not config — per Phase 2.4 Pre-Read §7 design ack).
 _CONTEXT_HELPER_FUNCTIONS: FrozenSet[str] = frozenset({
     "_dep",                  # inner closure of require_context_membership()
     "_verify_ned_context",   # the NED helper itself
+    "_resolve_artefact",     # studio_blocks artefact resolver (Phase 2.5a)
 })
 
 
@@ -309,7 +334,103 @@ _CONTEXT_HELPER_FUNCTIONS: FrozenSet[str] = frozenset({
 # recommendation; 24→0 via 20 defensive context_id adds + 4 markers.
 # Phase 2.4 adds `contexts` — fourth-context per Phase 2.4 Pre-Read §8
 # hybrid (Upgrade D helper-fusion + helper-body exemption + markers).
-_ENFORCE_MODE_COLLECTIONS: FrozenSet[str] = frozenset({"chats", "documents", "work_studio_exports", "contexts"})
+# Phase 2.5a adds 7 more: `inbound_queue`, `tasks`, `chat_messages`,
+# `user_calendar_credentials`, `signals`, `cycles`, `solva_v2_sessions`.
+_ENFORCE_MODE_COLLECTIONS: FrozenSet[str] = frozenset({
+    "chats",
+    "documents",
+    "work_studio_exports",
+    "contexts",
+    # Phase 2.5a additions (all 7 reached 0 via alt-key widening + markers).
+    "inbound_queue",
+    "tasks",
+    "chat_messages",
+    "user_calendar_credentials",
+    "signals",
+    "cycles",
+    "solva_v2_sessions",
+})
+
+
+# ───────────────────────── Phase 2.5a — cross-tenant whitelist ─────────
+# Collections that legitimately store rows WITHOUT a per-tenant key
+# because they exist at a global/system layer (pre-account, audit-only,
+# webhook log, telemetry, cron-state, etc.). These collections are
+# considered OUT-OF-SCOPE for the tenancy scanner by design — adding
+# `account_id` would be semantically wrong (the row predates / spans /
+# audits accounts).
+#
+# Invariant enforced by `test_cross_tenant_whitelist_disjoint_from_scoped`:
+#   `_CROSS_TENANT_COLLECTIONS & TENANT_SCOPED_COLLECTIONS == ∅`
+#
+# This list is a formal paper trail per Phase 2.5a brief — it does NOT
+# control scanner behaviour today (anything outside `TENANT_SCOPED_COLLECTIONS`
+# is already not checked). It exists so a future agent reviewing
+# "why is collection X unchecked?" gets an immediate, dated rationale
+# rather than relying on the absence of a declaration. Growth requires
+# explicit per-entry rationale.
+_CROSS_TENANT_COLLECTIONS: FrozenSet[str] = frozenset({
+    # ── Identity / pre-account ─────────────────────────────────────
+    "accounts",                  # The accounts collection itself; queried by id/email/cohort.
+    "memberships",               # The (account_id, context_id) JOIN; cross by definition.
+    "context_members",           # Legacy alias for memberships in some paths.
+    "invitations",               # Pre-account: an invite has no account_id yet.
+    "revoked_jtis",              # JWT revocation list; queried by jti globally.
+    "oauth_pkce_verifiers",      # Pre-account OAuth state; queried by state key.
+    "login_attempts",            # Brute-force gate; queried by email/IP, pre-auth.
+    # ── Cohort onboarding (pre-account) ─────────────────────────────
+    "cohorts",
+    "cohort_applications",
+    "cohort_application_audit",
+    "cohort_copy_overrides",
+    "cohort_email_events",
+    "cohort_invites",
+    "cohort_magic_links",
+    "cohort_special_asks",
+    "cohort_waitlist",
+    # ── Early-access / interest forms (pre-account) ─────────────────
+    "early_access_applications",
+    "early_access_optins",
+    "early_access_registrations",
+    "enterprise_interest",
+    "billing_launch_interest",
+    # ── System audit / telemetry / cron-state ──────────────────────
+    "audit_log",                 # System audit; rows tagged with `account_id` opportunistically but not as a tenancy gate.
+    "audit_invariant_violations",
+    "auth_events",
+    "chat_audit_log",
+    "feature_events",
+    "telemetry_events",
+    "scheduler_runs",
+    "model_fallback_log",
+    "llm_deep_usage",
+    "llm_retry_log",
+    "extraction_failures",
+    "extractions_log",
+    "backfill_jobs",
+    "backfill_log",
+    "async_jobs",
+    # ── Synisense Shield audit (cross-tenant by Shield contract) ────
+    "synisense_audit_log",
+    "synisense_runs",
+    "synisense_shield_maps",
+    "synisense_trust_receipts",
+    # ── External webhook logs ───────────────────────────────────────
+    "stripe_events",
+    "stripe_dead_letter",
+    "inbound_queue_raw",          # Raw email payload mirror; carries context_id but the inbound_queue normalised row is the tenant-scoped surface.
+    "inbox_routing_log",
+    # ── Public content ─────────────────────────────────────────────
+    "blog_posts",
+    "blog_subscribers",
+    "news_items",
+})
+
+
+# Invariant: cross-tenant whitelist MUST be disjoint from the
+# tenant-scoped allow-list. Adding the same collection to both is a
+# contradiction. (Test: `test_cross_tenant_whitelist_disjoint_from_scoped`.)
+_CROSS_TENANT_OVERLAP: FrozenSet[str] = _CROSS_TENANT_COLLECTIONS & TENANT_SCOPED_COLLECTIONS
 
 
 # Methods that take a `filter` as the first positional argument.
@@ -1328,3 +1449,26 @@ def test_upgrade_c_rejects_tenant_filter_without_account_id_kwarg() -> None:
             assert _helper_call_supplies_account_id(helper) is False
             return
     pytest.fail("test setup failed")
+
+
+
+# ─── Phase 2.5a Upgrade — cross-tenant whitelist disjointness ─────────
+
+def test_cross_tenant_whitelist_disjoint_from_scoped() -> None:
+    """`_CROSS_TENANT_COLLECTIONS` MUST be disjoint from
+    `TENANT_SCOPED_COLLECTIONS`. A collection cannot simultaneously be
+    a tenant-scoped collection AND a legitimate cross-tenant
+    collection. Build-breaking on overlap.
+
+    Phase 2.5a creates this whitelist as a formal paper trail for
+    collections legitimately out-of-scope for the scanner. The
+    invariant prevents accidental contradictions during future
+    growth.
+    """
+    overlap = _CROSS_TENANT_COLLECTIONS & TENANT_SCOPED_COLLECTIONS
+    assert overlap == frozenset(), (
+        f"Cross-tenant whitelist overlaps tenant-scoped allow-list: "
+        f"{sorted(overlap)!r}. Either remove from "
+        f"_CROSS_TENANT_COLLECTIONS or remove from "
+        f"TENANT_SCOPED_COLLECTIONS — these are mutually exclusive."
+    )

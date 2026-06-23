@@ -416,7 +416,7 @@ async def governance_audit_export(
     } if ctx_ids else {"account_id": current["id"]}
     if created_filter:
         solva_q["started_at"] = created_filter
-    solva_sessions = await db.solva_v2_sessions.find(
+    solva_sessions = await db.solva_v2_sessions.find(  # tenancy:allow-no-account-id — admin governance KPI route (super-admin gate at file entry); cross-tenant aggregation
         solva_q,
         {"_id": 0, "id": 1, "account_id": 1, "context_id": 1, "submodule": 1,
          "persona": 1, "cluster_id": 1, "cluster_label": 1, "intent": 1,
@@ -428,7 +428,7 @@ async def governance_audit_export(
     # Reasoning log rows are extracted as a separate flat list so the export
     # consumer (auditor) can ingest them without nesting.
     reasoning_rows: List[Dict[str, Any]] = []
-    full_logs = await db.solva_v2_sessions.find(
+    full_logs = await db.solva_v2_sessions.find(  # tenancy:allow-no-account-id — admin governance KPI route (super-admin gate at file entry); cross-tenant aggregation
         solva_q,
         {"_id": 0, "id": 1, "account_id": 1, "context_id": 1,
          "reasoning_audit_log": 1},

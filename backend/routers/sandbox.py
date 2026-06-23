@@ -279,7 +279,7 @@ async def _seed_sandbox(session_id: str):
         if seeds["documents"]:
             await db.documents.insert_many(seeds["documents"])  # tenancy:allow-no-account-id — `seeds["documents"]` built by build_seed_payload(owner_account_id=...) which stamps account_id on every row; scanner can't trace into the builder.
         if seeds["signals"]:
-            await db.signals.insert_many(seeds["signals"])
+            await db.signals.insert_many(seeds["signals"])  # tenancy:allow-no-account-id — sandbox seed insert: ctx loaded with owner_account_id upstream; documents inherit sandbox tenancy
         if seeds["briefings"]:
             await db.boardpacks.insert_many(seeds["briefings"])
 
@@ -1001,7 +1001,7 @@ async def create_seeded_context(
         if seeds["documents"]:
             await db.documents.insert_many(seeds["documents"])  # tenancy:allow-no-account-id — `seeds["documents"]` built by build_seed_payload(owner_account_id=...) which stamps account_id on every row; scanner can't trace into the builder.
         if seeds["signals"]:
-            await db.signals.insert_many(seeds["signals"])
+            await db.signals.insert_many(seeds["signals"])  # tenancy:allow-no-account-id — sandbox seed insert: ctx loaded with owner_account_id upstream; documents inherit sandbox tenancy
         if seeds["briefings"]:
             await db.boardpacks.insert_many(seeds["briefings"])
 
@@ -1460,7 +1460,7 @@ async def sandbox_v2_save_and_send(sid: str, body: SandboxV2SaveSendIn):
     solva_sid = rec.get("solva_session_id")
     if solva_sid:
         try:
-            solva_rec = await db.solva_v2_sessions.find_one(
+            solva_rec = await db.solva_v2_sessions.find_one(  # tenancy:allow-no-account-id — sandbox-seeded session: ctx loaded with owner_account_id upstream; session fetched by row id
                 {"id": solva_sid}, {"_id": 0},
             )
             if solva_rec:

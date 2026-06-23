@@ -1,5 +1,5 @@
 {
-  "scan_timestamp": "2026-06-23T06:42:39.976356+00:00",
+  "scan_timestamp": "2026-06-23T07:31:31.046791+00:00",
   "scan_roots": [
     "/app/backend/services",
     "/app/backend/routers"
@@ -87,12 +87,15 @@
     ],
     "studio_blocks": [
       "account_id",
+      "artefact_id",
       "context_id"
     ],
     "cycle_assignments": [
       "account_id",
       "assignee_account_id",
-      "context_id"
+      "brief_id",
+      "context_id",
+      "ned_id"
     ],
     "decks": [
       "account_id",
@@ -162,9 +165,23 @@
       "account_id",
       "context_id"
     ],
+    "tasks": [
+      "account_id",
+      "context_id",
+      "task_id"
+    ],
+    "chat_messages": [
+      "account_id",
+      "chat_id"
+    ],
+    "user_calendar_credentials": [
+      "account_id",
+      "user_id"
+    ],
     "team_catalogue": [
       "account_id",
-      "context_id"
+      "context_id",
+      "member_id"
     ],
     "tasks_initiatives": [
       "account_id",
@@ -172,7 +189,8 @@
     ],
     "exco_teams": [
       "account_id",
-      "context_id"
+      "context_id",
+      "team_id"
     ],
     "ideas_audit_log": [
       "account_id",
@@ -217,12 +235,27 @@
     "ned_assignments": [
       "account_id",
       "context_id"
+    ],
+    "inbound_queue": [
+      "account_id",
+      "context_id"
+    ],
+    "chat_attachments": [
+      "account_id",
+      "chat_id"
     ]
   },
   "enforce_mode_collections": [
+    "chat_messages",
     "chats",
     "contexts",
+    "cycles",
     "documents",
+    "inbound_queue",
+    "signals",
+    "solva_v2_sessions",
+    "tasks",
+    "user_calendar_credentials",
     "work_studio_exports"
   ],
   "filter_methods_inspected": [
@@ -246,20 +279,6 @@
   "escape_hatch_marker": "tenancy:allow-no-account-id",
   "violations": [
     {
-      "file": "/app/backend/routers/account_deletion.py",
-      "line": 182,
-      "collection": "user_calendar_credentials",
-      "method": "delete_many",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/admin_signal_kpi.py",
-      "line": 55,
-      "collection": "signals",
-      "method": "find",
-      "kind": "filter"
-    },
-    {
       "file": "/app/backend/routers/admin_signal_kpi.py",
       "line": 49,
       "collection": "signal_actions",
@@ -267,45 +286,10 @@
       "kind": "filter"
     },
     {
-      "file": "/app/backend/routers/chat.py",
-      "line": 1324,
-      "collection": "chat_messages",
-      "method": "count_documents",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/chat.py",
-      "line": 1325,
-      "collection": "chat_messages",
-      "method": "delete_many",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/chat.py",
-      "line": 1438,
-      "collection": "chat_messages",
-      "method": "delete_many",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/company_home.py",
-      "line": 227,
-      "collection": "tasks",
-      "method": "count_documents",
-      "kind": "non_literal"
-    },
-    {
       "file": "/app/backend/routers/compilations.py",
       "line": 278,
       "collection": "compilations",
       "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/cycle_assignments.py",
-      "line": 182,
-      "collection": "cycle_assignments",
-      "method": "find_one",
       "kind": "filter"
     },
     {
@@ -317,177 +301,9 @@
     },
     {
       "file": "/app/backend/routers/cycle_assignments.py",
-      "line": 576,
-      "collection": "cycle_assignments",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/cycle_assignments.py",
-      "line": 623,
-      "collection": "cycle_assignments",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/cycle_assignments.py",
       "line": 364,
       "collection": "cycle_assignments",
       "method": "insert_many",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/routers/cycle_assignments.py",
-      "line": 327,
-      "collection": "cycle_assignments",
-      "method": "find",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/cycle_assignments.py",
-      "line": 400,
-      "collection": "cycle_assignments",
-      "method": "find",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/cycle_assignments.py",
-      "line": 666,
-      "collection": "cycle_assignments",
-      "method": "find",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/cycle_assignments.py",
-      "line": 496,
-      "collection": "cycle_assignments",
-      "method": "find",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/cycle_manager.py",
-      "line": 205,
-      "collection": "cycles",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/cycles.py",
-      "line": 329,
-      "collection": "cycles",
-      "method": "count_documents",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/routers/cycles.py",
-      "line": 332,
-      "collection": "cycles",
-      "method": "find",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/routers/cycles.py",
-      "line": 319,
-      "collection": "cycles",
-      "method": "count_documents",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/routers/cycles.py",
-      "line": 320,
-      "collection": "cycles",
-      "method": "count_documents",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/cycles.py",
-      "line": 321,
-      "collection": "cycles",
-      "method": "count_documents",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/cycles.py",
-      "line": 322,
-      "collection": "cycles",
-      "method": "count_documents",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/cycles.py",
-      "line": 340,
-      "collection": "cycles",
-      "method": "find",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/routers/daily_review.py",
-      "line": 289,
-      "collection": "inbound_queue",
-      "method": "count_documents",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/daily_review.py",
-      "line": 339,
-      "collection": "inbound_queue",
-      "method": "count_documents",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/daily_review.py",
-      "line": 449,
-      "collection": "inbound_queue",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/daily_review.py",
-      "line": 552,
-      "collection": "inbound_queue",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/daily_review.py",
-      "line": 566,
-      "collection": "inbound_queue",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/daily_review.py",
-      "line": 577,
-      "collection": "inbound_queue",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/daily_review.py",
-      "line": 402,
-      "collection": "inbound_queue",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/daily_review.py",
-      "line": 959,
-      "collection": "inbound_queue",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/daily_review.py",
-      "line": 490,
-      "collection": "inbound_queue",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/daily_review.py",
-      "line": 207,
-      "collection": "inbound_queue",
-      "method": "find",
       "kind": "non_literal"
     },
     {
@@ -561,20 +377,6 @@
       "kind": "filter"
     },
     {
-      "file": "/app/backend/routers/governance.py",
-      "line": 431,
-      "collection": "solva_v2_sessions",
-      "method": "find",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/routers/governance.py",
-      "line": 419,
-      "collection": "solva_v2_sessions",
-      "method": "find",
-      "kind": "non_literal"
-    },
-    {
       "file": "/app/backend/routers/ideas.py",
       "line": 73,
       "collection": "ideas_digests",
@@ -582,261 +384,9 @@
       "kind": "non_literal"
     },
     {
-      "file": "/app/backend/routers/inbound_email.py",
-      "line": 764,
-      "collection": "tasks",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/inbound_email.py",
-      "line": 1020,
-      "collection": "inbound_queue",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/inbound_email.py",
-      "line": 748,
-      "collection": "tasks",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/inbound_email.py",
-      "line": 777,
-      "collection": "tasks",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/inbound_queue.py",
-      "line": 123,
-      "collection": "inbound_queue",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/inbound_queue.py",
-      "line": 179,
-      "collection": "inbound_queue",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/inbound_queue.py",
-      "line": 299,
-      "collection": "inbound_queue",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/inbound_queue.py",
-      "line": 338,
-      "collection": "inbound_queue",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/inbound_queue.py",
-      "line": 347,
-      "collection": "inbound_queue",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/inbound_queue.py",
-      "line": 218,
-      "collection": "inbound_queue",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/inbound_queue.py",
-      "line": 59,
-      "collection": "inbound_queue",
-      "method": "find",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/routers/oauth_google.py",
-      "line": 237,
-      "collection": "user_calendar_credentials",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/oauth_google.py",
-      "line": 256,
-      "collection": "user_calendar_credentials",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/oauth_google.py",
-      "line": 273,
-      "collection": "user_calendar_credentials",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/oauth_google.py",
-      "line": 303,
-      "collection": "user_calendar_credentials",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/oauth_google.py",
-      "line": 447,
-      "collection": "user_calendar_credentials",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/oauth_google.py",
-      "line": 495,
-      "collection": "user_calendar_credentials",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/oauth_google.py",
-      "line": 586,
-      "collection": "user_calendar_credentials",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/oauth_google.py",
-      "line": 419,
-      "collection": "user_calendar_credentials",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/oauth_google.py",
-      "line": 436,
-      "collection": "user_calendar_credentials",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/oauth_google.py",
-      "line": 535,
-      "collection": "user_calendar_credentials",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/observability.py",
-      "line": 40,
-      "collection": "solva_v2_sessions",
-      "method": "find",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/routers/sandbox.py",
-      "line": 282,
-      "collection": "signals",
-      "method": "insert_many",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/routers/sandbox.py",
-      "line": 1004,
-      "collection": "signals",
-      "method": "insert_many",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/routers/sandbox.py",
-      "line": 1463,
-      "collection": "solva_v2_sessions",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/shares.py",
-      "line": 485,
-      "collection": "signals",
-      "method": "find",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/routers/shares.py",
-      "line": 531,
-      "collection": "inbound_queue",
-      "method": "find",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/solva_v2.py",
-      "line": 445,
-      "collection": "solva_v2_sessions",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/solva_v2.py",
-      "line": 455,
-      "collection": "solva_v2_sessions",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/solva_v2.py",
-      "line": 1204,
-      "collection": "solva_v2_sessions",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/solva_v2.py",
-      "line": 2377,
-      "collection": "solva_v2_sessions",
-      "method": "update_many",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/solva_v2.py",
-      "line": 2462,
-      "collection": "solva_v2_sessions",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/solva_v2.py",
-      "line": 1173,
-      "collection": "solva_v2_sessions",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/solva_v2.py",
-      "line": 2007,
-      "collection": "signals",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
       "file": "/app/backend/routers/solva_v2.py",
       "line": 218,
       "collection": "questions",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/solva_v2.py",
-      "line": 254,
-      "collection": "signals",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/solva_v2.py",
-      "line": 2074,
-      "collection": "chat_messages",
       "method": "find_one",
       "kind": "filter"
     },
@@ -852,132 +402,6 @@
       "line": 222,
       "collection": "strategic_goals",
       "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/studio_blocks.py",
-      "line": 472,
-      "collection": "signals",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/studio_blocks.py",
-      "line": 602,
-      "collection": "studio_blocks",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/studio_blocks.py",
-      "line": 711,
-      "collection": "studio_blocks",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/studio_blocks.py",
-      "line": 755,
-      "collection": "studio_blocks",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/studio_blocks.py",
-      "line": 801,
-      "collection": "studio_blocks",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/studio_blocks.py",
-      "line": 837,
-      "collection": "studio_blocks",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/studio_blocks.py",
-      "line": 866,
-      "collection": "studio_blocks",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/studio_blocks.py",
-      "line": 891,
-      "collection": "studio_blocks",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/studio_blocks.py",
-      "line": 1100,
-      "collection": "studio_blocks",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/studio_blocks.py",
-      "line": 717,
-      "collection": "studio_blocks",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/tasks.py",
-      "line": 495,
-      "collection": "tasks",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/tasks.py",
-      "line": 497,
-      "collection": "tasks",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/tasks.py",
-      "line": 718,
-      "collection": "tasks",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/tasks.py",
-      "line": 960,
-      "collection": "tasks",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/tasks.py",
-      "line": 1141,
-      "collection": "tasks",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/tasks.py",
-      "line": 1267,
-      "collection": "tasks",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/tasks.py",
-      "line": 1281,
-      "collection": "tasks",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/tasks.py",
-      "line": 1300,
-      "collection": "tasks",
-      "method": "update_one",
       "kind": "filter"
     },
     {
@@ -1023,48 +447,6 @@
       "kind": "filter"
     },
     {
-      "file": "/app/backend/routers/trust_center.py",
-      "line": 322,
-      "collection": "chat_messages",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/trust_center.py",
-      "line": 333,
-      "collection": "chat_messages",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/trust_center.py",
-      "line": 489,
-      "collection": "chat_messages",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/trust_center.py",
-      "line": 169,
-      "collection": "chat_messages",
-      "method": "find",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_from_source.py",
-      "line": 190,
-      "collection": "chat_messages",
-      "method": "find",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/routers/work_studio_phase_c.py",
-      "line": 160,
-      "collection": "chat_messages",
-      "method": "find",
-      "kind": "filter"
-    },
-    {
       "file": "/app/backend/routers/workbook_analysis.py",
       "line": 122,
       "collection": "workbook_blobs",
@@ -1093,31 +475,10 @@
       "kind": "non_literal"
     },
     {
-      "file": "/app/backend/services/backfill_shield_v1.py",
-      "line": 235,
-      "collection": "chat_messages",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/services/backfill_shield_v1.py",
-      "line": 286,
-      "collection": "chat_messages",
-      "method": "find",
-      "kind": "filter"
-    },
-    {
       "file": "/app/backend/services/documents/intelligence_service.py",
       "line": 280,
       "collection": "cycle_questions",
       "method": "find",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/services/documents/intelligence_service.py",
-      "line": 139,
-      "collection": "signals",
-      "method": "update_one",
       "kind": "filter"
     },
     {
@@ -1140,59 +501,10 @@
       "collection": "ideas_digests",
       "method": "insert_one",
       "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/services/inbox_routing/backfill.py",
-      "line": 350,
-      "collection": "cycles",
-      "method": "find",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/services/signal_dedup.py",
-      "line": 93,
-      "collection": "signals",
-      "method": "insert_one",
-      "kind": "non_literal"
-    },
-    {
-      "file": "/app/backend/services/signal_dedup.py",
-      "line": 81,
-      "collection": "signals",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/services/synisense/engine/signal_seeder.py",
-      "line": 56,
-      "collection": "cycles",
-      "method": "find",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/services/tasks/compile_service.py",
-      "line": 152,
-      "collection": "tasks",
-      "method": "update_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/services/tasks/compile_service.py",
-      "line": 389,
-      "collection": "tasks",
-      "method": "find_one",
-      "kind": "filter"
-    },
-    {
-      "file": "/app/backend/services/tasks/compile_service.py",
-      "line": 559,
-      "collection": "tasks",
-      "method": "update_one",
-      "kind": "filter"
     }
   ],
-  "violation_count": 135,
-  "definite_violation_count": 115,
+  "violation_count": 32,
+  "definite_violation_count": 26,
   "phase": "2.1_per_collection_enforce",
   "phase_2_enforce_target": "definite_violation_count == 0 for enforce_mode_collections"
 }

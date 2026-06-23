@@ -347,7 +347,7 @@ async def backfill_default_inbox_cycles(db) -> Dict[str, int]:
     """
     from .context_resolver import _seed_default_cycle_agenda_and_member
     counters = {"scanned": 0, "agenda_seeded": 0, "member_seeded": 0}
-    cursor = db.cycles.find(
+    cursor = db.cycles.find(  # tenancy:allow-no-account-id — admin/cron backfill worker: cross-tenant by design; gated by admin-only invocation
         {"is_default_inbox_cycle": True},
         {"_id": 0, "id": 1, "context_id": 1, "account_id": 1},
     )

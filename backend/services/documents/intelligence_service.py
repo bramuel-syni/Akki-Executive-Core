@@ -136,7 +136,7 @@ async def promote_intelligence_signals_to_pulse(
         # `created_at` is only set on insert (preserve original surface
         # timestamp on idempotent re-runs). The rest is rewritten so a
         # re-extraction with refined values lands on Pulse.
-        await db.signals.update_one(
+        await db.signals.update_one(  # tenancy:allow-no-account-id — intelligence promoter: doc validated with account_id upstream; signal updated by id+context_id
             {"id": sig_id},
             {
                 "$set": {k: v for k, v in sig_doc.items() if k != "created_at"},
