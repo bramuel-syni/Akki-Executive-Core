@@ -68,6 +68,12 @@ _ALLOWLIST_PREFIXES = (
     # by SendGrid's signed-event-webhook ECDSA signature when the
     # `SENDGRID_WEBHOOK_PUBLIC_KEY` env is set.
     "/api/cohort/email-events/sendgrid",
+    # Phase 4.2 (2026-06) — internal HTTP transport for cross-context
+    # contracts. The endpoint enforces its own auth via the
+    # `INTERNAL_TRANSPORT_SECRET` shared-secret header
+    # (`X-Internal-Auth`); CSRF would block in-process httpx calls
+    # from `_http_client.py` because they don't carry a CSRF token.
+    "/api/internal/v1/",
 )
 
 

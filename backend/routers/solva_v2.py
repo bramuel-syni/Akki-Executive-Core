@@ -41,6 +41,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from core import db, get_current_account, iso, now
+from contracts import get_akki, get_synisense  # Phase 4.2 — route Akki + SyniSense reads through contracts.
 from services.solva_v2 import (
     GROUNDING_CONTRACT_PROMPT,
     parse,
@@ -202,13 +203,13 @@ async def _resolve_intake_seed(
     title: str = ""
 
     if kind == "document":
-        q: Dict[str, Any] = {"id": sid}
-        if context_id:
-            q["context_id"] = context_id
-        doc = await db.documents.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
-            q, {"_id": 0, "name": 1, "original_filename": 1, "preview": 1,
-                "sensitivity_band": 1, "extracted_text": 1},
+        doc_obj = await get_akki().get_document(
+            account_id=account_id,
+            document_id=sid,
+            context_id=context_id if context_id else None,
+            untenanted=not bool(context_id),
         )
+        doc = doc_obj.raw if doc_obj else None
         if not doc:
             return None
         title = doc.get("name") or doc.get("original_filename") or "Attached document"
@@ -251,9 +252,12 @@ async def _resolve_intake_seed(
         summary = body[:600]
 
     elif kind == "pulse_signal":
-        sig = await db.signals.find_one(  # tenancy:allow-no-account-id — session pre-validated by upstream find_one with account_id; signal fetched by row id  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
-            {"id": sid}, {"_id": 0, "title": 1, "summary": 1, "context_id": 1},
+        sig_obj = await get_synisense().get_signal(
+            account_id=account_id,
+            signal_id=sid,
+            untenanted=True,
         )
+        sig = sig_obj.raw if sig_obj else None
         if not sig:
             return None
         if context_id and sig.get("context_id") and sig["context_id"] != context_id:
@@ -412,10 +416,8 @@ async def _is_pro(account: Dict[str, Any]) -> bool:
     aid = account.get("id") if isinstance(account, dict) else None
     if not aid:
         return False
-    fresh = await db.accounts.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
-        {"id": aid},
-        {"_id": 0, "plan": 1, "solve_pro": 1, "subscription_status": 1},
-    )
+    fresh_obj = await get_akki().get_tenant_profile(account_id=aid)
+    fresh = fresh_obj.raw if fresh_obj else None
     src = fresh or account
     plan = (src.get("plan") or "free").lower()
     sub = (src.get("subscription_status") or "").lower()
@@ -597,9 +599,12 @@ async def _run_grounding(
     ctx_id = session.get("context_id")
     if ctx_id:
         # tenancy:allow-no-account-id — `_run_grounding` worker closure; `context_id` is a closure capture from the upstream-gated session-creation handler.
-        ctx_doc = await db.contexts.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
-            {"id": ctx_id}, {"_id": 0, "sector": 1, "industry": 1}
+        _aid = (session.get("account_id") or "")
+        ctx_obj = await get_akki().get_context(
+            account_id=_aid,
+            context_id=ctx_id,
         )
+        ctx_doc = ctx_obj.raw if ctx_obj else None
         if ctx_doc:
             sector_tag = (ctx_doc.get("sector") or ctx_doc.get("industry") or "").lower() or None
 
@@ -1497,9 +1502,10 @@ async def list_sessions(
     Wave 3.3 (UAT pack) — `q` substring filter against `intent`
     (case-insensitive) is preserved.
     """
-    membership = await db.memberships.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
-        {"context_id": context_id, "account_id": account["id"], "status": "active"},
-        {"_id": 0},
+    membership = await get_akki().get_membership(
+        account_id=account["id"],
+        context_id=context_id,
+        status="active",
     )
     if not membership:
         raise HTTPException(status_code=403, detail="Not a member of this context")
@@ -1654,11 +1660,12 @@ async def attach_session_document(
     if not context_id:
         raise HTTPException(status_code=400, detail="Session is not bound to a context.")
 
-    doc = await db.documents.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
-        {"id": body.document_id, "context_id": context_id},
-        {"_id": 0, "id": 1, "name": 1, "original_filename": 1, "preview": 1,
-         "extracted_text": 1, "sensitivity_band": 1},
+    doc_obj = await get_akki().get_document(
+        account_id=account["id"],
+        document_id=body.document_id,
+        context_id=context_id,
     )
+    doc = doc_obj.raw if doc_obj else None
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found in this context.")
 
@@ -2004,13 +2011,19 @@ async def fetch_take_to_solva_seed(
     citation_label = ""
 
     if kind == "signal":
-        sig = await db.signals.find_one({"id": sid_in}, {"_id": 0})  # tenancy:allow-no-account-id — session pre-validated by upstream find_one with account_id; signal fetched by row id  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
+        sig_obj = await get_synisense().get_signal(
+            account_id=aid,
+            signal_id=sid_in,
+            untenanted=True,
+        )
+        sig = sig_obj.raw if sig_obj else None
         if not sig:
             raise HTTPException(status_code=404, detail="signal not found")
         # account-scoped read: signal must be in a context the user has membership in
-        m = await db.memberships.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
-            {"account_id": aid, "context_id": sig.get("context_id"), "status": "active"},
-            {"_id": 0, "role": 1},
+        m = await get_akki().get_membership(
+            account_id=aid,
+            context_id=sig.get("context_id"),
+            status="active",
         )
         if not m:
             raise HTTPException(status_code=403, detail="not your context")
@@ -2018,12 +2031,18 @@ async def fetch_take_to_solva_seed(
         citation_label = sig.get("headline") or "Pulse signal"
 
     elif kind == "document":
-        doc = await db.documents.find_one({"id": sid_in}, {"_id": 0})  # tenancy:allow-no-account-id — Solva v2 evidence-card resolver; `sid_in` is a UUID from the session-gated input; session itself is account-scoped.  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
+        doc_obj = await get_akki().get_document(
+            account_id=aid,
+            document_id=sid_in,
+            untenanted=True,
+        )
+        doc = doc_obj.raw if doc_obj else None
         if not doc:
             raise HTTPException(status_code=404, detail="document not found")
-        m = await db.memberships.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
-            {"account_id": aid, "context_id": doc.get("context_id"), "status": "active"},
-            {"_id": 0, "role": 1},
+        m = await get_akki().get_membership(
+            account_id=aid,
+            context_id=doc.get("context_id"),
+            status="active",
         )
         if not m:
             raise HTTPException(status_code=403, detail="not your context")
@@ -2071,7 +2090,11 @@ async def fetch_take_to_solva_seed(
         citation_label = (s.get("framing") or "Solva session")[:80] + "…"
 
     elif kind == "chat_message":
-        msg = await db.chat_messages.find_one({"id": sid_in}, {"_id": 0})  # tenancy:allow-no-account-id — session pre-validated by upstream find_one with account_id; chat_message fetched by row id  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
+        msg_obj = await get_akki().get_chat_message(
+            account_id=aid,
+            message_id=sid_in,
+        )
+        msg = msg_obj.raw if msg_obj else None
         if not msg:
             raise HTTPException(status_code=404, detail="chat message not found")
         if msg.get("account_id") != aid:
@@ -2099,16 +2122,18 @@ async def fetch_take_to_solva_seed(
         # cycle_questions rows carry `context_id`; the caller must
         # be a member of that context. Citation_label format:
         #   "Question · {first 60 chars of text}…"
-        rec = await db.cycle_questions.find_one(  # tenancy:allow-no-account-id — Use-in-Solva handler: question fetched by id THEN explicit membership verified against rec.context_id at L2108-2114  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
-            {"id": sid_in}, {"_id": 0},
+        rec_obj = await get_akki().get_cycle_question(
+            account_id=aid,
+            question_id=sid_in,
         )
+        rec = rec_obj.raw if rec_obj else None
         if not rec:
             raise HTTPException(status_code=404, detail="question not found")
         # Membership check — caller must be on the question's context.
-        m = await db.memberships.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
-            {"context_id": rec.get("context_id"), "account_id": aid,
-              "status": "active"},
-            {"_id": 0},
+        m = await get_akki().get_membership(
+            account_id=aid,
+            context_id=rec.get("context_id"),
+            status="active",
         )
         if not m:
             raise HTTPException(status_code=404, detail="question not found")

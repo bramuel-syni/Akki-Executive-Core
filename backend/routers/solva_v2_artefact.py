@@ -27,6 +27,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from server import db  # type: ignore
 from routers.auth import get_current_account  # type: ignore
+from contracts import get_akki  # Phase 4.2 — route Akki collection reads through the contract.
 from services.solva_v2.feature_flag import solva_v2_enabled_for
 from services.solva_v2.payload_builder import build_payload
 from services.solva_v2.integrity_validators import validate_artefact
@@ -76,7 +77,8 @@ async def get_v2_artefact_payload(
     cid = rec.get("context_id")
     if cid:
         # tenancy:allow-no-account-id — Solva v2 evidence-card payload; `cid` came from a Solva session that was account-gated upstream.
-        ctx = await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
+        _ctx_obj = await get_akki().get_context(account_id=account["id"], context_id=cid)
+        ctx = _ctx_obj.raw if _ctx_obj else None
         if ctx and ctx.get("name"):
             context_name = ctx["name"]
 
@@ -202,7 +204,8 @@ async def stream_v2_reasoning(
     cid = rec.get("context_id")
     if cid:
         # tenancy:allow-no-account-id — Solva v2 reasoning stream; same session-gated `cid` as L78.
-        ctx = await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
+        _ctx_obj = await get_akki().get_context(account_id=account["id"], context_id=cid)
+        ctx = _ctx_obj.raw if _ctx_obj else None
         if ctx and ctx.get("name"):
             context_name = ctx["name"]
 
@@ -299,7 +302,8 @@ async def export_v2_pptx(
     cid = rec.get("context_id")
     if cid:
         # tenancy:allow-no-account-id — Solva v2 PPTX export; session-gated `cid`.
-        ctx = await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
+        _ctx_obj = await get_akki().get_context(account_id=account["id"], context_id=cid)
+        ctx = _ctx_obj.raw if _ctx_obj else None
         if ctx and ctx.get("name"):
             context_name = ctx["name"]
 
@@ -394,7 +398,8 @@ async def get_v2_chair_notes(
         raise HTTPException(status_code=404, detail="Session not found.")
     cid = rec.get("context_id")
     # tenancy:allow-no-account-id — Solva v2 chair notes; session-gated `cid`, optional (cid may be None for unattached sessions).
-    ctx = (await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})) if cid else None  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
+    _ctx_obj = (await get_akki().get_context(account_id=account["id"], context_id=cid)) if cid else None
+    ctx = _ctx_obj.raw if _ctx_obj else None
     payload = build_payload(rec, context_name=(ctx or {}).get("name") or "Context")
     return {"notes": chair_notes_dict(payload)}
 

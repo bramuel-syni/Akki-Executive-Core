@@ -28,6 +28,7 @@ from core import (
     gather_context_object, gather_documents_for_grounding,
     docs_as_grounding_block, docs_overall_trust,
 )
+from contracts import get_akki  # Phase 4.2 — route Akki document counts through the contract.
 from services.job_queue import (
     create_job as _create_job, mark_running as _mark_running,
     mark_completed as _mark_completed, mark_failed as _mark_failed,
@@ -75,8 +76,10 @@ async def generate_signals(
     # Cheap pre-flight check — we want to surface "no documents"
     # synchronously so the user sees the error immediately instead of
     # after a polling round-trip.
-    docs_count = await db.documents.count_documents(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
-        {"context_id": context_id, "status": "extracted"},
+    docs_count = await get_akki().count_documents(
+        account_id=ctx["account"]["id"],
+        context_id=context_id,
+        status="extracted",
     )
     if docs_count == 0:
         raise HTTPException(
@@ -280,7 +283,7 @@ async def list_signals(
     q: Dict[str, Any] = {"context_id": ctx["context"]["id"], "status": "active"}
     if committee_id:
         q["committee_id"] = committee_id
-    sigs = await db.signals.find(q, {"_id": 0}).sort("created_at", -1).to_list(min(limit, 500))  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
+    sigs = await db.signals.find(q, {"_id": 0}).sort("created_at", -1).to_list(min(limit, 500))  # boundary:allow-direct-call (Phase 4.2 deviation #1 — signals stays Akki-owned in scanner; SyniSense self-read kept as escape hatch; Phase 4.3 HTTP transport will route through `SyniSenseContract.list_signals`)
     # Backfill `references[]` for legacy signals that pre-date Reading Viewer
     # Phase 1. Stored `sources[]` is the source of truth; references is a
     # view over it. No mutation — read-time projection only.
@@ -295,7 +298,7 @@ async def dismiss_signal(
     context_id: str, signal_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
 ):
-    await db.signals.update_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
+    await db.signals.update_one(  # boundary:allow-direct-call (Phase 4.2 deviation #1 — signals stays Akki-owned in scanner; SyniSense self-write kept as escape hatch; Phase 4.3 HTTP transport will route through `SyniSenseContract.update_signal`)
         {"id": signal_id, "context_id": context_id},
         {"$set": {"status": "dismissed", "dismissed_at": iso(now())}},
     )

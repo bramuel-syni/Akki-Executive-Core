@@ -1,10 +1,10 @@
 {
-  "scan_timestamp": "2026-06-23T12:44:00.847871+00:00",
+  "scan_timestamp": "2026-06-23T15:15:44.115350+00:00",
   "scan_roots": [
     "/app/backend/services",
     "/app/backend/routers"
   ],
-  "files_scanned": 311,
+  "files_scanned": 312,
   "tenant_scoped_collections": [
     "analyses",
     "analysis_blobs",

@@ -35,6 +35,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from core import db, get_current_account, require_context_membership
+from contracts import get_akki  # Phase 4.2 — route Akki collection reads through the contract.
 from routers.chat_audit_panel import (
     _friendly_purpose,
     _friendly_model_name,
@@ -398,10 +399,11 @@ async def chat_privacy_report_pdf(
     receipts` row WITHOUT excluding `signature` / `payload_hash` —
     those are the fields a tenant uses to self-verify the HMAC chain.
     """
-    chat = await db.chats.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
-        {"id": chat_id, "account_id": account["id"]},
-        {"_id": 0},
+    _chat_obj = await get_akki().get_chat(
+        account_id=account["id"],
+        chat_id=chat_id,
     )
+    chat = _chat_obj.raw if _chat_obj else None
     if not chat:
         raise HTTPException(status_code=404, detail="Chat not found.")
     audit_ids = chat.get("synisense_audit_ids") or []

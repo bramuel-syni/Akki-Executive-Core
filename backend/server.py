@@ -197,9 +197,9 @@ app = FastAPI(
 # `/api/chats/{chat_id}/privacy-report.pdf`) and do not shadow Akki
 # chat routes.
 # -----------------------------------------------------------------------------
-from synisense_app import ROUTERS as _SYNISENSE_ROUTERS  # noqa: E402
-from solva_app import ROUTERS as _SOLVA_ROUTERS  # noqa: E402
-from akki_app import ROUTERS as _AKKI_ROUTERS  # noqa: E402
+from synisense_app import ROUTERS as _SYNISENSE_ROUTERS, INTERNAL_ROUTER as _SYNI_INTERNAL  # noqa: E402
+from solva_app import ROUTERS as _SOLVA_ROUTERS, INTERNAL_ROUTER as _SOLVA_INTERNAL  # noqa: E402
+from akki_app import ROUTERS as _AKKI_ROUTERS, INTERNAL_ROUTER as _AKKI_INTERNAL  # noqa: E402
 
 for _r in _SYNISENSE_ROUTERS:
     app.include_router(_r)
@@ -207,6 +207,13 @@ for _r in _SOLVA_ROUTERS:
     app.include_router(_r)
 for _r in _AKKI_ROUTERS:
     app.include_router(_r)
+
+# Phase 4.2 — internal HTTP transport endpoints
+# (`/api/internal/v1/{context}/method/<name>`). Excluded from public
+# OpenAPI via `include_in_schema=False` set on the router and routes.
+app.include_router(_SYNI_INTERNAL)
+app.include_router(_SOLVA_INTERNAL)
+app.include_router(_AKKI_INTERNAL)
 
 
 # -----------------------------------------------------------------------------

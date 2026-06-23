@@ -175,6 +175,23 @@ class Briefing:
 
 
 @dataclass(frozen=True)
+class Chat:
+    """A chat session row (`chats` collection).
+
+    Phase 4.2 widening — surfaces Trust Center + admin Shield back-fill +
+    Solva Phase-E polish reads through the contract instead of via direct
+    collection access.
+    """
+    chat_id: str
+    account_id: Optional[str]
+    context_id: Optional[str]
+    title: Optional[str]
+    status: Optional[str]
+    created_at: str
+    raw: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class TenantEntity:
     """A per-tenant proper-noun entry harvested for the de-id pipeline."""
     kind: str
@@ -263,12 +280,14 @@ __all__ = [
     "TenantProfile",
     "Context",
     "Cycle",
+    "Chat",
     "ChatMessage",
     "Document",
     "Signal",
     "Objective",
     "CycleQuestion",
     "Briefing",
+    "Membership",
     "TenantEntity",
     "SynthesisResult",
     "PhaseResult",

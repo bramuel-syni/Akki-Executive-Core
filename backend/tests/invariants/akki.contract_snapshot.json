@@ -1,6 +1,6 @@
 {
   "class": "AkkiContract",
-  "method_count": 12,
+  "method_count": 32,
   "methods": {
     "audit_event": {
       "parameters": [
@@ -25,6 +25,290 @@
       ],
       "return": "None"
     },
+    "count_briefings": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "status",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "updated_since_iso",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        }
+      ],
+      "return": "int"
+    },
+    "count_chat_messages": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "role",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "since_iso",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        }
+      ],
+      "return": "int"
+    },
+    "count_chats": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "admin_cross_tenant",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "bool",
+          "has_default": true
+        },
+        {
+          "name": "shield_audit_pending",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "bool",
+          "has_default": true
+        }
+      ],
+      "return": "int"
+    },
+    "count_cycle_questions": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_ids",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "status",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "status_in",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "overdue_iso",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        }
+      ],
+      "return": "int"
+    },
+    "count_cycles": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_ids",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "status",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "status_in",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        }
+      ],
+      "return": "int"
+    },
+    "count_documents": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "status",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "since_iso",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        }
+      ],
+      "return": "int"
+    },
+    "count_objectives": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_ids",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "rag_status",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        }
+      ],
+      "return": "int"
+    },
+    "find_assistant_reply_after": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "chat_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "after_iso",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "inclusive",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "bool",
+          "has_default": true
+        },
+        {
+          "name": "exclude_message_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        }
+      ],
+      "return": "Optional[ChatMessage]"
+    },
+    "find_chats": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_ids",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "ids",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "status_excludes",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "untenanted",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "bool",
+          "has_default": true
+        },
+        {
+          "name": "limit",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "int",
+          "has_default": true
+        }
+      ],
+      "return": "List[Chat]"
+    },
+    "get_chat": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "chat_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "untenanted",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "bool",
+          "has_default": true
+        }
+      ],
+      "return": "Optional[Chat]"
+    },
     "get_chat_history": {
       "parameters": [
         {
@@ -48,6 +332,161 @@
       ],
       "return": "List[ChatMessage]"
     },
+    "get_chat_message": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "chat_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "message_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "role",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        }
+      ],
+      "return": "Optional[ChatMessage]"
+    },
+    "get_context": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "Optional[Context]"
+    },
+    "get_context_by_owner": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "Optional[Context]"
+    },
+    "get_cycle": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "cycle_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        }
+      ],
+      "return": "Optional[Cycle]"
+    },
+    "get_cycle_question": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "question_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "Optional[CycleQuestion]"
+    },
+    "get_document": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "document_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "untenanted",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "bool",
+          "has_default": true
+        }
+      ],
+      "return": "Optional[Document]"
+    },
+    "get_membership": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "status",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": true
+        }
+      ],
+      "return": "Optional[Membership]"
+    },
     "get_tenant_profile": {
       "parameters": [
         {
@@ -58,6 +497,23 @@
         }
       ],
       "return": "TenantProfile"
+    },
+    "insert_document_row": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "document_row",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Dict[str, Any]",
+          "has_default": false
+        }
+      ],
+      "return": "str"
     },
     "list_briefings": {
       "parameters": [
@@ -75,6 +531,23 @@
         }
       ],
       "return": "List[Briefing]"
+    },
+    "list_chat_messages_in_chat": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "chat_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        }
+      ],
+      "return": "List[ChatMessage]"
     },
     "list_contexts": {
       "parameters": [
@@ -116,6 +589,47 @@
           "name": "context_id",
           "kind": "KEYWORD_ONLY",
           "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "context_ids",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "committee_label_regex",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "limit",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "int",
+          "has_default": true
+        }
+      ],
+      "return": "List[Cycle]"
+    },
+    "list_cycles_by_statuses": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "statuses",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "List[str]",
+          "has_default": false
+        },
+        {
+          "name": "limit",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "int",
           "has_default": true
         }
       ],

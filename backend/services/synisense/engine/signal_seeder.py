@@ -24,6 +24,8 @@ from typing import Any, Dict, List, Optional
 
 from core import db
 
+from contracts import get_akki  # Phase 4.2 — route Akki collection reads through the contract.
+
 log = logging.getLogger("synisense.engine.signal_seeder")
 
 SIGNAL_COLLECTION = "synisense_signals"
@@ -53,20 +55,21 @@ async def seed_for_tenant(tenant_id: str) -> Dict[str, int]:
     counts: Dict[str, int] = {}
 
     # ── anomaly_flag ── from cycles where status looks unhealthy.
-    cycles_cursor = db.cycles.find(  # tenancy:allow-no-account-id — internal seeder invoked from context-gated entry point; cycle fetched by row id    # boundary:allow-direct-call (Phase 4.2 will route through list_cycles + status filter)
-        {"$or": [{"status": "completed"}, {"status": "draft"}, {"status": "active"}]},
-        {"_id": 0, "id": 1, "context_id": 1, "title": 1, "status": 1,
-         "created_at": 1, "owner_account_id": 1},
-    ).limit(20)
-    async for cy in cycles_cursor:
+    seeder_cycles = await get_akki().list_cycles_by_statuses(
+        account_id=tenant_id,
+        statuses=["completed", "draft", "active"],
+        limit=20,
+    )
+    for _c in seeder_cycles:
+        cy = _c.raw
         # Only seed for cycles whose owner is this tenant. Skip stray rows.
         if cy.get("owner_account_id") != tenant_id:
             # Fallback: cycles in contexts this tenant owns.
             ctx_id = cy.get("context_id")
             if ctx_id:
-                ctx = await db.contexts.find_one(  # boundary:allow-direct-call (Phase 4.2 will route through list_contexts + filter)
-                    {"id": ctx_id, "owner_account_id": tenant_id},
-                    {"_id": 0},
+                ctx = await get_akki().get_context_by_owner(
+                    account_id=tenant_id,
+                    context_id=ctx_id,
                 )
                 if not ctx:
                     continue

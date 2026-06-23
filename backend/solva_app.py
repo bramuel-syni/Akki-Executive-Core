@@ -44,6 +44,7 @@ from routers import solva_telemetry_admin as _solva_telemetry_admin
 from routers import solva_v2 as _solva_v2
 from routers import solva_v2_artefact as _solva_v2_artefact
 from routers import workbook_analysis as _workbook_analysis
+from routers._internal_transport import make_internal_router  # Phase 4.2 internal HTTP transport.
 
 
 # Ordered list of routers this app owns. The master `server.py`
@@ -64,6 +65,20 @@ ROUTERS = [
 ]
 
 
+# Phase 4.2 internal HTTP transport — every Solva contract method is
+# reachable at `POST /api/internal/v1/solva/method/<name>` when
+# `BOUNDED_CONTEXT_TRANSPORT=http`. Excluded from public OpenAPI.
+def _solva_internal_adapter():
+    from contracts._adapters.solva import InProcessSolvaAdapter
+    return InProcessSolvaAdapter()
+
+
+INTERNAL_ROUTER = make_internal_router(
+    context_name="solva",
+    adapter_factory=_solva_internal_adapter,
+)
+
+
 # Phase 4.3 / 4.4 will give this app its own lifespan + per-process
 # scheduler. For Phase 4.1 we ship a slim FastAPI that exists
 # primarily to declare the ownership contract.
@@ -82,6 +97,7 @@ app = FastAPI(
 )
 for _r in ROUTERS:
     app.include_router(_r)
+app.include_router(INTERNAL_ROUTER)
 
 
-__all__ = ["app", "ROUTERS"]
+__all__ = ["app", "ROUTERS", "INTERNAL_ROUTER"]

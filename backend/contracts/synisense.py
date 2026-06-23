@@ -16,6 +16,7 @@ from .types import (
     AuditEvent,
     ShieldMetrics,
     ShieldResult,
+    Signal,
     TrustReceipt,
 )
 
@@ -73,6 +74,18 @@ class SyniSenseContract(Protocol):
         account_id: str,
     ) -> None:
         """Push-invalidate / reload the tenant-entity catalogue cache (vs. TTL-only)."""
+        ...
+
+    # ─────────── Phase 4.2 widening — signals are SyniSense-owned ─────
+
+    async def get_signal(
+        self,
+        *,
+        account_id: str,
+        signal_id: str,
+        untenanted: bool = False,
+    ) -> Optional[Signal]:
+        """Single-signal lookup. `untenanted=True` allowed for session-gated reads (Solva v2 Use-in-Solva resolver — caller validates via membership upstream). Replaces Solva v2 direct signals reads."""
         ...
 
 

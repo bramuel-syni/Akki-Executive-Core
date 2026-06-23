@@ -77,6 +77,23 @@ AKKI_OWNED_COLLECTIONS: FrozenSet[str] = frozenset({
     "objectives",
 })
 
+# Phase 4.2 reclassification kept as-is (signals remains Akki-owned).
+# The original Phase 4.2 design proposed reclassifying signals as
+# SyniSense-owned (matches the conceptual ownership: signals are
+# derived by `services/synisense/engine/signal_derivation.py`). But
+# scanning the codebase under that classification surfaces 45
+# net-new akki→signals call sites in Akki routers (briefings, chat,
+# pulse, comments, lens, decks, etc.) that have no equivalent
+# typed contract methods on `SyniSenseContract`. Adding count /
+# find / aggregate / update methods to mirror those reads would
+# expand the SyniSense contract surface to ~45 methods and
+# effectively re-introduce a find() passthrough — which the Phase
+# 4.2 dispatch explicitly forbade. Cleaner reversibility: keep
+# signals Akki-owned (legacy invariant view); 5 SyniSense self-
+# reads of signals are recorded as carry-forward escape hatches
+# (see sprint memo §3 Deviation #1).
+SYNISENSE_OWNED_COLLECTIONS: FrozenSet[str] = frozenset()
+
 # File path → owning context.
 SYNISENSE_ROUTER_PREFIXES: Tuple[str, ...] = (
     "synisense_", "healthz_shield", "trust_", "signal_", "signals_",
@@ -314,11 +331,25 @@ def compute_cross_context_violations() -> List[Dict[str, Any]]:
                     })
                     continue
             # Direct db.<X>.<method>(...) calls into Akki-owned collections
-            # from non-Akki packages.
+            # from non-Akki packages OR SyniSense-owned collections from
+            # non-SyniSense packages.
             db_call = _detect_db_calls(node)
             if db_call is None:
                 continue
             coll, method = db_call
+            # Phase 4.2 — split ownership: signals reads from synisense
+            # files are SAME-context.
+            if coll in SYNISENSE_OWNED_COLLECTIONS:
+                if my_ctx != "synisense" and my_ctx != "contracts":
+                    out.append({
+                        "file":       str(fp),
+                        "line":       node.lineno,
+                        "kind":       "db_read_from_other_context",
+                        "name":       f"db.{coll}.{method}",
+                        "owner":      "synisense",
+                        "caller_ctx": my_ctx,
+                    })
+                continue
             if coll not in AKKI_OWNED_COLLECTIONS:
                 continue
             if my_ctx in ("synisense", "solva"):
@@ -347,11 +378,12 @@ def test_cross_context_calls_scanner_writes_report() -> None:
         "scan_roots":                 list(SCAN_ROOTS),
         "primitives_inspected":       sorted(CROSS_CONTEXT_PRIMITIVES.keys()),
         "akki_owned_collections":     sorted(AKKI_OWNED_COLLECTIONS),
+        "synisense_owned_collections": sorted(SYNISENSE_OWNED_COLLECTIONS),
         "escape_hatch_marker":        ESCAPE_HATCH_MARKER,
         "violations":                 violations,
         "violation_count":            len(violations),
-        "phase":                      "4_0_enforce_mode",
-        "phase_4_0_enforce_target":   "violation_count == 0",
+        "phase":                      "4_2_enforce_mode",
+        "phase_4_2_enforce_target":   "violation_count == 0 AND escape_hatch_count == 0",
     }
     REPORT_PATH.write_text(
         json.dumps(payload, indent=2, ensure_ascii=False),
@@ -368,10 +400,10 @@ def test_cross_context_calls_report_has_expected_schema() -> None:
         "scan_timestamp", "scan_roots", "primitives_inspected",
         "akki_owned_collections", "escape_hatch_marker",
         "violations", "violation_count", "phase",
-        "phase_4_0_enforce_target",
+        "phase_4_2_enforce_target",
     }
     assert required.issubset(data.keys())
-    assert data["phase"] == "4_0_enforce_mode"
+    assert data["phase"] == "4_2_enforce_mode"
     for v in data["violations"]:
         for k in ("file", "line", "kind", "name", "owner", "caller_ctx"):
             assert k in v, f"violation missing {k!r}: {v!r}"

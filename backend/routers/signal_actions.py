@@ -95,7 +95,7 @@ async def get_signal_recommendations(
     signal_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
 ):
-    sig = await db.signals.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
+    sig = await db.signals.find_one(  # boundary:allow-direct-call (Phase 4.2 deviation #1 — signals stays Akki-owned in scanner; SyniSense self-read kept as escape hatch; Phase 4.3 HTTP transport will route through `SyniSenseContract.get_signal`)
         {"id": signal_id, "context_id": ctx["context"]["id"]},
         {"_id": 0, "headline": 1, "tone": 1, "kind": 1, "signal_type": 1, "category": 1},
     )
@@ -126,7 +126,7 @@ async def create_signal_action(
     level — a user can act twice and we record both, so the indicator shows
     the latest attribution while the audit shows the full history.
     """
-    sig = await db.signals.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
+    sig = await db.signals.find_one(  # boundary:allow-direct-call (Phase 4.2 deviation #1 — signals stays Akki-owned in scanner; SyniSense self-read kept as escape hatch; Phase 4.3 HTTP transport will route through `SyniSenseContract.get_signal`)
         {"id": signal_id, "context_id": ctx["context"]["id"]},
         {"_id": 0, "id": 1, "headline": 1},
     )

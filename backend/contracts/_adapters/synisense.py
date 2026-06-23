@@ -17,6 +17,7 @@ from ..types import (
     AuditEvent,
     ShieldMetrics,
     ShieldResult,
+    Signal,
     TrustReceipt,
 )
 
@@ -163,6 +164,35 @@ class InProcessSyniSenseAdapter(SyniSenseContract):
                 "harvest failed for account_id=%s",
                 account_id,
             )
+
+    # ─────────── Phase 4.2 widening — signals are SyniSense-owned ─────
+
+    async def get_signal(
+        self,
+        *,
+        account_id: str,
+        signal_id: str,
+        untenanted: bool = False,
+    ) -> Optional[Signal]:
+        """Pass-through to db.signals.find_one. Same-context read for
+        SyniSense; surfaced through the contract so Solva (cross-context)
+        callers don't reach into `db.signals` directly. `untenanted=True`
+        skips the account_id filter for session-gated upstream paths
+        (Solva v2 evidence cards) — `account_id` is still required as
+        the caller-of-record.
+        """
+        query: Dict[str, Any] = {"id": signal_id}
+        if not untenanted:
+            query["account_id"] = account_id
+        row = await db.signals.find_one(query, {"_id": 0})
+        if row is None:
+            return None
+        return Signal(
+            signal_id=signal_id,
+            account_id=row.get("account_id") or account_id,
+            context_id=row.get("context_id") or "",
+            raw=row,
+        )
 
 
 __all__ = ["InProcessSyniSenseAdapter"]

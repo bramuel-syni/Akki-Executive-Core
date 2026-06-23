@@ -136,6 +136,7 @@ from routers import work_studio_overlay as _work_studio_overlay
 from routers import work_studio_phase_c as _work_studio_phase_c
 from routers import work_studio_phase_c2 as _work_studio_phase_c2
 from routers import work_studio_render as _work_studio_render
+from routers._internal_transport import make_internal_router  # Phase 4.2 internal HTTP transport.
 
 
 # Ordered list of routers this app owns. Order preserved from the
@@ -264,6 +265,20 @@ ROUTERS = [
 ]
 
 
+# Phase 4.2 internal HTTP transport — every Akki contract method is
+# reachable at `POST /api/internal/v1/akki/method/<name>` when
+# `BOUNDED_CONTEXT_TRANSPORT=http`. Excluded from public OpenAPI.
+def _akki_internal_adapter():
+    from contracts._adapters.akki import InProcessAkkiAdapter
+    return InProcessAkkiAdapter()
+
+
+INTERNAL_ROUTER = make_internal_router(
+    context_name="akki",
+    adapter_factory=_akki_internal_adapter,
+)
+
+
 # Phase 4.3 / 4.4 will give this app its own lifespan, scheduler,
 # CORS + security headers middleware. For Phase 4.1 we ship a slim
 # FastAPI that exists primarily to declare the ownership contract.
@@ -282,6 +297,7 @@ app = FastAPI(
 )
 for _r in ROUTERS:
     app.include_router(_r)
+app.include_router(INTERNAL_ROUTER)
 
 
-__all__ = ["app", "ROUTERS"]
+__all__ = ["app", "ROUTERS", "INTERNAL_ROUTER"]

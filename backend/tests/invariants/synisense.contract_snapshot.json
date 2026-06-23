@@ -1,6 +1,6 @@
 {
   "class": "SyniSenseContract",
-  "method_count": 5,
+  "method_count": 6,
   "methods": {
     "get_audit_events": {
       "parameters": [
@@ -41,6 +41,29 @@
         }
       ],
       "return": "ShieldMetrics"
+    },
+    "get_signal": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "signal_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "untenanted",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "bool",
+          "has_default": true
+        }
+      ],
+      "return": "Optional[Signal]"
     },
     "get_trust_receipt": {
       "parameters": [

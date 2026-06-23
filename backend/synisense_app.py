@@ -32,6 +32,7 @@ from routers import synisense_metrics as _synisense_metrics
 from routers import synisense_observability as _synisense_observability
 from routers import synisense_shield as _synisense_shield
 from routers import trust_center as _trust_center
+from routers._internal_transport import make_internal_router  # Phase 4.2 internal HTTP transport.
 
 
 # Ordered list of routers this app owns. The master `server.py` includes
@@ -53,6 +54,20 @@ ROUTERS = [
 ]
 
 
+# Phase 4.2 internal HTTP transport — every SyniSense contract method is
+# reachable at `POST /api/internal/v1/synisense/method/<name>` when
+# `BOUNDED_CONTEXT_TRANSPORT=http`. Excluded from public OpenAPI.
+def _synisense_internal_adapter():
+    from contracts._adapters.synisense import InProcessSyniSenseAdapter
+    return InProcessSyniSenseAdapter()
+
+
+INTERNAL_ROUTER = make_internal_router(
+    context_name="synisense",
+    adapter_factory=_synisense_internal_adapter,
+)
+
+
 # Phase 4.3 / 4.4 will give this app its own lifespan + per-process
 # scheduler + spaCy load. For Phase 4.1 we ship a slim FastAPI that
 # exists primarily to declare the ownership contract.
@@ -69,6 +84,7 @@ app = FastAPI(
 )
 for _r in ROUTERS:
     app.include_router(_r)
+app.include_router(INTERNAL_ROUTER)
 
 
-__all__ = ["app", "ROUTERS"]
+__all__ = ["app", "ROUTERS", "INTERNAL_ROUTER"]

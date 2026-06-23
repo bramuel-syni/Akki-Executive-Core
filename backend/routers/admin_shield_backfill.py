@@ -27,6 +27,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from core import db, get_current_account
+from contracts import get_akki  # Phase 4.2 — route Akki chats count through the contract.
 from services.backfill_shield_v1 import (
     DEFAULT_BATCH_SIZE, DEFAULT_SLEEP_MS, run_backfill,
 )
@@ -125,13 +126,11 @@ async def latest_status(
         }
 
     # tenancy:allow-no-account-id — admin-wide pending-count probe; super-admin only (route gate at L62-79 enforces this).
-    pending = await db.chats.count_documents({  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
-        "$or": [
-            {"synisense_audit_ids": {"$exists": False}},
-            {"synisense_audit_ids": {"$size": 0}},
-        ],
-        "backfill_metadata.partial": {"$ne": False},
-    })
+    pending = await get_akki().count_chats(
+        account_id="",
+        admin_cross_tenant=True,
+        shield_audit_pending=True,
+    )
 
     # Naive ETA: assume same per-chat rate as the current job.
     rate_chats_per_s = 0.0

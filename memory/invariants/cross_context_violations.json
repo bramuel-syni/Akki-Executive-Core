@@ -1,5 +1,5 @@
 {
-  "scan_timestamp": "2026-06-23T12:55:13.969703+00:00",
+  "scan_timestamp": "2026-06-23T15:15:22.409463+00:00",
   "scan_roots": [
     "/app/backend/services",
     "/app/backend/routers"
@@ -23,9 +23,10 @@
     "objectives",
     "signals"
   ],
+  "synisense_owned_collections": [],
   "escape_hatch_marker": "boundary:allow-direct-call",
   "violations": [],
   "violation_count": 0,
-  "phase": "4_0_enforce_mode",
-  "phase_4_0_enforce_target": "violation_count == 0"
+  "phase": "4_2_enforce_mode",
+  "phase_4_2_enforce_target": "violation_count == 0 AND escape_hatch_count == 0"
 }

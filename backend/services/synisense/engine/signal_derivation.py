@@ -43,6 +43,8 @@ from services.synisense.engine.signal_seeder import (
     seed_for_tenant,
 )
 
+from contracts import get_akki  # Phase 4.2 — route Akki collection reads through the contract.
+
 log = logging.getLogger("synisense.engine.signal_derivation")
 
 # Keyword lists for compliance + anomaly heuristics.
@@ -85,13 +87,13 @@ async def _derive_anomaly_flags(tenant_id: str, now: datetime) -> List[Dict[str,
     if not tenant_context_ids:
         return out
 
-    cursor = db.cycles.find(  # boundary:allow-direct-call (Phase 4.2 will route through list_cycles + projection-aware HTTP)
-        {"context_id": {"$in": list(tenant_context_ids)}},
-        {"_id": 0, "id": 1, "context_id": 1, "title": 1, "status": 1,
-         "readiness_pct": 1, "expected_close_at": 1, "updated_at": 1,
-         "created_at": 1},
-    ).limit(50)
-    async for cy in cursor:
+    cursor_cycles = await get_akki().list_cycles(
+        account_id=tenant_id,
+        context_ids=list(tenant_context_ids),
+        limit=50,
+    )
+    for _c in cursor_cycles:
+        cy = _c.raw
         status = (cy.get("status") or "").lower()
         readiness = cy.get("readiness_pct") or 0
         triggered_by: Optional[str] = None
@@ -195,10 +197,11 @@ async def _derive_churn_risk(tenant_id: str, now: datetime) -> List[Dict[str, An
     cutoff_30 = now - timedelta(days=30)
     cutoff_iso = cutoff_30.isoformat()
 
-    msg_count = await db.chat_messages.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
-        "account_id": tenant_id, "role": "user",
-        "created_at": {"$gte": cutoff_30},
-    })
+    msg_count = await get_akki().count_chat_messages(
+        account_id=tenant_id,
+        role="user",
+        since_iso=cutoff_iso,
+    )
     solva_count = await db.solva_phase_d_sessions.count_documents({
         "account_id": tenant_id, "created_at": {"$gte": cutoff_30},
     })
@@ -207,10 +210,11 @@ async def _derive_churn_risk(tenant_id: str, now: datetime) -> List[Dict[str, An
     tenant_context_ids = await _tenant_context_ids(tenant_id)
     overdue_items = 0
     if tenant_context_ids:
-        overdue_items = await db.cycle_questions.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
-            "context_id": {"$in": list(tenant_context_ids)},
-            "status": {"$in": ["pending", "in_progress"]},
-        })
+        overdue_items = await get_akki().count_cycle_questions(
+            account_id=tenant_id,
+            context_ids=list(tenant_context_ids),
+            status_in=["pending", "in_progress"],
+        )
 
     # No engagement + no overdue items + no contexts → nothing to
     # assess. Brand-new tenants gracefully fall back to the seeder.
@@ -267,10 +271,11 @@ async def _derive_churn_risk(tenant_id: str, now: datetime) -> List[Dict[str, An
 async def _derive_behavioral_vector(tenant_id: str, now: datetime) -> List[Dict[str, Any]]:
     cutoff = now - timedelta(days=7)
     # Eight buckets, each a count we normalise to [0,1].
-    user_msgs = await db.chat_messages.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
-        "account_id": tenant_id, "role": "user",
-        "created_at": {"$gte": cutoff},
-    })
+    user_msgs = await get_akki().count_chat_messages(
+        account_id=tenant_id,
+        role="user",
+        since_iso=cutoff.isoformat(),
+    )
     solva_started = await db.solva_phase_d_sessions.count_documents({
         "account_id": tenant_id, "created_at": {"$gte": cutoff},
     })
@@ -281,16 +286,20 @@ async def _derive_behavioral_vector(tenant_id: str, now: datetime) -> List[Dict[
     })
     tenant_context_ids = await _tenant_context_ids(tenant_id)
     tc_list = list(tenant_context_ids) if tenant_context_ids else []
-    cycles_active = await db.cycles.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
-        "context_id": {"$in": tc_list}, "status": "active",
-    }) if tc_list else 0
-    docs_uploaded = await db.documents.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
-        "account_id": tenant_id, "created_at": {"$gte": cutoff},
-    })
-    briefings_approved = await db.briefings.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
-        "account_id": tenant_id, "status": "approved",
-        "updated_at": {"$gte": cutoff},
-    })
+    cycles_active = await get_akki().count_cycles(
+        account_id=tenant_id,
+        context_ids=tc_list,
+        status="active",
+    ) if tc_list else 0
+    docs_uploaded = await get_akki().count_documents(
+        account_id=tenant_id,
+        since_iso=cutoff.isoformat(),
+    )
+    briefings_approved = await get_akki().count_briefings(
+        account_id=tenant_id,
+        status="approved",
+        updated_since_iso=cutoff.isoformat(),
+    )
     shield_calls = await db.synisense_audit_log.count_documents({
         "tenant_id": tenant_id, "timestamp": {"$gte": cutoff.isoformat()},
     })
@@ -380,13 +389,14 @@ async def _derive_compliance_triggers(tenant_id: str, now: datetime) -> List[Dic
     # Cycles in audit / risk committees.
     tenant_context_ids = await _tenant_context_ids(tenant_id)
     if tenant_context_ids:
-        cursor = db.cycles.find(  # boundary:allow-direct-call (Phase 4.2 will route through list_cycles + filter)
-            {"context_id": {"$in": list(tenant_context_ids)},
-             "committee_label": {"$regex": "audit|risk", "$options": "i"}},
-            {"_id": 0, "id": 1, "context_id": 1, "title": 1,
-             "committee_label": 1, "status": 1},
-        ).limit(20)
-        async for cy in cursor:
+        committee_cycles = await get_akki().list_cycles(
+            account_id=tenant_id,
+            context_ids=list(tenant_context_ids),
+            committee_label_regex="audit|risk",
+            limit=20,
+        )
+        for _c in committee_cycles:
+            cy = _c.raw
             out.append({
                 "signal_id": _sig(),
                 "tenant_id": tenant_id,
@@ -421,18 +431,30 @@ async def _derive_operational_health(
         return []
     tc_list = list(tenant_context_ids)
 
-    cy_total = await db.cycles.count_documents({"context_id": {"$in": tc_list}})  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
-    cy_completed = await db.cycles.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
-        "context_id": {"$in": tc_list}, "status": "completed",
-    })
-    cy_overdue = await db.cycles.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
-        "context_id": {"$in": tc_list}, "status": {"$in": ["overdue", "off_track", "stalled"]},
-    })
+    cy_total = await get_akki().count_cycles(
+        account_id=tenant_id,
+        context_ids=tc_list,
+    )
+    cy_completed = await get_akki().count_cycles(
+        account_id=tenant_id,
+        context_ids=tc_list,
+        status="completed",
+    )
+    cy_overdue = await get_akki().count_cycles(
+        account_id=tenant_id,
+        context_ids=tc_list,
+        status_in=["overdue", "off_track", "stalled"],
+    )
 
-    obj_total = await db.objectives.count_documents({"context_id": {"$in": tc_list}})  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
-    obj_green = await db.objectives.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
-        "context_id": {"$in": tc_list}, "rag_status": "green",
-    })
+    obj_total = await get_akki().count_objectives(
+        account_id=tenant_id,
+        context_ids=tc_list,
+    )
+    obj_green = await get_akki().count_objectives(
+        account_id=tenant_id,
+        context_ids=tc_list,
+        rag_status="green",
+    )
 
     anomaly_count = sum(1 for s in prior_signals if s["signal_type"] == "anomaly_flag")
     signal_total = max(1, len(prior_signals))

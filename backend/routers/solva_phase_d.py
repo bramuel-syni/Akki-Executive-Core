@@ -23,6 +23,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from core import db, require_context_membership
+from contracts import get_akki  # Phase 4.2 — route Akki collection reads/writes through the contract.
 
 from documents_service import (
     ACCEPT_EXT, MAX_BYTES, extract_text, make_preview, save_to_storage,
@@ -585,11 +586,12 @@ async def _resolve_seed_references(
     resolved: List[Dict[str, Any]] = []
     for ref in references[:20]:
         # Try in order: documents → cycles → work_studio_artefacts.
-        doc = await db.documents.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
-            {"id": ref, "context_id": context_id},
-            {"_id": 0, "id": 1, "name": 1, "original_filename": 1,
-             "extracted_text": 1, "preview": 1, "status": 1},
+        _doc_obj = await get_akki().get_document(
+            account_id=account_id or "",
+            document_id=ref,
+            context_id=context_id,
         )
+        doc = _doc_obj.raw if _doc_obj else None
         if doc:
             label = (
                 doc.get("name")
@@ -609,10 +611,12 @@ async def _resolve_seed_references(
                 "status": doc.get("status"),
             })
             continue
-        cyc = await db.cycles.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
-            {"id": ref, "context_id": context_id},
-            {"_id": 0, "id": 1, "title": 1},
+        _cyc_obj = await get_akki().get_cycle(
+            account_id=account_id or "",
+            cycle_id=ref,
+            context_id=context_id,
         )
+        cyc = _cyc_obj.raw if _cyc_obj else None
         if cyc:
             resolved.append({
                 "ref_type": "cycle",
@@ -769,7 +773,10 @@ async def attach_document(
             "created_at": created_at,
             "updated_at": created_at,
         }
-        await db.documents.insert_one(dict(doc_row))  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
+        await get_akki().insert_document_row(
+            account_id=account["id"],
+            document_row=dict(doc_row),
+        )
         doc_row.pop("_id", None)
 
     elif is_json:
@@ -787,11 +794,12 @@ async def attach_document(
                 status_code=400,
                 detail="ValidationError: provide `document_id` in the JSON body.",
             )
-        existing = await db.documents.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
-            {"id": document_id, "context_id": context_id},
-            {"_id": 0, "id": 1, "name": 1, "original_filename": 1,
-             "extracted_text": 1, "preview": 1, "status": 1},
+        _existing_obj = await get_akki().get_document(
+            account_id=account["id"],
+            document_id=document_id,
+            context_id=context_id,
         )
+        existing = _existing_obj.raw if _existing_obj else None
         if not existing:
             raise HTTPException(
                 status_code=404,
