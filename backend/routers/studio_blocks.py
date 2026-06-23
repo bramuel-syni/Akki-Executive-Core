@@ -485,7 +485,7 @@ async def _hydrate_blocks(blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             out.append({**b, "content": new_content})
         elif b["kind"] == "citation":
             c = dict(b.get("content") or {})
-            doc = await db.documents.find_one(
+            doc = await db.documents.find_one(  # tenancy:allow-no-account-id — citation-block hydrator; `c.doc_id` was stamped on a tenant-scoped block originally; only fetches name+classification for display.
                 {"id": c.get("doc_id")},
                 {"_id": 0, "id": 1, "name": 1, "classification": 1},
             )
@@ -518,7 +518,7 @@ async def _classification_floor_from_citations(blocks: List[Dict[str, Any]]) -> 
         doc_id = c.get("doc_id")
         if not doc_id:
             continue
-        doc = await db.documents.find_one(
+        doc = await db.documents.find_one(  # tenancy:allow-no-account-id — sensitivity-floor computation; `doc_id` from a tenant-scoped citation block; only reads `classification` for the floor calc.
             {"id": doc_id}, {"_id": 0, "classification": 1},
         )
         cls = ((doc or {}).get("classification") or {}).get("classification") or (doc or {}).get("classification")

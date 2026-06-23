@@ -1095,7 +1095,7 @@ async def _score_and_mirror_confidence(
     if documents_row_id and score is not None:
         new_pct = score["confidence_pct"]
         if isinstance(new_pct, int):
-            await db.documents.update_one(
+            await db.documents.update_one(  # tenancy:allow-no-account-id — `documents_row_id` resolved upstream from the export's tenant-scoped artefact; this is a mirror write of confidence_pct.
                 {"id": documents_row_id},
                 {"$set": {"confidence_pct": new_pct}},
             )

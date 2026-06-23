@@ -2017,7 +2017,7 @@ async def fetch_take_to_solva_seed(
         citation_label = sig.get("headline") or "Pulse signal"
 
     elif kind == "document":
-        doc = await db.documents.find_one({"id": sid_in}, {"_id": 0})
+        doc = await db.documents.find_one({"id": sid_in}, {"_id": 0})  # tenancy:allow-no-account-id — Solva v2 evidence-card resolver; `sid_in` is a UUID from the session-gated input; session itself is account-scoped.
         if not doc:
             raise HTTPException(status_code=404, detail="document not found")
         m = await db.memberships.find_one(

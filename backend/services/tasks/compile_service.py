@@ -470,7 +470,7 @@ async def apply_comment(db, *, task: Dict[str, Any], account_id: str,
                                           purpose="apply_comment")
             new_body = (result or {}).get("response", "").strip() if result and not result.get("__timeout__") else ""
             if new_body:
-                await db.documents.update_one(
+                await db.documents.update_one(  # tenancy:allow-no-account-id — `doc` loaded above at L454 with `{"id": doc_id, "task_id": tid}` (task_id is an alt-key for documents per Phase 2.2 widening); this is the matching write of the rewritten body.
                     {"id": doc["id"]},
                     {"$set": {"extracted_text": new_body, "updated_at": _now_iso()}},
                 )
@@ -529,7 +529,7 @@ async def run_commit(db, *, task: Dict[str, Any], account_id: str) -> Dict[str, 
         # Rollback the ones we already committed in this run.
         for did in committed:
             try:
-                await db.documents.update_one(
+                await db.documents.update_one(  # tenancy:allow-no-account-id — rollback path; `did` was just committed by the same task-scoped commit loop above (L516, `task_id` alt-key gated); state restore is within-task.
                     {"id": did}, {"$set": {"state": "draft"}, "$unset": {"committed_at": ""}},
                 )
             except Exception as e:  # noqa: BLE001

@@ -485,6 +485,7 @@ async def aggregated_stream(
         .sort("created_at", -1).limit(per_kind_cap).to_list(per_kind_cap)
     raw_briefings = await db.boardpacks.find(briefings_q, {"_id": 0}) \
         .sort("created_at", -1).limit(per_kind_cap).to_list(per_kind_cap)
+    # tenancy:allow-no-account-id — `documents_q` includes `context_id ∈ active_ctx_ids` (L478) where active_ctx_ids derives from the share-token holder's accessible contexts; tenant scope enforced via context_id ∈ allow-list rather than account_id.
     raw_documents = await db.documents.find(documents_q, {"_id": 0}) \
         .sort("created_at", -1).limit(per_kind_cap).to_list(per_kind_cap)
 

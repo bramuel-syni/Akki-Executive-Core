@@ -277,7 +277,7 @@ async def _seed_sandbox(session_id: str):
             owner_account_id=account_id,
         )
         if seeds["documents"]:
-            await db.documents.insert_many(seeds["documents"])
+            await db.documents.insert_many(seeds["documents"])  # tenancy:allow-no-account-id — `seeds["documents"]` built by build_seed_payload(owner_account_id=...) which stamps account_id on every row; scanner can't trace into the builder.
         if seeds["signals"]:
             await db.signals.insert_many(seeds["signals"])
         if seeds["briefings"]:
@@ -988,7 +988,7 @@ async def create_seeded_context(
             owner_account_id=current["id"],
         )
         if seeds["documents"]:
-            await db.documents.insert_many(seeds["documents"])
+            await db.documents.insert_many(seeds["documents"])  # tenancy:allow-no-account-id — `seeds["documents"]` built by build_seed_payload(owner_account_id=...) which stamps account_id on every row; scanner can't trace into the builder.
         if seeds["signals"]:
             await db.signals.insert_many(seeds["signals"])
         if seeds["briefings"]:

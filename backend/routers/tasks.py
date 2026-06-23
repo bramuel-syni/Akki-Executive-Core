@@ -953,7 +953,7 @@ async def circulation_view(token: str):
     if exp and exp < datetime.now(timezone.utc):
         raise HTTPException(status_code=410, detail="Link expired")
     doc_ids = row.get("draft_artefact_ids") or []
-    docs = await db.documents.find(
+    docs = await db.documents.find(  # tenancy:allow-no-account-id — contributor-token-gated link; `row` looked up via opaque token, `doc_ids` come from `row.draft_artefact_ids` stamped at link mint.
         {"id": {"$in": doc_ids}},
         {"_id": 0, "id": 1, "name": 1, "extracted_text": 1, "doc_type": 1, "state": 1},
     ).to_list(length=20)

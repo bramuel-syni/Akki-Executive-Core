@@ -148,8 +148,11 @@ ALT_TENANCY_KEYS: Dict[str, FrozenSet[str]] = {
         "account_id", "context_id", "assignee_account_id",
     }),
     # documents: scoped to `context_id` (membership-gated) + the
-    # `uploaded_by` field for legacy single-user lookups.
-    "documents": frozenset({"account_id", "context_id", "uploaded_by"}),
+    # `uploaded_by` field for legacy single-user lookups. Phase 2.2
+    # adds `task_id` — documents linked to a task inherit the task's
+    # tenancy (tasks are account_id-scoped; the task lookup gates
+    # the document access upstream).
+    "documents": frozenset({"account_id", "context_id", "uploaded_by", "task_id"}),
     # compilations: scoped to `context_id` (membership-gated) + the
     # `created_by` field on the rec (routers/compilations.py:116).
     "compilations": frozenset({"account_id", "context_id", "created_by"}),
@@ -231,7 +234,10 @@ def _allowed_keys_for(collection: str) -> FrozenSet[str]:
 #
 # Phase 2.1 ships with `chats` first per dispatch directive — highest-
 # traffic surface, full Phase 0 + Phase 14 lockdown coverage.
-_ENFORCE_MODE_COLLECTIONS: FrozenSet[str] = frozenset({"chats"})
+# Phase 2.2 adds `documents` — second-context per Pre-Read §5.A.2
+# verbatim recommendation; 32→0 via task_id alt-key widening + 23
+# markers.
+_ENFORCE_MODE_COLLECTIONS: FrozenSet[str] = frozenset({"chats", "documents"})
 
 
 # Methods that take a `filter` as the first positional argument.

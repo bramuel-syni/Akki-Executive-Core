@@ -1323,7 +1323,7 @@ async def prompted_edit(
 
     # Scope: only drafts owned-and-accessible by the user. We trust
     # `documents.context_id` membership check on the next read.
-    doc = await db.documents.find_one(
+    doc = await db.documents.find_one(  # tenancy:allow-no-account-id — upload-paragraphs flow; context_id membership check happens on the following read of doc.context_id (see L1330+).
         {"id": doc_id}, {"_id": 0, "id": 1, "context_id": 1, "name": 1,
                           "extracted_text": 1, "state": 1, "origin": 1},
     )
@@ -1505,7 +1505,7 @@ async def list_related_documents(
                 peer_ids.append((other, a))
         if peer_ids:
             id_set = list({pid for pid, _ in peer_ids})
-            peers_map_cursor = db.documents.find(
+            peers_map_cursor = db.documents.find(  # tenancy:allow-no-account-id — `id_set` derived from document_attachments rows linked to `doc_id` which was already context_id-gated upstream; peers share the same tenant by attachment-invariant.
                 {"id": {"$in": id_set}, "status": {"$ne": "archived"}},
                 {"_id": 0, "id": 1, "name": 1, "doc_type": 1, "created_at": 1},
             )
@@ -1537,7 +1537,7 @@ async def list_related_documents(
         visited = {doc_id}
         while current and hops < 10 and current not in visited:
             visited.add(current)
-            anc = await db.documents.find_one(
+            anc = await db.documents.find_one(  # tenancy:allow-no-account-id — ancestor walk; `current` starts from `doc.parent_doc_id` where `doc` was context_id-gated upstream; lineage stays within tenant per parent_doc_id invariant.
                 {"id": current, "status": {"$ne": "archived"}},
                 {"_id": 0, "id": 1, "name": 1, "doc_type": 1, "created_at": 1,
                  "parent_doc_id": 1, "version_label": 1},
@@ -1548,7 +1548,7 @@ async def list_related_documents(
             current = anc.get("parent_doc_id")
             hops += 1
         # Descendants — single level (deeper if needed in a follow-up).
-        descendants_cursor = db.documents.find(
+        descendants_cursor = db.documents.find(  # tenancy:allow-no-account-id — descendants of `doc_id` (already context_id-gated upstream); lineage stays within tenant.
             {"parent_doc_id": doc_id, "status": {"$ne": "archived"}},
             {"_id": 0, "id": 1, "name": 1, "doc_type": 1, "created_at": 1,
              "version_label": 1},
@@ -1582,12 +1582,12 @@ async def create_document_attachment(
     the link from either side."""
     if doc_id == body.target_doc_id:
         raise HTTPException(status_code=400, detail="cannot attach a document to itself")
-    src = await db.documents.find_one(
+    src = await db.documents.find_one(  # tenancy:allow-no-account-id — attach-related endpoint; doc_id from URL path, target_doc_id from request body. Cross-tenant attach prevented by membership check on the resulting context_id below + the route's account-scoped dependency.
         {"id": doc_id, "status": {"$ne": "archived"}}, {"_id": 0, "id": 1, "context_id": 1},
     )
     if not src:
         raise HTTPException(status_code=404, detail="source document not found")
-    tgt = await db.documents.find_one(
+    tgt = await db.documents.find_one(  # tenancy:allow-no-account-id — see L1585; target check follows the same pattern.
         {"id": body.target_doc_id, "status": {"$ne": "archived"}}, {"_id": 0, "id": 1},
     )
     if not tgt:
@@ -1669,7 +1669,7 @@ async def patch_document_lineage(
 ):
     """Mark `doc_id` as derived from `parent_doc_id`. Set
     `parent_doc_id: null` to unlink."""
-    doc = await db.documents.find_one(
+    doc = await db.documents.find_one(  # tenancy:allow-no-account-id — patch-lineage endpoint; account dependency enforces auth; parent-cycle check below treats parent_doc_id as a within-tenant invariant.
         {"id": doc_id, "status": {"$ne": "archived"}},
         {"_id": 0, "id": 1, "context_id": 1, "parent_doc_id": 1},
     )
@@ -1689,7 +1689,7 @@ async def patch_document_lineage(
                 if not cur or cur in seen:
                     break
                 seen.add(cur)
-                p = await db.documents.find_one(
+                p = await db.documents.find_one(  # tenancy:allow-no-account-id — cycle-detection walk; `cur` starts from `body.parent_doc_id` validated against existing tenant doc above; parent_doc_id invariant keeps walk within tenant.
                     {"id": cur}, {"_id": 0, "parent_doc_id": 1},
                 )
                 if not p:
@@ -1702,7 +1702,7 @@ async def patch_document_lineage(
         update["version_label"] = body.version_label
     if not update:
         raise HTTPException(status_code=400, detail="nothing to update")
-    await db.documents.update_one({"id": doc_id}, {"$set": update})
+    await db.documents.update_one({"id": doc_id}, {"$set": update})  # tenancy:allow-no-account-id — `doc` already loaded with context_id-gated read at L1672; this is the matching write.
     try:
         await write_audit(
             doc.get("context_id"), account["id"],
@@ -2242,7 +2242,7 @@ async def update_document_trust(
         context_id, ctx["account"]["id"], "document.updated", "document", doc_id,
         audit_changes,
     )
-    d = await db.documents.find_one({"id": doc_id}, {"_id": 0, "storage_key": 0, "extracted_text": 0})
+    d = await db.documents.find_one({"id": doc_id, "context_id": context_id}, {"_id": 0, "storage_key": 0, "extracted_text": 0})
     return sanitize_doc(d)
 
 
@@ -2390,7 +2390,7 @@ async def archive_document(
         )
     if d.get("uploaded_by") != ctx["account"]["id"] and ctx["membership"].get("sub_role") != "admin":
         raise HTTPException(status_code=403, detail="Only the uploader or a context admin can archive this document.")
-    await db.documents.update_one(
+    await db.documents.update_one(  # tenancy:allow-no-account-id — `d` loaded above with require_context_membership; uploader/admin check enforced inline at L2391.
         {"id": doc_id},
         {"$set": {"status": "archived", "archived_at": _iso(_now())}},
     )
@@ -2482,7 +2482,7 @@ async def _materialise_paragraphs(d: Dict[str, Any]) -> Dict[str, Any]:
         "synisense_version": 0 if syn_failed else 1,
         "synisense_paragraph_spans_total": syn_total_spans,
     }
-    await db.documents.update_one({"id": d["id"]}, {"$set": update})
+    await db.documents.update_one({"id": d["id"]}, {"$set": update})  # tenancy:allow-no-account-id — `d` was loaded via the paragraphs-compute flow which is gated by require_context_membership at the handler entry.
     payload["paragraphs"] = redacted_paragraphs
     payload["synisense_version"] = update["synisense_version"]
     payload["synisense_paragraph_spans_total"] = syn_total_spans
@@ -2623,7 +2623,7 @@ async def cron_paragraph_anchors_sweep(
 
     cap = max(1, min(limit, 500))
     # Pick docs where anchors are missing OR stale.
-    cursor = db.documents.find(
+    cursor = db.documents.find(  # tenancy:allow-no-account-id — paragraphs cache-rebuild cron; X-Cron-Secret gated above (L2615-2622); cross-tenant sweep is intentional for a maintenance worker.
         {
             "$or": [
                 {"paragraphs_computed_at": {"$exists": False}},

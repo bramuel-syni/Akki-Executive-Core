@@ -108,7 +108,7 @@ async def list_extractions(
     doc_ids = list({r.get("document_id") for r in rows if r.get("document_id")})
     docs_by_id: Dict[str, Dict[str, Any]] = {}
     if doc_ids:
-        async for d in db.documents.find(
+        async for d in db.documents.find(  # tenancy:allow-no-account-id — admin extractions inventory; super-admin gate enforced by route dependency; doc_ids already harvested from the admin-scoped page.
             {"id": {"$in": doc_ids}},
             {"_id": 0, "id": 1, "title": 1, "category": 1},
         ):

@@ -1539,7 +1539,7 @@ async def _retrieve_grounding_paragraphs(
                 ps = computed.get("paragraphs") or []
                 if ps:
                     # Persist so subsequent calls hit the cache.
-                    await db.documents.update_one(
+                    await db.documents.update_one(  # tenancy:allow-no-account-id — `d` was loaded from this chat's grounding doc set via context_id-gated path; update is a write-back of paragraphs cache, no cross-tenant exposure.
                         {"id": d["id"]},
                         {"$set": {
                             "paragraphs": ps,

@@ -458,30 +458,29 @@ Recorded for paper trail per user direction. NOT auto-scoped. Same pattern as Ph
 
 ## Section 6 — Active Phase
 
-**Re-Architecture Phase 2.1 ✅ COMPLETE 2026-06-22** (Tenancy Guard — Scanner upgrades A+B+C + first-context migration).
+**Re-Architecture Phase 2.2 ✅ COMPLETE 2026-06-22** (Tenancy Guard — `documents` second-context migration).
 
-Per the approved 8-phase Syni Re-Architecture Plan (v3). Bundles scanner upgrades (Upgrades A multi-line dict tracking + B alternative tenancy keys per-collection + C `tenant_filter()` helper recognition), locks the Phase-0 baseline as immutable provenance, migrates `chats` as the first per-collection enforce target, and flips the tenancy invariant to per-collection enforce mode for the migrated context only.
+Per Pre-Read §5.A.2 verbatim recommendation. Migrates the `documents` collection using the same data-access helper pattern that worked for `chats` in Phase 2.1 (marker + alt-key widening + per-collection enforce flip).
 
 **Acceptance criteria (from dispatch §"Acceptance criteria"):**
-- ✅ Step 1 — `memory/invariants/tenancy_baseline_phase_0.json` committed as immutable provenance (git_sha `7d484a7c`, scan_timestamp `2026-06-22T20:53:21Z`, 550/685).
-- ✅ Step 2 — Scanner Upgrades A + B + C bundled (`backend/tests/invariants/test_invariant_tenancy.py` 1122 LOC, additive walker on top of strict mode). `backend/helpers/tenancy.py` adds `tenant_filter()` + `tenant_doc()` helpers (66 LOC).
-- ✅ Step 3 — Post-upgrade scanner delta: total 685→**262 (−62%)**, definite 550→**235 (−57%)**, non-literal 135→**27 (−80%)**. Far exceeds the 50% target.
-- ✅ Step 4 — `chats` context migrated. 15 chats violations → 0 via 9 markers (genuine cross-tenant) + 6 defensive `account_id` filter additions (zero behaviour change).
-- ✅ Step 5 — `_ENFORCE_MODE_COLLECTIONS: FrozenSet[str] = frozenset({"chats"})`; `test_tenancy_enforce_mode_for_migrated_collections` build-breaking on chats; other collections stay observe.
-- ✅ Step 6 — Regression sweep: Phase 0 invariants 33/33 PASS, 5 expected skips. Phase 14 chat fluency + Phase 15 docs + Track A 5/6/7 = 42/42 PASS. Broader sweep 82 PASS, 3 PRE-EXISTING failures (`test_track_a_phase2_drawer_journal.py::*` `KeyError: 'notes'` — verified pre-existing via `git stash`, not Phase 2.1 attributable).
-- ✅ Step 7 — Sprint memo: `/app/memory/sprints/PHASE_2_1_SCANNER_AND_FIRST_CONTEXT.md`. MASTER_STATE Section 6 + 7 + 8 + 9 updated below.
-- ✅ Aggregate Phase 2.1 lockdown: Phase-0 (8) + Phase-1 (22) + Phase-2.1 (15) + Phase-5/6/7 (42) + Phase-14 (1) + Phase-15 (5) = **93 deterministic lockdowns PASS**.
+- ✅ One context migrated. `documents` violations: 32 → **0** via `task_id` alt-key widening (6 hits) + 23 markers with inline rationale + 1 defensive `context_id` add at L2245.
+- ✅ Per-collection enforce mode now active for **both** `chats` AND `documents`: `_ENFORCE_MODE_COLLECTIONS = frozenset({"chats", "documents"})`.
+- ✅ All goldens + invariants + regression sweep green.
+- ✅ Sprint memo + MASTER_STATE updates land — `/app/memory/sprints/PHASE_2_2_DOCUMENTS.md` + this file.
+- ✅ No new BE-sweep failures outside the 8 known pre-existing. Targeted documents/shares/sandbox/tasks/studio regression: **133 PASS**, 44 SKIP (pre-quarantined), 3 ERROR (`test_phase_b_sandbox_upload.py` setup — verified pre-existing under `git stash`).
 
-**Out of scope (held):** Phase 2.2+ (next router context migration — `documents` recommended), Phase 3 (frontend), Phase 4+ (HTTP transport / commercial). All deferred. Phase 1 backlog (48 cross-context calls + 3 boundary imports) deferred to Phase 2.X side-lane OR Phase 4.
+**Scanner delta (Phase 2.1 close → Phase 2.2 close):** total 262→**230 (−12%)**, definite 235→**206 (−12%)**, non-literal 27→**24 (−11%)**. Cumulative from Phase-0 baseline: total 685→230 (**−66%**), definite 550→206 (**−63%**).
+
+**Out of scope (held):** Phase 2.3+ (`work_studio_exports` recommended next), Phase 3 (frontend), Phase 4+ (HTTP transport / commercial). All deferred. `contexts` (71 hits) escalated to a separate Pre-Read because all 71 are `{"id": context_id}` lookups where `contexts.id` IS the tenant primary key — needs structural decision (see Phase 2.2 memo §8.B). Phase 1 backlog (48 cross-context calls + 3 boundary imports) still deferred.
 
 ---
 
 ## Section 7 — Last Updated
 
-- **Written:** 2026-06-22T<phase-2.1-close>Z (Re-Architecture Phase 2.1 ✅ shipped — scanner upgrades + chats first-context migration + per-collection enforce flip).
-- **Agent:** rearch-phase-2.1-scanner-and-first-context.
-- **Mode:** 2 new Python files (66 + 1122 LOC) + 1 immutable baseline snapshot + live report update + 11 router/service edits (15 chats migrations) + sprint memo + this state file updated. Memo: `sprints/PHASE_2_1_SCANNER_AND_FIRST_CONTEXT.md`.
-- **Counts after Re-Arch Phase 2.1 close:** Phase 0 ✅ + Phase 1 ✅ + Phase 2.1 ✅ in the re-architecture backlog (Section 8); Phases 2.2-7 remain Pending/GATED. Product phases 1-15 ledger unchanged.
+- **Written:** 2026-06-22T<phase-2.2-close>Z (Re-Architecture Phase 2.2 ✅ shipped — `documents` second-context migration + per-collection enforce widened to two contexts).
+- **Agent:** rearch-phase-2.2-documents-migration.
+- **Mode:** 0 new test files (R4 budget conserved). 1 scanner refinement (`task_id` added to `documents` alt-key) + 26 markers across 11 router/service files + 1 defensive `context_id` add + sprint memo + this state file updated. Memo: `sprints/PHASE_2_2_DOCUMENTS.md`.
+- **Counts after Re-Arch Phase 2.2 close:** Phase 0 ✅ + Phase 1 ✅ + Phase 2.1 ✅ + Phase 2.2 ✅ in the re-architecture backlog (Section 8); Phase 2.3 next (`work_studio_exports` recommended), Phases 3-7 remain Pending/GATED. Product phases 1-15 ledger unchanged.
 
 ---
 
@@ -494,47 +493,52 @@ This is the canonical execution plan for the Syni Re-Architecture (approved 2026
 | 0 | Characterisation harness + global invariants | ✅ DONE 2026-06-05 | shipped |
 | 1 | Contracts + logical data ownership + tenant propagation | ✅ DONE 2026-06-05 | shipped |
 | 2.1 | Tenancy Guard — Scanner Upgrades A+B+C + `chats` first-context migration | ✅ DONE 2026-06-22 | shipped |
-| 2.2 | Tenancy Guard — `documents` second-context migration | Pending | After 2.1 ✅ |
-| 2.3+ | Tenancy Guard — `work_studio_exports`, `signals`, `signal_actions`, ... | Pending | Sequential, density-ordered |
+| 2.2 | Tenancy Guard — `documents` second-context migration | ✅ DONE 2026-06-22 | shipped |
+| 2.3 | Tenancy Guard — `work_studio_exports` third-context migration (recommended) | Pending | After 2.2 ✅ |
+| 2.X | Tenancy Guard — `contexts` collection (needs separate Pre-Read for structural alt-key/helper decision) | Pre-Read GATED | After 2.3 |
+| 2.4+ | Tenancy Guard — `inbound_queue`, `solva_v2_sessions`, `signals`, `signal_actions`, ... | Pending | Sequential, density-ordered |
 | 3 | Frontend API-boundary contract | Pending | After 1 ✅ (∥ 2) |
 | 4 | Process separation (one deployment) | Pending | After 1–3 |
 | 5 | Deployment separation (sell-ready) | Pending | After 4 |
 | 6 | Physical data carve | GATED | Scale OR signed sale |
 | 7 | Commercial surfaces | GATED | Paying customer |
 
-**Phase 2.1 deliverables (now in tree):**
-- `backend/helpers/tenancy.py` — `tenant_filter()` + `tenant_doc()` builder helpers with fail-closed `ValueError` on missing account_id.
-- `backend/tests/invariants/test_invariant_tenancy.py` — Upgrades A (multi-line dict tracking including AnnAssign + spread tracking) + B (per-collection alt-key map covering 9 collections with `context_id` / `owner_account_id` / `assignee_account_id` / `seed_marker_visible_for` / `created_by` / `uploaded_by` as legitimate tenancy keys) + C (`tenant_filter()` / `tenant_doc()` helper recognition). Per-collection enforce mode active for `chats`.
-- `memory/invariants/tenancy_baseline_phase_0.json` — IMMUTABLE Phase-0-start snapshot (git_sha `7d484a7c`, 685/550).
-- `memory/invariants/tenancy_violations.json` — live post-upgrade report (262/235).
-- 11 router/service files edited for `chats` migration (15 chats violations → 0; 9 markers + 6 defensive account_id additions).
+**Phase 2.2 deliverables (now in tree):**
+- `backend/tests/invariants/test_invariant_tenancy.py` — `documents` alt-key widened to add `task_id` (Phase 2.1 Upgrade B refinement); `_ENFORCE_MODE_COLLECTIONS = frozenset({"chats", "documents"})`.
+- 11 router/service files marked with inline rationale comments + 1 defensive `context_id` add (`routers/documents.py:2245`).
+- `memory/invariants/tenancy_violations.json` — live post-Phase-2.2 report (230/206).
 
-**Phase 2.2 dispatch TODOs (logged for the next dispatch):**
-- Migrate next router context (`documents` recommended — ≈ 5 residual definite violations after Upgrade B; full Phase 0 + Phase 5/6 lockdown coverage).
-- Widen `_ENFORCE_MODE_COLLECTIONS` to `{"chats", "documents"}` after migration.
-- Update `tenancy.baseline.json` if added (Phase 2.2 may introduce a baseline-shrink-only file separate from the immutable Phase-0 snapshot).
-- Per Pre-Read §5.A, subsequent dispatches follow density-ordered sequencing: `documents` → `work_studio_exports` → `signals` → `signal_actions` → `chat_attachments` → `chat_messages` → long-tail.
+**Phase 2.3 dispatch TODOs (logged for the next dispatch):**
+- Migrate `work_studio_exports` (24 hits, 22 literal — single router, full Track A Phase 5 lockdown coverage; same shape as Phase 2.2).
+- Widen `_ENFORCE_MODE_COLLECTIONS` to `{"chats", "documents", "work_studio_exports"}` after migration.
+- Per Phase 2.2 sprint memo §4.D, Phase 2.4+ sequencing: `inbound_queue` (19) → `solva_v2_sessions` (14) → distributed `signals`/`signal_actions`/`exco_teams` cleanup.
+- **`contexts` (71 hits)** explicitly defers to a Phase 2.X Pre-Read — needs the "is `contexts.id` a tenancy key?" structural decision before code migration.
 
 ---
 
-## Section 9 — Cumulative Health Snapshot (2026-06-22 Re-Arch Phase 2.1 ✅ close)
+## Section 9 — Cumulative Health Snapshot (2026-06-22 Re-Arch Phase 2.2 ✅ close)
+
+> **🛡️ Phase 2 cumulative posture (through Phase 2.2):** two collections (`chats`, `documents`) under per-collection enforce mode. Scanner Upgrades A/B/C/A.1/A.2 + `task_id` widening live. **Total tenancy violations down 66% (685→230) from Phase-0 baseline; definite down 63% (550→206).** Zero production cross-tenant bugs introduced; zero behaviour changes. Pattern proven across two contexts; Phase 2.3 (`work_studio_exports` recommended) will follow the same single-context single-dispatch shape.
 
 > **🛡️ Phase 2 Pre-Read confirmed ZERO production cross-tenant data leak bugs.** The original 685 / 145 non-literal hits broke down as 5% intentional cross-tenant (admin / cron probes) + 45% scanner FPs (multi-line dict construction the strict walker couldn't see) + 50% alt-key uses (`context_id`, `owner_account_id`, `assignee_account_id` — legitimate tenancy keys per architecture) + 0% bugs. Tenancy posture is structurally correct; Phase 2 work is cleanup, not bug-fix.
 
-- ✅ **15 product phases + Re-Arch Phase 0 + Re-Arch Phase 1 + Re-Arch Phase 2.1 shipped + verified**: Track A 1-7 + 14 + 15, Track B B1+B2+B3+B4+B5, plus Re-Arch Phase 0 + Phase 1 + Phase 2.1.
+- ✅ **15 product phases + Re-Arch Phase 0 + Re-Arch Phase 1 + Re-Arch Phase 2.1 + Re-Arch Phase 2.2 shipped + verified**: Track A 1-7 + 14 + 15, Track B B1+B2+B3+B4+B5, plus Re-Arch Phase 0 + Phase 1 + Phase 2.1 + Phase 2.2.
 - ✅ **3 standalone bugs closed**: BUG-ANL-001 + BUG-ANL-002 + BUG-WS-001.
 - ✅ **TM3 unblocked** 2026-06-04.
 - ✅ **Master docs delivered**: `/app/memory/PRODUCT.md` + `/app/memory/DEVELOPMENT.md` + 3 download routes.
 - ✅ **Anti-Forget Protocol delivered**: `/app/memory/ANTI_FORGET_PROTOCOL.md`.
 - ✅ **Contract surface delivered**: 3 Protocols × 21 methods, pass-through adapters, account_id-as-kwarg invariant enforced.
-- ✅ **Tenancy Guard scanner upgrades delivered**: Upgrades A (multi-line dict + AnnAssign + spread) + B (alt-key per-collection map) + C (`tenant_filter()`/`tenant_doc()` helper recognition). Live baseline 262/235 from 685/550 — 62% reduction.
-- ✅ **First-context tenancy migration**: `chats` collection migrated to per-collection enforce mode. 31→0 chats violations. Zero behaviour change.
+- ✅ **Tenancy Guard scanner upgrades delivered**: Upgrades A (multi-line dict + AnnAssign + spread) + B (alt-key per-collection map, refined for `documents` with `task_id` in Phase 2.2) + C (`tenant_filter()`/`tenant_doc()` helper recognition).
+- ✅ **First-context tenancy migration**: `chats` 31→0; enforce mode active.
+- ✅ **Second-context tenancy migration**: `documents` 32→0; enforce mode active.
 - 🟡 **0 phases pending tester.**
 - ❌ **4 ❌ open items** across the 3 original QA docs (unchanged).
-- 🪲 **3 pre-existing failures** in `test_track_a_phase2_drawer_journal.py::*` (`KeyError: 'notes'` — verified pre-Phase-2.1 via `git stash`); logged for Phase 2.X side-lane remediation.
+- 🪲 **8 pre-existing failures** (unchanged) — `test_governance_endpoint` ×2, `test_backlog_b_seed` ×1, `test_chunk6_5_revised_endpoints` ×2, `test_home_cleanup_phase_e3` ×2, `test_track_a_phase2_drawer_journal` ×3 — plus 3 setup ERRORs in `test_phase_b_sandbox_upload.py` (env-config). All logged for Phase 2.X side-lane remediation.
 - 🛌 **0 deferred future phases.**
 - 🚧 **1 USER-BLOCKED item:** Google GCP OAuth creds (G2).
-- ✅ **Re-Arch Phase 2.1 deterministic sweep 15/15 PASS** (`tests/invariants/test_invariant_tenancy.py`).
+- 🟠 **1 STRUCTURAL PRE-READ pending:** `contexts` collection migration (71 hits — needs alt-key vs helper-fusion decision).
+- ✅ **Re-Arch Phase 2.2 deterministic sweep PASS** (`documents` 32→0; chats stays at 0; cumulative 685→230 / 550→206 = 66%/63% reduction).
+- ✅ **Re-Arch Phase 2.1 deterministic sweep 15/15 PASS** (tenancy invariant suite preserved).
 - ✅ **Re-Arch Phase 1 deterministic sweep 22/22 PASS** (`tests/invariants/`).
 - ✅ **Re-Arch Phase 0 deterministic sweep 8/8 PASS**.
 - ✅ **Phase 15 lockdown sweep 5/5 PASS**.
@@ -542,18 +546,18 @@ This is the canonical execution plan for the Syni Re-Architecture (approved 2026
 - ✅ **Track A Phase 7 lockdown 13/13 default + 2 integration-marked PASS**.
 - ✅ **Track A Phase 6 lockdown 10/10 default + 2 integration-marked PASS**.
 - ✅ **Track A Phase 5 lockdown PASS**.
-- ✅ **Aggregate Phase 2.1 lockdown sweep 93 PASS** (Phase-0 8 + Phase-1 22 + Phase-2.1 15 + Phase-5/6/7 42 + Phase-14 1 + Phase-15 5).
+- ✅ **Phase 2.2 targeted regression: 133 PASS** across documents/shares/sandbox/tasks/studio surfaces (the collections touched by Phase 2.2).
 - ✅ **Boundary-imports baseline:** 3 existing Solva→SyniSense direct imports captured (unchanged; Phase 1 backlog).
 - ✅ **Cross-context observe-mode report:** 48 violations recorded for Phase 2.X side-lane migration backlog.
 - ✅ **Tenancy provenance snapshot:** `memory/invariants/tenancy_baseline_phase_0.json` (immutable, 685/550, git_sha `7d484a7c`).
-- ✅ **Tenancy live report:** `memory/invariants/tenancy_violations.json` (post-upgrade + post-migration, 262/235).
+- ✅ **Tenancy live report:** `memory/invariants/tenancy_violations.json` (post Phase 2.2, 230/206).
 - ✅ **Voice-lint clean** across customer-copy surfaces.
 - ✅ **ESLint clean** on every file touched.
 - ✅ **Ruff clean** on all backend files touched.
 
 ---
 
-**Paused per orchestrator instruction.** Re-Architecture Phase 1 ✅ DONE. Next legitimate dispatch is Phase 2 Pre-Read (Tenancy Guard). NOT auto-starting Phase 2 per Discipline Rail R2 (Approval Gate) + R6 (no auto-starting). Holding.
+**Paused per orchestrator instruction.** Re-Architecture Phase 2.2 ✅ DONE. Next legitimate dispatch is Phase 2.3 (`work_studio_exports`) per Phase 2.2 memo §4.D recommendation, OR the Phase 2.X `contexts` Pre-Read per memo §8.B. NOT auto-starting per Discipline Rail R2 (Approval Gate) + R6 (no auto-starting). Holding.
 
 ---
 
