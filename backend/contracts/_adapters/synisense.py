@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from core import db
 
@@ -44,18 +44,27 @@ class InProcessSyniSenseAdapter(SyniSenseContract):
         synonym). The Shield internally uses `tenant_id`; the contract
         surfaces `account_id` so the rest of the codebase converges
         on a single tenancy term.
+
+        Phase 4.0 — only forwards `system_msg` to the underlying
+        primitive when the caller explicitly provided a non-None
+        value. The primitive's default behaviour (no system_msg kwarg
+        present → llm_router's generic system prompt) is preserved
+        verbatim for the 90+ legacy call sites that never passed
+        system_msg.
         """
         from services.synisense.shield.client import invoke as _shield_invoke
-        result = await _shield_invoke(
-            content=content,
-            purpose=purpose,
-            tenant_id=account_id,
-            consumer_id=consumer_id,
-            user_id=user_id,
-            model_preference=model_preference,
-            internal_caller=internal_caller,
-            system_msg=system_msg,
-        )
+        primitive_kwargs: Dict[str, Any] = {
+            "content": content,
+            "purpose": purpose,
+            "tenant_id": account_id,
+            "consumer_id": consumer_id,
+            "user_id": user_id,
+            "model_preference": model_preference,
+            "internal_caller": internal_caller,
+        }
+        if system_msg is not None:
+            primitive_kwargs["system_msg"] = system_msg
+        result = await _shield_invoke(**primitive_kwargs)
         return ShieldResult(
             response=result.get("response") or "",
             audit_id=result.get("audit_id"),

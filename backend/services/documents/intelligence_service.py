@@ -30,7 +30,7 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from services.synisense.shield.client import invoke as shield_invoke
+from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
 
 
 log = logging.getLogger("documents.intelligence")
@@ -410,14 +410,14 @@ async def extract_intelligence(
                 f"TITLE: {title}\n\n"
                 f"BODY:\n{body}"
             )
-            result = await shield_invoke(
+            result = (await get_synisense().shield_invoke(
                 purpose="document_journal.intelligence.extract",
                 content=prompt,
-                tenant_id=account_id,
+                account_id=account_id,
                 consumer_id="documents",
                 user_id=account_id,
                 model_preference="balanced",
-            )
+            )).raw
             out["summary"] = (result.get("response") or "").strip()[:600] or None
         except Exception as e:  # noqa: BLE001
             log.warning("intelligence.summary failed: %s", e)
@@ -436,14 +436,14 @@ async def extract_intelligence(
             "Use a calm coach voice (Solva style). Max 6 signals, max 4 questions.\n\n"
             f"TITLE: {title}\n\nBODY:\n{body}"
         )
-        result = await shield_invoke(
+        result = (await get_synisense().shield_invoke(
             purpose="document_journal.signals.generate",
             content=signals_prompt,
-            tenant_id=account_id,
+            account_id=account_id,
             consumer_id="documents",
             user_id=account_id,
             model_preference="analytical",
-        )
+        )).raw
         raw = (result.get("response") or "").strip()
         # Best-effort JSON parse — tolerate prose preamble.
         m = re.search(r"\{[\s\S]*\}", raw)
@@ -481,14 +481,14 @@ async def extract_intelligence(
                     f"OBJECTIVE context: {ctx}\n\n"
                     f"DRAFT:\n{body}"
                 )
-                result = await shield_invoke(
+                result = (await get_synisense().shield_invoke(
                     purpose="document_journal.intelligence.extract",
                     content=obj_prompt,
-                    tenant_id=account_id,
+                    account_id=account_id,
                     consumer_id="documents",
                     user_id=account_id,
                     model_preference="analytical",
-                )
+                )).raw
                 raw = (result.get("response") or "").strip()
                 m = re.search(r"\{[\s\S]*\}", raw)
                 if m:

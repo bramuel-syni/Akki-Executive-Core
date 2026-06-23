@@ -35,7 +35,24 @@ import re
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from services.synisense.shield.client import invoke as shield_invoke
+from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
+
+
+# Phase 4.0 — module-level `shield_invoke` shim. Routes through
+# `SyniSenseContract` so the call goes via the contracts package
+# (preserves Phase 1's "no direct primitive calls outside contracts"
+# rule). Kept as a module-level symbol so existing tests that
+# monkey-patch `analyze_narration.shield_invoke` continue to work
+# unchanged.
+async def shield_invoke(**kwargs):
+    """Phase 4.0 shim — delegates to SyniSenseContract.shield_invoke.
+
+    Translates legacy `tenant_id` → contract `account_id` so call
+    sites can keep their pre-Phase-1 kwarg shape.
+    """
+    if "tenant_id" in kwargs and "account_id" not in kwargs:
+        kwargs["account_id"] = kwargs.pop("tenant_id")
+    return (await get_synisense().shield_invoke(**kwargs)).raw
 from services.workbook_analyzer.schema import WorkbookAnalysis
 from services.workbook_analyzer import _FORECAST_LOW_R2_THRESHOLD
 

@@ -37,7 +37,17 @@ from pydantic import BaseModel, ConfigDict
 
 from core import db, iso as _iso, now as _now, require_context_membership
 from services.synisense.engine.signal_seeder import SIGNAL_COLLECTION
-from services.synisense.shield.client import invoke as shield_invoke
+from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
+
+
+# Phase 4.0 — module-level `shield_invoke` shim. Kept so existing
+# `monkeypatch.setattr("routers.strategic_goal_assessment.shield_invoke", ...)`
+# tests continue to work. Routes through SyniSenseContract.
+async def shield_invoke(**kwargs):
+    """Phase 4.0 shim — delegates to SyniSenseContract.shield_invoke."""
+    if "tenant_id" in kwargs and "account_id" not in kwargs:
+        kwargs["account_id"] = kwargs.pop("tenant_id")
+    return (await get_synisense().shield_invoke(**kwargs)).raw
 
 log = logging.getLogger("strategic_goal_assessment")
 

@@ -76,7 +76,7 @@ async def get_v2_artefact_payload(
     cid = rec.get("context_id")
     if cid:
         # tenancy:allow-no-account-id — Solva v2 evidence-card payload; `cid` came from a Solva session that was account-gated upstream.
-        ctx = await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})
+        ctx = await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         if ctx and ctx.get("name"):
             context_name = ctx["name"]
 
@@ -202,7 +202,7 @@ async def stream_v2_reasoning(
     cid = rec.get("context_id")
     if cid:
         # tenancy:allow-no-account-id — Solva v2 reasoning stream; same session-gated `cid` as L78.
-        ctx = await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})
+        ctx = await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         if ctx and ctx.get("name"):
             context_name = ctx["name"]
 
@@ -299,7 +299,7 @@ async def export_v2_pptx(
     cid = rec.get("context_id")
     if cid:
         # tenancy:allow-no-account-id — Solva v2 PPTX export; session-gated `cid`.
-        ctx = await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})
+        ctx = await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         if ctx and ctx.get("name"):
             context_name = ctx["name"]
 
@@ -394,7 +394,7 @@ async def get_v2_chair_notes(
         raise HTTPException(status_code=404, detail="Session not found.")
     cid = rec.get("context_id")
     # tenancy:allow-no-account-id — Solva v2 chair notes; session-gated `cid`, optional (cid may be None for unattached sessions).
-    ctx = (await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})) if cid else None
+    ctx = (await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})) if cid else None  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
     payload = build_payload(rec, context_name=(ctx or {}).get("name") or "Context")
     return {"notes": chair_notes_dict(payload)}
 

@@ -224,17 +224,17 @@ async def _invoke_detector(
     """Single detector call via Shield. Returns parsed JSON or None
     on any failure. Detector failures are non-fatal — the assistant
     reply still ships."""
-    from services.synisense.shield.client import invoke as shield_invoke
+    from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
     try:
-        result = await asyncio.wait_for(
-            shield_invoke(
+        result = (await asyncio.wait_for(
+            get_synisense().shield_invoke(
                 purpose=purpose, content=prompt,
-                tenant_id=tenant_id, consumer_id="chat",
+                account_id=tenant_id, consumer_id="chat",
                 user_id=user_id, model_preference="balanced",
                 internal_caller=True,
             ),
             timeout=12.0,
-        )
+        )).raw
         return _parse_json_blob(result.get("response") or "")
     except asyncio.TimeoutError:
         log.warning("detector timeout: purpose=%s", purpose)

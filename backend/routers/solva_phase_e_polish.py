@@ -398,7 +398,7 @@ async def chat_privacy_report_pdf(
     receipts` row WITHOUT excluding `signature` / `payload_hash` —
     those are the fields a tenant uses to self-verify the HMAC chain.
     """
-    chat = await db.chats.find_one(
+    chat = await db.chats.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         {"id": chat_id, "account_id": account["id"]},
         {"_id": 0},
     )

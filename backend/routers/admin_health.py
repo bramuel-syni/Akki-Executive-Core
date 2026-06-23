@@ -66,19 +66,19 @@ async def _check_llm() -> Dict[str, Any]:
     to the balanced provider (Gemini flash by default) for cost."""
     started = time.monotonic()
     try:
-        from services.synisense.shield.client import invoke as shield_invoke
-        result = await asyncio.wait_for(
-            shield_invoke(
+        from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
+        result = (await asyncio.wait_for(
+            get_synisense().shield_invoke(
                 purpose="health.ping",
                 content="ping",
-                tenant_id="system.health.probe",
+                account_id="system.health.probe",
                 consumer_id="admin_health",
                 user_id="system.health.probe",
                 model_preference="balanced",
                 internal_caller=True,
             ),
             timeout=15,
-        )
+        )).raw
         text = (result.get("response") or "").strip()
         return _result(
             "pass" if text else "warn",

@@ -72,18 +72,19 @@ async def shield_invoke_bounded(
     timeout or any failure so callers can fall back to deterministic
     behaviour without distinguishing the failure mode."""
     try:
-        from services.synisense.shield.client import invoke as shield_invoke
+        from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
     except Exception:
         return None
     try:
-        return await asyncio.wait_for(
-            shield_invoke(
+        result = (await asyncio.wait_for(
+            get_synisense().shield_invoke(
                 purpose=purpose, content=content,
-                tenant_id=tenant_id, consumer_id=consumer_id,
+                account_id=tenant_id, consumer_id=consumer_id,
                 user_id=user_id, model_preference=model_preference,
             ),
             timeout=SHIELD_LLM_TIMEOUT_SECONDS,
-        )
+        )).raw
+        return result
     except asyncio.TimeoutError:
         log.warning("shield timeout: purpose=%s timeout=%.1fs", purpose, SHIELD_LLM_TIMEOUT_SECONDS)
         # Audit event surfaced via the caller (it has db handle).

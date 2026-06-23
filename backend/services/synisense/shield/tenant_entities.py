@@ -89,7 +89,11 @@ async def harvest(tenant_id: str) -> Dict[str, int]:
 
     # Accounts — Phase A binds tenant_id := account_id (see route docs),
     # so we harvest the row whose id == tenant_id.
-    acc = await db.accounts.find_one({"id": tenant_id}, {"_id": 0})
+    # Phase 4.0 — routes through AkkiContract.get_tenant_profile (was direct db.accounts.find_one).
+    from contracts import get_akki
+    _akki = get_akki()
+    profile = await _akki.get_tenant_profile(account_id=tenant_id)
+    acc = profile.raw if profile and profile.raw else None
     if acc:
         for field, key in (("company_name", "ORG"), ("full_name", "PERSON")):
             val = acc.get(field)
@@ -104,11 +108,15 @@ async def harvest(tenant_id: str) -> Dict[str, int]:
                 counts[f"accounts.{field}"] += 1
 
     # Contexts where this account is the owner.
-    ctx_cursor = db.contexts.find(
-        {"owner_account_id": tenant_id},
-        {"_id": 0, "name": 1, "organization_name": 1, "id": 1},
-    )
-    async for ctx in ctx_cursor:
+    # Phase 4.0 — routes through AkkiContract.list_contexts (was direct db.contexts.find).
+    # The contract filters by `account_id` (not `owner_account_id`);
+    # `list_contexts` returns ALL contexts the tenant owns/sees, so
+    # client-side filter on raw.owner_account_id preserves behaviour.
+    ctx_dtos = await _akki.list_contexts(account_id=tenant_id)
+    for ctx_dto in ctx_dtos:
+        ctx = ctx_dto.raw
+        if ctx.get("owner_account_id") != tenant_id:
+            continue
         for field, key in (("name", "ORG"), ("organization_name", "ORG")):
             val = ctx.get(field)
             if isinstance(val, str) and len(val.strip()) >= _MIN_ENTITY_LEN:
@@ -124,10 +132,10 @@ async def harvest(tenant_id: str) -> Dict[str, int]:
         # Cycles scoped to this context.
         ctx_id = ctx.get("id")
         if ctx_id:
-            cy_cursor = db.cycles.find(
-                {"context_id": ctx_id}, {"_id": 0, "title": 1},
-            )
-            async for cy in cy_cursor:
+            # Phase 4.0 — routes through AkkiContract.list_cycles (was direct db.cycles.find).
+            cycle_dtos = await _akki.list_cycles(account_id=tenant_id, context_id=ctx_id)
+            for cy_dto in cycle_dtos:
+                cy = cy_dto.raw
                 title = cy.get("title")
                 for noun in _extract_proper_nouns(title or ""):
                     if len(noun) < _MIN_ENTITY_LEN:

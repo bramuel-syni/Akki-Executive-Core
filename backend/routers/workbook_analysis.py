@@ -68,7 +68,7 @@ from services.workbook_analyzer import (
     run_monte_carlo,
     validate_no_imperatives,
 )
-from services.solva_v2.analyze_narration import narrate_analysis  # Track A Phase 3
+from contracts import get_solva  # Phase 4.0 — was direct narrate_analysis import
 
 # Track A Phase 1 (2026-06-03) — new sibling Analysis entity + service.
 from models.analysis import Analysis  # noqa: F401  re-export available for callers
@@ -1086,7 +1086,7 @@ async def synthesize_v2_endpoint(
             "cache_key":     _last.get("cache_key"),
         }
 
-    narration = await narrate_analysis(
+    narration = await get_solva().narrate_analysis(
         workbook_analysis=wba,
         account_id=current["id"],
         objective=row.get("objective", ""),

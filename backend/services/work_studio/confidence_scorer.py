@@ -45,7 +45,18 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from services.synisense.shield.client import invoke as shield_invoke
+from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
+
+
+# Phase 4.0 — module-level `shield_invoke` shim. See sibling rationale
+# in `services/solva_v2/analyze_narration.py`: kept so existing tests
+# (`monkeypatch.setattr("services.work_studio.confidence_scorer.shield_invoke", ...)`)
+# continue to work unchanged. Routes through SyniSenseContract.
+async def shield_invoke(**kwargs):
+    """Phase 4.0 shim — delegates to SyniSenseContract.shield_invoke."""
+    if "tenant_id" in kwargs and "account_id" not in kwargs:
+        kwargs["account_id"] = kwargs.pop("tenant_id")
+    return (await get_synisense().shield_invoke(**kwargs)).raw
 
 logger = logging.getLogger(__name__)
 

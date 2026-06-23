@@ -590,8 +590,8 @@ async def _llm_classify_fallback(text: str, *, tenant_id: str = "system.chat.cla
     error, returns None so the caller defaults to substantive_analytical.
     """
     try:
-        from services.synisense.shield.client import invoke as shield_invoke
-        result = await shield_invoke(
+        from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
+        result = (await get_synisense().shield_invoke(
             purpose="chat.tools.classify_turn",
             content=(
                 "SYSTEM: Classify the user's chat turn into exactly one of: "
@@ -600,12 +600,12 @@ async def _llm_classify_fallback(text: str, *, tenant_id: str = "system.chat.cla
                 "no punctuation.\n\n"
                 f"USER TURN:\n{text}"
             ),
-            tenant_id=tenant_id,
+            account_id=tenant_id,
             consumer_id="chat",
             user_id=tenant_id,
             model_preference="balanced",  # Gemini flash — cheapest
             internal_caller=True,
-        )
+        )).raw
         label = (result.get("response") or "").strip().lower()
         # Tolerate prefix/suffix noise.
         for cls in _tp.TURN_CLASSES:
@@ -1931,22 +1931,22 @@ async def send_message(
     shield_de_id_summary: Dict[str, int] = {}
     chat_system_prompt_injection_failed = False  # Phase 14 typed flag (T1 step 5)
     try:
-        from services.synisense.shield.client import invoke as shield_invoke
+        from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
         pref = "balanced"
         if model_def.get("provider") == "anthropic":
             pref = "analytical"
         elif model_def.get("provider") == "openai":
             pref = "generative"
-        sr = await shield_invoke(
+        sr = (await get_synisense().shield_invoke(
             purpose="chat.standard_response",
             content=full_prompt,
-            tenant_id=current["id"],
+            account_id=current["id"],
             consumer_id="chat",
             user_id=current["id"],
             model_preference=pref,
             internal_caller=True,
             system_msg=system_msg,
-        )
+        )).raw
         reply_text = sr.get("response") or ""
         shield_audit_id = sr.get("audit_id")
         shield_de_id_summary = (
@@ -2477,19 +2477,20 @@ async def stream_message(
                 try:
                     # Phase B (2026-05-13) — migrated to Synisense Shield
                     # with `purpose="chat.thin_input.evidence_list"`.
-                    from services.synisense.shield.client import invoke as shield_invoke
-                    sr = await _asyncio2.wait_for(
-                        shield_invoke(
+                    # Phase 4.0 — routes through SyniSenseContract.
+                    from contracts import get_synisense
+                    sr = (await _asyncio2.wait_for(
+                        get_synisense().shield_invoke(
                             purpose="chat.thin_input.evidence_list",
                             content=evidence_system + "\n\nUSER: " + body.content,
-                            tenant_id=current["id"],
+                            account_id=current["id"],
                             consumer_id="chat",
                             user_id=current["id"],
                             model_preference="balanced",
                             internal_caller=True,
                         ),
                         timeout=4.0,
-                    )
+                    )).raw
                     candidate = sr.get("response") or ""
                     candidate, hit = _tp.sanitize_evidence_phrase(candidate)
                     if hit and candidate:
@@ -2501,18 +2502,18 @@ async def stream_message(
                             + _tp.banned_word_retry_instruction(hit)
                         )
                         try:
-                            sr2 = await _asyncio2.wait_for(
-                                shield_invoke(
+                            sr2 = (await _asyncio2.wait_for(
+                                get_synisense().shield_invoke(
                                     purpose="chat.thin_input.evidence_list",
                                     content=retry_sys + "\n\nUSER: " + body.content,
-                                    tenant_id=current["id"],
+                                    account_id=current["id"],
                                     consumer_id="chat",
                                     user_id=current["id"],
                                     model_preference="balanced",
                                     internal_caller=True,
                                 ),
                                 timeout=4.0,
-                            )
+                            )).raw
                             cand2, hit2 = _tp.sanitize_evidence_phrase(sr2.get("response") or "")
                             if hit2 or not cand2:
                                 evidence_phrase = _tp.THIN_INPUT_FALLBACK_EVIDENCE
@@ -3045,7 +3046,7 @@ async def stream_message(
         # carve-out documented in PHASE_B_INVENTORY.md.
         if turn_class == "strategic_deliverable":
             try:
-                from services.synisense.shield.client import invoke as shield_invoke
+                from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
                 pref = "balanced"
                 if model_def.get("provider") == "anthropic":
                     pref = "analytical"
@@ -3060,15 +3061,15 @@ async def stream_message(
                     "and reflection. Do NOT produce the deliverable. Do "
                     "NOT include the marker lines. Just the reasoning."
                 )
-                p1_sr = await shield_invoke(
+                p1_sr = (await get_synisense().shield_invoke(
                     purpose="chat.deliverable.pass1_reasoning",
                     content=pass_1_system + "\n\n" + full_prompt,
-                    tenant_id=current["id"],
+                    account_id=current["id"],
                     consumer_id="chat",
                     user_id=current["id"],
                     model_preference=pref,
                     internal_caller=True,
-                )
+                )).raw
                 explicit_pass_1 = p1_sr.get("response") or ""
                 # Pass 2: deliverable.
                 pass_2_system = (
@@ -3084,15 +3085,15 @@ async def stream_message(
                     f"[PASS_1_REASONING]\n{explicit_pass_1}\n[/PASS_1_REASONING]\n\n"
                     + full_prompt
                 )
-                p2_sr = await shield_invoke(
+                p2_sr = (await get_synisense().shield_invoke(
                     purpose="chat.deliverable.pass2_render",
                     content=pass_2_system + "\n\n" + p2_full_prompt,
-                    tenant_id=current["id"],
+                    account_id=current["id"],
                     consumer_id="chat",
                     user_id=current["id"],
                     model_preference=pref,
                     internal_caller=True,
-                )
+                )).raw
                 raw_text = p2_sr.get("response") or ""
                 mode = "live"
                 # H2.5 follow-up — surface Pass 2's Shield audit_id
@@ -3399,7 +3400,8 @@ async def stream_message(
             try:
                 # Phase B (2026-05-13) — voice-violation retry migrated to
                 # Synisense Shield with `purpose="chat.refusal.compose"`.
-                from services.synisense.shield.client import invoke as shield_invoke
+                # Phase 4.0 — routes through SyniSenseContract.
+                from contracts import get_synisense
                 pref = "balanced"
                 if model_def.get("provider") == "anthropic":
                     pref = "analytical"
@@ -3410,15 +3412,15 @@ async def stream_message(
                     + "\n\n"
                     + _tp.banned_word_retry_instruction(first_banned)
                 )
-                retry_sr = await shield_invoke(
+                retry_sr = (await get_synisense().shield_invoke(
                     purpose="chat.refusal.compose",
                     content=retry_sys + "\n\n" + full_prompt,
-                    tenant_id=current["id"],
+                    account_id=current["id"],
                     consumer_id="chat",
                     user_id=current["id"],
                     model_preference=pref,
                     internal_caller=True,
-                )
+                )).raw
                 retry_text = retry_sr.get("response") or ""
                 # H2.5 follow-up — supersede the envelope audit_id
                 # with the retry's Shield audit_id when the retry

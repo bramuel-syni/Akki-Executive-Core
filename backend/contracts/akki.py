@@ -32,6 +32,7 @@ from .types import (
     Cycle,
     CycleQuestion,
     Document,
+    Membership,
     Objective,
     Signal,
     TenantEntity,
@@ -76,6 +77,15 @@ class AkkiContract(Protocol):
         account_id: str,
     ) -> List[TenantEntity]:
         """BATCHED: precomputed tenant proper-noun catalogue for the Shield's de-id dictionary."""
+        ...
+
+    async def list_memberships(
+        self,
+        *,
+        account_id: str,
+        status: Optional[str] = "active",
+    ) -> List[Membership]:
+        """Active memberships for the tenant (replaces `db.memberships.find` in SyniSense engine signal derivation). Phase 4.0 widening (Pre-Read §9.1)."""
         ...
 
     # ─────────── Chat context ───────────

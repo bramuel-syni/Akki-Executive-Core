@@ -1,6 +1,6 @@
 {
   "class": "AkkiContract",
-  "method_count": 11,
+  "method_count": 12,
   "methods": {
     "audit_event": {
       "parameters": [
@@ -143,6 +143,23 @@
         }
       ],
       "return": "List[Document]"
+    },
+    "list_memberships": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "status",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        }
+      ],
+      "return": "List[Membership]"
     },
     "list_objectives": {
       "parameters": [

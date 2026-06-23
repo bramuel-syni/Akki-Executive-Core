@@ -125,7 +125,7 @@ async def latest_status(
         }
 
     # tenancy:allow-no-account-id — admin-wide pending-count probe; super-admin only (route gate at L62-79 enforces this).
-    pending = await db.chats.count_documents({
+    pending = await db.chats.count_documents({  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         "$or": [
             {"synisense_audit_ids": {"$exists": False}},
             {"synisense_audit_ids": {"$size": 0}},

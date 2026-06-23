@@ -30,7 +30,7 @@ from services.solva.models import (
     SituationClass, SituationClassRecord, TensionRecord,
     TriangulationClaim,
 )
-from services.synisense.shield.client import invoke as shield_invoke
+from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
 
 log = logging.getLogger("solva.reasoning")
 
@@ -58,15 +58,15 @@ async def _shield_call(
     """Routes through Shield, returns (parsed_json, audit_id). Returns
     (None, None) on any failure — caller decides fallback policy."""
     try:
-        result = await asyncio.wait_for(
-            shield_invoke(
+        result = (await asyncio.wait_for(
+            get_synisense().shield_invoke(
                 purpose=purpose, content=prompt,
-                tenant_id=tenant_id, consumer_id="solva",
+                account_id=tenant_id, consumer_id="solva",
                 user_id=user_id, model_preference="analytical",
                 internal_caller=True,
             ),
             timeout=timeout_s,
-        )
+        )).raw
         return _parse_json(result.get("response") or ""), result.get("audit_id")
     except Exception as exc:  # noqa: BLE001
         log.warning("solva reasoning shield call failed: purpose=%s err=%s",

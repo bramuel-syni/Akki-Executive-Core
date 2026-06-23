@@ -164,23 +164,23 @@ async def _call_llm(
     seed/dev surface so we accept a synthetic tenant when none is
     supplied (the in-process `client.invoke` lets internal callers
     pass a system tenant)."""
-    from services.synisense.shield.client import invoke as shield_invoke
+    from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
     pref = "analytical" if model_id[0] == "anthropic" else "generative" \
         if model_id[0] == "openai" else "balanced"
     effective_tenant = tenant_id or "system.sandbox.seed"
     try:
-        result = await asyncio.wait_for(
-            shield_invoke(
+        result = (await asyncio.wait_for(
+            get_synisense().shield_invoke(
                 purpose="work_studio.sandbox.generate",
                 content=prompt,
-                tenant_id=effective_tenant,
+                account_id=effective_tenant,
                 consumer_id="sandbox",
                 user_id=effective_tenant,
                 model_preference=pref,  # type: ignore[arg-type]
                 internal_caller=True,
             ),
             timeout=timeout_s,
-        )
+        )).raw
     except asyncio.TimeoutError as exc:
         raise RuntimeError(
             f"asyncio.TimeoutError: sandbox generation timed out after {timeout_s}s"

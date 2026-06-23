@@ -192,8 +192,10 @@ def test_every_contract_method_has_account_id_kwarg() -> None:
 
 
 def test_contract_method_counts() -> None:
-    """Pre-Read §4 pinned the method counts: 5 + 5 + 11 = 21."""
-    expected = {"synisense": 5, "solva": 5, "akki": 11}
+    """Pre-Read §4 pinned the method counts: 5 + 5 + 11 = 21.
+    Phase 4.0 widening (Pre-Read §9.1) raised to: 5 + 6 + 12 = 23.
+    """
+    expected = {"synisense": 5, "solva": 6, "akki": 12}
     actual: Dict[str, int] = {}
     for name, (cls, _) in SNAPSHOTS.items():
         actual[name] = sum(

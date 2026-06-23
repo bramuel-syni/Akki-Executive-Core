@@ -24,6 +24,7 @@ from ..types import (
     Cycle,
     CycleQuestion,
     Document,
+    Membership,
     Objective,
     Signal,
     TenantEntity,
@@ -120,6 +121,34 @@ class InProcessAkkiAdapter(AkkiContract):
             if value:
                 out.append(TenantEntity(kind=kind, value=value, source=source))
         return out
+
+    async def list_memberships(
+        self,
+        *,
+        account_id: str,
+        status: Optional[str] = "active",
+    ) -> List[Membership]:
+        """Pass-through to db.memberships.find.
+
+        Phase 4.0 widening (Pre-Read §9.1) — surfaces the one in-tree
+        SyniSense direct read (`services/synisense/engine/signal_derivation.py:476`)
+        through the contract. When `status` is None, returns ALL
+        memberships regardless of state.
+        """
+        query: Dict[str, Any] = {"account_id": account_id}
+        if status is not None:
+            query["status"] = status
+        cursor = db.memberships.find(query, {"_id": 0})
+        rows = await cursor.to_list(1000)
+        return [
+            Membership(
+                account_id=account_id,
+                context_id=r.get("context_id") or "",
+                status=r.get("status") or "",
+                raw=r,
+            )
+            for r in rows
+        ]
 
     # ─────────── Chat context ───────────
 

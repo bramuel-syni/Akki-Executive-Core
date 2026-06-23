@@ -1,6 +1,6 @@
 {
   "class": "SolvaContract",
-  "method_count": 5,
+  "method_count": 6,
   "methods": {
     "get_session_state": {
       "parameters": [
@@ -35,6 +35,47 @@
         }
       ],
       "return": "List[SolvaArtefact]"
+    },
+    "narrate_analysis": {
+      "parameters": [
+        {
+          "name": "workbook_analysis",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Any",
+          "has_default": false
+        },
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "objective",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": true
+        },
+        {
+          "name": "cached",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[Dict[str, Any]]",
+          "has_default": true
+        },
+        {
+          "name": "workbook_context",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[Dict[str, Any]]",
+          "has_default": true
+        },
+        {
+          "name": "forecast_meta",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[Dict[str, Any]]]",
+          "has_default": true
+        }
+      ],
+      "return": "Dict[str, Any]"
     },
     "refuse_to_decide_check": {
       "parameters": [

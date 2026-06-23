@@ -7,7 +7,7 @@ an HTTP-client adapter.
 from __future__ import annotations
 
 import logging
-from typing import List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from core import db
 
@@ -72,6 +72,33 @@ class InProcessSolvaAdapter(SolvaContract):
             citations=list(envelope.get("citations") or []),
             cache_key=envelope.get("cache_key"),
             raw=envelope,
+        )
+
+    async def narrate_analysis(
+        self,
+        *,
+        workbook_analysis: Any,
+        account_id: str,
+        objective: str = "",
+        cached: Optional[Dict[str, Any]] = None,
+        workbook_context: Optional[Dict[str, Any]] = None,
+        forecast_meta: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        """Pass-through to services.solva_v2.analyze_narration.narrate_analysis.
+
+        Phase 4.0 widening (Pre-Read §9.1) — gives one production call
+        site in `routers/workbook_analysis.py:1089` a typed surface
+        without re-shaping it through the higher-level
+        `synthesize_workbook` path.
+        """
+        from services.solva_v2.analyze_narration import narrate_analysis as _narrate
+        return await _narrate(
+            workbook_analysis=workbook_analysis,
+            account_id=account_id,
+            objective=objective,
+            cached=cached,
+            workbook_context=workbook_context,
+            forecast_meta=forecast_meta,
         )
 
     async def run_solva_session(

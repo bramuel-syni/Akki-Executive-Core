@@ -221,8 +221,17 @@ def test_no_secondary_deid_in_chat_router():
     )
 
     # Positive control: Shield IS the de-id pipeline now.
-    assert "from services.synisense.shield.client import invoke as shield_invoke" in text, (
-        "chat.py should import shield_invoke for its de-id+LLM path"
+    # Phase 4.0 — `shield_invoke` is now routed through
+    # `SyniSenseContract.shield_invoke` (via the contracts package)
+    # rather than imported directly. The path is preserved; the entry
+    # point is just contract-aware.
+    assert "from contracts import get_synisense" in text, (
+        "chat.py should import get_synisense for its de-id+LLM path "
+        "(Phase 4.0 routes through the SyniSenseContract)"
+    )
+    assert "get_synisense().shield_invoke" in text, (
+        "chat.py should invoke Shield via SyniSenseContract.shield_invoke "
+        "(Phase 4.0 contract routing)"
     )
     assert 'purpose="chat.standard_response"' in text, (
         "chat.py standard-response Shield purpose missing"

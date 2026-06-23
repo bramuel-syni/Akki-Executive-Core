@@ -205,7 +205,7 @@ async def chat_synisense_metrics(chat_id: str) -> Dict[str, Any]:
     """
     from core import db, get_current_account
     # tenancy:allow-no-account-id — Phase J public chat metrics endpoint; access is via chat_id (UUID) without auth, returns aggregated counters keyed off the chat's stored account_id below. Pre-existing surface contract — Phase 2.1 preserves behaviour.
-    chat = await db.chats.find_one({"id": chat_id})
+    chat = await db.chats.find_one({"id": chat_id})  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
     if not chat:
         raise HTTPException(status_code=404, detail="chat not found")
     account_id = chat.get("account_id")

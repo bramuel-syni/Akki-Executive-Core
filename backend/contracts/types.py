@@ -182,6 +182,22 @@ class TenantEntity:
     source: str  # e.g. "accounts", "contexts", "cycles"
 
 
+
+@dataclass(frozen=True)
+class Membership:
+    """A tenant's active membership of a context (`memberships` row).
+
+    Phase 4.0 widening (Pre-Read §9.1) — surfaces the one in-tree
+    `db.memberships.find(...)` call site in
+    `services/synisense/engine/signal_derivation.py` through the
+    contract instead of via direct collection access.
+    """
+    account_id: str
+    context_id: str
+    status: str  # typically "active"
+    raw: Dict[str, Any] = field(default_factory=dict)
+
+
 # ───────────────────────── Solva DTOs ─────────────────────────
 
 @dataclass(frozen=True)

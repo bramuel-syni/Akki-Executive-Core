@@ -584,7 +584,7 @@ async def agent_prefill(
     # Fall through to a Shield-bounded LLM ask. If Shield is down,
     # return a generic template so the wizard is never blocked.
     try:
-        from services.synisense.shield.client import invoke as shield_invoke
+        from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
         prompt = (
             "You are a senior executive coach. The user is setting up a task "
             "called the following; propose: (a) a single-paragraph OBJECTIVE "
@@ -594,14 +594,14 @@ async def agent_prefill(
             "{\"objective\": \"...\", \"success_criteria\": \"...\"}\n\n"
             f"TASK NAME: {body.name}"
         )
-        result = await shield_invoke(
+        result = (await get_synisense().shield_invoke(
             purpose="task_manager.wizard.prefill",
             content=prompt,
-            tenant_id=current["id"],
+            account_id=current["id"],
             consumer_id="tasks",
             user_id=current["id"],
             model_preference="balanced",
-        )
+        )).raw
         raw = (result.get("response") or "").strip()
         m = re.search(r"\{[\s\S]*\}", raw)
         if m:

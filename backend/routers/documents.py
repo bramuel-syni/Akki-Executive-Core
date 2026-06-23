@@ -1329,7 +1329,7 @@ async def prompted_edit(
     WITHOUT committing. Caller (the drawer) then renders a diff
     preview and POSTs a PATCH to commit if the user accepts."""
     import hashlib as _hash
-    from services.synisense.shield.client import invoke as shield_invoke
+    from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
     from datetime import datetime as _dt, timezone as _tz
     import uuid as _uuid
 
@@ -1371,14 +1371,14 @@ async def prompted_edit(
         f"CURRENT BODY:\n{body_text}"
     )
     try:
-        result = await shield_invoke(
+        result = (await get_synisense().shield_invoke(
             purpose="document_journal.prompted_edit.rewrite",
             content=llm_prompt,
-            tenant_id=current["id"],
+            account_id=current["id"],
             consumer_id="documents",
             user_id=current["id"],
             model_preference="balanced",
-        )
+        )).raw
         new_body = (result.get("response") or "").strip()
         # Strip any markdown fences the model may have added.
         if new_body.startswith("```"):

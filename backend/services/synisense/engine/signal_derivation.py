@@ -85,7 +85,7 @@ async def _derive_anomaly_flags(tenant_id: str, now: datetime) -> List[Dict[str,
     if not tenant_context_ids:
         return out
 
-    cursor = db.cycles.find(
+    cursor = db.cycles.find(  # boundary:allow-direct-call (Phase 4.2 will route through list_cycles + projection-aware HTTP)
         {"context_id": {"$in": list(tenant_context_ids)}},
         {"_id": 0, "id": 1, "context_id": 1, "title": 1, "status": 1,
          "readiness_pct": 1, "expected_close_at": 1, "updated_at": 1,
@@ -195,7 +195,7 @@ async def _derive_churn_risk(tenant_id: str, now: datetime) -> List[Dict[str, An
     cutoff_30 = now - timedelta(days=30)
     cutoff_iso = cutoff_30.isoformat()
 
-    msg_count = await db.chat_messages.count_documents({
+    msg_count = await db.chat_messages.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
         "account_id": tenant_id, "role": "user",
         "created_at": {"$gte": cutoff_30},
     })
@@ -207,7 +207,7 @@ async def _derive_churn_risk(tenant_id: str, now: datetime) -> List[Dict[str, An
     tenant_context_ids = await _tenant_context_ids(tenant_id)
     overdue_items = 0
     if tenant_context_ids:
-        overdue_items = await db.cycle_questions.count_documents({
+        overdue_items = await db.cycle_questions.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
             "context_id": {"$in": list(tenant_context_ids)},
             "status": {"$in": ["pending", "in_progress"]},
         })
@@ -267,7 +267,7 @@ async def _derive_churn_risk(tenant_id: str, now: datetime) -> List[Dict[str, An
 async def _derive_behavioral_vector(tenant_id: str, now: datetime) -> List[Dict[str, Any]]:
     cutoff = now - timedelta(days=7)
     # Eight buckets, each a count we normalise to [0,1].
-    user_msgs = await db.chat_messages.count_documents({
+    user_msgs = await db.chat_messages.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
         "account_id": tenant_id, "role": "user",
         "created_at": {"$gte": cutoff},
     })
@@ -281,13 +281,13 @@ async def _derive_behavioral_vector(tenant_id: str, now: datetime) -> List[Dict[
     })
     tenant_context_ids = await _tenant_context_ids(tenant_id)
     tc_list = list(tenant_context_ids) if tenant_context_ids else []
-    cycles_active = await db.cycles.count_documents({
+    cycles_active = await db.cycles.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
         "context_id": {"$in": tc_list}, "status": "active",
     }) if tc_list else 0
-    docs_uploaded = await db.documents.count_documents({
+    docs_uploaded = await db.documents.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
         "account_id": tenant_id, "created_at": {"$gte": cutoff},
     })
-    briefings_approved = await db.briefings.count_documents({
+    briefings_approved = await db.briefings.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
         "account_id": tenant_id, "status": "approved",
         "updated_at": {"$gte": cutoff},
     })
@@ -345,12 +345,11 @@ async def _derive_compliance_triggers(tenant_id: str, now: datetime) -> List[Dic
     out: List[Dict[str, Any]] = []
 
     # Documents pass.
-    cursor = db.documents.find(
-        {"account_id": tenant_id},
-        {"_id": 0, "id": 1, "title": 1, "summary": 1,
-         "commentary": 1, "context_id": 1, "created_at": 1},
-    ).limit(50)
-    async for d in cursor:
+    # Phase 4.0 — routes through AkkiContract.list_documents (was direct db.documents.find).
+    from contracts import get_akki
+    docs = await get_akki().list_documents(account_id=tenant_id)
+    for doc_dto in docs[:50]:
+        d = doc_dto.raw
         haystack = " ".join([
             str(d.get("title") or ""),
             str(d.get("summary") or ""),
@@ -381,7 +380,7 @@ async def _derive_compliance_triggers(tenant_id: str, now: datetime) -> List[Dic
     # Cycles in audit / risk committees.
     tenant_context_ids = await _tenant_context_ids(tenant_id)
     if tenant_context_ids:
-        cursor = db.cycles.find(
+        cursor = db.cycles.find(  # boundary:allow-direct-call (Phase 4.2 will route through list_cycles + filter)
             {"context_id": {"$in": list(tenant_context_ids)},
              "committee_label": {"$regex": "audit|risk", "$options": "i"}},
             {"_id": 0, "id": 1, "context_id": 1, "title": 1,
@@ -422,16 +421,16 @@ async def _derive_operational_health(
         return []
     tc_list = list(tenant_context_ids)
 
-    cy_total = await db.cycles.count_documents({"context_id": {"$in": tc_list}})
-    cy_completed = await db.cycles.count_documents({
+    cy_total = await db.cycles.count_documents({"context_id": {"$in": tc_list}})  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
+    cy_completed = await db.cycles.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
         "context_id": {"$in": tc_list}, "status": "completed",
     })
-    cy_overdue = await db.cycles.count_documents({
+    cy_overdue = await db.cycles.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
         "context_id": {"$in": tc_list}, "status": {"$in": ["overdue", "off_track", "stalled"]},
     })
 
-    obj_total = await db.objectives.count_documents({"context_id": {"$in": tc_list}})
-    obj_green = await db.objectives.count_documents({
+    obj_total = await db.objectives.count_documents({"context_id": {"$in": tc_list}})  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
+    obj_green = await db.objectives.count_documents({  # boundary:allow-direct-call (Phase 4.2 will add typed count endpoint)
         "context_id": {"$in": tc_list}, "rag_status": "green",
     })
 
@@ -473,11 +472,10 @@ async def _derive_operational_health(
 # ─────────────────────────────────────────────────────────────────────
 async def _tenant_context_ids(tenant_id: str) -> set:
     """Set of context_ids the tenant has active membership for."""
-    rows = await db.memberships.find(
-        {"account_id": tenant_id, "status": "active"},
-        {"_id": 0, "context_id": 1},
-    ).to_list(length=200)
-    return {r["context_id"] for r in rows if r.get("context_id")}
+    # Phase 4.0 — routes through AkkiContract.list_memberships (was direct db.memberships.find).
+    from contracts import get_akki
+    rows = await get_akki().list_memberships(account_id=tenant_id, status="active")
+    return {r.context_id for r in rows if r.context_id}
 
 
 async def _activity_window(tenant_id: str) -> Tuple[Optional[datetime], Optional[datetime]]:

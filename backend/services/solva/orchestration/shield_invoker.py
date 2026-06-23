@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
-from services.synisense.shield.client import invoke as shield_invoke
+from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
 
 
 DEFAULT_CONSUMER_ID = "solva.phase_d"
@@ -62,14 +62,14 @@ async def invoke_via_shield(
     fixture).
     """
     started = time.perf_counter()
-    result = await shield_invoke(
+    result = (await get_synisense().shield_invoke(
         purpose=purpose,
         content=prompt,
-        tenant_id=tenant_id,
+        account_id=tenant_id,
         consumer_id=consumer_id,
         user_id=user_id,
         model_preference=model_preference,  # type: ignore[arg-type]
-    )
+    )).raw
     latency_ms = int((time.perf_counter() - started) * 1000)
     audit_id = result["audit_id"]
     response = result["response"]

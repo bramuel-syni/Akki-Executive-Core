@@ -230,7 +230,7 @@ async def _llm_recommendations(task: Dict[str, Any], rb: Dict[str, Any], bl: Lis
     back to the rule-based fallback without raising."""
     import asyncio as _asyncio
     try:
-        from services.synisense.shield.client import invoke as shield_invoke
+        from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
     except Exception:
         return None
     prompt = (
@@ -247,17 +247,17 @@ async def _llm_recommendations(task: Dict[str, Any], rb: Dict[str, Any], bl: Lis
         f"GAPS: {json.dumps([g['message'] for g in gp])}\n"
     )
     try:
-        result = await _asyncio.wait_for(
-            shield_invoke(
+        result = (await _asyncio.wait_for(
+            get_synisense().shield_invoke(
                 purpose="task_manager.intelligence.recommendations",
                 content=prompt,
-                tenant_id=user_id,
+                account_id=user_id,
                 consumer_id="tasks",
                 user_id=user_id,
                 model_preference="balanced",
             ),
             timeout=3.0,
-        )
+        )).raw
     except _asyncio.TimeoutError:
         log.warning("intel recs timed out (>3s); falling back to rule-based")
         return None

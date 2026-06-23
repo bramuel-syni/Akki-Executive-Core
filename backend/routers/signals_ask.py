@@ -75,7 +75,7 @@ async def generate_signals(
     # Cheap pre-flight check — we want to surface "no documents"
     # synchronously so the user sees the error immediately instead of
     # after a polling round-trip.
-    docs_count = await db.documents.count_documents(
+    docs_count = await db.documents.count_documents(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         {"context_id": context_id, "status": "extracted"},
     )
     if docs_count == 0:
@@ -280,7 +280,7 @@ async def list_signals(
     q: Dict[str, Any] = {"context_id": ctx["context"]["id"], "status": "active"}
     if committee_id:
         q["committee_id"] = committee_id
-    sigs = await db.signals.find(q, {"_id": 0}).sort("created_at", -1).to_list(min(limit, 500))
+    sigs = await db.signals.find(q, {"_id": 0}).sort("created_at", -1).to_list(min(limit, 500))  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
     # Backfill `references[]` for legacy signals that pre-date Reading Viewer
     # Phase 1. Stored `sources[]` is the source of truth; references is a
     # view over it. No mutation — read-time projection only.
@@ -295,7 +295,7 @@ async def dismiss_signal(
     context_id: str, signal_id: str,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
 ):
-    await db.signals.update_one(
+    await db.signals.update_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         {"id": signal_id, "context_id": context_id},
         {"$set": {"status": "dismissed", "dismissed_at": iso(now())}},
     )

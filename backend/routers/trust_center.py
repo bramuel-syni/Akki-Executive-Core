@@ -49,7 +49,7 @@ router = APIRouter(prefix="/api/trust-center", tags=["trust-center"])
 async def _accessible_context_ids(account_id: str) -> Set[str]:
     """All context_ids the account has an active membership in.
     Trust Center's strict scoping anchor."""
-    rows = await db.memberships.find(
+    rows = await db.memberships.find(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         {"account_id": account_id, "status": "active"},
         {"_id": 0, "context_id": 1},
     ).to_list(length=None)
@@ -59,7 +59,7 @@ async def _accessible_context_ids(account_id: str) -> Set[str]:
 async def _is_superadmin_in_context(account_id: str, context_id: str) -> bool:
     """Superadmin status is context-scoped — a tenant admin elsewhere
     has no powers here."""
-    membership = await db.memberships.find_one(
+    membership = await db.memberships.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         {"account_id": account_id, "context_id": context_id, "status": "active"},
         {"_id": 0, "sub_role": 1},
     )
@@ -68,7 +68,7 @@ async def _is_superadmin_in_context(account_id: str, context_id: str) -> bool:
     if membership.get("sub_role") in ("admin", "owner"):
         return True
     # Global superadmin (rare; emergency access).
-    acct = await db.accounts.find_one(
+    acct = await db.accounts.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         {"id": account_id}, {"_id": 0, "is_superadmin": 1},
     )
     return bool(acct and acct.get("is_superadmin"))
@@ -78,7 +78,7 @@ async def _load_chat_or_403(chat_id: str, account_id: str) -> Dict[str, Any]:
     """Returns the chat row if the caller has access to its context.
     Raises 404 if missing, 403 if not in context."""
     # tenancy:allow-no-account-id — lookup is intentionally chat_id-only; the membership check below at L84-90 enforces tenant scope. A direct account_id filter here would convert 403 → 404 for foreign chats, masking the existence check the Trust Center needs.
-    chat = await db.chats.find_one({"id": chat_id}, {"_id": 0})
+    chat = await db.chats.find_one({"id": chat_id}, {"_id": 0})  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
     if not chat:
         raise HTTPException(status_code=404, detail="Chat not found.")
     ctx_id = chat.get("context_id")
@@ -148,7 +148,7 @@ async def session(
     # UI keys off `shield_status`.
     if shield_status == "pre_shield_v1":
         # tenancy:allow-no-account-id — Trust Center session lookup; `chat.context_id` came from `_load_chat_or_403` membership-gated read above.
-        context = await db.contexts.find_one(
+        context = await db.contexts.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
             {"id": chat.get("context_id")}, {"_id": 0, "name": 1},
         ) or {}
         return {
@@ -166,7 +166,7 @@ async def session(
         }
 
     # ── Turn list ── pull both user + assistant messages, threaded.
-    messages = await db.chat_messages.find(
+    messages = await db.chat_messages.find(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         {"chat_id": chat_id}, {"_id": 0},
     ).sort([("ts", 1), ("id", 1)]).to_list(length=None)
 
@@ -256,7 +256,7 @@ async def session(
         })
 
     # tenancy:allow-no-account-id — Trust Center session detail; chat already loaded with membership check upstream.
-    context = await db.contexts.find_one(
+    context = await db.contexts.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         {"id": chat.get("context_id")}, {"_id": 0, "name": 1},
     ) or {}
 
@@ -319,7 +319,7 @@ async def session_turn(
     auditor can run the same call independently and verify.
     """
     chat = await _load_chat_or_403(chat_id, current["id"])
-    user_msg = await db.chat_messages.find_one(
+    user_msg = await db.chat_messages.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         {"chat_id": chat_id, "id": message_id, "role": "user"},
         {"_id": 0},
     )
@@ -330,7 +330,7 @@ async def session_turn(
     # ``parent_message_id`` is not currently persisted on the
     # assistant turn.
     user_ts = user_msg.get("created_at") or user_msg.get("ts") or ""
-    asst_msg = await db.chat_messages.find_one(
+    asst_msg = await db.chat_messages.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         {"chat_id": chat_id, "role": "assistant",
          "created_at": {"$gte": user_ts}},
         {"_id": 0},
@@ -486,7 +486,7 @@ async def session_turn_plaintext(
                    "superadmin in this context.",
         )
 
-    user_msg = await db.chat_messages.find_one(
+    user_msg = await db.chat_messages.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         {"chat_id": chat_id, "id": message_id, "role": "user"},
         {"_id": 0, "content": 1, "ts": 1, "at": 1},
     )
@@ -589,7 +589,7 @@ async def activity(
                 detail="Filtering by user_id requires superadmin-in-context.",
             )
         chat_query["account_id"] = user_id
-    chats_in_scope = await db.chats.find(
+    chats_in_scope = await db.chats.find(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         chat_query, {"_id": 0, "id": 1, "title": 1, "context_id": 1, "account_id": 1},
     ).to_list(length=None)
     chat_ids = [c["id"] for c in chats_in_scope]
@@ -713,7 +713,7 @@ async def activity_export(
                if r.get("message_id")]
     if msg_ids:
         chat_ids = list({r["chat_id"] for r in activity_resp.get("rows", [])})
-        chats_in_scope = await db.chats.find(  # tenancy:allow-no-account-id — `chat_ids` were sourced from `activity()` above which is tenant-filtered via accessible_context_ids; this read is a lookup-by-id of an already-filtered set.
+        chats_in_scope = await db.chats.find(  # tenancy:allow-no-account-id — `chat_ids` were sourced from `activity()` above which is tenant-filtered via accessible_context_ids; this read is a lookup-by-id of an already-filtered set.  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
             {"id": {"$in": chat_ids}},
             {"_id": 0, "id": 1, "synisense_audit_ids": 1},
         ).to_list(length=None)
@@ -752,7 +752,7 @@ async def reasoning(
     cutoff_iso = cutoff.isoformat()
 
     ctx_ids = await _accessible_context_ids(current["id"])
-    chats = await db.chats.find(
+    chats = await db.chats.find(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         {"account_id": current["id"], "status": {"$ne": "archived"}},
         {"_id": 0, "id": 1, "context_id": 1},
     ).to_list(length=None)

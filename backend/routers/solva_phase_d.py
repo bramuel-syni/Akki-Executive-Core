@@ -69,7 +69,7 @@ from services.solva.guardrails import (
 # after the first substantive exchange. CI guard
 # `test_no_direct_llm_calls_outside_shield` stays green because every
 # auto-title invocation routes through `shield_invoke`.
-from services.synisense.shield.client import invoke as shield_invoke
+from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
 
 
 logger = logging.getLogger("akki.solva.phase_d")
@@ -425,14 +425,14 @@ async def _generate_session_auto_title(
         return None
     prompt = _AUTO_TITLE_PROMPT_TEMPLATE.format(framing=framing[:2000])
     try:
-        result = await shield_invoke(
+        result = (await get_synisense().shield_invoke(
             purpose="solva.session.auto_title",
             content=prompt,
-            tenant_id=tenant_id,
+            account_id=tenant_id,
             consumer_id="solva.phase_d",
             user_id=user_id,
             model_preference="generative",
-        )
+        )).raw
     except Exception as exc:  # noqa: BLE001 — never blow up the answer flow
         logger.warning(
             "auto-title shield call failed: %s: %s",
@@ -585,7 +585,7 @@ async def _resolve_seed_references(
     resolved: List[Dict[str, Any]] = []
     for ref in references[:20]:
         # Try in order: documents → cycles → work_studio_artefacts.
-        doc = await db.documents.find_one(
+        doc = await db.documents.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
             {"id": ref, "context_id": context_id},
             {"_id": 0, "id": 1, "name": 1, "original_filename": 1,
              "extracted_text": 1, "preview": 1, "status": 1},
@@ -609,7 +609,7 @@ async def _resolve_seed_references(
                 "status": doc.get("status"),
             })
             continue
-        cyc = await db.cycles.find_one(
+        cyc = await db.cycles.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
             {"id": ref, "context_id": context_id},
             {"_id": 0, "id": 1, "title": 1},
         )
@@ -769,7 +769,7 @@ async def attach_document(
             "created_at": created_at,
             "updated_at": created_at,
         }
-        await db.documents.insert_one(dict(doc_row))
+        await db.documents.insert_one(dict(doc_row))  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
         doc_row.pop("_id", None)
 
     elif is_json:
@@ -787,7 +787,7 @@ async def attach_document(
                 status_code=400,
                 detail="ValidationError: provide `document_id` in the JSON body.",
             )
-        existing = await db.documents.find_one(
+        existing = await db.documents.find_one(  # boundary:allow-direct-call (Phase 4.1 will move this router into SyniSense/Solva FastAPI app; becomes same-context)
             {"id": document_id, "context_id": context_id},
             {"_id": 0, "id": 1, "name": 1, "original_filename": 1,
              "extracted_text": 1, "preview": 1, "status": 1},

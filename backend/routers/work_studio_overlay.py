@@ -27,7 +27,17 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from core import db, iso as _iso, now as _now, require_context_membership
-from services.synisense.shield.client import invoke as shield_invoke
+from contracts import get_synisense  # Phase 4.0 — was direct shield_invoke import
+
+
+# Phase 4.0 — module-level `shield_invoke` shim, kept so existing tests
+# (`monkeypatch.setattr(router_mod, "shield_invoke", ...)`) continue
+# to work unchanged. Routes through SyniSenseContract.
+async def shield_invoke(**kwargs):
+    """Phase 4.0 shim — delegates to SyniSenseContract.shield_invoke."""
+    if "tenant_id" in kwargs and "account_id" not in kwargs:
+        kwargs["account_id"] = kwargs.pop("tenant_id")
+    return (await get_synisense().shield_invoke(**kwargs)).raw
 from services.work_studio.confidence_scorer import (
     score_confidence as _score_confidence,
     structured_content_hash as _structured_content_hash,
