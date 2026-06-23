@@ -470,11 +470,13 @@ async def _resolve_signal_card(content: Dict[str, Any]) -> Dict[str, Any]:
     sid = content.get("signal_id")
     if not sid:
         return content
-    sig = await db.signals.find_one(  # tenancy:allow-no-account-id — block hydrator: parent block validated via _resolve_artefact upstream; signal fetched by row id
-        {"id": sid},
-        {"_id": 0, "id": 1, "headline": 1, "type": 1, "rationale": 1,
-         "evidence": 1, "severity": 1},
+    # tenancy:allow-no-account-id — block hydrator: parent block validated via _resolve_artefact upstream; signal fetched by row id
+    sig_dto = await get_synisense().get_signal(
+        account_id="",  # untenanted lookup; parent block validated upstream
+        signal_id=sid,
+        untenanted=True,
     )
+    sig = sig_dto.raw if sig_dto else None
     return {**content, "_resolved": sig or None}
 
 

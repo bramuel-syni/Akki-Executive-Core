@@ -280,7 +280,11 @@ async def _seed_sandbox(session_id: str):
         if seeds["documents"]:
             await db.documents.insert_many(seeds["documents"])  # tenancy:allow-no-account-id — `seeds["documents"]` built by build_seed_payload(owner_account_id=...) which stamps account_id on every row; scanner can't trace into the builder.
         if seeds["signals"]:
-            await db.signals.insert_many(seeds["signals"])  # tenancy:allow-no-account-id — sandbox seed insert: ctx loaded with owner_account_id upstream; documents inherit sandbox tenancy
+            await get_synisense().insert_signals_for_context(
+                account_id=account_id,
+                context_id=context_id,
+                signal_rows=seeds["signals"],
+            )
         if seeds["briefings"]:
             await db.boardpacks.insert_many(seeds["briefings"])
 
@@ -312,7 +316,10 @@ async def _seed_sandbox(session_id: str):
         try:
             if ctx_id:
                 await db.documents.delete_many({"context_id": ctx_id})
-                await db.signals.delete_many({"context_id": ctx_id})
+                await get_synisense().delete_signals_in_context(
+                    account_id=acc_id or "",
+                    context_id=ctx_id,
+                )
                 await db.boardpacks.delete_many({"context_id": ctx_id})
                 await db.context_objects.delete_many({"context_id": ctx_id})
                 await db.memberships.delete_many({"context_id": ctx_id})
@@ -376,8 +383,12 @@ async def cleanup_expired_sandboxes(
     swept = 0
     async for ctx in cursor:
         cid = ctx["id"]
+        owner_acct = ctx.get("owner_account_id") or ""
         await db.documents.delete_many({"context_id": cid})
-        await db.signals.delete_many({"context_id": cid})
+        await get_synisense().delete_signals_in_context(
+            account_id=owner_acct,
+            context_id=cid,
+        )
         await db.boardpacks.delete_many({"context_id": cid})
         await db.context_objects.delete_many({"context_id": cid})
         await db.memberships.delete_many({"context_id": cid})
@@ -468,11 +479,15 @@ async def sandbox_tutorial(
     )
 
     # First seeded signal headline (for the suggested chat opener).
-    sig = await db.signals.find_one(
-        {"context_id": context_id, "sandbox_artefact": True},
-        {"_id": 0, "headline": 1},
-        sort=[("created_at", 1)],
+    sig_rows = await get_synisense().list_signals(
+        account_id=current["id"],
+        context_id=context_id,
+        sandbox_artefact=True,
+        sort_by="created_at",
+        order="asc",
+        limit=1,
     )
+    sig = sig_rows[0].raw if sig_rows else None
 
     # Suggested opener — anchored to objective when available, else to the
     # most cutting first signal.
@@ -830,7 +845,10 @@ async def convert_sandbox(
         else:
             # Discard the explored sandbox entirely on conversion
             await db.documents.delete_many({"context_id": m["context_id"]})
-            await db.signals.delete_many({"context_id": m["context_id"]})
+            await get_synisense().delete_signals_in_context(
+                account_id=current["id"],
+                context_id=m["context_id"],
+            )
             await db.boardpacks.delete_many({"context_id": m["context_id"]})
             await db.context_objects.delete_many({"context_id": m["context_id"]})
             await db.memberships.delete_many({"context_id": m["context_id"]})
@@ -1002,7 +1020,11 @@ async def create_seeded_context(
         if seeds["documents"]:
             await db.documents.insert_many(seeds["documents"])  # tenancy:allow-no-account-id — `seeds["documents"]` built by build_seed_payload(owner_account_id=...) which stamps account_id on every row; scanner can't trace into the builder.
         if seeds["signals"]:
-            await db.signals.insert_many(seeds["signals"])  # tenancy:allow-no-account-id — sandbox seed insert: ctx loaded with owner_account_id upstream; documents inherit sandbox tenancy
+            await get_synisense().insert_signals_for_context(
+                account_id=current["id"],
+                context_id=context_id,
+                signal_rows=seeds["signals"],
+            )
         if seeds["briefings"]:
             await db.boardpacks.insert_many(seeds["briefings"])
 

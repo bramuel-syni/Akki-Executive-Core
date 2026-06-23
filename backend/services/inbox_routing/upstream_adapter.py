@@ -66,14 +66,15 @@ def is_email_akki_origin(origin: Optional[Dict[str, Any]]) -> bool:
 
 async def _existing_signal_for_routed(db, *, context_id: str,
                                         message_id: str) -> Optional[Dict[str, Any]]:
-    return await db.signals.find_one(
-        {
-            "context_id": context_id,
-            "origin.source": ORIGIN_EMAIL_AKKI,
-            "origin.message_id": message_id,
-        },
-        {"_id": 0, "id": 1},
+    sig_dto = await get_synisense().find_signal_by_external_ref(
+        account_id="",  # ops-side; cross-account lookup
+        context_id=context_id,
+        source=ORIGIN_EMAIL_AKKI,
+        source_ref=message_id,
     )
+    if sig_dto is None:
+        return None
+    return {"id": sig_dto.raw.get("id") or sig_dto.signal_id}
 
 
 async def materialize_signal_primary(
@@ -127,7 +128,10 @@ async def materialize_signal_primary(
         "updated_at": now_iso,
         "origin": origin_env,
     }
-    await db.signals.insert_one(dict(sig_doc))
+    await get_synisense().insert_signal(
+        account_id="",  # routing service-side; cross-account
+        signal_row=dict(sig_doc),
+    )
     return {"id": sig_doc["id"], "status": "created"}
 
 

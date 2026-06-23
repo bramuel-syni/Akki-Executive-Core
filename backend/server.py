@@ -215,6 +215,18 @@ app.include_router(_SYNI_INTERNAL)
 app.include_router(_SOLVA_INTERNAL)
 app.include_router(_AKKI_INTERNAL)
 
+# Phase 4.3 — Healthcheck Triad. Per-context probes + composite proxy
+# from the Akki app. Same routers used by the standalone apps when run
+# in separate uvicorn processes, mounted here for the bundled topology.
+from routers.healthz_context import (  # noqa: E402
+    make_context_healthz_router,
+    make_composite_healthz_router,
+)
+app.include_router(make_context_healthz_router("akki"))
+app.include_router(make_context_healthz_router("synisense"))
+app.include_router(make_context_healthz_router("solva"))
+app.include_router(make_composite_healthz_router())
+
 
 # -----------------------------------------------------------------------------
 # Phase P2 B.1 (2026-02) — Security headers middleware.

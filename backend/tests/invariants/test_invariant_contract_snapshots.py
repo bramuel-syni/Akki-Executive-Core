@@ -195,9 +195,9 @@ def test_contract_method_counts() -> None:
     """Pre-Read §4 pinned the method counts: 5 + 5 + 11 = 21.
     Phase 4.0 widening (Pre-Read §9.1) raised to: 5 + 6 + 12 = 23.
     Phase 4.2 widening (58-hatch dissolution) raised to: 6 + 6 + 32 = 44.
-    Phase 4.3 widening (full signals API on SyniSense) raised to: 25 + 6 + 32 = 63.
+    Phase 4.3 widening (full signals API on SyniSense) raised to: 30 + 6 + 32 = 68.
     """
-    expected = {"synisense": 25, "solva": 6, "akki": 32}
+    expected = {"synisense": 30, "solva": 6, "akki": 32}
     actual: Dict[str, int] = {}
     for name, (cls, _) in SNAPSHOTS.items():
         actual[name] = sum(

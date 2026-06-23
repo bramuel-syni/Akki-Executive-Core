@@ -230,7 +230,7 @@ async def _build_reports(cid: str) -> CardReports:
     return CardReports(count=count, subtext=subtext)
 
 
-async def _build_pulse(cid: str) -> CardPulse:
+async def _build_pulse(account_id: str, cid: str) -> CardPulse:
     """Pulse signals created in last 7 days. No `severity`/`priority`
     field exists in the wild (verified 2026-05-27: `db.signals.distinct`
     both return []), so we fall back to `type`:
@@ -240,14 +240,12 @@ async def _build_pulse(cid: str) -> CardPulse:
     is absent — we use the type-based decomposition since it's
     deterministic and present."""
     since = (_now() - timedelta(days=7)).isoformat()
-    q = {"context_id": cid, "created_at": {"$gte": since}}
 
-    cursor = db.signals.aggregate([
-        {"$match": q},
-        {"$group": {"_id": "$type", "n": {"$sum": 1}}},
-    ])
-    rows = await cursor.to_list(length=None)
-    by_type = {(r["_id"] or "unknown"): r["n"] for r in rows}
+    by_type = await get_synisense().aggregate_signals_by_type(
+        account_id=account_id,
+        context_id=cid,
+        since_iso=since,
+    )
 
     critical = by_type.get("risk", 0) + by_type.get("gap", 0)
     opportunities = by_type.get("opportunity", 0)
@@ -367,7 +365,7 @@ async def attention(
 
     drafts    = await _build_drafts(cid)
     reports   = await _build_reports(cid)
-    pulse     = await _build_pulse(cid)
+    pulse     = await _build_pulse(me["id"], cid)
     questions = await _build_questions(cid)
     events    = await _build_events(cid)
 
@@ -429,17 +427,23 @@ def _invert_ts(ts: str) -> str:
 
 
 # ─── Chip: pulse ─────────────────────────────────────────────────
-async def _build_pulse_items(cid: str, limit: int) -> tuple[list[Dict[str, Any]], int]:
+async def _build_pulse_items(account_id: str, cid: str, limit: int) -> tuple[list[Dict[str, Any]], int]:
     """Recent pulse signals. Type drives severity: risk/gap → critical,
     opportunity → info, unknown → warning. Limit `limit` after the
     severity-then-recency sort."""
-    total = await db.signals.count_documents({"context_id": cid})
-    cursor = db.signals.find(
-        {"context_id": cid},
-        {"_id": 0, "id": 1, "headline": 1, "summary": 1,
-         "type": 1, "created_at": 1},
-    ).sort("created_at", -1).limit(max(limit * 3, 30))
-    raw = await cursor.to_list(length=max(limit * 3, 30))
+    total = await get_synisense().count_signals(
+        account_id=account_id,
+        context_id=cid,
+    )
+    page_limit = max(limit * 3, 30)
+    signals = await get_synisense().list_signals(
+        account_id=account_id,
+        context_id=cid,
+        sort_by="created_at",
+        order="desc",
+        limit=page_limit,
+    )
+    raw = [sig.raw or {} for sig in signals]
 
     items = []
     for s in raw:
@@ -463,7 +467,7 @@ async def _build_pulse_items(cid: str, limit: int) -> tuple[list[Dict[str, Any]]
 
 
 # ─── Chip: monitor ───────────────────────────────────────────────
-async def _build_monitor_items(cid: str, limit: int) -> tuple[list[Dict[str, Any]], int]:
+async def _build_monitor_items(account_id: str, cid: str, limit: int) -> tuple[list[Dict[str, Any]], int]:
     """Union: checklists (status=active) + submissions (status in
     {pending_approval, dispatched}) + reports (status in {draft,
     in_review}). Reuses the live `/api/contexts/{cid}/monitor` query
@@ -529,7 +533,7 @@ async def _build_monitor_items(cid: str, limit: int) -> tuple[list[Dict[str, Any
 
 
 # ─── Chip: documents ─────────────────────────────────────────────
-async def _build_document_items(cid: str, limit: int) -> tuple[list[Dict[str, Any]], int]:
+async def _build_document_items(account_id: str, cid: str, limit: int) -> tuple[list[Dict[str, Any]], int]:
     """All documents for this context, sorted by `updated_at` desc
     (fall back to `created_at` if `updated_at` is missing). Severity
     is always null — documents aren't graded."""
@@ -588,7 +592,7 @@ async def top_signals(
         return TopSignalsOut(**cached[1])
 
     builder = _CHIP_BUILDERS[chip_key]
-    items, total = await builder(cid, limit)
+    items, total = await builder(me["id"], cid, limit)
 
     out = {
         "chip":            chip_key,

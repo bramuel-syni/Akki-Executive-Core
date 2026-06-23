@@ -489,9 +489,16 @@ async def aggregated_stream(
     # Phase 2b — read full rows then project. The Mongo projection is
     # NOT relied on for privacy; the wall is. We still strip `_id`
     # because Motor returns `ObjectId` which isn't JSON-safe.
-    # tenancy:allow-no-account-id — share token validated upstream; signals filtered by token-resolved context_id list (signals_q built at L473)
-    raw_signals = await db.signals.find(signals_q, {"_id": 0}) \
-        .sort("created_at", -1).limit(per_kind_cap).to_list(per_kind_cap)
+    raw_signal_dtos = await get_synisense().list_signals(
+        account_id=current["id"],
+        context_ids=active_ctx_ids,
+        status_excludes=["archived"],
+        before_created_iso=cursor if cursor else None,
+        sort_by="created_at",
+        order="desc",
+        limit=per_kind_cap,
+    )
+    raw_signals = [s.raw or {} for s in raw_signal_dtos]
     raw_briefings = await db.boardpacks.find(briefings_q, {"_id": 0}) \
         .sort("created_at", -1).limit(per_kind_cap).to_list(per_kind_cap)
     # tenancy:allow-no-account-id — `documents_q` includes `context_id ∈ active_ctx_ids` (L478) where active_ctx_ids derives from the share-token holder's accessible contexts; tenant scope enforced via context_id ∈ allow-list rather than account_id.

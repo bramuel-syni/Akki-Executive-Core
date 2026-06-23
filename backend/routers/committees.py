@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from contracts import get_synisense
 from core import db, require_context_membership, write_audit
 
 router = APIRouter(prefix="/api")
@@ -83,9 +84,10 @@ async def delete_committee(
         raise HTTPException(status_code=404, detail="Committee not found")
     await db.contexts.update_one({"id": context_id}, {"$set": {"committees": remaining}})
     # Unset committee_id on any artefact that referenced it so nothing goes dangling.
-    await db.signals.update_many(
-        {"context_id": context_id, "committee_id": committee_id},
-        {"$unset": {"committee_id": ""}},
+    await get_synisense().unset_signals_committee(
+        account_id=ctx["account"]["id"],
+        context_id=context_id,
+        committee_id=committee_id,
     )
     await db.boardpacks.update_many(
         {"context_id": context_id, "committee_id": committee_id},

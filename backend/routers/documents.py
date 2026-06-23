@@ -1075,6 +1075,7 @@ async def generate_briefing_from_document(
         _create_job, _mark_running, _mark_completed, _mark_failed,
         _spawn,
     )
+    from contracts import get_synisense  # Phase 4.3 — signals via SyniSense API.
     doc = await db.documents.find_one(
         {"id": doc_id, "context_id": context_id},
         {"_id": 0, "id": 1, "name": 1},
@@ -1083,14 +1084,14 @@ async def generate_briefing_from_document(
         raise HTTPException(status_code=404, detail="Document not found")
     # Resolve signals owned by this doc. Mirrors the matching the
     # briefings worker does on its `signals.sources[].doc_id` field.
-    related_signals = await db.signals.find(
-        {
-            "context_id": context_id,
-            "status": "active",
-            "sources.doc_id": doc_id,
-        },
-        {"_id": 0, "id": 1},
-    ).to_list(50)
+    related_signal_rows = await get_synisense().list_signals(
+        account_id=ctx["account"]["id"],
+        context_id=context_id,
+        status="active",
+        sources_doc_id=doc_id,
+        limit=50,
+    )
+    related_signals = [{"id": sig.raw.get("id")} for sig in related_signal_rows]
     # P0-A (2026-02) — State-read parity. If the workspace-level
     # `db.signals` filter returns empty, fall through to the
     # document-level `document_intelligence.key_signals` array (the

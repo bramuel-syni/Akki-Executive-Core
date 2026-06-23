@@ -27,6 +27,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict
 
+from contracts import get_synisense  # Phase 4.3 — signals via SyniSense API.
+
 from .upstream_adapter import ORIGIN_EMAIL_AKKI, build_origin_envelope
 from contracts import get_synisense  # Phase 4.3 — signals routes through SyniSense.
 
@@ -141,13 +143,11 @@ async def run() -> Dict[str, Dict[str, int]]:
 
 
 async def _existing_primary_signal(db, *, context_id: str, message_id: str) -> Any:
-    return await db.signals.find_one(
-        {
-            "context_id": context_id,
-            "origin.source": ORIGIN_EMAIL_AKKI,
-            "origin.message_id": message_id,
-        },
-        {"_id": 0, "id": 1},
+    return await get_synisense().find_signal_by_external_ref(
+        account_id="",  # ops-side backfill; cross-account scan
+        context_id=context_id,
+        source=ORIGIN_EMAIL_AKKI,
+        source_ref=message_id,
     )
 
 
@@ -207,19 +207,22 @@ async def backfill_signals(db) -> Dict[str, int]:
             sig_kind_in, "observation",
         )
         now_iso = datetime.now(timezone.utc).isoformat()
-        await db.signals.insert_one({
-            "id": "sig-akki-" + uuid.uuid4().hex[:12],
-            "context_id": ctx_id,
-            "surface_type": surface_type,
-            "title": (sibling.get("subject") or "Email signal")[:240],
-            "body": cite[:480],
-            "topic_class": "operations",
-            "freshness": "new",
-            "confidence": env["confidence_band"],
-            "created_at": now_iso,
-            "updated_at": now_iso,
-            "origin": env,
-        })
+        await get_synisense().insert_signal(
+            account_id=account_id,
+            signal_row={
+                "id": "sig-akki-" + uuid.uuid4().hex[:12],
+                "context_id": ctx_id,
+                "surface_type": surface_type,
+                "title": (sibling.get("subject") or "Email signal")[:240],
+                "body": cite[:480],
+                "topic_class": "operations",
+                "freshness": "new",
+                "confidence": env["confidence_band"],
+                "created_at": now_iso,
+                "updated_at": now_iso,
+                "origin": env,
+            },
+        )
         counters["created"] += 1
     logger.info("[inbox_routing.backfill_signals] %s", counters)
     return counters

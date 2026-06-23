@@ -94,10 +94,6 @@ async def portfolio_metrics(
     # Run all 3 aggregate count queries in parallel via asyncio.gather
     # would be ideal — but Motor returns coroutines individually and
     # the sequential ones complete in ~tens of ms. Sequential is fine.
-    signals_q = {
-        "context_id": {"$in": cids},
-        "created_at": {"$gte": since_30d},
-    }
     briefings_q = {
         "context_id": {"$in": cids},
         "created_at": {"$gte": since_30d},
@@ -107,7 +103,11 @@ async def portfolio_metrics(
         "status": {"$ne": "archived"},
     }
 
-    signals_count   = await db.signals.count_documents(signals_q)
+    signals_count   = await get_synisense().count_signals(
+        account_id=me["id"],
+        context_ids=cids,
+        since_iso=since_30d,
+    )
     briefings_count = await db.briefings.count_documents(briefings_q)
     documents_count = await db.documents.count_documents(documents_q)
 

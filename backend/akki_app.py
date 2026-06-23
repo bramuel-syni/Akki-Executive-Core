@@ -299,5 +299,13 @@ for _r in ROUTERS:
     app.include_router(_r)
 app.include_router(INTERNAL_ROUTER)
 
+# Phase 4.3 — Healthcheck Triad. Per-context probe + composite proxy.
+from routers.healthz_context import (  # noqa: E402 — module-final wire-up
+    make_context_healthz_router,
+    make_composite_healthz_router,
+)
+app.include_router(make_context_healthz_router("akki"))
+app.include_router(make_composite_healthz_router())
+
 
 __all__ = ["app", "ROUTERS", "INTERNAL_ROUTER"]

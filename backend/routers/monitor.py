@@ -83,10 +83,15 @@ async def get_monitor(
     area_keywords = filters["reportee_area_keywords"]
 
     # ── Signals (filtered by category whitelist if any)
-    sig_q: Dict[str, Any] = {"context_id": context_id}
-    if cat_whitelist:
-        sig_q["category"] = {"$in": cat_whitelist}
-    signals = await db.signals.find(sig_q, {"_id": 0}).sort("created_at", -1).to_list(50)
+    signal_rows = await get_synisense().list_signals(
+        account_id=ctx["account"]["id"],
+        context_id=context_id,
+        category_in=list(cat_whitelist) if cat_whitelist else None,
+        sort_by="created_at",
+        order="desc",
+        limit=50,
+    )
+    signals = [sig.raw or {} for sig in signal_rows]
 
     high_signals = [s for s in signals if s.get("confidence") == "high"]
     risk_signals = [s for s in signals if s.get("type") == "risk"]

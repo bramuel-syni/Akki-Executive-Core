@@ -99,5 +99,9 @@ for _r in ROUTERS:
     app.include_router(_r)
 app.include_router(INTERNAL_ROUTER)
 
+# Phase 4.3 — Healthcheck Triad. Per-context probe.
+from routers.healthz_context import make_context_healthz_router  # noqa: E402
+app.include_router(make_context_healthz_router("solva"))
+
 
 __all__ = ["app", "ROUTERS", "INTERNAL_ROUTER"]

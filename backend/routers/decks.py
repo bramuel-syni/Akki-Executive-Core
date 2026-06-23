@@ -74,7 +74,7 @@ class FeedbackIn(BaseModel):
 # and shows them which sources will be used. Critical guardrail: the user
 # must confirm this before any deep call fires.
 # ---------------------------------------------------------------------------
-async def _gather_context_signals(context_id: str) -> Dict[str, Any]:
+async def _gather_context_signals(account_id: str, context_id: str) -> Dict[str, Any]:
     """Pull a compact summary of available evidence for the LLM to plan against."""
     docs = await db.documents.find(
         {"context_id": context_id, "status": {"$in": ["extracted", "ready"]}},
@@ -82,11 +82,15 @@ async def _gather_context_signals(context_id: str) -> Dict[str, Any]:
          "extracted_chars": 1},
     ).sort("created_at", -1).to_list(length=40)
 
-    signals = await db.signals.find(
-        {"context_id": context_id, "status": {"$ne": "archived"}},
-        {"_id": 0, "id": 1, "title": 1, "kind": 1, "act_on_status": 1,
-         "created_at": 1, "summary": 1},
-    ).sort("created_at", -1).to_list(length=30)
+    signal_rows = await get_synisense().list_signals(
+        account_id=account_id,
+        context_id=context_id,
+        status_excludes=["archived"],
+        sort_by="created_at",
+        order="desc",
+        limit=30,
+    )
+    signals = [sig.raw or {} for sig in signal_rows]
 
     briefs = await db.briefs.find(
         {"context_id": context_id},
@@ -168,7 +172,7 @@ async def create_outline(
     """Plan a deck cheaply; surface gaps; do NOT consume the deck deep slot."""
     target_slides = body.target_slides or 8
     ctx_name = ctx["context"].get("name") or "the company"
-    evidence = await _gather_context_signals(context_id)
+    evidence = await _gather_context_signals(ctx["account"]["id"], context_id)
 
     # Look up the most recent regen-reason this user gave on a prior deck
     # so the planner can fold the lesson into this outline (zero deep budget).

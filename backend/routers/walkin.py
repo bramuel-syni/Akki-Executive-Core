@@ -128,10 +128,15 @@ async def walkin_question(
         {"id": body.context_id}, {"_id": 0, "name": 1}
     )
     ctx_name = (ctx or {}).get("name") or "the company"
-    recent_signals = await db.signals.find(
-        {"context_id": body.context_id, "status": {"$ne": "archived"}},
-        {"_id": 0, "title": 1, "kind": 1},
-    ).sort("created_at", -1).to_list(length=3)
+    recent_signal_rows = await get_synisense().list_signals(
+        account_id=account["id"],
+        context_id=body.context_id,
+        status_excludes=["archived"],
+        sort_by="created_at",
+        order="desc",
+        limit=3,
+    )
+    recent_signals = [s.raw or {} for s in recent_signal_rows]
     signal_lines = "\n".join(
         f"  · {s.get('title','(untitled)')} ({s.get('kind') or 'signal'})"
         for s in recent_signals

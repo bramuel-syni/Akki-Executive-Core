@@ -134,12 +134,13 @@ async def _count_compile_ready(context_id: str) -> int:
     })
 
 
-async def _count_pulse_critical(context_id: str) -> int:
-    return await db.signals.count_documents({
-        "context_id": context_id,
-        "severity": "critical",
-        "state": {"$in": ["open", "new", "active", None]},
-    })
+async def _count_pulse_critical(account_id: str, context_id: str) -> int:
+    return await get_synisense().count_signals(
+        account_id=account_id,
+        context_id=context_id,
+        severity="critical",
+        state_in=["open", "new", "active", None],
+    )
 
 
 async def _count_solva_waiting(context_id: str, account_id: str) -> int:
@@ -239,7 +240,7 @@ async def home_insights(
     prev_visit = await _bump_visit(me["id"], context_id)
 
     compile_ready = await _count_compile_ready(context_id)
-    pulse_critical = await _count_pulse_critical(context_id)
+    pulse_critical = await _count_pulse_critical(me["id"], context_id)
     solva_waiting = await _count_solva_waiting(context_id, me["id"])
     signoffs_needed = await _count_signoffs_needed(context_id, me["id"])
     cycles_closing = await _count_cycles_closing_this_week(context_id)
@@ -319,14 +320,15 @@ async def home_whats_new(
             })
 
         # Critical Pulse signals.
-        async for s in db.signals.find(
-            {
-                "context_id": context_id,
-                "severity": "critical",
-                "created_at": {"$gt": since},
-            },
-            {"_id": 0, "id": 1, "title": 1, "created_at": 1},
-        ).limit(10):
+        critical_signals = await get_synisense().list_signals(
+            account_id=me["id"],
+            context_id=context_id,
+            severity="critical",
+            created_after_iso=since,
+            limit=10,
+        )
+        for sig in critical_signals:
+            s = sig.raw or {}
             items.append({
                 "kind": "pulse_critical",
                 "ts": s.get("created_at"),

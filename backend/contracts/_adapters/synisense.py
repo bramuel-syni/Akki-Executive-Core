@@ -211,6 +211,8 @@ class InProcessSyniSenseAdapter(SyniSenseContract):
         until_iso: Optional[str] = None,
         status: Optional[str] = None,
         status_in: Optional[List[str]] = None,
+        severity: Optional[str] = None,
+        state_in: Optional[List[str]] = None,
         committee_id: Optional[str] = None,
     ) -> int:
         """Pass-through to db.signals.count_documents."""
@@ -224,6 +226,8 @@ class InProcessSyniSenseAdapter(SyniSenseContract):
             until_iso=until_iso,
             status=status,
             status_in=status_in,
+            severity=severity,
+            state_in=state_in,
             committee_id=committee_id,
         )
         return await db.signals.count_documents(query)
@@ -239,8 +243,14 @@ class InProcessSyniSenseAdapter(SyniSenseContract):
         status: Optional[str] = None,
         status_in: Optional[List[str]] = None,
         status_excludes: Optional[List[str]] = None,
+        severity: Optional[str] = None,
+        state_in: Optional[List[str]] = None,
         committee_id: Optional[str] = None,
+        sources_doc_id: Optional[str] = None,
+        category_in: Optional[List[str]] = None,
+        sandbox_artefact: Optional[bool] = None,
         since_iso: Optional[str] = None,
+        created_after_iso: Optional[str] = None,
         before_created_iso: Optional[str] = None,
         sort_by: str = "created_at",
         order: str = "desc",
@@ -256,8 +266,14 @@ class InProcessSyniSenseAdapter(SyniSenseContract):
             status=status,
             status_in=status_in,
             status_excludes=status_excludes,
+            severity=severity,
+            state_in=state_in,
             committee_id=committee_id,
+            sources_doc_id=sources_doc_id,
+            category_in=category_in,
+            sandbox_artefact=sandbox_artefact,
             since_iso=since_iso,
+            created_after_iso=created_after_iso,
             before_created_iso=before_created_iso,
         )
         sort_dir = -1 if order.lower() == "desc" else 1
@@ -350,7 +366,7 @@ class InProcessSyniSenseAdapter(SyniSenseContract):
         """Inbox-routing helper."""
         _ = account_id  # noqa: F841 — audit
         row = await db.signals.find_one(
-            {"context_id": context_id, "source": source, "source_ref": source_ref},
+            {"context_id": context_id, "origin.source": source, "origin.message_id": source_ref},
             {"_id": 0},
         )
         if row is None:
@@ -573,15 +589,155 @@ class InProcessSyniSenseAdapter(SyniSenseContract):
         account_id: str,
         signal_id: str,
         content_hash: str,
-        merge_count: int,
         last_seen_at: str,
     ) -> bool:
         _ = account_id  # noqa: F841 — audit
         result = await db.signals.update_one(
-            {"id": signal_id, "content_hash": content_hash},
-            {"$set": {"merge_count": int(merge_count), "last_seen_at": last_seen_at}},
+            {"id": signal_id},
+            {
+                "$inc": {"merge_count": 1},
+                "$set": {"updated_at": last_seen_at, "last_merged_at": last_seen_at},
+            },
         )
         return bool(result and result.modified_count)
+
+    # Semantic-named count helpers — preserve legacy filter shapes verbatim
+
+    async def count_goals_at_risk(
+        self,
+        *,
+        account_id: str,
+        context_id: str,
+        confidence_gt: float = 0.6,
+    ) -> int:
+        """Count `goal_risk`-category signals with confidence above the threshold and state ≠ archived (Portfolio Goals-at-Risk tile)."""
+        _ = account_id  # noqa: F841 — audit
+        return await db.signals.count_documents(
+            {
+                "context_id": context_id,
+                "category": "goal_risk",
+                "confidence": {"$gt": float(confidence_gt)},
+                "state": {"$ne": "archived"},
+            }
+        )
+
+    async def count_unread_signals(
+        self,
+        *,
+        account_id: str,
+        context_id: str,
+    ) -> int:
+        """Count Pulse "unread" signals — `state == active` OR (no `state` AND `status ∈ {active, None}`). (Portfolio unread tile.)"""
+        _ = account_id  # noqa: F841 — audit
+        return await db.signals.count_documents(
+            {
+                "context_id": context_id,
+                "$or": [
+                    {"state": "active"},
+                    {"state": {"$exists": False}, "status": {"$in": ["active", None]}},
+                ],
+            }
+        )
+
+    # Pulse-specific composite queries — preserve legacy filter shape verbatim
+
+    async def list_pulse_feed_signals(
+        self,
+        *,
+        account_id: str,
+        context_id: str,
+        state_filter: str = "active",
+        origin: Optional[str] = None,
+        limit: int = 500,
+    ) -> List[Signal]:
+        """Verbatim Pulse feed query."""
+        _ = account_id  # noqa: F841 — audit
+        if state_filter == "active":
+            sf: Dict[str, Any] = {"$or": [
+                {"state": "active"},
+                {"state": {"$exists": False}, "status": {"$in": ["active", None]}},
+            ]}
+        elif state_filter == "resolved":
+            sf = {"$or": [
+                {"state": "resolved"},
+                {"state": {"$exists": False}, "status": "resolved"},
+            ]}
+        else:
+            sf = {"state": state_filter}
+        base_query: Dict[str, Any] = {"context_id": context_id, **sf}
+        if origin == "email_akki":
+            base_query["origin.source"] = "email_akki"
+        elif origin == "manual":
+            base_query["$and"] = [{"$or": [
+                {"origin": {"$exists": False}},
+                {"origin": None},
+            ]}]
+        cursor = db.signals.find(base_query, {"_id": 0}).sort("created_at", -1).limit(int(limit))
+        rows = await cursor.to_list(int(limit))
+        return [
+            Signal(
+                signal_id=r.get("id") or "",
+                account_id=r.get("account_id") or account_id,
+                context_id=r.get("context_id") or context_id,
+                raw=r,
+            )
+            for r in rows
+        ]
+
+    async def get_signal_with_origin(
+        self,
+        *,
+        account_id: str,
+        signal_id: str,
+        context_id: str,
+        origin_required: bool = False,
+    ) -> Optional[Signal]:
+        """Pulse action handler — fetch by (id, context_id) with optional origin gating."""
+        _ = account_id  # noqa: F841 — audit
+        query: Dict[str, Any] = {"id": signal_id, "context_id": context_id}
+        if origin_required:
+            query["origin"] = {"$exists": True, "$ne": None}
+        row = await db.signals.find_one(query, {"_id": 0})
+        if row is None:
+            return None
+        return Signal(
+            signal_id=row.get("id") or signal_id,
+            account_id=row.get("account_id") or account_id,
+            context_id=row.get("context_id") or context_id,
+            raw=row,
+        )
+
+    async def search_signals_by_text(
+        self,
+        *,
+        account_id: str,
+        context_id: str,
+        query: str,
+        limit: int = 50,
+    ) -> List[Signal]:
+        """Universal Search — case-insensitive regex on `headline` OR
+        `summary`. Excludes archived signals."""
+        _ = account_id  # noqa: F841 — audit
+        import re as _re
+        rx = {"$regex": _re.escape(query), "$options": "i"}
+        cursor = db.signals.find(
+            {
+                "context_id": context_id,
+                "state": {"$ne": "archived"},
+                "$or": [{"headline": rx}, {"summary": rx}],
+            },
+            {"_id": 0},
+        ).sort("created_at", -1).limit(int(limit))
+        rows = await cursor.to_list(int(limit))
+        return [
+            Signal(
+                signal_id=r.get("id") or "",
+                account_id=r.get("account_id") or account_id,
+                context_id=context_id,
+                raw=r,
+            )
+            for r in rows
+        ]
 
     @staticmethod
     def _build_signal_query(
@@ -592,9 +748,17 @@ class InProcessSyniSenseAdapter(SyniSenseContract):
         ids: Optional[List[str]] = None,
         status: Optional[str] = None,
         status_in: Optional[List[str]] = None,
+        status_excludes: Optional[List[str]] = None,
+        severity: Optional[str] = None,
+        state_in: Optional[List[str]] = None,
         committee_id: Optional[str] = None,
+        sources_doc_id: Optional[str] = None,
+        category_in: Optional[List[str]] = None,
+        sandbox_artefact: Optional[bool] = None,
         since_iso: Optional[str] = None,
         until_iso: Optional[str] = None,
+        created_after_iso: Optional[str] = None,
+        before_created_iso: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Compose the legacy-shape Mongo filter dict from the typed kwargs."""
         query: Dict[str, Any] = {}
@@ -613,13 +777,31 @@ class InProcessSyniSenseAdapter(SyniSenseContract):
             query["status"] = status
         elif status_in is not None:
             query["status"] = {"$in": list(status_in)}
+        elif status_excludes is not None:
+            query["status"] = {"$nin": list(status_excludes)}
+        if severity is not None:
+            query["severity"] = severity
+        if state_in is not None:
+            # Legacy "state" field — values include None mixed with strings
+            # (`["open", "new", "active", None]`). Preserve None-in-list semantics.
+            query["state"] = {"$in": list(state_in)}
         if committee_id is not None:
             query["committee_id"] = committee_id
+        if sources_doc_id is not None:
+            query["sources.doc_id"] = sources_doc_id
+        if category_in is not None:
+            query["category"] = {"$in": list(category_in)}
+        if sandbox_artefact is not None:
+            query["sandbox_artefact"] = bool(sandbox_artefact)
         created_at: Dict[str, Any] = {}
         if since_iso is not None:
             created_at["$gte"] = since_iso
+        if created_after_iso is not None:
+            created_at["$gt"] = created_after_iso
         if until_iso is not None:
             created_at["$lt"] = until_iso
+        if before_created_iso is not None:
+            created_at["$lt"] = before_created_iso
         if created_at:
             query["created_at"] = created_at
         return query

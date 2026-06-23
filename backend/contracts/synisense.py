@@ -103,6 +103,8 @@ class SyniSenseContract(Protocol):
         until_iso: Optional[str] = None,
         status: Optional[str] = None,
         status_in: Optional[List[str]] = None,
+        severity: Optional[str] = None,
+        state_in: Optional[List[str]] = None,
         committee_id: Optional[str] = None,
     ) -> int:
         """Tenant-scoped signal count with composable filters. Replaces all `db.signals.count_documents(...)` direct calls in Akki routers."""
@@ -119,8 +121,14 @@ class SyniSenseContract(Protocol):
         status: Optional[str] = None,
         status_in: Optional[List[str]] = None,
         status_excludes: Optional[List[str]] = None,
+        severity: Optional[str] = None,
+        state_in: Optional[List[str]] = None,
         committee_id: Optional[str] = None,
+        sources_doc_id: Optional[str] = None,
+        category_in: Optional[List[str]] = None,
+        sandbox_artefact: Optional[bool] = None,
         since_iso: Optional[str] = None,
+        created_after_iso: Optional[str] = None,
         before_created_iso: Optional[str] = None,
         sort_by: str = "created_at",
         order: str = "desc",
@@ -167,7 +175,7 @@ class SyniSenseContract(Protocol):
         source: str,
         source_ref: str,
     ) -> Optional[Signal]:
-        """Inbox-routing helper — `services/inbox_routing/{upstream_adapter,backfill}.py` finds an existing row by (context_id, source, source_ref) before inserting a new one."""
+        """Inbox-routing helper — finds an existing row by (context_id, origin.source, origin.message_id) before inserting a new one. (`services/inbox_routing/{upstream_adapter,backfill}.py`)"""
         ...
 
     # Mutations — semantic-named per business action
@@ -302,10 +310,73 @@ class SyniSenseContract(Protocol):
         account_id: str,
         signal_id: str,
         content_hash: str,
-        merge_count: int,
         last_seen_at: str,
     ) -> bool:
-        """Increment merge_count + refresh last_seen_at on a deduped signal row (services/signal_dedup.py)."""
+        """Atomic `$inc` of merge_count + `$set` updated_at / last_merged_at on a deduped signal row (services/signal_dedup.py)."""
+        ...
+
+    # Semantic-named composite queries — preserve legacy filter shapes verbatim
+
+    async def list_pulse_feed_signals(
+        self,
+        *,
+        account_id: str,
+        context_id: str,
+        state_filter: str = "active",
+        origin: Optional[str] = None,
+        limit: int = 500,
+    ) -> List[Signal]:
+        """Pulse feed — verbatim `state` + `origin` filter (routers/pulse.py).
+        `state_filter` is one of `"active"` / `"resolved"` / any other
+        string mapped to `{state: <value>}`. `origin` is one of
+        `"email_akki"` (→ `origin.source == email_akki`) / `"manual"`
+        (→ `origin` absent or null) / None (no origin filter)."""
+        ...
+
+    async def get_signal_with_origin(
+        self,
+        *,
+        account_id: str,
+        signal_id: str,
+        context_id: str,
+        origin_required: bool = False,
+    ) -> Optional[Signal]:
+        """Pulse action handler — fetch by (id, context_id). When
+        `origin_required=True`, the row is only returned if `origin`
+        exists and is non-null (used by the `email_akki` action filter)."""
+        ...
+
+    async def search_signals_by_text(
+        self,
+        *,
+        account_id: str,
+        context_id: str,
+        query: str,
+        limit: int = 50,
+    ) -> List[Signal]:
+        """Universal Search — case-insensitive regex on `headline` OR
+        `summary`. Excludes archived signals. (services/universal_search.py)"""
+        ...
+
+    # Semantic-named count helpers — preserve legacy filter shapes verbatim
+
+    async def count_goals_at_risk(
+        self,
+        *,
+        account_id: str,
+        context_id: str,
+        confidence_gt: float = 0.6,
+    ) -> int:
+        """Count `goal_risk`-category signals with confidence above the threshold and state ≠ archived (Portfolio Goals-at-Risk tile)."""
+        ...
+
+    async def count_unread_signals(
+        self,
+        *,
+        account_id: str,
+        context_id: str,
+    ) -> int:
+        """Count Pulse "unread" signals — `state == active` OR (no `state` AND `status ∈ {active, None}`). (Portfolio unread tile.)"""
         ...
 
 

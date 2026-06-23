@@ -74,23 +74,29 @@ async def dedup_or_insert(
     # Atomic find-or-insert. We cannot use upsert+inc because that would
     # bump merge_count on first insert too. Two-step is fine — race is
     # handled by the unique partial index in server.py startup.
-    existing = await db.signals.find_one(
-        {"context_id": sig["context_id"], "content_hash": h},
-        {"_id": 0},
+    syni = get_synisense()
+    existing_dto = await syni.find_signal_by_content_hash(
+        account_id=sig.get("account_id", "") or "",
+        context_id=sig["context_id"],
+        content_hash=h,
     )
+    existing = existing_dto.raw if existing_dto else None
     if existing:
-        await db.signals.update_one(  # tenancy:allow-no-account-id — dedup helper called with account-gated signal payload; merge by fingerprint within tenant scope
-            {"id": existing["id"]},
-            {
-                "$inc": {"merge_count": 1},
-                "$set": {"updated_at": sig.get("created_at"),
-                         "last_merged_at": sig.get("created_at")},
-            },
+        # tenancy:allow-no-account-id — dedup helper called with account-gated signal payload; merge by fingerprint within tenant scope
+        await syni.merge_signal_dedup(
+            account_id=sig.get("account_id", "") or "",
+            signal_id=existing["id"],
+            content_hash=h,
+            last_seen_at=sig.get("created_at") or "",
         )
         existing["merge_count"] = (existing.get("merge_count") or 1) + 1
         existing["last_merged_at"] = sig.get("created_at")
         return existing, False
 
-    await db.signals.insert_one(sig)  # tenancy:allow-no-account-id — dedup helper called with account-gated signal payload; insert with full provenance
+    # tenancy:allow-no-account-id — dedup helper called with account-gated signal payload; insert with full provenance
+    await syni.insert_signal(
+        account_id=sig.get("account_id", "") or "",
+        signal_row=sig,
+    )
     sig.pop("_id", None)
     return sig, True

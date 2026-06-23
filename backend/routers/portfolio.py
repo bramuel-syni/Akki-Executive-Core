@@ -90,14 +90,10 @@ async def _cycle_state(context_id: str) -> Dict[str, Any]:
     return {"status": "ship", "ship_in_days": None, "act_label": "Compile pack"}
 
 
-async def _goals_at_risk_count(context_id: str) -> int:
-    return await db.signals.count_documents(
-        {
-            "context_id": context_id,
-            "category": "goal_risk",
-            "confidence": {"$gt": 0.6},
-            "state": {"$ne": "archived"},
-        }
+async def _goals_at_risk_count(account_id: str, context_id: str) -> int:
+    return await get_synisense().count_goals_at_risk(
+        account_id=account_id,
+        context_id=context_id,
     )
 
 
@@ -107,16 +103,11 @@ async def _pending_followups_count(context_id: str) -> int:
     )
 
 
-async def _unread_signals_count(context_id: str) -> int:
+async def _unread_signals_count(account_id: str, context_id: str) -> int:
     # Active signals not yet bookmarked or resolved.
-    return await db.signals.count_documents(
-        {
-            "context_id": context_id,
-            "$or": [
-                {"state": "active"},
-                {"state": {"$exists": False}, "status": {"$in": ["active", None]}},
-            ],
-        }
+    return await get_synisense().count_unread_signals(
+        account_id=account_id,
+        context_id=context_id,
     )
 
 
@@ -199,9 +190,9 @@ async def me_portfolio(current: Dict[str, Any] = Depends(get_current_account)):
             continue
         state = {
             "cycle": await _cycle_state(cid),
-            "goals_at_risk_count": await _goals_at_risk_count(cid),
+            "goals_at_risk_count": await _goals_at_risk_count(account_id, cid),
             "pending_followups_count": await _pending_followups_count(cid),
-            "unread_signals_count": await _unread_signals_count(cid),
+            "unread_signals_count": await _unread_signals_count(account_id, cid),
             "last_active_at": await _last_active_at(cid, account_id),
             "exco": await _exco_membership_summary(cid, account_id),
         }

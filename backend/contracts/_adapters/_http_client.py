@@ -50,6 +50,24 @@ DEFAULT_RETRIES = int(os.environ.get("INTERNAL_TRANSPORT_RETRIES", "3"))
 DEFAULT_BACKOFF_BASE_S = 0.1
 
 
+def _per_context_base_url(context_name: str) -> str:
+    """Resolve the per-context base URL.
+
+    Phase 4.3 adds per-context base URL overrides so the three apps can
+    eventually run as independent uvicorn processes on distinct ports:
+
+      • ``INTERNAL_TRANSPORT_BASE_URL_AKKI``      (default port 8001)
+      • ``INTERNAL_TRANSPORT_BASE_URL_SYNISENSE`` (default port 8011)
+      • ``INTERNAL_TRANSPORT_BASE_URL_SOLVA``     (default port 8012)
+
+    When the per-context env var is empty/absent, falls back to the
+    composite ``INTERNAL_TRANSPORT_BASE_URL`` (loopback to the bundled
+    process — the supervisor-locked default in Phase 4.3).
+    """
+    env_key = f"INTERNAL_TRANSPORT_BASE_URL_{context_name.upper()}"
+    return os.environ.get(env_key, "").strip() or DEFAULT_BASE_URL
+
+
 def _internal_secret() -> str:
     return os.environ.get("INTERNAL_TRANSPORT_SECRET", "")
 
@@ -92,17 +110,24 @@ def _reconstruct(value: Any, dto_class: Optional[Type[Any]]) -> Any:
 
 def _build_return_map(adapter_cls: Type[Any]) -> Dict[str, Tuple[Optional[Type[Any]], bool]]:
     """Inspect the in-process adapter class to build a method-name →
-    (dto_class, is_list) map. `dto_class=None` for primitives."""
+    (dto_class, is_list) map. `dto_class=None` for primitives.
+
+    Adapter modules opt into ``from __future__ import annotations`` (PEP
+    563 string annotations), so we resolve via ``typing.get_type_hints``
+    to turn the string forms back into real types. Resolution runs in
+    the adapter module's namespace so context DTOs (``Signal``,
+    ``ShieldResult``, etc.) bind correctly.
+    """
     out: Dict[str, Tuple[Optional[Type[Any]], bool]] = {}
     for name, member in inspect.getmembers(adapter_cls, predicate=inspect.isfunction):
         if name.startswith("_"):
             continue
         try:
-            sig = inspect.signature(member)
-        except (TypeError, ValueError):
-            continue
-        ret = sig.return_annotation
-        if ret is inspect.Signature.empty:
+            hints = typing.get_type_hints(member)
+        except Exception:  # pragma: no cover — defensive (forward-ref the module can't resolve)
+            hints = {}
+        ret = hints.get("return")
+        if ret is None:
             out[name] = (None, False)
             continue
         is_optional, inner = _is_optional(ret)
@@ -133,7 +158,10 @@ class _HTTPAdapterBase:
         timeout_s: Optional[float] = None,
         retries: Optional[int] = None,
     ) -> None:
-        self._base_url = (base_url or DEFAULT_BASE_URL).rstrip("/")
+        # Phase 4.3 — resolve per-context base URL first, then allow
+        # caller-explicit override. Falls back to composite default.
+        resolved = base_url or _per_context_base_url(self.context_name)
+        self._base_url = resolved.rstrip("/")
         self._timeout_s = timeout_s if timeout_s is not None else DEFAULT_TIMEOUT_S
         self._retries = retries if retries is not None else DEFAULT_RETRIES
 

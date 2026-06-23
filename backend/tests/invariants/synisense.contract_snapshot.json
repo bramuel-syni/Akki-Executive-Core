@@ -1,6 +1,6 @@
 {
   "class": "SyniSenseContract",
-  "method_count": 25,
+  "method_count": 30,
   "methods": {
     "add_signal_comment": {
       "parameters": [
@@ -83,6 +83,29 @@
       ],
       "return": "bool"
     },
+    "count_goals_at_risk": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "confidence_gt",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "float",
+          "has_default": true
+        }
+      ],
+      "return": "int"
+    },
     "count_signals": {
       "parameters": [
         {
@@ -105,6 +128,12 @@
         },
         {
           "name": "type_in",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "ids",
           "kind": "KEYWORD_ONLY",
           "annotation": "Optional[List[str]]",
           "has_default": true
@@ -134,10 +163,39 @@
           "has_default": true
         },
         {
+          "name": "severity",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "state_in",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
           "name": "committee_id",
           "kind": "KEYWORD_ONLY",
           "annotation": "Optional[str]",
           "has_default": true
+        }
+      ],
+      "return": "int"
+    },
+    "count_unread_signals": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
         }
       ],
       "return": "int"
@@ -338,6 +396,35 @@
       ],
       "return": "Optional[Signal]"
     },
+    "get_signal_with_origin": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "signal_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "origin_required",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "bool",
+          "has_default": true
+        }
+      ],
+      "return": "Optional[Signal]"
+    },
     "get_trust_receipt": {
       "parameters": [
         {
@@ -395,6 +482,41 @@
       ],
       "return": "int"
     },
+    "list_pulse_feed_signals": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "state_filter",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": true
+        },
+        {
+          "name": "origin",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "limit",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "int",
+          "has_default": true
+        }
+      ],
+      "return": "List[Signal]"
+    },
     "list_signals": {
       "parameters": [
         {
@@ -440,13 +562,61 @@
           "has_default": true
         },
         {
+          "name": "status_excludes",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "severity",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "state_in",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
           "name": "committee_id",
           "kind": "KEYWORD_ONLY",
           "annotation": "Optional[str]",
           "has_default": true
         },
         {
+          "name": "sources_doc_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "category_in",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[List[str]]",
+          "has_default": true
+        },
+        {
+          "name": "sandbox_artefact",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[bool]",
+          "has_default": true
+        },
+        {
           "name": "since_iso",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "created_after_iso",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "Optional[str]",
+          "has_default": true
+        },
+        {
+          "name": "before_created_iso",
           "kind": "KEYWORD_ONLY",
           "annotation": "Optional[str]",
           "has_default": true
@@ -574,12 +744,6 @@
           "has_default": false
         },
         {
-          "name": "merge_count",
-          "kind": "KEYWORD_ONLY",
-          "annotation": "int",
-          "has_default": false
-        },
-        {
           "name": "last_seen_at",
           "kind": "KEYWORD_ONLY",
           "annotation": "str",
@@ -598,6 +762,35 @@
         }
       ],
       "return": "None"
+    },
+    "search_signals_by_text": {
+      "parameters": [
+        {
+          "name": "account_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "context_id",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "query",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "str",
+          "has_default": false
+        },
+        {
+          "name": "limit",
+          "kind": "KEYWORD_ONLY",
+          "annotation": "int",
+          "has_default": true
+        }
+      ],
+      "return": "List[Signal]"
     },
     "shield_invoke": {
       "parameters": [

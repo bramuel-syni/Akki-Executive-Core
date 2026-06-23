@@ -216,35 +216,18 @@ async def pulse_feed(
 
     # Query layer: prefer the new `state` field, fall back to `status`.
     # Old rows (pre-G.1 migration) may have only `status='active'` —
-    # the $or below matches both cleanly.
-    if state_arg == "active":
-        state_filter = {"$or": [
-            {"state": "active"},
-            {"state": {"$exists": False}, "status": {"$in": ["active", None]}},
-        ]}
-    elif state_arg == "resolved":
-        state_filter = {"$or": [
-            {"state": "resolved"},
-            {"state": {"$exists": False}, "status": "resolved"},
-        ]}
-    else:
-        state_filter = {"state": state_arg}
-
-    base_query = {"context_id": context_id, **state_filter}
-
+    # the `list_pulse_feed_signals` adapter encodes the legacy $or fallback.
     # Phase P5.19 — `?origin=email_akki|manual` filter on the feed.
     # `email_akki` narrows to signals carrying the P5.17/P5.19 origin
     # envelope; `manual` excludes them.
-    if origin == "email_akki":
-        base_query["origin.source"] = "email_akki"
-    elif origin == "manual":
-        base_query["$and"] = [{"$or": [
-            {"origin": {"$exists": False}},
-            {"origin": None},
-        ]}]
-
-    sigs = await db.signals.find(base_query, {"_id": 0})\
-        .sort("created_at", -1).to_list(500)
+    feed_signals = await get_synisense().list_pulse_feed_signals(
+        account_id=ctx["account"]["id"],
+        context_id=context_id,
+        state_filter=state_arg,
+        origin=origin if origin in ("email_akki", "manual") else None,
+        limit=500,
+    )
+    sigs = [sig.raw or {} for sig in feed_signals]
 
     # Phase G.3 — priority sort on Active landing: confidence × recency.
     # high=3, medium=2, low=1. Within the same confidence bucket the newer
@@ -563,13 +546,16 @@ class ShareIn(BaseModel):
     note: Optional[str] = Field(default=None, max_length=600)
 
 
-async def _load_signal_or_404(signal_id: str, context_id: str) -> Dict[str, Any]:
-    sig = await db.signals.find_one(
-        {"id": signal_id, "context_id": context_id}, {"_id": 0},
+async def _load_signal_or_404(account_id: str, signal_id: str, context_id: str) -> Dict[str, Any]:
+    sig = await get_synisense().get_signal(
+        account_id=account_id,
+        signal_id=signal_id,
+        context_id=context_id,
+        untenanted=True,  # caller validates membership via require_context_membership
     )
     if not sig:
         raise HTTPException(status_code=404, detail="Signal not found")
-    return sig
+    return sig.raw or {}
 
 
 async def _record_action(
@@ -613,7 +599,7 @@ async def pulse_comment(
     are private per-account: the feed/drawer only surfaces comments
     where `account_id` matches the caller.
     """
-    await _load_signal_or_404(signal_id, context_id)
+    await _load_signal_or_404(ctx["account"]["id"], signal_id, context_id)
     aid = ctx["account"]["id"]
     note = body.note.strip()
     if not note:
@@ -625,9 +611,11 @@ async def pulse_comment(
         "created_at": iso(now()),
     }
     # Append to signals.comments[]
-    await db.signals.update_one(
-        {"id": signal_id, "context_id": context_id},
-        {"$push": {"comments": comment_doc}},
+    await get_synisense().add_signal_comment(
+        account_id=aid,
+        signal_id=signal_id,
+        context_id=context_id,
+        comment=comment_doc,
     )
     # Mirror to signal_actions for the audit trail.
     await _record_action(
@@ -646,12 +634,14 @@ async def pulse_comment_delete(
     """Remove a comment from the signal. Only the comment's author
     can delete their own comment."""
     aid = ctx["account"]["id"]
-    res = await db.signals.update_one(
-        {"id": signal_id, "context_id": context_id,
-         "comments.id": comment_id, "comments.account_id": aid},
-        {"$pull": {"comments": {"id": comment_id, "account_id": aid}}},
+    deleted = await get_synisense().delete_signal_comment(
+        account_id=aid,
+        signal_id=signal_id,
+        context_id=context_id,
+        comment_id=comment_id,
+        commenter_account_id=aid,
     )
-    if res.modified_count == 0:
+    if not deleted:
         raise HTTPException(status_code=404, detail="Comment not found or not yours")
     return {"ok": True, "id": comment_id}
 
@@ -661,7 +651,7 @@ async def pulse_share(
     context_id: str, signal_id: str, body: ShareIn,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
 ):
-    await _load_signal_or_404(signal_id, context_id)
+    await _load_signal_or_404(ctx["account"]["id"], signal_id, context_id)
     recipients = [r.strip() for r in (body.recipients or []) if r.strip()]
     return await _record_action(
         signal_id=signal_id, context_id=context_id,
@@ -684,22 +674,19 @@ async def pulse_resolve(
     """Phase G.1 — mark signal resolved. Sets `state='resolved'` plus
     legacy `status='resolved'` for back-compat. Optional resolution_note
     on body is shown in the Resolved tab card."""
-    await _load_signal_or_404(signal_id, context_id)
-    upd = {
-        "state": "resolved",
-        "status": "resolved",
-        "resolved_at": iso(now()),
-        "resolved_by": ctx["account"]["id"],
-    }
-    if body and body.resolution_note:
-        upd["resolution_note"] = body.resolution_note.strip()
-    await db.signals.update_one(
-        {"id": signal_id, "context_id": context_id}, {"$set": upd},
+    await _load_signal_or_404(ctx["account"]["id"], signal_id, context_id)
+    resolution_note = (body.resolution_note or "").strip() if body and body.resolution_note else None
+    await get_synisense().mark_signal_resolved(
+        account_id=ctx["account"]["id"],
+        signal_id=signal_id,
+        context_id=context_id,
+        resolution_note=resolution_note,
+        resolved_by=ctx["account"]["id"],
     )
     return await _record_action(
         signal_id=signal_id, context_id=context_id,
         account_id=ctx["account"]["id"], action_type="resolved",
-        payload={"resolution_note": upd.get("resolution_note")},
+        payload={"resolution_note": resolution_note},
     )
 
 
@@ -711,11 +698,11 @@ async def pulse_unresolve(
     """Phase G.1 — recover from accidental resolve. Per QA brief E-02:
     the user resolved in error and wants the signal back on the
     Active tab. Returns state='active'; clears resolved metadata."""
-    await _load_signal_or_404(signal_id, context_id)
-    await db.signals.update_one(
-        {"id": signal_id, "context_id": context_id},
-        {"$set": {"state": "active", "status": "active"},
-         "$unset": {"resolved_at": "", "resolved_by": "", "resolution_note": ""}},
+    await _load_signal_or_404(ctx["account"]["id"], signal_id, context_id)
+    await get_synisense().mark_signal_unresolved(
+        account_id=ctx["account"]["id"],
+        signal_id=signal_id,
+        context_id=context_id,
     )
     return await _record_action(
         signal_id=signal_id, context_id=context_id,
@@ -732,13 +719,13 @@ async def pulse_bookmark(
     Sets state='bookmarked' on the signal AND records a per-user
     saved row on signal_actions so per-user bookmark history
     (multi-NED context) is preserved."""
-    await _load_signal_or_404(signal_id, context_id)
+    await _load_signal_or_404(ctx["account"]["id"], signal_id, context_id)
     aid = ctx["account"]["id"]
-    await db.signals.update_one(
-        {"id": signal_id, "context_id": context_id},
-        {"$set": {"state": "bookmarked",
-                  "bookmarked_at": iso(now()),
-                  "bookmarked_by": aid}},
+    await get_synisense().bookmark_signal(
+        account_id=aid,
+        signal_id=signal_id,
+        context_id=context_id,
+        bookmarked_by=aid,
     )
     # mirror to signal_actions for the per-user trail
     existing = await db.signal_actions.find_one(
@@ -759,12 +746,12 @@ async def pulse_unbookmark(
     ctx: Dict[str, Any] = Depends(require_context_membership()),
 ):
     """Phase G.1 — remove bookmark; returns to Active state."""
-    await _load_signal_or_404(signal_id, context_id)
+    await _load_signal_or_404(ctx["account"]["id"], signal_id, context_id)
     aid = ctx["account"]["id"]
-    await db.signals.update_one(
-        {"id": signal_id, "context_id": context_id},
-        {"$set": {"state": "active"},
-         "$unset": {"bookmarked_at": "", "bookmarked_by": ""}},
+    await get_synisense().unbookmark_signal(
+        account_id=aid,
+        signal_id=signal_id,
+        context_id=context_id,
     )
     await db.signal_actions.delete_many(
         {"signal_id": signal_id, "context_id": context_id,
@@ -784,7 +771,7 @@ async def pulse_save(
     ctx: Dict[str, Any] = Depends(require_context_membership()),
 ):
     """LEGACY toggle — flips between bookmark/unbookmark."""
-    await _load_signal_or_404(signal_id, context_id)
+    await _load_signal_or_404(ctx["account"]["id"], signal_id, context_id)
     aid = ctx["account"]["id"]
     existing = await db.signal_actions.find_one(
         {"signal_id": signal_id, "context_id": context_id,
@@ -809,7 +796,7 @@ async def pulse_take_to_solva(
     construct on db.solva_v2_sessions so we don't run an HTTP roundtrip
     against ourselves. The session is tagged `from_signal=<sid>` so the
     Solva surface can render the framing chip."""
-    sig = await _load_signal_or_404(signal_id, context_id)
+    sig = await _load_signal_or_404(ctx["account"]["id"], signal_id, context_id)
 
     headline = sig.get("headline") or ""
     summary = sig.get("summary") or ""

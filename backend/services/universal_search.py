@@ -195,22 +195,21 @@ async def search_chats(
 
 async def search_pulse(
     db: Any, context_id: str, q: str, limit: int,
+    account_id: str = "",
 ) -> List[Dict[str, Any]]:
     """Pulse signals — case-insensitive regex on `headline` OR `summary`.
 
     Excludes archived signals (Phase G lifecycle). Defaults to a 50-row
     cap because Pulse feeds are intentionally short."""
-    rx = {"$regex": _escape_regex(q), "$options": "i"}
-    cursor = db.signals.find(
-        {
-            "context_id": context_id,
-            "state": {"$ne": "archived"},
-            "$or": [{"headline": rx}, {"summary": rx}],
-        },
-        {"_id": 0, "id": 1, "headline": 1, "summary": 1, "type": 1, "state": 1, "created_at": 1},
-    ).sort("created_at", -1).limit(limit)
+    sig_rows = await get_synisense().search_signals_by_text(
+        account_id=account_id,
+        context_id=context_id,
+        query=q,
+        limit=limit,
+    )
     out: List[Dict[str, Any]] = []
-    async for s in cursor:
+    for sig_dto in sig_rows:
+        s = sig_dto.raw or {}
         title = s.get("headline") or "(signal)"
         body = s.get("summary") or ""
         title_hit = q.lower() in title.lower()
@@ -527,12 +526,16 @@ async def run_federated_search(
             continue
         per_context.setdefault(cid, {"context_id": cid, "context_name": cname, "count": 0})
         for sname, handler in selected.items():
-            # Chats need account_id (chats are personal); others are
+            # Chats + pulse take account_id (chats are personal; pulse
+            # routes through SyniSenseContract for audit). Others are
             # context-scoped only. Pass kwargs so handlers can pick.
             try:
-                rows = await handler(
-                    db, cid, q, per_context_limit, account_id=account_id,
-                ) if sname == "chats" else await handler(db, cid, q, per_context_limit)
+                if sname in ("chats", "pulse"):
+                    rows = await handler(
+                        db, cid, q, per_context_limit, account_id=account_id,
+                    )
+                else:
+                    rows = await handler(db, cid, q, per_context_limit)
             except TypeError:
                 # Defensive — older signatures.
                 rows = await handler(db, cid, q, per_context_limit)

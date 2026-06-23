@@ -88,10 +88,14 @@ async def simulate(
     # Optional signals grounding
     signals: List[Dict[str, Any]] = []
     if body.signal_ids:
-        signals = await db.signals.find(
-            {"context_id": context_id, "id": {"$in": body.signal_ids}, "status": "active"},
-            {"_id": 0, "id": 1, "type": 1, "headline": 1, "confidence": 1, "sources": 1},
-        ).to_list(8)
+        signal_rows = await get_synisense().list_signals(
+            account_id=ctx["account"]["id"],
+            context_id=context_id,
+            ids=body.signal_ids,
+            status="active",
+            limit=8,
+        )
+        signals = [s.raw or {} for s in signal_rows]
 
     signals_summary = ""
     if signals:
