@@ -51,6 +51,7 @@ async def _build_ctx(*, account_id: str, context_id: str) -> Dict[str, Any]:
     The 4 sync handlers we delegate to expect this nested shape."""
     from core import db
     acc = await db.accounts.find_one({"id": account_id}, {"_id": 0}) or {}
+    # tenancy:allow-no-account-id — async-mirror context hydrator; `context_id` flows from a tenant-gated document handler.
     ctx_row = await db.contexts.find_one({"id": context_id}, {"_id": 0}) or {}
     return {
         "account": acc,

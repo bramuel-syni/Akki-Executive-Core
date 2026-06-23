@@ -49,6 +49,7 @@ async def _user_context_ids(account_id: str) -> List[str]:
 async def _context_name_map(ctx_ids: List[str]) -> Dict[str, str]:
     if not ctx_ids:
         return {}
+    # tenancy:allow-no-account-id — `ctx_ids` were filtered to the caller's accessible contexts at the route entry.
     rows = await db.contexts.find(
         {"id": {"$in": ctx_ids}}, {"_id": 0, "id": 1, "name": 1},
     ).to_list(500)

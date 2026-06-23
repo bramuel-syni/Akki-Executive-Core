@@ -759,6 +759,7 @@ async def public_read_share(token: str, request: Request):
             {"id": share_rec.get("shared_by")}, {"_id": 0, "name": 1, "email": 1}
         ) or {}
         sharer_name = sharer.get("name") or sharer.get("email")
+    # tenancy:allow-no-account-id — public share-token-resolved render; `cid` came from the share record validated against the token at the route entry.
     ctx_doc = await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1}) or {}
     context_name = ctx_doc.get("name") or "AKKI"
 

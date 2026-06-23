@@ -122,6 +122,7 @@ async def walkin_question(
     # someone who actually sits on this board, not a generic helper. Same
     # tier (Sonnet, free of deep budget) — we just give the planner more
     # to work with.
+    # tenancy:allow-no-account-id — walkin-question helper; `context_id` came from the body validated against the caller's accessible-context list above.
     ctx = await db.contexts.find_one(
         {"id": body.context_id}, {"_id": 0, "name": 1}
     )

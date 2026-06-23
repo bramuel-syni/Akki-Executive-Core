@@ -499,6 +499,7 @@ async def preview_invitation(token: str):
         raise HTTPException(status_code=404, detail="Invitation not found or no longer valid")
     if inv.get("expires_at") and datetime.fromisoformat(inv["expires_at"]) < _now():
         raise HTTPException(status_code=410, detail="Invitation expired")
+    # tenancy:allow-no-account-id — preview-invitation; `inv` was looked up by the public invitation token (token IS the auth surface for invitations).
     ctx = await db.contexts.find_one({"id": inv["context_id"]}, {"_id": 0})
     return {
         "email": inv["email"],
@@ -546,5 +547,6 @@ async def accept_invitation(
         inv["context_id"], current["id"], "member.joined", "account", current["id"],
         {"role": inv["role"]},
     )
+    # tenancy:allow-no-account-id — accept-invitation; `inv` was looked up by the public invitation token at the route entry.
     ctx = await db.contexts.find_one({"id": inv["context_id"]}, {"_id": 0})
     return {"ok": True, "context": sanitize_context(ctx)}

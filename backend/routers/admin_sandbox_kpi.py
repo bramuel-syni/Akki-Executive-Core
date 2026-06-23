@@ -62,6 +62,7 @@ async def sandbox_kpi(_: Dict[str, Any] = Depends(_require_superadmin)):
           ]
         }
     """
+    # tenancy:allow-no-account-id — admin sandbox-KPI dashboard; super-admin gate enforced by route dependency.
     cursor = db.contexts.find(
         {
             "$or": [
@@ -154,6 +155,7 @@ async def sandbox_objectives_list(
       sector — filter by intake sector
       answer — filter by 'yes' | 'partial' | 'no' | 'skipped' | 'pending'
     """
+    # tenancy:allow-no-account-id — admin sandbox-objectives listing; super-admin gate enforced by route dependency.
     cursor = db.contexts.find(
         {
             "$or": [

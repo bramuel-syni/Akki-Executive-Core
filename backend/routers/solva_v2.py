@@ -596,6 +596,7 @@ async def _run_grounding(
     sector_tag: Optional[str] = None
     ctx_id = session.get("context_id")
     if ctx_id:
+        # tenancy:allow-no-account-id — `_run_grounding` worker closure; `context_id` is a closure capture from the upstream-gated session-creation handler.
         ctx_doc = await db.contexts.find_one(
             {"id": ctx_id}, {"_id": 0, "sector": 1, "industry": 1}
         )

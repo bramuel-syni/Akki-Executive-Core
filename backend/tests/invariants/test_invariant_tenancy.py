@@ -227,6 +227,44 @@ def _allowed_keys_for(collection: str) -> FrozenSet[str]:
     return ALT_TENANCY_KEYS.get(collection, frozenset({"account_id"}))
 
 
+# ───────────────────────── Phase 2.4 Upgrade D — helper-fusion ──────────
+# For collections where the tenancy contract is enforced by a tenant-vetted
+# helper (rather than by a key-on-the-filter literal), the scanner accepts
+# a `db.<collection>.<method>(...)` call as compliant iff a matching helper
+# call appears earlier in the same function scope OR the function is
+# decorated with a FastAPI `Depends(helper_factory(...))` dependency.
+#
+# Recognised helpers per collection (Phase 2.4 Pre-Read §2 audit confirmed
+# both helpers enforce tenancy via memberships-collection lookup + raise
+# 403 on miss).
+TENANT_GATE_HELPERS: Dict[str, FrozenSet[str]] = {
+    "contexts": frozenset({
+        # core.py:249 — `require_context_membership(owner_only=False)`
+        # returns a FastAPI Dependency `_dep` that verifies
+        # (account_id, context_id, status=active) in memberships before
+        # returning {account, context, membership}. Used via
+        # `ctx = Depends(require_context_membership())` in handler signatures.
+        "require_context_membership",
+        # ned_cycle.py:164 — `_verify_ned_context(account_id, context_id)`
+        # verifies (account_id, context_id, role=ned, status=active) in
+        # memberships and returns the resolved context row.
+        "_verify_ned_context",
+    }),
+}
+
+# Functions whose OWN body implements one of the helpers above. Their
+# `db.contexts.find_one({"id": context_id})` calls ARE the tenancy
+# contract — they're not consumers of it. The scanner skips contexts
+# checks inside these specific function bodies.
+#
+# Hard-coded set; growth requires a PR-reviewed scanner edit (treated as
+# documentation, not config — per Phase 2.4 Pre-Read §7 design ack).
+_CONTEXT_HELPER_FUNCTIONS: FrozenSet[str] = frozenset({
+    "_dep",                  # inner closure of require_context_membership()
+    "_verify_ned_context",   # the NED helper itself
+})
+
+
 # ───────────────────────── Phase 2.1 enforce-mode list ─────────────────
 # Collections currently under enforce mode. Adding a collection here
 # means any violation against that collection FAILS the build.
@@ -237,7 +275,11 @@ def _allowed_keys_for(collection: str) -> FrozenSet[str]:
 # Phase 2.2 adds `documents` — second-context per Pre-Read §5.A.2
 # verbatim recommendation; 32→0 via task_id alt-key widening + 23
 # markers.
-_ENFORCE_MODE_COLLECTIONS: FrozenSet[str] = frozenset({"chats", "documents", "work_studio_exports"})
+# Phase 2.3 adds `work_studio_exports` — third-context per Phase 2.2 §8.A
+# recommendation; 24→0 via 20 defensive context_id adds + 4 markers.
+# Phase 2.4 adds `contexts` — fourth-context per Phase 2.4 Pre-Read §8
+# hybrid (Upgrade D helper-fusion + helper-body exemption + markers).
+_ENFORCE_MODE_COLLECTIONS: FrozenSet[str] = frozenset({"chats", "documents", "work_studio_exports", "contexts"})
 
 
 # Methods that take a `filter` as the first positional argument.
@@ -612,6 +654,127 @@ def _helper_call_supplies_account_id(call: ast.Call) -> bool:
     return False
 
 
+# ───────────────────────── Phase 2.4 Upgrade D — helper-fusion ──────────
+
+def _function_has_dependency_on_helper(
+    func_node: ast.AST, helper_names: FrozenSet[str],
+) -> bool:
+    """Phase 2.4 Upgrade D — FastAPI dependency detection.
+
+    Returns True if `func_node` has any positional or keyword-only argument
+    whose default value is `Depends(<helper>(...))` for any helper in
+    `helper_names`. The dependency is resolved BEFORE the function body
+    runs, so the tenancy gate is established for the entire function
+    scope.
+
+    Recognises both shapes:
+      - `Depends(require_context_membership())`           — bare factory
+      - `Depends(require_context_membership(owner_only=True))` — factory call
+    """
+    if not isinstance(func_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        return False
+    defaults = list(func_node.args.defaults) + list(
+        func_node.args.kw_defaults or []
+    )
+    for d in defaults:
+        if not isinstance(d, ast.Call):
+            continue
+        # Depends(...) wrapper
+        fn = d.func
+        if isinstance(fn, ast.Name) and fn.id == "Depends":
+            pass
+        elif isinstance(fn, ast.Attribute) and fn.attr == "Depends":
+            pass
+        else:
+            continue
+        # Inspect the argument inside Depends(...)
+        if not d.args:
+            continue
+        inner = d.args[0]
+        # Pattern A: Depends(helper) — bare reference
+        if isinstance(inner, ast.Name) and inner.id in helper_names:
+            return True
+        if isinstance(inner, ast.Attribute) and inner.attr in helper_names:
+            return True
+        # Pattern B: Depends(helper(...)) — factory invocation
+        if isinstance(inner, ast.Call):
+            ifn = inner.func
+            if isinstance(ifn, ast.Name) and ifn.id in helper_names:
+                return True
+            if isinstance(ifn, ast.Attribute) and ifn.attr in helper_names:
+                return True
+    return False
+
+
+def _function_calls_helper_before(
+    func_node: ast.AST, helper_names: FrozenSet[str], before_lineno: int,
+) -> bool:
+    """Phase 2.4 Upgrade D — direct-call detection.
+
+    Returns True if any `Call` node to one of `helper_names` exists in
+    the function body BEFORE `before_lineno`. Covers the
+    `await _verify_ned_context(aid, ctx_id)` pattern where the helper
+    is invoked explicitly inside the function body (rather than via
+    FastAPI dependency injection).
+    """
+    if not isinstance(func_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        return False
+    for n in ast.walk(func_node):
+        if not isinstance(n, ast.Call):
+            continue
+        if getattr(n, "lineno", 0) >= before_lineno:
+            continue
+        fn = n.func
+        if isinstance(fn, ast.Name) and fn.id in helper_names:
+            return True
+        if isinstance(fn, ast.Attribute) and fn.attr in helper_names:
+            return True
+    return False
+
+
+def _is_helper_body(func_node: ast.AST) -> bool:
+    """Phase 2.4 helper-body exemption.
+
+    Returns True if `func_node` is one of the recognised tenant-gate
+    helper implementations. Their `db.contexts.find_one(...)` calls
+    ARE the tenancy contract — not consumers of it.
+    """
+    if not isinstance(func_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        return False
+    return func_node.name in _CONTEXT_HELPER_FUNCTIONS
+
+
+def _tenancy_satisfied_by_helper_fusion(
+    tree: ast.AST,
+    call_node: ast.Call,
+    collection: str,
+) -> bool:
+    """Phase 2.4 Upgrade D entry point.
+
+    Returns True if the contexts-collection call is tenancy-satisfied
+    by helper-fusion: either (a) the enclosing function IS a recognised
+    helper body (exemption), or (b) a recognised tenant-gate helper was
+    invoked earlier in the function's lexical scope OR injected as a
+    FastAPI dependency.
+    """
+    helpers = TENANT_GATE_HELPERS.get(collection)
+    if not helpers:
+        return False
+    enc = _enclosing_function(tree, call_node)
+    if enc is None:
+        return False
+    # (a) helper-body exemption
+    if _is_helper_body(enc):
+        return True
+    # (b1) FastAPI Depends(...) on a recognised helper
+    if _function_has_dependency_on_helper(enc, helpers):
+        return True
+    # (b2) direct call to a recognised helper before our line
+    if _function_calls_helper_before(enc, helpers, call_node.lineno):
+        return True
+    return False
+
+
 # ───────────────────────── core scanner ─────────────────────────
 
 def scan_repo_for_tenancy_violations() -> Dict[str, Any]:
@@ -644,6 +807,15 @@ def scan_repo_for_tenancy_violations() -> Dict[str, Any]:
             if collection not in TENANT_SCOPED_COLLECTIONS:
                 continue
             if _line_is_escape_hatched(source_lines, node.lineno):
+                continue
+
+            # Phase 2.4 Upgrade D — helper-fusion check (currently only
+            # consulted for `contexts`; per-collection map in
+            # TENANT_GATE_HELPERS). Treat the call as compliant if a
+            # tenant-vetted helper was injected (Depends) or invoked
+            # earlier in the same function — OR if the call is INSIDE
+            # the helper body itself (exemption).
+            if _tenancy_satisfied_by_helper_fusion(tree, node, collection):
                 continue
 
             allowed = _allowed_keys_for(collection)

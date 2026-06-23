@@ -159,6 +159,7 @@ async def login(
         {"account_id": account["id"], "status": "active"}, {"_id": 0}
     ).to_list(200)
     context_ids = [m["context_id"] for m in memberships]
+    # tenancy:allow-no-account-id — `context_ids` were just fetched from `db.memberships.find({account_id: account["id"]})` at L153-158; the set is the user's own contexts by construction.
     contexts = await db.contexts.find({"id": {"$in": context_ids}}, {"_id": 0}).to_list(200)
 
     return {
@@ -236,6 +237,7 @@ async def me(current: Dict[str, Any] = Depends(get_current_account)):
         {"account_id": current["id"], "status": "active"}, {"_id": 0}
     ).to_list(200)
     context_ids = [m["context_id"] for m in memberships]
+    # tenancy:allow-no-account-id — `context_ids` from `db.memberships.find({account_id: current["id"]})` above; user's own contexts by construction.
     contexts = await db.contexts.find({"id": {"$in": context_ids}}, {"_id": 0}).to_list(200)
 
     # Phase 4 — auto-grandfather users who completed the legacy 7-question

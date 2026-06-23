@@ -451,6 +451,7 @@ async def aggregated_stream(
             "documents": [], "approvals": [], "next_cursor": None,
         }
 
+    # tenancy:allow-no-account-id — share-aggregator; `context_ids` are the caller's accessible contexts pre-filtered above.
     contexts = await db.contexts.find(
         {"id": {"$in": ctx_ids}, "status": {"$ne": "archived"}},
         {"_id": 0, "id": 1, "name": 1, "type": 1},

@@ -57,6 +57,7 @@ async def _resolve_memberships(account_id: str) -> List[Dict[str, Any]]:
     if not mships:
         return []
     ids = [m["context_id"] for m in mships]
+    # tenancy:allow-no-account-id — universal search resolver; `context_ids` come from the caller's own memberships harvested above.
     contexts = await db.contexts.find(
         {"id": {"$in": ids}},
         {"_id": 0, "id": 1, "name": 1},

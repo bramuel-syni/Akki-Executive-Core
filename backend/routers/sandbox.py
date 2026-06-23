@@ -315,6 +315,7 @@ async def _seed_sandbox(session_id: str):
                 await db.boardpacks.delete_many({"context_id": ctx_id})
                 await db.context_objects.delete_many({"context_id": ctx_id})
                 await db.memberships.delete_many({"context_id": ctx_id})
+                # tenancy:allow-no-account-id — `ctx_id` was just created by `_seed_sandbox` for the same disposable account; rollback path.
                 await db.contexts.delete_one({"id": ctx_id})
             if acc_id:
                 await db.accounts.delete_one({"id": acc_id, "is_sandbox": True})
@@ -362,6 +363,7 @@ async def cleanup_expired_sandboxes(
     if not x_cron_secret or x_cron_secret != expected:
         raise HTTPException(status_code=401, detail="Invalid or missing X-Cron-Secret header.")
     now_iso_str = _iso(_now())
+    # tenancy:allow-no-account-id — cleanup_expired_sandboxes cron; cross-tenant sweep of expired sandbox-type contexts by hard_delete_at; route gated by X-Cron-Secret upstream.
     cursor = db.contexts.find(
         {
             "type": "sandbox",
@@ -378,6 +380,7 @@ async def cleanup_expired_sandboxes(
         await db.boardpacks.delete_many({"context_id": cid})
         await db.context_objects.delete_many({"context_id": cid})
         await db.memberships.delete_many({"context_id": cid})
+        # tenancy:allow-no-account-id — cleanup_expired_sandboxes cron; soft-delete write within the same cron sweep as L365.
         await db.contexts.update_one({"id": cid}, {"$set": {"status": "deleted"}})
         if ctx.get("owner_account_id"):
             await db.accounts.delete_one({"id": ctx["owner_account_id"], "is_sandbox": True})
@@ -403,6 +406,7 @@ async def capture_email(
     )
     if not ctx:
         raise HTTPException(status_code=404, detail="Sandbox context not found")
+    # tenancy:allow-no-account-id — `ctx` loaded earlier with `{owner_account_id: current["id"], type: sandbox}` gate; this is the matching write.
     await db.contexts.update_one(
         {"id": context_id},
         {"$set": {
@@ -521,6 +525,7 @@ async def dismiss_tutorial(
     # Stamp the right metadata branch depending on context flavour.
     set_field = "sandbox_metadata.tutorial_dismissed" if ctx.get("type") == "sandbox" \
         else "seeded_metadata.tutorial_dismissed"
+    # tenancy:allow-no-account-id — `ctx` loaded above with `{owner_account_id: current["id"]}` gate; matching tutorial-dismissed write.
     await db.contexts.update_one(
         {"id": context_id},
         {"$set": {set_field: bool(body.dismissed)}},
@@ -631,6 +636,7 @@ async def sandbox_sample_doc_accept(
     }
     await db.documents.insert_one(doc.copy())
     # Stamp the metadata so the card disappears from the home canvas.
+    # tenancy:allow-no-account-id — `ctx` loaded earlier with `{owner_account_id: current["id"], type: sandbox}` gate; matching sample-doc-accepted write.
     await db.contexts.update_one(
         {"id": context_id},
         {"$set": {"sandbox_metadata.sample_doc_accepted": True,
@@ -729,6 +735,7 @@ async def answer_objective_check(
 
     now_iso = _iso(_now())
     if body.answer == "skip":
+        # tenancy:allow-no-account-id — `ctx` loaded with `{owner_account_id: current["id"]}` gate above; skip-dismissal write.
         await db.contexts.update_one(
             {"id": context_id},
             {"$set": {f"{prefix}.objective_check": {
@@ -742,6 +749,7 @@ async def answer_objective_check(
         "answer": body.answer,
         "note": (body.note or "").strip() or None,
     }
+    # tenancy:allow-no-account-id — `ctx` loaded with `{owner_account_id: current["id"]}` gate above; objective-check answer write.
     await db.contexts.update_one(
         {"id": context_id},
         {"$set": {f"{prefix}.objective_check": payload}},
@@ -803,6 +811,7 @@ async def convert_sandbox(
         my_ctx_ids.append(m["context_id"])
         real_type = "ned_personal" if m.get("role") == "ned" else "executive_personal"
         if body.keep_sandbox:
+            # tenancy:allow-no-account-id — `m` from db.memberships.find({account_id: current["id"]}) above; the caller's own sandbox contexts being converted.
             await db.contexts.update_one(
                 {"id": m["context_id"], "type": "sandbox"},
                 {
@@ -824,6 +833,7 @@ async def convert_sandbox(
             await db.boardpacks.delete_many({"context_id": m["context_id"]})
             await db.context_objects.delete_many({"context_id": m["context_id"]})
             await db.memberships.delete_many({"context_id": m["context_id"]})
+            # tenancy:allow-no-account-id — same membership-derived ids as L806; deletion path for non-kept sandboxes.
             await db.contexts.delete_one({"id": m["context_id"], "type": "sandbox"})
 
     # 3. Rotate tokens + set real cookies so the user is cleanly logged in
@@ -844,6 +854,7 @@ async def convert_sandbox(
     # before submitting; we just save them three keystrokes.
     prefill_first_session: Optional[Dict[str, Any]] = None
     if my_ctx_ids:
+        # tenancy:allow-no-account-id — pre-fill source for First Session form; `my_ctx_ids` are the caller's own contexts from db.memberships above.
         src_ctx = await db.contexts.find_one(
             {"id": {"$in": my_ctx_ids}},
             {"_id": 0, "name": 1, "sandbox_metadata": 1},
@@ -1000,6 +1011,7 @@ async def create_seeded_context(
          "seeded": bool(body.seed_data)},
     )
 
+    # tenancy:allow-no-account-id — read-back of the seeded context just created earlier in this same handler with owner_account_id=current["id"].
     new_ctx = await db.contexts.find_one({"id": context_id}, {"_id": 0})
     return {"context": sanitize_context(new_ctx) if new_ctx else None,
             "context_id": context_id}

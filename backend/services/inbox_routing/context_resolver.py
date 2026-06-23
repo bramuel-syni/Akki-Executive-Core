@@ -37,6 +37,7 @@ async def get_or_create_default_inbox_context(db, *, account_id: str) -> Dict[st
     )
     if pointer:
         ctx_id = pointer["context_id"]
+        # tenancy:allow-no-account-id — default-inbox context_resolver; `ctx_id` is the caller's primary context resolved by the routing pipeline upstream.
         existing = await db.contexts.find_one({"id": ctx_id}, {"_id": 0})
         if existing:
             return existing
@@ -382,6 +383,7 @@ async def resolve_cycle_id(
         return (open_cyc["id"], "resolved")
 
     # No open cycle. If this is the default inbox context, mint one.
+    # tenancy:allow-no-account-id — cycle-id resolver; `context_id` resolved via the mailbox routing pipeline (caller authenticated upstream).
     ctx_row = await db.contexts.find_one(
         {"id": context_id}, {"_id": 0, "is_default_inbox": 1},
     )

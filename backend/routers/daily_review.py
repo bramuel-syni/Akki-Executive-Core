@@ -81,6 +81,7 @@ async def _context_name_map(context_ids: List[str]) -> Dict[str, str]:
     if not context_ids:
         return {}
     out: Dict[str, str] = {}
+    # tenancy:allow-no-account-id — daily-review aggregator; `ctx_ids` derive from the caller's accessible contexts upstream.
     async for c in db.contexts.find(
         {"id": {"$in": context_ids}}, {"_id": 0, "id": 1, "name": 1},
     ):

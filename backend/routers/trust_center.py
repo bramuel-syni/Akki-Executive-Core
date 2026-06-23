@@ -147,6 +147,7 @@ async def session(
     # Pre-Shield-v1.x chats — return the empty-state shell that the
     # UI keys off `shield_status`.
     if shield_status == "pre_shield_v1":
+        # tenancy:allow-no-account-id — Trust Center session lookup; `chat.context_id` came from `_load_chat_or_403` membership-gated read above.
         context = await db.contexts.find_one(
             {"id": chat.get("context_id")}, {"_id": 0, "name": 1},
         ) or {}
@@ -254,6 +255,7 @@ async def session(
             "original_message_ts": (run or {}).get("original_message_ts"),
         })
 
+    # tenancy:allow-no-account-id — Trust Center session detail; chat already loaded with membership check upstream.
     context = await db.contexts.find_one(
         {"id": chat.get("context_id")}, {"_id": 0, "name": 1},
     ) or {}

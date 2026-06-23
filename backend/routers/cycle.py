@@ -1238,6 +1238,7 @@ async def export_report_pdf(
     from fastapi.responses import Response
     from reports_service import render_report_pdf
 
+    # tenancy:allow-no-account-id — cycle export-PDF; `context_id` came from the cycle row loaded with membership gate upstream.
     ctx = await db.contexts.find_one(
         {"id": context_id}, {"_id": 0, "name": 1},
     ) or {}
@@ -1271,6 +1272,7 @@ async def export_report_deck_pdf(
     from fastapi.responses import Response
     from briefings_service import render_board_deck_pdf
 
+    # tenancy:allow-no-account-id — cycle export-deck-PDF; same gate as L1241.
     ctx = await db.contexts.find_one(
         {"id": context_id}, {"_id": 0, "name": 1},
     ) or {}

@@ -272,6 +272,7 @@ async def _write_context_object_from_intake(
     }
     await db.context_objects.insert_one(doc)
     # Also stamp the context itself for quick access
+    # tenancy:allow-no-account-id — first-session context-object write; `context_id` was just created earlier in this same handler with owner_account_id=current["id"].
     await db.contexts.update_one(
         {"id": context_id},
         {
@@ -383,10 +384,12 @@ async def submit_intake(
     # promotes them to `ned_personal` when role ∈ {ned, chair}. The
     # change is idempotent (set-if-different) and audited.
     new_type = _ROLE_TO_CONTEXT_TYPE.get(body.role, "executive_personal")
+    # tenancy:allow-no-account-id — submit-intake context-row read; `context_id` was just created earlier in the same handler with owner_account_id=current["id"].
     ctx_row = await db.contexts.find_one(
         {"id": ctx_id}, {"_id": 0, "id": 1, "type": 1, "name": 1},
     )
     if ctx_row and ctx_row.get("type") != new_type:
+        # tenancy:allow-no-account-id — submit-intake context-row write; same gate as L386.
         await db.contexts.update_one(
             {"id": ctx_id},
             {"$set": {"type": new_type}},

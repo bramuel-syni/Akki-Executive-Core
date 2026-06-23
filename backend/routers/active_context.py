@@ -85,6 +85,7 @@ async def list_my_contexts(
         return {"items": [], "count": 0}
 
     ctx_ids = [m["context_id"] for m in memberships]
+    # tenancy:allow-no-account-id — `context_ids` came from the caller's own memberships above; this is the active-context picker for the current account.
     contexts = await db.contexts.find(
         {"id": {"$in": ctx_ids}},
         {"_id": 0, "id": 1, "name": 1, "type": 1, "status": 1,
@@ -165,6 +166,7 @@ async def set_active_context(
 
     to_role = to_membership.get("role") or "—"
 
+    # tenancy:allow-no-account-id — set-active-context: ctx fetched by id then membership verified at L175-181 before commit; explicit post-find gate.
     to_ctx = await db.contexts.find_one(
         {"id": body.context_id},
         {"_id": 0, "id": 1, "name": 1, "type": 1},
@@ -192,6 +194,7 @@ async def set_active_context(
         )
         if fm:
             from_role = fm.get("role")
+        # tenancy:allow-no-account-id — set-active-context fallback path; same explicit post-find membership gate as L168.
         fc = await db.contexts.find_one(
             {"id": body.from_context_id}, {"_id": 0, "name": 1},
         )

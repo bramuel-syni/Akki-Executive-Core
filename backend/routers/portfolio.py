@@ -172,6 +172,7 @@ async def me_portfolio(current: Dict[str, Any] = Depends(get_current_account)):
         return {"items": []}
 
     context_ids = [m["context_id"] for m in memberships]
+    # tenancy:allow-no-account-id — portfolio aggregator; `ctx_ids` come from `db.memberships.find({account_id: current["id"]})` above.
     contexts = await db.contexts.find(
         {"id": {"$in": context_ids}}, {"_id": 0, "id": 1, "name": 1}
     ).to_list(length=len(context_ids))

@@ -75,6 +75,7 @@ async def get_v2_artefact_payload(
     context_name = "Context"
     cid = rec.get("context_id")
     if cid:
+        # tenancy:allow-no-account-id — Solva v2 evidence-card payload; `cid` came from a Solva session that was account-gated upstream.
         ctx = await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})
         if ctx and ctx.get("name"):
             context_name = ctx["name"]
@@ -200,6 +201,7 @@ async def stream_v2_reasoning(
     context_name = "Context"
     cid = rec.get("context_id")
     if cid:
+        # tenancy:allow-no-account-id — Solva v2 reasoning stream; same session-gated `cid` as L78.
         ctx = await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})
         if ctx and ctx.get("name"):
             context_name = ctx["name"]
@@ -296,6 +298,7 @@ async def export_v2_pptx(
     context_name = "Context"
     cid = rec.get("context_id")
     if cid:
+        # tenancy:allow-no-account-id — Solva v2 PPTX export; session-gated `cid`.
         ctx = await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})
         if ctx and ctx.get("name"):
             context_name = ctx["name"]
@@ -390,6 +393,7 @@ async def get_v2_chair_notes(
     if not rec:
         raise HTTPException(status_code=404, detail="Session not found.")
     cid = rec.get("context_id")
+    # tenancy:allow-no-account-id — Solva v2 chair notes; session-gated `cid`, optional (cid may be None for unattached sessions).
     ctx = (await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})) if cid else None
     payload = build_payload(rec, context_name=(ctx or {}).get("name") or "Context")
     return {"notes": chair_notes_dict(payload)}

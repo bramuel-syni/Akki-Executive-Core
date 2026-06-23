@@ -103,8 +103,10 @@ async def list_tenants(
     if type:
         match["type"] = type
 
+    # tenancy:allow-no-account-id — admin tenant inventory count; super-admin gate at route dep.
     total = await db.contexts.count_documents(match)
     cursor = (
+        # tenancy:allow-no-account-id — admin tenant inventory listing; super-admin gate at route dep (same as L106 above).
         db.contexts.find(match, {"_id": 0})
         .sort("created_at", -1)
         .limit(limit)
@@ -209,6 +211,7 @@ async def get_tenant(
     """Read-only drill-down for a single tenant. Returns the
     sanitized context + enrichments + the list of memberships
     (account-id + role only — no payload content)."""
+    # tenancy:allow-no-account-id — admin per-tenant detail; super-admin gate at route dep.
     ctx = await db.contexts.find_one({"id": context_id}, {"_id": 0})
     if not ctx:
         raise HTTPException(status_code=404, detail="Tenant not found.")

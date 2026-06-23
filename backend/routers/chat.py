@@ -2773,6 +2773,7 @@ async def stream_message(
             )
             if _mb:
                 _ned_role = _mb.get("role")
+            # tenancy:allow-no-account-id — `_event_gen` worker closure inside `stream_message`; `chat.context_id` resolved earlier from a chat row loaded with account_id gate.
             _ctx = await db.contexts.find_one(
                 {"id": chat["context_id"]},
                 {"_id": 0, "type": 1},

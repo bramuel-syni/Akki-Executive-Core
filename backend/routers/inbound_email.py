@@ -275,6 +275,7 @@ async def _resolve_mailbox(mailbox_hash: str) -> Dict[str, Any]:
 
     context: Optional[Dict[str, Any]] = None
     if context_token:
+        # tenancy:allow-no-account-id — inbound-email mailbox resolver; routing is by the unique mailbox address (inbound_address) on the context row, not by caller identity.
         context = await db.contexts.find_one(
             {"inbound_token": context_token, "status": {"$ne": "archived"}},
             {"_id": 0, "id": 1, "name": 1, "inbound_token": 1},
@@ -293,6 +294,7 @@ async def _resolve_mailbox(mailbox_hash: str) -> Dict[str, Any]:
         )
         if not m:
             raise HTTPException(status_code=404, detail="Recipient has no contexts.")
+        # tenancy:allow-no-account-id — mailbox-resolver fallback path; same address-routed contract as L278.
         context = await db.contexts.find_one(
             {"id": m["context_id"]},
             {"_id": 0, "id": 1, "name": 1},
@@ -365,6 +367,7 @@ async def get_inbound_address(request: Request, context_id: Optional[str] = Quer
         )
         if not m:
             raise HTTPException(status_code=403, detail="Not a member of that context.")
+        # tenancy:allow-no-account-id — get-inbound-address read; `ctx_id` validated against the caller's accessible-context set at the route boundary.
         ctx = await db.contexts.find_one(
             {"id": context_id}, {"_id": 0, "id": 1, "inbound_token": 1, "name": 1}
         )
@@ -372,6 +375,7 @@ async def get_inbound_address(request: Request, context_id: Optional[str] = Quer
             ctx_token = (ctx.get("inbound_token") or "").strip()
             if not ctx_token:
                 ctx_token = _mint_token()
+                # tenancy:allow-no-account-id — get-inbound-address write; same gate as L368.
                 await db.contexts.update_one(
                     {"id": context_id}, {"$set": {"inbound_token": ctx_token}}
                 )

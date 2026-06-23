@@ -58,6 +58,7 @@ async def _user_ned_context_ids(account_id: str) -> List[Dict[str, Any]]:
     cids = [m["context_id"] for m in memberships]
     if not cids:
         return []
+    # tenancy:allow-no-account-id — `ctx_ids` were fetched from db.memberships keyed by (account_id=caller, role=ned).
     ctxs = await db.contexts.find(
         {"id": {"$in": cids}, "type": {"$regex": "^ned_"}},
         {"_id": 0, "id": 1, "name": 1, "type": 1, "industry": 1},

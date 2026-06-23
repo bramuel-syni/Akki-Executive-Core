@@ -171,6 +171,7 @@ async def boards_to_watch(
         return BoardsToWatchOut(items=[])
 
     # Fetch the context docs for names.
+    # tenancy:allow-no-account-id — boards-to-watch; `ctx_ids` derive from the caller's accessible contexts upstream.
     contexts = await db.contexts.find(
         {"id": {"$in": cids}},
         {"_id": 0, "id": 1, "name": 1},
@@ -339,6 +340,7 @@ async def last_action(
     cid = row.get("context_id")
     ctx_name = None
     if cid:
+        # tenancy:allow-no-account-id — last-action context-name lookup; `cid` from the caller's accessible board ids set above.
         ctx = await db.contexts.find_one({"id": cid}, {"_id": 0, "name": 1})
         ctx_name = (ctx or {}).get("name")
 

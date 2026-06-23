@@ -164,6 +164,7 @@ async def _cascade_hard_delete(account_id: str) -> Dict[str, int]:
         r_mem = await db.memberships.delete_many({"context_id": {"$in": owned_ctx_ids}})
         counts["memberships_by_owned_ctx"] = r_mem.deleted_count
         # Wipe the contexts themselves.
+        # tenancy:allow-no-account-id — account-deletion cascade; `owned_ctx_ids` is exactly the deleting user's owner_account_id-stamped contexts (computed above).
         r = await db.contexts.delete_many({"id": {"$in": owned_ctx_ids}})
         counts["contexts"] = r.deleted_count
 

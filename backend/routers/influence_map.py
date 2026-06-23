@@ -386,6 +386,7 @@ async def cron_weekly_digest(
     # send to each executive member. NEDs get a lightweight version
     # (this v1 emails executives only — they own the read patterns;
     # NEDs receive briefings via a different cadence).
+    # tenancy:allow-no-account-id — cron weekly digest; sweeps contexts marked for the digest (route gated by X-Cron-Secret upstream).
     contexts = await db.contexts.find(
         {"status": {"$ne": "archived"}}, {"_id": 0, "id": 1, "name": 1},
     ).to_list(2000)

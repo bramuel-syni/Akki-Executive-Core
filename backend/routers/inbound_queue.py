@@ -96,6 +96,7 @@ async def my_inbound_queue_counts(
 
     # Enrich with context names (one cheap round-trip).
     if rows:
+        # tenancy:allow-no-account-id — context-name hydrator; `context_ids` derived from the caller's own inbound-queue rows above.
         ctx_names = await db.contexts.find(
             {"id": {"$in": [r["context_id"] for r in rows]}},
             {"_id": 0, "id": 1, "name": 1},

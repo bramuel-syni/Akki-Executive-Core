@@ -625,6 +625,7 @@ async def _run_export(
     # Phase L.a (2026-05-27) — phase 0 ("Reading the cycle inputs.") fires
     # at entry. Subsequent phases are stamped at each boundary.
     await _set_export_phase(export_id, 0, "Reading the cycle inputs.")
+    # tenancy:allow-no-account-id — `_run_export` worker closure; `context_id` is a closure capture from `start_export` which was gated by require_context_membership.
     ctx_doc = await db.contexts.find_one({"id": context_id}, {"_id": 0})
     if not ctx_doc:
         await db.work_studio_exports.update_one(
@@ -1333,6 +1334,7 @@ async def _run_enhance(
     """Run the canonical two-pass on (extracted text + instructions),
     render the enhanced output via the existing renderer, persist to
     work_studio_exports with source='enhance', and mint a continue chat."""
+    # tenancy:allow-no-account-id — `_run_enhance` worker closure; `context_id` is a closure capture from `enhance_export` which was gated by require_context_membership.
     ctx_doc = await db.contexts.find_one({"id": context_id}, {"_id": 0})
     if not ctx_doc:
         await db.work_studio_exports.update_one(

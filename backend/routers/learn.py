@@ -71,6 +71,7 @@ async def learn_research(
             {"_id": 0, "context_id": 1},
         )
         if membership:
+            # tenancy:allow-no-account-id — research-corpus resolver; `current` is the authenticated account, `context_id` was looked up upstream via the user's accessible contexts.
             ctx = await db.contexts.find_one(
                 {"id": body.context_id},
                 {"_id": 0, "name": 1, "sector": 1, "industry": 1, "jurisdiction": 1, "type": 1},

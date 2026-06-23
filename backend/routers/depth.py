@@ -65,6 +65,7 @@ async def _primary_sector(account_id: str) -> Optional[str]:
     )
     if not m:
         return None
+    # tenancy:allow-no-account-id — primary-sector resolver; `m` is the caller's own membership row (db.memberships find filtered by account_id upstream).
     ctx = await db.contexts.find_one(
         {"id": m["context_id"]}, {"_id": 0, "sector": 1}
     )
