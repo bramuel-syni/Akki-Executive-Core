@@ -189,12 +189,42 @@ ALT_TENANCY_KEYS: Dict[str, FrozenSet[str]] = {
     "analysis_blobs": frozenset({"account_id", "context_id"}),
     # tasks / tasks_initiatives: account_id is the canonical key
     # (routers/tasks.py:207); `owner_id` is a contributor reference,
-    # NOT tenant scope.
-    # team_catalogue: context-scoped via membership.
-    "team_catalogue": frozenset({"account_id", "context_id"}),
+    # NOT tenant scope. Phase 2.5 adds `task_id` for contributor-token-
+    # gated paths that look up the row by `{"id": task_id}` after
+    # _resolve_contributor_token validated the token.
+    "tasks": frozenset({"account_id", "context_id", "task_id"}),
+    # chat_messages: scoped by `chat_id` (parent chat row is
+    # account_id-gated; messages inherit the parent's tenancy). Phase 2.5
+    # widens to recognise the chat_id-keyed lookups in trust_center,
+    # work_studio_from_source, work_studio_phase_c, and the backfill
+    # services.
+    "chat_messages": frozenset({"account_id", "chat_id"}),
+    # user_calendar_credentials: scoped by `user_id` (alias for
+    # account_id on this collection — see routers/account_deletion.py:182
+    # `delete_many({"user_id": account_id})`). Phase 2.5 alt-key widening.
+    "user_calendar_credentials": frozenset({"account_id", "user_id"}),
+    # cycle_assignments: NED-keyed via `ned_id` (the assignee), or
+    # gated by the parent brief (`brief_id`) which is itself
+    # context_id-gated. Phase 2.5 adds both keys.
+    "cycle_assignments": frozenset({
+        "account_id", "context_id", "assignee_account_id",
+        "ned_id", "brief_id",
+    }),
+    # studio_blocks: scoped by `artefact_id` (the parent artefact row
+    # is context_id-gated via `_resolve_artefact` upstream). Phase 2.5
+    # adds `artefact_id` to the alt-keys for static recognition + uses
+    # the `_resolve_artefact` helper-fusion (TENANT_GATE_HELPERS below).
+    "studio_blocks": frozenset({"account_id", "context_id", "artefact_id"}),
+    # team_catalogue: context-scoped via membership (route is
+    # `/contexts/{context_id}/team-catalogue/{member_id}`). Phase 2.5
+    # adds `member_id` (the row's own primary key — gated by the
+    # context-membership upstream).
+    "team_catalogue": frozenset({"account_id", "context_id", "member_id"}),
     "tasks_initiatives": frozenset({"account_id", "context_id"}),
-    # exco_teams: context-scoped.
-    "exco_teams": frozenset({"account_id", "context_id"}),
+    # exco_teams: context-scoped via membership. Phase 2.5 adds
+    # `team_id` (the row's own primary key — handlers are at
+    # `/contexts/{context_id}/exco-teams/{team_id}`).
+    "exco_teams": frozenset({"account_id", "context_id", "team_id"}),
     # ideas_audit_log + ideas_digests: account-scoped or context-scoped.
     "ideas_audit_log": frozenset({"account_id", "context_id"}),
     "ideas_digests": frozenset({"account_id", "context_id"}),
