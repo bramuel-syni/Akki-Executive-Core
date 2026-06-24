@@ -2,6 +2,67 @@
 
 > Append-only history of shipped work. Newest first.
 
+## 2026-06-24 — Full Runway dispatch CLOSED (Stages 1-5)
+
+Five-stage runway dispatch landed today. Combined regression: **170
+passed / 10 skipped** across invariants + new e2e tests + 65
+pre-existing surface tests.
+
+### Stage 5 — FE shell verification (Task Manager · Monitor · Pulse)
+- `8ad7040b` — 7 new live-call e2e tests confirm every Stage 5 FE-shell
+  backend works at runtime for an authenticated member: `/api/tasks/counts`,
+  `/api/tasks`, `/api/contexts/{cid}/monitor`, `/api/contexts/{cid}/monitor/{kind}`
+  (objective + project, post-Stage-3 rename), `/api/contexts/{cid}/monitor/owner-roles`,
+  `/api/contexts/{cid}/pulse/feed`, `/api/contexts/{cid}/pulse/across-boards`.
+  Pattern: `httpx.AsyncClient + ASGITransport + @pytest.mark.asyncio`. Sprint
+  memo: `sprints/STAGE_5_FE_SHELL_VERIFICATION.md`.
+
+### Stage 4 — Work Studio end-to-end
+- `edc278fe` — Solva v2 Analyze narration now lands in DOCX / PPTX / XLSX
+  report exports. `WorkbookAnalysis` schema +2 optional carriers
+  (`analyze_narration_headline` / `analyze_narration_observations`);
+  `_adapt_new_analysis_to_workbook_analysis` reads them from `row.headline`
+  + `row.observations` (mirrors `runs[-1]`); the 3 builders inject a
+  `Bottom Line` section (DOCX heading; PPTX slide; XLSX sheet at position 0).
+  4 e2e tests + tenancy allowlist refresh.
+- `e0fb89b2` — Chat Work Studio affordance objective → best-fit-kind
+  recommender. Pure-JS regex pipeline (zero net-new LLM calls); ordered
+  high → low (board_pack > committee_pack > minutes > deck > report > brief).
+  `Suggested` pill on the matching tile + quiet reason line; the moment
+  the user clicks any tile the recommender stops auto-overwriting. 21
+  jest unit cases.
+- `15c2afba` — Stage 4 closeout docs.
+- Sprint memo: `sprints/STAGE_4_WORK_STUDIO.md`.
+
+### Stage 3 — Function-based renames (Option C)
+- `7fcdb587` — `services/solva` → `services/solva_voice_audit` (24 files moved, 50+ import callsites updated).
+- `95ae06ba` — `routers/monitor.py` → `routers/monitor_dashboard.py`; `routers/monitor_v2.py` → `routers/monitor_strategic_items.py` (13 callsites updated).
+- `f8a91624` — Build-breaking invariant `test_no_legacy_solva_monitor_names.py` locks the new names (3 sub-tests).
+- `2063f12a` — Inventory pass + STOP-and-surface.
+- `0c9c9293` — Close-out memo + DEV_PIPELINE updates.
+- Sprint memo: `sprints/STAGE_3_FUNCTION_RENAMES.md`.
+
+### Stage 2 — Verification-only clean-board
+- Remote scan: 4/4 branches CLEAN_TREE + CLEAN_LOG. Audit lanes:
+  pip-audit GREEN, yarn audit GREEN, requirements-guard OK, gitleaks
+  GREEN, pipeline-log-sync GREEN.
+- Sprint memo: `sprints/STAGE_2_CLEAN_BOARD.md`.
+
+### Stage 1 — Security ratchet
+- `adbecd3f` — P2.1: `strategic_goal_evolution.py` Depends-swap from
+  `get_current_account` → `require_context_membership()`. CVE-class
+  IDOR closed.
+- `5cbd948f` — P2.2: `test_context_route_membership_gate.py` (hard
+  ratchet on `{context_id}` routes; 21-entry allowlist) +
+  `test_tenancy_escape_hatch_allowlist.py` (12 `untenanted=True` +
+  179 `tenancy:allow-no-account-id` markers explicitly allowlisted).
+- `280b4549` — P2.4: `test_thinklab_uilabel_only.py` (case-insensitive
+  `thinklab` scan of `backend/`; 0 hits today; hard-ratchet; FE
+  explicitly allowed).
+- Sprint memo: `sprints/STAGE_1_SECURITY_RATCHET.md`.
+
+---
+
 ## 2026-02-06 — Phase P5.22 (CLOSED, test-rig only)
 
 **CSRF-rotted wire test refresh — single shared fix at `conftest.py`.**

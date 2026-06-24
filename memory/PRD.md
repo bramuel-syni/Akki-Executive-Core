@@ -1,6 +1,26 @@
 # AKKI Sandbox — Product Requirements Document (PRD)
 
 
+> **2026-06-24 update — Full Runway dispatch CLOSED.** Five stages of
+> the AKKI Full Runway dispatch landed today (Stages 1 + 2 + 3 + 4 +
+> 5). Stage 1: security ratchet — IDOR fix on `strategic_goal_evolution`
+> + hard-ratchet invariants for `{context_id}` membership + tenancy
+> escape allowlist + `thinklab` UI-label-only guard. Stage 2: clean-board
+> verification (CI lanes + remote-history scrub). Stage 3: function-based
+> renames (`services/solva` → `services/solva_voice_audit`;
+> `routers/monitor.py` → `monitor_dashboard.py`; `routers/monitor_v2.py`
+> → `monitor_strategic_items.py`); 26 files moved, 63 import callsites
+> updated, build-breaking invariant locks the new names. Stage 4 (Work
+> Studio end-to-end): chat affordance objective → best-fit-kind
+> recommender (pure-JS regex; zero net-new LLM calls) + Solva v2 Analyze
+> narration carriage in DOCX/PPTX/XLSX report exports (3-layer wiring:
+> schema + adapter + builders). Stage 5: live-call verification of all
+> three FE shell backends (Task Manager / Monitor / Pulse); STOP gate
+> not tripped. Full Runway combined regression: 170 passed / 10
+> skipped. Sprint memos at `memory/sprints/STAGE_{1..5}_*.md`. See
+> `memory/DEV_PIPELINE.md` §9 for the canonical phase ledger.
+
+
 > **2026-06-24 update — canonical surfaces split.** This PRD remains the
 > durable historical record. The three live sources of truth are now:
 >   • `/app/memory/SPRINT_PLAN.md` — decisions + sequence + locks +
