@@ -1,0 +1,328 @@
+name: pipeline-log-sync
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+# Phase Pipeline-Log-Sync (2026-06-24) — Sprint-memo ↔ DEV_PIPELINE
+# §9 row consistency CI gate.
+#
+# This workflow enforces the Maintenance Protocol established in
+# `memory/DEV_PIPELINE.md` + the convention in `memory/sprints/README.md`:
+#
+#   Every phase that ships a sprint memo at `memory/sprints/PHASE_*.md`
+#   MUST have a corresponding row in `memory/DEV_PIPELINE.md` §9 Phase
+#   History (or H2-prefixed equivalent for the historical Chat shield
+#   audit phases). Without this gate, the "I forgot to update the
+#   pipeline log" failure mode goes uncaught — exactly the failure
+#   pattern Phase 5.5.1 + Phase 5.5.2 were authored to defend against
+#   for the test-suite ratchet.
+#
+# Cross-references:
+#   - `memory/DEV_PIPELINE.md` Maintenance Protocol (last section) —
+#     names this CI gate as the enforcement for §4 + §5 + §9 updates.
+#   - `memory/sprints/README.md` — the 3-step sprint memo convention
+#     this gate enforces.
+#
+# Algorithm (deterministic, no external network, no pip installs):
+#   1. Enumerate `memory/sprints/*.md`, excluding `README.md` and any
+#      non-phase log files (`CHUNK_*`, `BACKLOG*`, `*_LOG.md`,
+#      `*_DIAGNOSIS*`, `*_AUDIT*`, etc. — see the SKIP_PREFIXES /
+#      SKIP_PATTERNS literals in the script).
+#   2. For each retained file, derive the canonical phase identifier
+#      by stripping `PHASE_` / `P` / `H` prefixes, splitting on
+#      separators, and joining the digits/letters. Examples:
+#        PHASE_5_5_2_TRACK_A_REAL_FIXES.md → "5.5.2"
+#        PHASE_TL0_THINKLAB_PREREAD.md     → "TL0"
+#        PHASE_14_CHAT_FLUENCY.md          → "14"
+#        PHASE_F_CHAT_BOUNDARY_STATE.md    → "F"
+#        H2_5_STREAMING_PII_FIX_STATE.md   → "H2.5"
+#        H2_SHIELD_UNIFORMITY_AUDIT.md     → "H2"
+#        P5_10_chat_resilience.md          → "5.10"
+#        PHASE_PIPELINE_LOG_SYNC.md        → "Pipeline-Log-Sync"
+#   3. Slice the §9 Phase History table from `DEV_PIPELINE.md` and
+#      collect the `Phase` column values from each row.
+#   4. For each retained sprint memo identifier, assert it appears as
+#      the `Phase` column of a §9 row. Surface ALL mismatches at once
+#      (not just the first) — operators get one actionable list.
+#
+# Failure modes the gate catches:
+#   - New sprint memo lands; builder forgot to add §9 row.
+#   - §9 row deleted/edited; sprint memo still present.
+#   - Sprint memo renamed without §9 update.
+#
+# Failure modes the gate does NOT catch (out of scope, by design):
+#   - §9 row exists but Summary / Closed columns are stale.
+#   - §4 Invariant Ladder / §5 Surface Ratchet drift.
+#   - Sprint memo filename canonicalisation drift (the script's
+#     identifier-derivation is the spec; if a memo's filename
+#     doesn't parse cleanly, the gate fails with an actionable
+#     diagnostic pointing at the offending file).
+#
+# Self-test: this workflow's own row in §9 (id `Pipeline-Log-Sync`)
+# is the first dogfooded entry — if this row is removed, the gate
+# fails on its own sprint memo. That's the desired behaviour.
+
+jobs:
+  pipeline-log-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify sprint-memo ↔ §9 row consistency
+        run: |
+          python3 - <<'PYEOF'
+          import pathlib
+          import re
+          import sys
+
+          REPO = pathlib.Path(".").resolve()
+          SPRINTS_DIR = REPO / "memory" / "sprints"
+          PIPELINE_LOG = REPO / "memory" / "DEV_PIPELINE.md"
+
+          if not PIPELINE_LOG.exists():
+              print(f"::error::{PIPELINE_LOG} not found — DEV_PIPELINE.md is the live pipeline log; without it the §9 ratchet can't be enforced.")
+              sys.exit(2)
+          if not SPRINTS_DIR.is_dir():
+              print(f"::error::{SPRINTS_DIR} not found.")
+              sys.exit(2)
+
+          # Files that are NOT phase sprint memos (logs / diagnoses /
+          # bundles / backlogs / etc.). The gate explicitly skips
+          # these. If a new file pattern emerges that's not a phase
+          # memo, add it here AND document the addition in the PR.
+          SKIP_PREFIXES = (
+              "CHUNK_",          # iteration chunks (pre-Phase-4 era)
+              "BACKLOG",         # backlog logs
+              "BUG_",            # bug-id sprint diagnoses
+              "CLEANUP_",        # cleanup logs
+              "CYCLE_MANAGER",   # cycle-manager briefs / verifies
+              "GITHUB_",         # github-save support tickets
+              "ENV_FILE_",       # env-file audits
+              "FALSE_GREEN_",    # false-green audit ledger
+              "FRIENDLY_TESTER", # tester rollout checklist
+              "DEPLOY_READINESS",
+              "AUTONOMOUS_",     # autonomous-decisions logs
+              "AWAITING_",       # awaiting-PO etc
+              "CI_HYGIENE",      # CI hygiene memo
+              "A_LOG",
+              "B_LOG",
+              "D_LOG",
+              "BANK_QA_EVIDENCE_PACK",  # evidence bundle (subdir)
+              "C1_revised_",     # bug-specific revised brief
+          )
+          # Suffix-based skips: `_LOG.md`, `_DIAGNOSIS.md`, `_AUDIT.md` etc.
+          SKIP_SUFFIXES = (
+              "_LOG.md",
+              "_DIAGNOSIS.md",
+              "_DIAGNOSIS_v2.md",
+              "_TASKS.md",
+              "_STATE.md.archive",
+          )
+          # Exact filename skips. Includes:
+          #   - non-phase meta-files (README, MODULE_PRODUCT_SPECS).
+          #   - bug-id memos that pre-dated the PHASE_ convention.
+          #   - PHASE_LEDGER.md — meta-ledger, not a specific phase.
+          #   - FALSE_GREEN_AUDIT_LEDGER.md — meta-ledger, not a phase.
+          SKIP_EXACT = {
+              "README.md",
+              "AUTONOMOUS_DECISIONS_LOG.md",
+              "AUTONOMOUS_TRIP_REPORT.md",
+              "AWAITING_PO",
+              "A_LOG.md",
+              "BACKLOG.md",
+              "BACKLOG_B_LOG.md",
+              "BUG_ANL_001_ANALYZE_ROUTE_GUARD.md",
+              "BUG_ANL_002_ANALYZE_UPLOAD_SILENT_FAILURE.md",
+              "MODULE_PRODUCT_SPECS.md",  # not in this dir, defensive
+              "PHASE_LEDGER.md",          # meta-ledger; not a specific phase
+              "FALSE_GREEN_AUDIT_LEDGER.md",  # meta-ledger
+          }
+
+          # LEGACY_ALLOWLIST — phase identifiers that PRE-DATE the
+          # Maintenance Protocol commitment (2026-06-24). The gate
+          # exempts these from the §9-row requirement. New memos
+          # (any identifier NOT in this set, NOT in §9) WILL fail
+          # the gate. Same pattern as Phase 5.4's IGNORED_VULNS
+          # allowlist for the dep-audit-strict gate — honest
+          # baseline + forward-going ratchet.
+          #
+          # When ADDING a new phase memo whose identifier collides
+          # with a legacy entry, prefer adding a §9 row over
+          # extending this list. The list is intentionally frozen
+          # at the 2026-06-24 baseline.
+          LEGACY_ALLOWLIST = {
+              "0", "1", "15", "2", "2.1", "2.2", "2.3", "2.4", "2.5",
+              "3", "3.0", "3.1", "3.2", "3.3", "4", "4.0",
+              "5.11", "5.12", "5.13", "5.14", "5.14.2", "5.15", "5.16",
+              "5.17", "5.19", "5.20", "5.20.1", "5.21", "5.22",
+              "5.6.1", "5.7.3", "5.7.7", "5.7.8", "5.8.4",
+              "A", "B", "C", "D", "E", "F.1", "L",
+          }
+
+          def is_phase_memo(path: pathlib.Path) -> bool:
+              name = path.name
+              if name in SKIP_EXACT:
+                  return False
+              if any(name.startswith(p) for p in SKIP_PREFIXES):
+                  # Whitelist: PHASE_PIPELINE_LOG_SYNC is a phase
+                  # memo even if "PIPELINE" looks log-ish.
+                  if name.startswith("PHASE_"):
+                      return True
+                  return False
+              if any(name.endswith(s) for s in SKIP_SUFFIXES):
+                  return False
+              # Phase memos start with PHASE_, P<digit>, H<digit>, or TL.
+              if name.startswith(("PHASE_", "TL")):
+                  return True
+              if re.match(r"^P\d", name):
+                  return True
+              if re.match(r"^H\d", name):
+                  return True
+              return False
+
+          def derive_identifier(filename: str) -> str:
+              """Derive the canonical §9 phase identifier from a memo filename."""
+              stem = filename[:-3] if filename.endswith(".md") else filename
+              # Strip the `PHASE_` prefix if present.
+              if stem.startswith("PHASE_"):
+                  stem = stem[len("PHASE_"):]
+              # Specific known canonical mappings (single source of truth).
+              # When a memo title doesn't follow the digit-separator
+              # pattern, name it here.
+              KNOWN_MAPPINGS = {
+                  "PIPELINE_LOG_SYNC": "Pipeline-Log-Sync",
+                  "TL0_THINKLAB_PREREAD": "TL0",
+              }
+              for prefix, identifier in KNOWN_MAPPINGS.items():
+                  if stem.startswith(prefix):
+                      return identifier
+              # P<digit> family (`P5_10_chat_resilience` → `5.10`).
+              m = re.match(r"^P(\d+(?:_\d+)*)_", stem)
+              if m:
+                  return m.group(1).replace("_", ".")
+              # H<digit> family (`H2_5_STREAMING_*` → `H2.5`,
+              # `H2_SHIELD_UNIFORMITY_AUDIT` → `H2`).
+              m = re.match(r"^H(\d+(?:_\d+)*)(?:_|$)", stem)
+              if m:
+                  return "H" + m.group(1).replace("_", ".")
+              # TL family (`TL0_*` → `TL0`).
+              m = re.match(r"^TL(\d+(?:_\d+)*)(?:_|$)", stem)
+              if m:
+                  return "TL" + m.group(1).replace("_", ".")
+              # Numeric phase family (`5_5_2_TRACK_A_*` → `5.5.2`,
+              # `14_CHAT_FLUENCY` → `14`, `4_3_TOPOLOGY` → `4.3`).
+              m = re.match(r"^(\d+(?:_\d+)*)(?:_|$)", stem)
+              if m:
+                  return m.group(1).replace("_", ".")
+              # Single-letter / single-letter+digit phase family
+              # (`F_CHAT_*` → `F`, `F1_CLOSEOUT` → `F.1`,
+              # `A_CLOSEOUT` → `A`, `B_CLOSEOUT` → `B`).
+              m = re.match(r"^([A-Z])(\d*)(?:_|$)", stem)
+              if m:
+                  letter, digits = m.group(1), m.group(2)
+                  return f"{letter}.{digits}" if digits else letter
+              # Fall through — couldn't parse.
+              return ""
+
+          # Step 1: enumerate retained phase memos and derive identifiers.
+          phase_memos = []
+          unparseable = []
+          for p in sorted(SPRINTS_DIR.glob("*.md")):
+              if not is_phase_memo(p):
+                  continue
+              ident = derive_identifier(p.name)
+              if not ident:
+                  unparseable.append(p.name)
+                  continue
+              phase_memos.append((ident, p.name))
+
+          if unparseable:
+              for name in unparseable:
+                  print(
+                      f"::error file=memory/sprints/{name}::"
+                      f"pipeline-log-sync: cannot derive a phase identifier "
+                      f"from the filename. Add a canonical mapping to the "
+                      f"KNOWN_MAPPINGS dict in "
+                      f".github/workflows/pipeline-log-sync.yml, OR rename "
+                      f"the memo to a recognised pattern "
+                      f"(PHASE_<digits>_..., PHASE_TL<digits>_..., "
+                      f"H<digits>_..., P<digits>_..., F_..., etc.)."
+                  )
+              sys.exit(1)
+
+          # Step 2: slice §9 Phase History rows from DEV_PIPELINE.md.
+          pipeline_src = PIPELINE_LOG.read_text(encoding="utf-8")
+          m = re.search(
+              r"^## 9\. Phase History.*?\n(.*?)^## 10\.",
+              pipeline_src,
+              re.DOTALL | re.MULTILINE,
+          )
+          if not m:
+              print(
+                  "::error file=memory/DEV_PIPELINE.md::"
+                  "pipeline-log-sync: §9 Phase History section not found "
+                  "(expected `## 9. Phase History` header and `## 10.` "
+                  "terminator). The Maintenance Protocol requires this "
+                  "section to exist."
+              )
+              sys.exit(1)
+          section_body = m.group(1)
+          # §9 table rows look like:
+          #   `| Phase | Closed | Summary | Sprint Memo |`
+          # We collect the Phase column.
+          row_phases = []
+          for line in section_body.splitlines():
+              if not line.startswith("|"):
+                  continue
+              # Skip separator + header rows.
+              cells = [c.strip() for c in line.strip().strip("|").split("|")]
+              if not cells or cells[0] in ("Phase", "---", ""):
+                  continue
+              if re.match(r"^[-:|\s]+$", cells[0]):
+                  continue
+              row_phases.append(cells[0])
+
+          row_phase_set = set(row_phases)
+
+          # Step 3: every retained sprint memo identifier MUST be in
+          # the §9 phase set OR in the LEGACY_ALLOWLIST. Surface ALL
+          # mismatches at once.
+          missing = [
+              (ident, name)
+              for ident, name in phase_memos
+              if ident not in row_phase_set and ident not in LEGACY_ALLOWLIST
+          ]
+          if missing:
+              for ident, name in missing:
+                  print(
+                      f"::error file=memory/sprints/{name}::"
+                      f"pipeline-log-sync: sprint memo '{name}' "
+                      f"(identifier '{ident}') has no matching row in "
+                      f"memory/DEV_PIPELINE.md §9 Phase History and is "
+                      f"not in the LEGACY_ALLOWLIST. Add a row to §9 "
+                      f"with the Phase column set to '{ident}' per "
+                      f"the Maintenance Protocol + sprints/README.md "
+                      f"convention."
+                  )
+              sys.exit(1)
+
+          # All retained sprint memos have a §9 row OR are
+          # legacy-allowlisted. Green.
+          legacy_hit = sum(
+              1 for ident, _ in phase_memos if ident in LEGACY_ALLOWLIST
+          )
+          print(
+              f"pipeline-log-sync: OK. {len(phase_memos)} retained sprint "
+              f"memo(s) checked: "
+              f"{len(phase_memos) - legacy_hit} have matching §9 rows, "
+              f"{legacy_hit} are legacy-allowlisted (pre-2026-06-24 "
+              f"Maintenance Protocol baseline)."
+          )
+          PYEOF

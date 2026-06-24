@@ -26,13 +26,25 @@ None — TL0 closed 2026-06-24. Builder idle. Awaiting orchestrator's TL1.1 brie
 - **Then:** TL1.2 (collapsed build+characterize: state-machine 5-layer parameterisation + 12 preset probe templates + L1 candidate persistence + confidence_scores per layer + UI rename + Solva-export wiring + parity test)
 - **Sprint memos:** `/app/memory/sprints/PHASE_TL0_THINKLAB_PREREAD.md`
 
-### 3.3 Track Chat — Consumer-Grade Chat UX (parallel product track)
-- **Current state:** B0 queued behind TL1.2 close
-- **Locked decisions:** sub-300ms first-token latency bar · providers = Claude + OpenAI + Gemini (no long tail) · in-org retrieval trigger = model-tool-call with explicit-attach fallback (no intent classifier) · Work Studio fix-first then model-tool-call (manual affordance interim) · NO SyniSense tokenization change in scope · Shield as ONLY outbound path
-- **Locked B0 scope:** fidelity probe matrix (text/PNG/PDF/DOCX/XLSX/image-with-text → PASS/PARTIAL/DEGRADE/FAIL) + streaming-reidentify verification + Emergent proxy fronts all 3 providers confirm + in-org retrieval mechanism inventory + Work Studio actual-state probe
-- **Next dispatch:** Chat B0 (read-only) — fires after TL1.2 closes
-- **Then:** Chat B1+ sized at ~3-4 phases after B0 returns honest scope
-- **Sprint memos:** [none yet]
+### 3.3 Track Chat — Consumer-Grade Chat UX
+- **Status:** Currently **LIVE** (operational); consumer-grade redesign queued behind TL1.2 close.
+- **Prior history:**
+  - **Phase 5.10** (2026-02-23 fork-resume) — Chat resilience: production cancellation + audit-panel red error fix on `/app/chat` + `/api/chats/{cid}/messages/stream` · `sprints/P5_10_chat_resilience.md`.
+  - **Phase F** (2026-05-21) — Akki Chat boundary-removal pass: chrome refinement only, no palette/typography/IA changes · `sprints/PHASE_F_CHAT_BOUNDARY_STATE.md`.
+  - **H2** (2026-05-24, read-only) — Shield Uniformity Audit: forensic check that LLMs never see confidential data + Shield-always-on across roles/surfaces; surfaced P0 caveats → H2.5 · `sprints/H2_SHIELD_UNIFORMITY_AUDIT.md`.
+  - **H2.5** (2026-05-24) — Streaming PII fix + audit-integrity invariant: closed 3 P0s from H2 audit + audit-integrity violation; covers streaming PII fix for chat · `sprints/H2_5_STREAMING_PII_FIX_STATE.md`.
+  - **Phase 14** (2026-06-05) — Chat Fluency & Detection Hardening: closed the "redacted tokens" / "did you mean" / disease-name-as-org failure modes; rewrote `system_msg` preamble; threaded `system_msg` kwarg through Shield client + LLM router · `sprints/PHASE_14_CHAT_FLUENCY.md`.
+- **Current operational state** (per `MODULE_PRODUCT_SPECS.md` §1 — Chat is module #1, not #2):
+  - **UI routes**: `/app/chat` → `Chat.jsx`; `/app/chats/archived` → `ArchivedChats.jsx`; inline in `AppHome.jsx` (recent chats card).
+  - **BE endpoints**: 13 routes under `/api/chats/*` + dual-mount `/v1/akki/chats/*` (GET/POST/PATCH/DELETE per route; messages/stream + attach + audit + audit/export.zip + governance/solva-escalation-clicked; `/api/chat/models`; `/api/admin/chat-retention/sweep`; `/api/streaming/v9/*`).
+  - **Owning context**: Akki (orchestration/persistence/UI). Every turn calls SyniSense `shield_invoke(...)` — the only outbound path to LLMs (Anthropic Claude Sonnet 4.5 via Emergent LLM Key).
+  - **Integrations**: `get_synisense().shield_invoke` + `issue_trust_receipt` + `get_shield_audit_by_chat`; `get_akki().mark_solva_escalation_clicked`; quota gating via `services/llm_quota.py`.
+  - **Known debt**: 6 `/api/chats/*` endpoints still `Optional[Dict[str, Any]]` with `# phase-3.0:narrow-in-3.1` marker (Phase 5.2 Part B partial narrowing); streaming Shield UI parked in Trust Center; per-tenant retention policy lacks central admin UI.
+- **Planned next track (consumer-grade redesign) — queued behind TL1.2:**
+  - **Locked decisions:** sub-300ms first-token latency bar · providers = Claude + OpenAI + Gemini (no long tail) · in-org retrieval trigger = model-tool-call with explicit-attach fallback (no intent classifier) · Work Studio fix-first then model-tool-call (manual affordance interim) · NO SyniSense tokenization change in scope · Shield as ONLY outbound path.
+  - **Locked B0 scope:** fidelity probe matrix (text/PNG/PDF/DOCX/XLSX/image-with-text → PASS/PARTIAL/DEGRADE/FAIL) + streaming-reidentify verification + Emergent proxy fronts all 3 providers confirm + in-org retrieval mechanism inventory + Work Studio actual-state probe.
+  - **Next dispatch:** Chat B0 (read-only pre-read) — fires after TL1.2 closes.
+  - **Then:** Chat B1+ sized at ~3-4 phases after B0 returns honest scope.
 
 ## 4. Invariant Ladder Snapshot
 
@@ -50,6 +62,7 @@ None — TL0 closed 2026-06-24. Builder idle. Awaiting orchestrator's TL1.1 brie
 | Schema correctness | first-session-response-shape + http-transport-pydantic-kwargs | ✅ |
 | Deploy | deploy-smoke present (CI gate) | ✅ |
 | CI gates | codemod-drift + dep-audit-strict + invariants.yml + backend-tests.yml (scoped) | ✅ |
+| CI gates | pipeline-log-sync (sprint memo ↔ DEV_PIPELINE §9 row consistency) | ✅ |
 
 ## 5. Surface Ratchet
 
@@ -79,8 +92,11 @@ Held since Phase 4.1 close.
 
 ## 9. Phase History (Reverse Chronological)
 
+> Sort order: **reverse chronological by ship date** (most recent first). Phases without an explicit ship date in MASTER_STATE are listed in the order they appear in MASTER_STATE §4.
+
 | Phase | Closed | Summary | Sprint Memo |
 |---|---|---|---|
+| Pipeline-Log-Sync | 2026-06-24 | Sprint-memo ↔ DEV_PIPELINE §9 row consistency CI gate; first dogfooded by this entry | `sprints/PHASE_PIPELINE_LOG_SYNC.md` |
 | TL0 | 2026-06-24 | ThinkLab pre-read; Gates A (PARTIAL) + B (GREEN) + layer-order SHARED; 3 stop-and-report flags surfaced | `sprints/PHASE_TL0_THINKLAB_PREREAD.md` |
 | 5.5.2 | 2026-06-24 | Track A real closure; 2 production bug fixes (StateOnlyResponse + HTTP transport Pydantic kwargs); 86/86 quarantined unlocked end-to-end | `sprints/PHASE_5_5_2_TRACK_A_REAL_FIXES.md` |
 | 5.5.1 | 2026-06-24 | 62/86 unlocked + 24 honest-skip with named candidates | `sprints/PHASE_5_5_1_TRACK_A_CLOSURE.md` |
@@ -94,6 +110,11 @@ Held since Phase 4.1 close.
 | 4.3 | — | Container topology + healthcheck triad + final 5-hatch dissolution + http default flip | `sprints/PHASE_4_3_TOPOLOGY.md` |
 | 4.2 | — | HTTP transport + typed adapters + 53/58 hatch dissolution | `sprints/PHASE_4_2_HTTP_TRANSPORT.md` |
 | 4.1 | — | Three FastAPI app entrypoints + 134 router redistribution | `sprints/PHASE_4_1_THREE_APPS.md` |
+| 14 | 2026-06-05 | Chat Fluency & Detection Hardening — closed Claude "redacted tokens" / "did you mean" / disease-name-as-org failure modes; rewrote system_msg preamble; threaded kwarg through Shield client + LLM router | `sprints/PHASE_14_CHAT_FLUENCY.md` |
+| H2.5 | 2026-05-24 | Streaming PII fix + audit-integrity invariant — closed 3 P0s from H2 audit + audit-integrity violation surfaced by independent verifier | `sprints/H2_5_STREAMING_PII_FIX_STATE.md` |
+| H2 | 2026-05-24 (read-only) | Shield Uniformity Audit — forensic check that LLMs never see confidential data + Shield-always-on across roles/surfaces; surfaced P0 caveats → H2.5 | `sprints/H2_SHIELD_UNIFORMITY_AUDIT.md` |
+| F | 2026-05-21 | Akki Chat boundary-removal pass — chrome refinement only, no palette/typography/IA changes | `sprints/PHASE_F_CHAT_BOUNDARY_STATE.md` |
+| 5.10 | 2026-02-23 (fork-resume) | Chat resilience — production cancellation + audit-panel red error fix on `/app/chat` + `/api/chats/{cid}/messages/stream` | `sprints/P5_10_chat_resilience.md` |
 | ... | — | (earlier phases per MASTER_STATE.md §8) | — |
 
 ## 10. QA Notes
