@@ -608,6 +608,53 @@ Status legend:
 
   **Iteration budget**: 1/3 used. Iter-2/3 reserved for Phase 5.5.1 rewrites (the 5 quarantined files + full-suite CI stage).
 
+- Phase 5.5.1 (Track-A Closure — Quarantine Rewrites + Full-Suite CI Lane): per-quarantine re-triage of the 5 Phase 5.5 file-level skips (8+24+20+22+12 = 86 tests) using the contract-vs-implementation rewrite principle; 4 of 5 files unquarantined (62 tests back online); Q1 carry-forward + 16 per-test skips on Q4/Q5 all cite specific **Phase 5.5.2 candidates** (2 P0 product bugs + 1 P1 scope expansion) with actionable fix paths; new `.github/workflows/backend-tests.yml` ships the **targeted-green CI lane** (165 passed, 31 skipped, 0 failed; synthetic-regression-tested) — Part A.5 stage 2 of the original Phase 5.5 dispatch → ✅ SHIPPED 2026-06-24 (iter-1; honest two-axis partial-ship per §6 of the closure memo). **60 PASS, 10 docs-skip, 0 fail** on full invariants suite (unchanged from 5.5 — Phase 5.5.1 touched zero product code). **Public surface ratchet held** (`/api/* = cdcb23322bb82895`, `/v1/* = acc51822aa8818ae`, combined `ca9429c64e44570c`).
+
+  **What shipped:**
+
+  • **Part A — 5-file re-triage + rewrites** ✅ COMPLETE.
+    - **Q1** `test_track_a_phase4_versioning_multi.py` (8 tests) — file-level quarantine **CARRIED FORWARD** with updated SPECIFIC reason citing Phase 5.5.2 candidate B (HTTP transport Pydantic-kwarg serialization). Probe revealed all 8 tests fail with `TypeError: Object of type WorkbookAnalysis is not JSON serializable` at `contracts/_adapters/_http_client.py:176` when the synthesize endpoint passes a Pydantic model directly through the HTTP adapter. Test rewrite tracked for Phase 5.5.3 (post-5.5.2-product-fix). Cat 4 (product bug).
+    - **Q2** `test_home_cleanup_phase_f4.py` (24 tests) — file-level quarantine **LIFTED**. Two failing tests rewritten: `test_f4_tasks_router_has_all_compile_endpoints` now pins via OpenAPI path-list (was: decorator-source substring match); `test_f4_circulation_endpoint_is_public_no_auth` now drives HTTP with no auth and asserts non-(401|403) (was: `get_current_account` source string search). 22 other tests unchanged. **22 pass, 0 fail.** Cat 5 (stale-to-arch implementation pin).
+    - **Q3** `test_home_cleanup_phase_f5.py` (20 tests) — same pattern as Q2. File-level quarantine **LIFTED**. Two failing tests rewritten (OpenAPI path-list + HTTP-behaviour pins for the 4 public contributor routes). **20 pass, 0 fail.** Cat 5.
+    - **Q4** `test_j2_stage_3.py` (22 tests) — file-level quarantine **LIFTED**. Per-test skip `_INTAKE_RESPONSE_MODEL_SKIP` applied to the 13 tests that exercise `POST /api/me/first-session/intake` — these fail with `ResponseValidationError` because `StateOnlyResponse.state: Optional[str]` (contracts/responses.py:22) does not match the dict envelope the handler returns. The 9 static / source-string tests (ALLOWED_DOORS, FirstSession.jsx testid order, T5 wizard guardrails) run green unchanged. **Re-triage correction:** the original Phase 5.5 quarantine reason ("audit-row keys drifted from v1.1 baseline") was **incorrect** — both `ALLOWED_DOORS` and the audit-row shape still match the v1.1 baseline. Cross-confirmed via `test_j1_stages_1_2.py` which has 9 failures from the same `StateOnlyResponse` bug. **9 pass, 13 honest-skip.** Cat 4 (product bug → 5.5.2 candidate A).
+    - **Q5** `test_track_a_phase6_inline_edit_and_bc_removal.py` (12 default tests + 2 integration) — file-level quarantine **LIFTED**. Per-test skip `_HTTP_TRANSPORT_PYDANTIC_SKIP` applied to the 3 tests that drive the synthesize endpoint (same 5.5.2 candidate B as Q1). **Re-triage correction:** the original Phase 5.5 reason ("Phase 5 SDK re-introduced top-level BC mirrors") was **incorrect** — the 9 BC-mirror-absence tests for the `notes` collection still pass; `extra='allow'` permits additive fields, NOT removed ones. **9 pass, 3 honest-skip.** Cat 4 (product bug).
+
+  • **Part B — Targeted-green CI lane** ✅ COMPLETE (honest scope-shrink).
+    - `.github/workflows/backend-tests.yml` (~95 LOC): triggers on push to `main` + PR + manual dispatch. Mongo `:7` service container. `BOUNDED_CONTEXT_TRANSPORT=inproc` env. Runs the targeted-green subset (invariants/ + Phase 4.4 dual-mount + Phase 4.2 HTTP transport + the 5 Phase 5.5.1 files), `-m "not integration and not deploy_smoke"`.
+    - **Clean-state local smoke**: `165 passed, 31 skipped, 5 deselected, 0 failed` in 32.09s.
+    - **Synthetic-regression local smoke**: injected `assert "PHASE_5_5_1_SYNTHETIC_REGRESSION_PROBE" in src` into a previously-passing test → `1 failed, 164 passed` (workflow correctly surfaces regressions). Restored after smoke.
+    - **Scope shrink** (carried as D3): original dispatch said "full `backend/tests/`"; Phase 5.5.1 ships the targeted-green subset (~190 tests across 8 directories/files). Full-tree expansion is queued as Phase 5.5.2 candidate C (broader-suite drift triage) — surfaced ~15+ pre-existing failures across ~7+ test files NOT in the Q1-Q5 scope.
+
+  • **Side-effect: `invariants.yml` header updated** — cross-references `backend-tests.yml` and notes Phase 5.5.1 closes Part A.5 of the original Phase 5.5 dispatch end-to-end.
+
+  **Files touched (test files + CI workflows + memo + MASTER_STATE only — zero product code):**
+  - **Created**: `.github/workflows/backend-tests.yml`; `memory/sprints/PHASE_5_5_1_TRACK_A_CLOSURE.md`.
+  - **Modified (test files)**: `backend/tests/test_track_a_phase4_versioning_multi.py` (skip reason update); `backend/tests/test_home_cleanup_phase_f4.py` (unquarantine + 2 rewrites); `backend/tests/test_home_cleanup_phase_f5.py` (unquarantine + 2 rewrites); `backend/tests/test_j2_stage_3.py` (unquarantine + 13 per-test skips); `backend/tests/test_track_a_phase6_inline_edit_and_bc_removal.py` (unquarantine + 3 per-test skips).
+  - **Modified (CI + memo)**: `.github/workflows/invariants.yml` (header cross-ref); `memory/MASTER_STATE.md` (this entry).
+  - **Net product code delta: 0 LOC. Zero behaviour change.**
+
+  **Verification evidence (this env):**
+  - 5-file sweep: `pytest <5 Q files> -q` → **62 passed, 24 skipped, 0 failed** in 64.69s. All 24 skips carry SPECIFIC reasons citing Phase 5.5.2 candidates.
+  - Invariants: `pytest tests/invariants/ -q` → **60 passed, 10 skipped, 0 failed** in 48.14s (unchanged from 5.5; mechanical — Phase 5.5.1 touched zero product code).
+  - `test_invariant_no_silent_skips`: **1/1 PASS** post-rewrite (all 24 new per-test/file-level skip reasons match the no-silent-skips contract).
+  - Targeted-green CI lane (clean state): `165 passed, 31 skipped, 5 deselected, 0 failed` in 32.09s.
+  - Synthetic-regression: `1 failed, 164 passed` (workflow surfaces real failures).
+  - Public ratchet held untouched: `/api/* = cdcb23322bb82895`, `/v1/* = acc51822aa8818ae`, combined `ca9429c64e44570c`.
+
+  **Deviations log** (3 — full details in memo §6):
+  - **D1** Q1 + 3 Q5 tests carry-forward partial: blocked on Phase 5.5.2 candidate B (HTTP transport Pydantic-kwarg). STOP-and-surface per sprint contract.
+  - **D2** Q4 + Q5 re-triage corrections: Phase 5.5 quarantine reasons were both **incorrect**. The actual blockers are different (Phase 5.5.2 candidate A + B). Confirms the value of the per-file probe methodology.
+  - **D3** Part B scope shrink: targeted-green subset instead of full `tests/` tree. Full-tree expansion queued as Phase 5.5.2 candidate C.
+
+  **Phase 5.5.2 candidates surfaced** (queued, NOT shipped):
+  - **A (P0)**: `StateOnlyResponse.state: Optional[str]` typing bug. 6 first-session routes return 500 in production. Unblocks 13 Q4 + 9 cross-file failures.
+  - **B (P0)**: HTTP transport Pydantic-kwarg serialization at `_http_client.py:176`. Unblocks 8 Q1 + 3 Q5 tests + any other call sites with Pydantic kwargs (audit-pending grep).
+  - **C (P1)**: Broader-suite drift triage. ~15+ pre-existing failures across ~7+ test files. Expansion of `backend-tests.yml` to full `tests/` tree.
+
+  Memo: `sprints/PHASE_5_5_1_TRACK_A_CLOSURE.md`.
+
+  **Iteration budget**: 1/3 used. Iter-2 = Phase 5.5.2 (product fixes for candidates A + B). Iter-3 = Phase 5.5.3 (Q1 rewrite + delete per-test skips on Q4/Q5).
+
 
 ### Track B — QA cleanup
 - Phase B1 (small mechanical onboarding + signin): **O4** ✅ + **O6** ✅ + **G1** ✅ (Fig 20 — `/sign-in` → `/signin` × 4 buttons) + **G2 Fig 22 modal** ✅ (SessionTimeoutGuard handler gated on `account`); **O7** ✅ Fig 7. Phase status: ✅ SHIPPED — tester PASS Journeys 4-v2, 6, 7, 8, 9 (5/5 incl. regression), 2026-06-04. Memos: `sprints/TRACK_B_PHASE1_FIG7_V2_ROOT_CAUSE_FIX.md`, `sprints/TRACK_B_PHASE1B_O4_O6_FIG20_FIG22.md`.

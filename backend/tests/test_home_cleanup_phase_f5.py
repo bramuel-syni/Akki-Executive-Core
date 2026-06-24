@@ -1,31 +1,27 @@
 """Phase F.5 — Contributor notification modes wire + live tests (2026-05-26).
 
-**STATUS: QUARANTINED — Phase 5.5 Track-A triage.**
+**Phase 5.5.1 (2026-06-24) rewrite:** the original Phase-F.5 lockdown
+asserted on router-decorator source strings (e.g.
+`'@router.get("/tasks/contribute/{token}")' in src`) which broke
+when later phases added `response_model=...` args to those
+decorators. The wire contract is unchanged.
 
-Phase 5.5 (2026-06-24) inventory: this Phase F.5 lockdown asserts
-specific notification-mode call shapes (Postmark integration call
-args, magic-link token format, audit row keys) that have evolved.
+Two tests in this file were contract-pinned at file-level
+unquarantine:
+  - `test_f5_tasks_router_has_all_contributor_endpoints` — pins
+    via OpenAPI path-list.
+  - `test_f5_public_contributor_endpoints_have_no_auth_dependency`
+    — pins via HTTP behaviour (no-auth call resolves, doesn't
+    401/403).
 
-The contributor-token public endpoints are exercised separately by
-the Phase 4.4 dual-mount smoke. Full rewrite tracked for Phase
-5.5.1 — re-express via Pydantic models for the affected handlers.
+All 18 other tests in the file pass unchanged against current
+architecture.
 
-See `/app/memory/sprints/PHASE_5_5_CODEMOD_CI_AND_TRACK_A_TRIAGE.md` §4
-for the per-test triage.
+See `/app/memory/sprints/PHASE_5_5_1_TRACK_A_CLOSURE.md` §2.
 """
 from __future__ import annotations
 
 import pytest
-
-pytestmark = pytest.mark.skip(
-    reason=(
-        "Phase 5.5 Track-A quarantine — Phase F.5 contributor-"
-        "notification-mode lockdown asserts integration-call "
-        "specifics superseded by current handler architecture. "
-        "Full rewrite tracked for Phase 5.5.1. See "
-        "memory/sprints/PHASE_5_5_CODEMOD_CI_AND_TRACK_A_TRIAGE.md"
-    )
-)
 
 import base64
 import uuid
@@ -127,25 +123,71 @@ def test_f5_invitation_service_has_three_mode_dispatchers():
 
 
 def test_f5_tasks_router_has_all_contributor_endpoints():
-    src = _read(TASKS_ROUTER)
-    assert '@router.get("/tasks/contribute/{token}")' in src
-    assert '@router.post("/tasks/contribute/{token}/upload")' in src
-    assert '@router.post("/tasks/contribute/{token}/comment")' in src
-    assert '@router.post("/tasks/contribute/{token}/submit")' in src
-    assert '@router.post("/tasks/{task_id}/contributors/{contributor_id}/reinvite")' in src
+    """Phase 5.5.1 — pins the public surface via the OpenAPI path-list."""
+    from server import app
+    spec = app.openapi()
+    paths = set(spec["paths"].keys())
+    expected = [
+        ("get",  "/api/tasks/contribute/{token}"),
+        ("post", "/api/tasks/contribute/{token}/upload"),
+        ("post", "/api/tasks/contribute/{token}/comment"),
+        ("post", "/api/tasks/contribute/{token}/submit"),
+        ("post", "/api/tasks/{task_id}/contributors/{contributor_id}/reinvite"),
+    ]
+    for verb, path in expected:
+        assert path in paths, (
+            f"OpenAPI surface missing contributor endpoint: {verb.upper()} {path}"
+        )
+        methods = {m.lower() for m in spec["paths"][path].keys()}
+        assert verb in methods, (
+            f"OpenAPI {path} present but missing {verb.upper()} method "
+            f"(found: {sorted(methods)})"
+        )
 
 
-def test_f5_public_contributor_endpoints_have_no_auth_dependency():
-    src = _read(TASKS_ROUTER)
-    for path in (
-        '/tasks/contribute/{token}")',
-        '/tasks/contribute/{token}/upload")',
-        '/tasks/contribute/{token}/comment")',
-        '/tasks/contribute/{token}/submit")',
-    ):
-        block = src.split(path)[1].split("@router")[0]
-        # No `Depends(get_current_account)` in the signature.
-        assert "get_current_account" not in block, f"{path} should be PUBLIC"
+@pytest.mark.asyncio
+async def test_f5_public_contributor_endpoints_have_no_auth_dependency():
+    """Phase 5.5.1 — drive each contributor public endpoint with NO
+    auth header. A public endpoint resolves and 404s on unknown
+    token; an auth-walled endpoint 401/403s before looking up the
+    token. The status-code distinction is the wire contract.
+    """
+    from server import app
+    from httpx import AsyncClient, ASGITransport
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        # GET /contribute/{token} — public landing.
+        r = await c.get("/api/tasks/contribute/no-such-token")
+        assert r.status_code not in (401, 403), (
+            f"GET /api/tasks/contribute/{{token}} returned {r.status_code} "
+            f"without auth — expected public. Body: {r.text[:200]}"
+        )
+        # POST /comment — public comment.
+        r = await c.post(
+            "/api/tasks/contribute/no-such-token/comment",
+            json={"comment": "hi"},
+        )
+        assert r.status_code not in (401, 403), (
+            f"POST /comment returned {r.status_code} without auth — "
+            f"expected public. Body: {r.text[:200]}"
+        )
+        # POST /submit — public submit.
+        r = await c.post(
+            "/api/tasks/contribute/no-such-token/submit",
+            json={},
+        )
+        assert r.status_code not in (401, 403), (
+            f"POST /submit returned {r.status_code} without auth — "
+            f"expected public. Body: {r.text[:200]}"
+        )
+        # POST /upload — public upload (multipart).
+        r = await c.post(
+            "/api/tasks/contribute/no-such-token/upload",
+            files={"file": ("x.txt", b"x", "text/plain")},
+        )
+        assert r.status_code not in (401, 403), (
+            f"POST /upload returned {r.status_code} without auth — "
+            f"expected public. Body: {r.text[:200]}"
+        )
 
 
 def test_f5_inbound_webhook_recognises_task_token_prefix():

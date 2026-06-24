@@ -1,42 +1,46 @@
 """Track A Phase 4 (2026-06-04) — Versioning + multi-workbook synthesis.
 
-**STATUS: QUARANTINED — Phase 5.5 Track-A triage.**
+**STATUS: STILL QUARANTINED — Phase 5.5.1 re-triage 2026-06-24.**
 
-Phase 5.5 (2026-06-24) inventory established this test family asserts
-phase-4-era invariants that have been **superseded** by:
-  - Phase 5.4 narrowing batch 1's `TaskResponse` / `ChatResponse` /
-    `TaskCountsResponse` shape pins (response shape contract).
-  - The new `test_invariant_narrowing_byte_equivalence.py` invariant
-    (per-route wire-byte pin).
-  - The Phase 4.4 dual-mount smoke (path-list + sha pins).
+Phase 5.5.1 probe (file-level unquarantine) revealed all 8 tests
+fail against current architecture due to **Phase 5.5.2 candidate B**:
+the Phase 4.2 HTTP transport (`BOUNDED_CONTEXT_TRANSPORT=http`)
+does not serialize the `WorkbookAnalysis` Pydantic model passed
+as a kwarg to `get_solva().narrate_analysis(workbook_analysis=wba)`
+at `routers/workbook_analysis.py:1089`. `HTTPSolvaAdapter._call`
+does `client.post(url, json=kwargs)` — non-JSON-serializable
+types fail with `TypeError: Object of type WorkbookAnalysis is
+not JSON serializable`.
 
-The original Phase-4 lockdown is no longer the canonical contract.
-The current architecture allows additional fields on the synthesize
-response (the file's `_assert_no_top_level_narration` and
-`runs[]` exact-shape assertions are no longer correct invariants).
+Per the Phase 5.5.1 sprint contract (zero behaviour change to
+product code), the fix is queued for Phase 5.5.2:
+  - HTTPSolvaAdapter._call must serialize Pydantic models in kwargs
+    via `.model_dump()` before `json=` POST, OR
+  - The call site at `routers/workbook_analysis.py:1089` must
+    pass a dict instead of a Pydantic model.
 
-Full rewrite tracked for Phase 5.5.1 — the right path is to author
-proper Pydantic models for `/api/v2/analyses/{aid}` + the synthesize
-endpoint family (codemod 002 batch 2 candidate), then derive shape
-tests from the model (extra='allow' is fine for additive fields).
+Once 5.5.2 ships, this file becomes a candidate for re-rewrite +
+unquarantine in Phase 5.5.3 (test rewrites are still needed
+because the file's exact-shape `runs[]` assertions are also
+stale-to-arch).
 
-See `/app/memory/sprints/PHASE_5_5_CODEMOD_CI_AND_TRACK_A_TRIAGE.md` §4
-for the per-test triage.
+See `/app/memory/sprints/PHASE_5_5_1_TRACK_A_CLOSURE.md` §6
+(deviations) for the full 5.5.2 candidate write-up.
 """
 from __future__ import annotations
 
 import pytest
 
-# Phase 5.5 file-level quarantine. Skip reason is SPECIFIC (per the
-# no-silent-skips invariant) and points to the sprint memo's triage
-# entry + the Phase 5.5.1 follow-up.
+# Phase 5.5.1 file-level quarantine carry-forward. Specific reason per
+# the no-silent-skips invariant; cites Phase 5.5.2 (product) +
+# Phase 5.5.3 (test rewrite) follow-ups.
 pytestmark = pytest.mark.skip(
     reason=(
-        "Phase 5.5 Track-A quarantine — Phase 4 versioning lockdown "
-        "superseded by Phase 5.4 narrowing batch 1 + the new "
-        "narrowing byte-equivalence invariant. Full rewrite tracked "
-        "for Phase 5.5.1 (codemod 002 batch 2). See "
-        "memory/sprints/PHASE_5_5_CODEMOD_CI_AND_TRACK_A_TRIAGE.md"
+        "Phase 5.5.1 carry-forward quarantine — Phase 5.5.2 "
+        "candidate B (HTTP transport Pydantic-kwarg serialization) "
+        "blocks 8/8 tests in this file. Test rewrite tracked for "
+        "Phase 5.5.3 after 5.5.2 product fix lands. See "
+        "memory/sprints/PHASE_5_5_1_TRACK_A_CLOSURE.md §6"
     )
 )
 

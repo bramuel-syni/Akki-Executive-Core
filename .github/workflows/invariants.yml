@@ -22,14 +22,12 @@ on:
 #     (every pytest.skip / @pytest.mark.skip has a specific reason)
 #   - deploy-smoke registration + docker-compose triad boot honesty
 #
-# Scope-honesty note (Phase 5.5 — 2026-06-24): Part A.5 of the
-# original dispatch asked for the FULL backend test suite in CI.
-# Phase 5.5 ships the invariants-only slice now; the full suite
-# slice ships in Phase 5.5.1 after the 5 stale-to-arch Track-A test
-# files (~83 tests) are rewritten. Quarantining and then painting
-# CI red on known-deferred work would be dishonest. See
-# /app/memory/sprints/PHASE_5_5_CODEMOD_CI_AND_TRACK_A_TRIAGE.md
-# §5 for the two-stage rollout rationale.
+# Scope-honesty note (Phase 5.5.1 — 2026-06-24): Part A.5 stage 2 of
+# the original Phase 5.5 dispatch ships in `backend-tests.yml` (next
+# to this file), now that the 5 stale-to-arch Track-A test files
+# have been re-triaged in Phase 5.5.1 (49 tests back online, 24
+# honest skips citing Phase 5.5.2 candidates). The two workflows
+# together cover the full Part A.5 scope.
 #
 # Integration-marked invariants (real-LLM round-trips, etc.) are
 # DESELECTED by default — they require a live `EMERGENT_LLM_KEY` and

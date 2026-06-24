@@ -1,34 +1,33 @@
 """Phase F.4 — Compile Flow wire + live tests (2026-05-26).
 
-**STATUS: QUARANTINED — Phase 5.5 Track-A triage.**
+**Phase 5.5.1 (2026-06-24) rewrite:** the original Phase-F.4 lockdown
+asserted on router-decorator source strings (e.g.
+`'@router.get("/tasks/{task_id}/compile")' in src`) which broke
+when Phase 5.4 narrowing batch 1 added `response_model=...`
+arguments to those decorators.
 
-Phase 5.5 (2026-06-24) inventory: this Phase F.4 lockdown asserts
-intra-handler wiring details (specific service-call argument
-shapes, stage-transition log strings, audit-row exact keys) that
-have evolved through Phases 4/5. The Phase 4.4 dual-mount smoke +
-Phase 5.4 narrowing batch 1 (`TaskResponse`) are the canonical
-contract pins now — they assert what matters at the wire.
+The wire contract is unchanged — the endpoints still exist and
+serve the same payloads. Two tests in this file were
+contract-pinned instead of source-string-pinned at file-level
+unquarantine:
+  - `test_f4_tasks_router_has_all_compile_endpoints` — now reads
+    the OpenAPI path-list (the public surface ratchet) and
+    asserts each spec'd compile path is present.
+  - `test_f4_circulation_endpoint_is_public_no_auth` — now drives
+    HTTP against the actual endpoints with no auth header and
+    asserts they DON'T return 401/403 (they return 404 on an
+    invalid token, which proves the endpoint resolved without
+    auth-walling first).
 
-The Phase F.4 internals can drift; the wire contract is what we
-guard. Full rewrite tracked for Phase 5.5.1 — express any
-still-relevant assertions as model-level Pydantic validations.
+All 22 other tests in the file pass unchanged against the
+current architecture.
 
-See `/app/memory/sprints/PHASE_5_5_CODEMOD_CI_AND_TRACK_A_TRIAGE.md` §4
-for the per-test triage.
+See `/app/memory/sprints/PHASE_5_5_1_TRACK_A_CLOSURE.md` §2 for
+the rewrite rationale + contract-vs-implementation justification.
 """
 from __future__ import annotations
 
 import pytest
-
-pytestmark = pytest.mark.skip(
-    reason=(
-        "Phase 5.5 Track-A quarantine — Phase F.4 compile-flow "
-        "wiring lockdown asserts intra-handler details superseded "
-        "by the Phase 5.4 narrowing batch 1 wire contract. Full "
-        "rewrite tracked for Phase 5.5.1. See "
-        "memory/sprints/PHASE_5_5_CODEMOD_CI_AND_TRACK_A_TRIAGE.md"
-    )
-)
 
 import asyncio
 import uuid
@@ -126,20 +125,41 @@ def test_f4_commit_panel_has_commit_final_cta():
 
 
 # ═════════════════════════════════════════════════════════════════════
-# Wire — Backend
+# Wire — Backend (Phase 5.5.1 — contract-pinned via OpenAPI path-list)
 # ═════════════════════════════════════════════════════════════════════
 def test_f4_tasks_router_has_all_compile_endpoints():
-    src = _read(TASKS_ROUTER)
-    assert '@router.get("/tasks/{task_id}/compile")' in src
-    assert '@router.post("/tasks/{task_id}/compile/draft")' in src
-    assert '@router.post("/tasks/{task_id}/compile/review/complete")' in src
-    assert '@router.post("/tasks/{task_id}/compile/circulation/send")' in src
-    assert '@router.get("/tasks/circulation/{token}")' in src
-    assert '@router.post("/tasks/circulation/{token}/comment")' in src
-    assert '@router.post("/tasks/{task_id}/compile/circulation/close")' in src
-    assert '@router.post("/tasks/{task_id}/compile/final-production/apply-comment")' in src
-    assert '@router.post("/tasks/{task_id}/compile/final-production/complete")' in src
-    assert '@router.post("/tasks/{task_id}/compile/commit")' in src
+    """Phase 5.5.1 — pins the **public surface** of the compile flow
+    via the OpenAPI path-list (the same ratchet hashed by
+    `/api/* = cdcb23322bb82895`). The original source-string pin
+    broke when Phase 5.4 narrowing added `response_model=` args to
+    the decorators; the wire contract is the right pin.
+    """
+    from server import app
+    spec = app.openapi()
+    paths = set(spec["paths"].keys())
+    # Per-method check: every spec'd compile endpoint resolves
+    # under the canonical `/api/*` prefix with the right HTTP verb.
+    expected = [
+        ("get",  "/api/tasks/{task_id}/compile"),
+        ("post", "/api/tasks/{task_id}/compile/draft"),
+        ("post", "/api/tasks/{task_id}/compile/review/complete"),
+        ("post", "/api/tasks/{task_id}/compile/circulation/send"),
+        ("get",  "/api/tasks/circulation/{token}"),
+        ("post", "/api/tasks/circulation/{token}/comment"),
+        ("post", "/api/tasks/{task_id}/compile/circulation/close"),
+        ("post", "/api/tasks/{task_id}/compile/final-production/apply-comment"),
+        ("post", "/api/tasks/{task_id}/compile/final-production/complete"),
+        ("post", "/api/tasks/{task_id}/compile/commit"),
+    ]
+    for verb, path in expected:
+        assert path in paths, (
+            f"OpenAPI surface missing compile endpoint: {verb.upper()} {path}"
+        )
+        methods = {m.lower() for m in spec["paths"][path].keys()}
+        assert verb in methods, (
+            f"OpenAPI {path} present but missing {verb.upper()} method "
+            f"(found: {sorted(methods)})"
+        )
 
 
 def test_f4_compile_service_has_3sec_llm_timeout():
@@ -165,13 +185,35 @@ def test_f4_commit_path_has_rollback_on_partial_failure():
     assert "task.compile.commit.completed" in src
 
 
-def test_f4_circulation_endpoint_is_public_no_auth():
-    src = _read(TASKS_ROUTER)
-    # Public endpoints have NO `Depends(get_current_account)` in their signature.
-    pub_view = src.split('@router.get("/tasks/circulation/{token}")')[1].split("@router")[0]
-    assert "get_current_account" not in pub_view
-    pub_post = src.split('@router.post("/tasks/circulation/{token}/comment")')[1].split("@router")[0]
-    assert "get_current_account" not in pub_post
+@pytest.mark.asyncio
+async def test_f4_circulation_endpoint_is_public_no_auth():
+    """Phase 5.5.1 — drive the actual HTTP endpoint with NO auth
+    header. A public endpoint resolves and returns 404 on an
+    unknown token (or 422 on malformed input); an auth-walled
+    endpoint returns 401/403 BEFORE looking up the token. The
+    status-code distinction proves the wire contract without
+    coupling to the handler's `Depends(get_current_account)`
+    source signature.
+    """
+    from server import app
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        # GET — public landing on unknown token must NOT 401/403.
+        r = await c.get("/api/tasks/circulation/no-such-token")
+        assert r.status_code != 401 and r.status_code != 403, (
+            f"GET /api/tasks/circulation/{{token}} returned {r.status_code} "
+            f"without auth — expected the endpoint to resolve as public "
+            f"and return 404 on the missing token. Body: {r.text[:200]}"
+        )
+        # POST comment — public submission on unknown token must NOT 401/403.
+        r = await c.post(
+            "/api/tasks/circulation/no-such-token/comment",
+            json={"comment": "hi"},
+        )
+        assert r.status_code != 401 and r.status_code != 403, (
+            f"POST /api/tasks/circulation/{{token}}/comment returned "
+            f"{r.status_code} without auth — expected public. "
+            f"Body: {r.text[:200]}"
+        )
 
 
 # ═════════════════════════════════════════════════════════════════════
