@@ -231,3 +231,16 @@ P1 (CI lane greens) awaits user approval. P1 actionable surface (per the P0.3 tr
 - **P1.3** annotate `backend/requirements.txt:34,35` with `# ci-requirements-guard: allow spacy-models-via-github-release` per the existing script's allowlist convention.
 - **P1.4** no-op against current state (`yarn audit --level high` already in place).
 - **P1.5** extend `.gitleaks.toml` `[allowlist].paths` with `^memory/sprints/.*\.md$` and `^docs/PRODUCT_REVIEW\.md$`. Config-path correction is a no-op (already correct).
+
+## Lessons learned — git filter-repo + dependabot branches
+
+**Gotcha discovered post-push:** `git filter-repo --path backup/ --invert-paths --force` rewrites refs you explicitly list (or all local refs in the working repo). It does NOT rewrite refs that exist only on the remote.
+
+**Concrete failure mode:** After force-pushing rewritten `main`, 10 pre-existing dependabot branches on the remote (5 npm/yarn + 5 pip) still pointed at pre-scrub commits and still contained every `.bson` file. The exposure window stayed open via `https://github.com/<org>/<repo>/tree/<dependabot-branch>/backup` until those branch refs were deleted.
+
+**Checklist for next history scrub:**
+1. Before force-push: `git branch -r` and list every remote branch.
+2. After local filter-repo: every remote branch that contained the leak path must be either (a) deleted, (b) rebased onto the clean base and force-pushed, or (c) confirmed to never have contained the leak path.
+3. Mirror-clone option: `git clone --mirror <remote>` + filter-repo on the mirror, then force-push the mirror back. Rewrites ALL refs in one shot. More disruptive but eliminates this failure mode entirely.
+4. Post-scrub: ask GitHub Support to run `gc --prune=now` for security-scrub cases — accelerates unreachable-object cleanup from days/weeks to immediate.
+5. Treat the scrub as INCOMPLETE until verification covers EVERY remote branch, not just default branch.
