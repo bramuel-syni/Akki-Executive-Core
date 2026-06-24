@@ -33,6 +33,8 @@ import {
   ArrowLeft,
   // Phase C Chat cleanup (2026-05-26) — three-dot per-thread menu.
   MoreVertical,
+  // Phase B1.1 (2026-06-24) — Work Studio affordance trigger icon.
+  Sparkles,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -53,7 +55,13 @@ import "highlight.js/styles/github.css";
 import ModelAvatar from "@/components/chat/ModelAvatar";
 import MarkdownMessage from "@/components/chat/MarkdownMessage";
 import MessageActions from "@/components/chat/MessageActions";
-import GovernanceSignals from "@/components/chat/GovernanceSignals";import {
+import GovernanceSignals from "@/components/chat/GovernanceSignals";
+// Phase B1.1 (2026-06-24) — manual Work Studio affordance modal.
+// Lives in components/chat/ so other consumer surfaces (Solva, future
+// chat-like apps) can reuse it without re-implementing the pre-fill
+// mechanics. Open-action wired from the Composer toolbar button.
+import WorkStudioAffordanceModal from "@/components/chat/WorkStudioAffordanceModal";
+import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
@@ -168,6 +176,11 @@ export default function Chat() {
   const [loading, setLoading] = useState(true);
   const [bypassDlg, setBypassDlg] = useState(null); // {detected}
   const [auditOpen, setAuditOpen] = useState(false);
+  // Phase B1.1 (2026-06-24) — manual Work Studio affordance modal.
+  // Opened from a button on the Composer toolbar; carries the live
+  // conversation messages + the active chat's context for mechanical
+  // pre-fill (no LLM call).
+  const [wsModalOpen, setWsModalOpen] = useState(false);
   const messagesEndRef = useRef(null);
 
   // K1 (2026-05-12) — Per-message Synisense badge.
@@ -1441,6 +1454,8 @@ export default function Chat() {
                 onToggleThinkHarder={() => setThinkHarder((v) => !v)}
                 linkedContext={activeChat.linked_context || null}
                 onRemoveLinkedContext={onRemoveLinkedContext}
+                onOpenWS={() => setWsModalOpen(true)}
+                wsContextId={activeChat.context_id || null}
               />
             </>
           )}
@@ -1459,6 +1474,14 @@ export default function Chat() {
         open={auditOpen}
         onClose={() => setAuditOpen(false)}
         chatId={activeChat?.id}
+      />
+      <WorkStudioAffordanceModal
+        open={wsModalOpen}
+        onClose={() => setWsModalOpen(false)}
+        messages={activeChat?.messages || []}
+        contextId={activeChat?.context_id || null}
+        contextName={activeContext?.name || null}
+        chatTitle={activeChat?.title || null}
       />
       </WorkspaceEntryGate>
     </AppShell>
@@ -1935,7 +1958,7 @@ function renderInlineCitations(text, citations) {
   });
 }
 
-function Composer({ value, onChange, onSubmit, sending, policy, onCancel, attachments, onAttachFile, onRemoveAttachment, thinkHarder, onToggleThinkHarder, linkedContext, onRemoveLinkedContext }) {
+function Composer({ value, onChange, onSubmit, sending, policy, onCancel, attachments, onAttachFile, onRemoveAttachment, thinkHarder, onToggleThinkHarder, linkedContext, onRemoveLinkedContext, onOpenWS, wsContextId }) {
   const ta = useRef(null);
   const fileInputRef = useRef(null);
   return (
@@ -2053,6 +2076,27 @@ function Composer({ value, onChange, onSubmit, sending, policy, onCancel, attach
               >
                 <Brain className="w-3 h-3" />
                 <span>Think harder{thinkHarder ? " · ON" : ""}</span>
+              </button>
+              {/* Phase B1.1 (2026-06-24) — manual Work Studio
+                  affordance trigger. Opens the WorkStudioAffordanceModal
+                  with mechanically-prefilled description / objective /
+                  scope derived from the live conversation. Disabled
+                  outside an org context (the /export route requires
+                  context_id membership) — tooltip explains. */}
+              <button
+                type="button"
+                onClick={onOpenWS}
+                disabled={sending || !wsContextId}
+                className="inline-flex items-center gap-1 text-[10.5px] text-[var(--muted)] hover:text-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed px-1.5 py-0.5 rounded-sm border border-transparent hover:border-[var(--rule)]"
+                data-testid="chat-ws-affordance-btn"
+                title={
+                  wsContextId
+                    ? "Create a Work Studio artefact from this conversation"
+                    : "Open this chat inside an organisation context to create a Work Studio artefact"
+                }
+              >
+                <Sparkles className="w-3 h-3" />
+                <span>Create</span>
               </button>
             </div>
             <span className="text-[10px] text-[var(--muted)]">

@@ -6,11 +6,11 @@
 
 ## 1. Current State
 
-Track Work Studio — Phase WS1 closed 2026-06-24. All four WS1 repair items shipped end-to-end with execution evidence: (1) committee_pack render dispatcher branch + (2) board_pack via `/export` (Pass-2 schema_doc + dispatcher + enhance + synisense-breakdown parity) — both new kinds produce real DOCX bytes (38 777 + 39 835) with correct ZIP magic + MIME; (3) overlay list/get verdict reclassified to **WORKS** (WS0 was a test-time misclassification — id picked from `db.documents` instead of `db.work_studio_exports`); (4) compile-then-render smoke green for DOCX (36 650 bytes) + PPTX (29 085 bytes) + PDF (1 631 bytes). All 6 user-facing generation kinds now reach `/export`. ThinkLab Gate A still queued; Chat B1.1 manual Work Studio affordance unblocked.
+Track Chat — Phase B1.1 closed 2026-06-24. Manual Work Studio affordance live on `/app/chat`: composer toolbar "Create" button opens a modal with all 6 kinds (brief/deck/report/minutes/committee_pack/board_pack) + mechanically-prefilled description (last 6 turns) / objective (last user message) / scope (context + chat title). Handoff to the WS1-uniform `/api/contexts/{ctx}/work-studio/export/{kind}` route. End-to-end chain verified: modal payload → `export_id=7fd6da82` → COMPLETE → 38 891-byte DOCX with valid ZIP magic. Prefill is 100% pure JS — zero net-new LLM calls (static code audit confirms only 3 network calls in the modal, all gated behind explicit user actions: Create / poll / Download). Disabled-out-of-org tooltip surfaces honestly. ThinkLab Gate A still queued.
 
 ## 2. Active Dispatch
 
-None — WS1 closed. Chat B1.1 + ThinkLab Gate A both unblocked; await orchestrator pick.
+None — B1.1 closed. ThinkLab Gate A render-check + Flag 3 verification is next per consolidated dispatch queue.
 
 ## 3. Parallel Tracks
 
@@ -29,6 +29,7 @@ None — WS1 closed. Chat B1.1 + ThinkLab Gate A both unblocked; await orchestra
 ### 3.3 Track Chat — Consumer-Grade Chat UX
 - **Status:** Currently **LIVE** (operational); B1 consumer-surface build closed 2026-06-24.
 - **Prior history:**
+  - **Phase B1.1** (2026-06-24) — Chat manual Work Studio affordance: composer toolbar "Create" button opens a modal with all 6 generation kinds + mechanically-prefilled description (last 6 turns) / objective (last user message) / scope (context + chat title). Handoff to the WS1-uniform `/api/contexts/{ctx}/work-studio/export/{kind}` route. End-to-end chain green: `export_id=7fd6da82` → COMPLETE → 38 891-byte DOCX with valid ZIP magic. Prefill is 100% pure JS — zero net-new LLM calls. Disabled-out-of-org tooltip handled honestly. New component `frontend/src/components/chat/WorkStudioAffordanceModal.jsx`. · `sprints/PHASE_B1_1_CHAT_WS_AFFORDANCE.md`.
   - **Phase B1** (2026-06-24) — Chat consumer-surface build: grouped two-level model picker (Claude · GPT · Gemini provider groups) + AST invariant `test_invariant_chat_streaming_reidentify_present.py` pinning `StreamingReidentifier(...)` in `stream_message` + generalised `test_invariant_shield_no_leak.py` chat surface across all 3 providers + deliberate-violation smoke rail (7 default-lane tests). Pre-B1 FE regressions repaired (missing `tsconfig.json` + `SessionTimeoutGuard` apiV2/raw-axios mix-up). · `sprints/PHASE_B1_CHAT_BUILD.md`.
   - **Phase 5.10** (2026-02-23 fork-resume) — Chat resilience: production cancellation + audit-panel red error fix on `/app/chat` + `/api/chats/{cid}/messages/stream` · `sprints/P5_10_chat_resilience.md`.
   - **Phase F** (2026-05-21) — Akki Chat boundary-removal pass: chrome refinement only, no palette/typography/IA changes · `sprints/PHASE_F_CHAT_BOUNDARY_STATE.md`.
@@ -117,6 +118,7 @@ Held since Phase 4.1 close.
 
 | Phase | Closed | Summary | Sprint Memo |
 |---|---|---|---|
+| B1.1 | 2026-06-24 | Chat manual Work Studio affordance: composer toolbar "Create" button → modal with all 6 generation kinds + mechanically-prefilled description / objective / scope from live conversation; handoff to WS1-uniform `/api/contexts/{ctx}/work-studio/export/{kind}`. Chain green: 38 891-byte DOCX with valid ZIP magic. Prefill is pure JS — zero net-new LLM calls. New component `WorkStudioAffordanceModal.jsx`. | `sprints/PHASE_B1_1_CHAT_WS_AFFORDANCE.md` |
 | WS1 | 2026-06-24 | Work Studio repair pass: all 6 generation kinds now reach `/export` (committee_pack dispatcher branch + board_pack added to `_VALID_KINDS` + Pass-2 schema_doc + enhance + synisense-breakdown parity); committee_pack DOCX 38 777 bytes + board_pack DOCX 39 835 bytes verified end-to-end with correct ZIP magic + MIME. Overlay reclassified to WORKS (WS0 was a test-time misclassification — id picked from `db.documents`, not `db.work_studio_exports`). Compile-then-render smoke green for DOCX/PPTX/PDF on an artefact with non-empty structured_content. Chat B1.1 handoff matrix: 6/6 kinds safe. | `sprints/PHASE_WS1_REPAIR.md` |
 | WS0 | 2026-06-24 | Work Studio runtime classification (read-only + execution-based, no product code touched): 8-capability matrix produced; 4 generate-kinds WORK (brief/deck/report/minutes), 1 BROKEN-AT-SEAM (committee_pack render dispatcher), 1 DEFERRED via `/export` (board_pack); Phase-C/C2 WORKS, overlay RUNS-BUT-AMBIGUOUS, render AMBIGUOUS (needs compile-then-render smoke), Analyze spreadsheet-only confirmed; objective→content TRUE, objective→kind FALSE; AnalyzeDrawer Phase-3 = CLEAN-PLACEHOLDER | `sprints/PHASE_WS0_CLASSIFY.md` |
 | B1 | 2026-06-24 | Chat consumer-surface build: grouped two-level provider→version model picker on `/app/chat`; build-breaking AST invariant on `StreamingReidentifier` wire-up; shield-no-leak generalised across Claude/GPT/Gemini + deliberate-violation rail (7 default-lane tests); pre-B1 FE regressions repaired (`tsconfig.json` + `SessionTimeoutGuard.__raw`) | `sprints/PHASE_B1_CHAT_BUILD.md` |
