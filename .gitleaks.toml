@@ -31,6 +31,15 @@ paths = [
   '''^\.gitleaks\.toml$''',
   # frontend STORAGE_KEY constants — these are localStorage keys, not secrets.
   '''^frontend/src/components/cohort/Day16Banner\.jsx$''',
+  # AKKI Audit (P1.5, 2026-06-24) — sprint memos + audit memos quote
+  # redaction markers (`<REDACTED_ROTATE_AFTER_LEAK>`) and
+  # already-rotated basic-auth USER identifiers (`BASIC_AUTH_USER=...`,
+  # not the secret) for forensic completeness. These are
+  # documentation, not live credentials. Same allowlist class as the
+  # below per-path override for test_credentials.md.
+  '''^memory/sprints/.*\.md$''',
+  '''^memory/audit/.*\.md$''',
+  '''^docs/PRODUCT_REVIEW\.md$''',
 ]
 
 # Per-path overrides for known-safe files.
