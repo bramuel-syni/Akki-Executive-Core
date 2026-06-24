@@ -31,7 +31,7 @@ if str(BACKEND) not in sys.path:
 
 
 def test_aa_f5_canonical_matches_ti_owner_role_enum():
-    from routers.monitor_v2 import CANONICAL_OWNER_ROLES  # type: ignore
+    from routers.monitor_strategic_items import CANONICAL_OWNER_ROLES  # type: ignore
     expected = (
         "CEO", "CFO", "COO", "CRO", "CTO", "CHRO", "CMO", "CIO", "OTHER",
     )
@@ -44,7 +44,7 @@ def test_aa_f5_canonical_matches_ti_owner_role_enum():
 
 def test_aa_f5_legacy_tokens_no_longer_in_monitor_v2_constant():
     """Legacy tokens that were in the original 7-tuple must be gone."""
-    from routers.monitor_v2 import CANONICAL_OWNER_ROLES  # type: ignore
+    from routers.monitor_strategic_items import CANONICAL_OWNER_ROLES  # type: ignore
     for legacy in ("CCO", "Audit Committee", "Risk Committee"):
         assert legacy not in CANONICAL_OWNER_ROLES, (
             f"Legacy token {legacy!r} must be removed from "
@@ -53,7 +53,7 @@ def test_aa_f5_legacy_tokens_no_longer_in_monitor_v2_constant():
 
 
 def test_aa_f5_new_tokens_present_in_monitor_v2_constant():
-    from routers.monitor_v2 import CANONICAL_OWNER_ROLES  # type: ignore
+    from routers.monitor_strategic_items import CANONICAL_OWNER_ROLES  # type: ignore
     for added in ("CHRO", "CMO", "OTHER"):
         assert added in CANONICAL_OWNER_ROLES, (
             f"New token {added!r} must be in "
@@ -65,7 +65,7 @@ def test_aa_f5_canonical_tuple_matches_tasks_initiatives_literal():
     """The monitor_v2 canonical tuple and the tasks_initiatives
     `TIOwnerRole` Literal MUST stay in lockstep. This guards future
     drift between the two source-of-truths."""
-    from routers.monitor_v2 import CANONICAL_OWNER_ROLES  # type: ignore
+    from routers.monitor_strategic_items import CANONICAL_OWNER_ROLES  # type: ignore
 
     # Read the source — TIOwnerRole is a Literal[...] which Python
     # serialises as `Literal["CEO", ...]`. Use `typing.get_args` to

@@ -52,9 +52,9 @@ from server import app
 REPO = Path(__file__).resolve().parents[2]
 PHASE_D_ROUTER = REPO / "backend/routers/solva_phase_d.py"
 SITUATION_CLASSIFIER = (
-    REPO / "backend/services/solva/reasoning/situation_class_classifier.py"
+    REPO / "backend/services/solva_voice_audit/reasoning/situation_class_classifier.py"
 )
-FRAME_AUDIT = REPO / "backend/services/solva/reasoning/frame_audit_engine.py"
+FRAME_AUDIT = REPO / "backend/services/solva_voice_audit/reasoning/frame_audit_engine.py"
 
 
 def _client() -> httpx.AsyncClient:

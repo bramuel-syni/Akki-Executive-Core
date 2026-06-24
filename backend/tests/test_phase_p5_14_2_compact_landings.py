@@ -78,7 +78,7 @@ def test_p5_14_2_does_not_touch_solva_v1():
     # of any P5.14.2 marker.
     import subprocess
     proc = subprocess.run(
-        ["grep", "-r", "P5.14.2", "/app/backend/services/solva/"],
+        ["grep", "-r", "P5.14.2", "/app/backend/services/solva_voice_audit/"],
         capture_output=True, text=True, check=False,
     )
     assert "P5.14.2" not in proc.stdout, (

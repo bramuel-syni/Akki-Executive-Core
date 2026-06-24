@@ -87,7 +87,7 @@ from routers import password_reset as password_reset_router  # noqa: E402
 # backend/_archived_legacy/routers/plays.py.archived.
 from routers import agenda as agenda_router  # noqa: E402
 from routers import document_engagement as document_engagement_router  # noqa: E402
-from routers import monitor as monitor_router  # noqa: E402
+from routers import monitor_dashboard as monitor_dashboard_router  # noqa: E402
 from routers import strategic_goals as strategic_goals_router  # noqa: E402
 from routers import chat as chat_router  # noqa: E402
 from routers import influence_map as influence_map_router  # noqa: E402
@@ -144,7 +144,7 @@ from routers import exco_teams as exco_teams_router  # noqa: E402  HOME sprint �
 from routers import portfolio as portfolio_router  # noqa: E402  HOME sprint — portfolio state
 from routers import compilations as compilations_router  # noqa: E402  Patch 2B.2 — Compilation Wizard
 from routers import home as home_router  # noqa: E402  Patch 3 — Home v2
-from routers import monitor_v2 as monitor_v2_router  # noqa: E402  Patch 5 — Objectives & Projects
+from routers import monitor_strategic_items as monitor_strategic_items_router  # noqa: E402  Patch 5 — Objectives & Projects
 from routers import monitor_status_assessment as monitor_status_router  # noqa: E402  Phase F — Update goal
 from routers import strategic_goal_assessment as strategic_goal_assessment_router  # noqa: E402  Chunk 12 — Strategic Goal Update Goal flow
 from routers import streaming_v9 as streaming_v9_router  # noqa: E402  Patch 9 — Streaming phase events

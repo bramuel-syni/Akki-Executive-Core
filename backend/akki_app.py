@@ -94,9 +94,9 @@ from routers import lens as _lens
 from routers import llm_quota as _llm_quota
 from routers import mfa as _mfa
 from routers import misc as _misc
-from routers import monitor as _monitor
+from routers import monitor_dashboard as _monitor_dashboard
 from routers import monitor_status_assessment as _monitor_status
-from routers import monitor_v2 as _monitor_v2
+from routers import monitor_strategic_items as _monitor_strategic_items
 from routers import ned_cycle as _ned_cycle
 from routers import news as _news
 from routers import oauth_google as _oauth_google
@@ -188,7 +188,7 @@ ROUTERS = [
     _password_reset.router,
     _agenda.router,
     _document_engagement.router,
-    _monitor.router,
+    _monitor_dashboard.router,
     _strategic_goals.router,
     # ─── chat audit panel BEFORE chat (path-collision guard) ───────────
     _chat_audit_panel.router,
@@ -240,7 +240,7 @@ ROUTERS = [
     _portfolio.router,
     _compilations.router,
     _home.router,
-    _monitor_v2.router,
+    _monitor_strategic_items.router,
     _monitor_status.router,
     _strategic_goal_assessment.router,
     _streaming_v9.router,
