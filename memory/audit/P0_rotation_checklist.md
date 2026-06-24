@@ -74,3 +74,87 @@ If the user chooses to rotate ANYTHING, recommended sequence:
 - Detailed counts + first-doc field shape: `memory/audit/P0_exposure_report.md`.
 - CI lane triage: `memory/audit/P0_ci_log_triage.md`.
 - Sprint memo for P0 close-out: `memory/sprints/PHASE_AUDIT_P0.md`.
+
+---
+
+## Verdict: `auth_events.credentials` — **(i) hash/metadata** (actually simpler: source-label list)
+
+**Read date:** 2026-06-24 follow-on dispatch.
+**Method:** Code-read only. No DB value of `auth_events.credentials` inspected anywhere.
+
+### Single write-site
+
+Grep found exactly one writer (plus one reader on the admin surface):
+```
+$ grep -rn "auth_events" backend/ --include="*.py"
+  backend/core.py:233            await db.auth_events.insert_one({
+  backend/core.py:237                "credentials": credentials,
+  backend/routers/admin_auth_events.py:46   rows = await db.auth_events.find(...)
+  backend/routers/admin_auth_events.py:65   creds = r.get("credentials") or []
+```
+
+### Code path that fills `credentials`
+
+`backend/core.py:95` constructs the candidate list:
+```python
+95:  candidates: list[tuple[str, str]] = []
+96:  auth_header = request.headers.get("Authorization", "")
+97:  if auth_header.startswith("Bearer "):
+98:      bearer = auth_header[7:].strip()
+99:      if bearer:
+100:         candidates.append(("bearer", bearer))
+101: cookie_token = request.cookies.get("access_token")
+102: if cookie_token:
+103:     candidates.append(("cookie", cookie_token))
+```
+
+Each tuple is `(source_label, raw_jwt_token)`. So far the token IS in the tuple, but it never escapes:
+
+`backend/core.py:187` (success path) and `:204` (failure path) BOTH apply the same comprehension that DROPS the token:
+```python
+187: creds_seen = [s for s, _ in candidates]
+204: credentials=[s for s, _ in candidates],
+```
+
+The pattern `[s for s, _ in candidates]` binds:
+- `s` → the source label (`"bearer"` or `"cookie"`)
+- `_` → the raw token (discarded by convention)
+
+The list passed to `_record_auth_event(..., credentials=...)` therefore contains ONLY label strings. At `core.py:237` that list is inserted into the document verbatim:
+```python
+233: await db.auth_events.insert_one({
+234:     "at": _dt.now(_tz.utc).isoformat(),
+235:     "ok": ok,
+236:     "reason": reason,
+237:     "credentials": credentials,    # ← list of strings: "bearer"/"cookie"
+238:     "authed_via": authed_via,
+...
+```
+
+### Possible domain of values
+
+`auth_events.credentials` can only ever be one of:
+- `[]` — no credentials provided (the `no_credentials` 401 branch at `core.py:106`).
+- `["bearer"]` — Authorization header only.
+- `["cookie"]` — access_token cookie only.
+- `["bearer", "cookie"]` — both submitted (the dual-credential branch that the `dual_mismatch` flag tracks).
+
+**No JWT, no token, no password, no secret ever lands in `auth_events.credentials` per this write-site.**
+
+### Verdict
+
+**(i) hash/metadata.** The field stores a list of source labels (`"bearer"` / `"cookie"`) ONLY. This is even safer than a hash — there is no underlying token recoverable from the stored value because the token was never persisted in the first place; the comprehension `[s for s, _ in candidates]` discards it at the FE of `_record_auth_event` before any I/O.
+
+**No code bug.** The write-site is correct by design — the `_` in the comprehension is the deliberate discard of the token half of each `(label, token)` tuple.
+
+**Rotation impact:** None on this field. Folds into the existing P0 wave's forced password reset (item #1 above). `auth_events.credentials` itself can stay as-is — it does not contribute to the exposure surface.
+
+### Confirmation that no other write-site exists
+
+```
+$ grep -rn '"credentials"' backend/ --include="*.py"
+  backend/core.py:237            "credentials": credentials,
+  backend/routers/admin_auth_events.py:65        creds = r.get("credentials") or []   # READ side
+```
+
+The admin router only READS `credentials` to render the admin UI (`admin_auth_events.py:65`). There is no `update_one` / `update_many` / `findAndModify` against `auth_events` anywhere in the tree. Single write-site; verdict is unambiguous.
