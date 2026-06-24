@@ -6,11 +6,11 @@
 
 ## 1. Current State
 
-Builder idle. Awaiting user direction on Track Chat B1+ scope after Phase B0 close (TL Flag 3 also still open in parallel).
+Builder idle. SPRINT_PLAN.md established as canonical decisions+sequence source. Awaiting (a) user decisions on TL Flag 3 + Gate A render check (blocks TL1.1) and (b) user-blessed brief for Track Work Studio / WS0 (blocks B1).
 
 ## 2. Active Dispatch
 
-None — Phase B0 closed 2026-06-24. Builder idle.
+None — `PHASE_SPRINT_PLAN_INIT` closed 2026-06-24. Builder idle.
 
 ## 3. Parallel Tracks
 
@@ -69,6 +69,7 @@ None — Phase B0 closed 2026-06-24. Builder idle.
 | Deploy | deploy-smoke present (CI gate) | ✅ |
 | CI gates | codemod-drift + dep-audit-strict + invariants.yml + backend-tests.yml (scoped) | ✅ |
 | CI gates | pipeline-log-sync (sprint memo ↔ DEV_PIPELINE §9 row consistency) | ✅ |
+| Decisions+sequence | `SPRINT_PLAN.md` — canonical for sprint goal · tracks · sequence · protocols · locks · agreements · mixups | ✅ |
 
 ## 5. Surface Ratchet
 
@@ -102,6 +103,7 @@ Held since Phase 4.1 close.
 
 | Phase | Closed | Summary | Sprint Memo |
 |---|---|---|---|
+| SPRINT_PLAN_INIT | 2026-06-24 | `SPRINT_PLAN.md` established as canonical decisions+sequence source (8 sections: sprint goal · tracks · sequence · protocols · locks · agreements · mixups · external action items); zero overlap with `DEV_PIPELINE.md` (live state) and `MASTER_STATE.md` (history) per §0 role boundary | `sprints/PHASE_SPRINT_PLAN_INIT.md` |
 | B0 | 2026-06-24 | Chat consumer-grade redesign pre-read: 6 probes resolved (fidelity matrix, streaming-reidentify EXISTS, proxy fronts all 3, RAG BM25-exists, tool-call MISSING, Work Studio ambiguous); honest B1+ scope sized across 3 scenarios | `sprints/PHASE_B0_CHAT_PREREAD.md` |
 | Pipeline-Log-Sync | 2026-06-24 | Sprint-memo ↔ DEV_PIPELINE §9 row consistency CI gate; first dogfooded by this entry | `sprints/PHASE_PIPELINE_LOG_SYNC.md` |
 | TL0 | 2026-06-24 | ThinkLab pre-read; Gates A (PARTIAL) + B (GREEN) + layer-order SHARED; 3 stop-and-report flags surfaced | `sprints/PHASE_TL0_THINKLAB_PREREAD.md` |
