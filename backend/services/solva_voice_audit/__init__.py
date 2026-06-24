@@ -10,8 +10,8 @@ Mongo collection.
 Architecture (per /app/memory/briefs/SOLVA.md):
 
     Presentation tier  — owned by the frontend (single voice — coach)
-    Orchestration tier — services/solva/orchestration/ + voice/
-    Reasoning tier     — services/solva/reasoning/ (Shield-routed)
+    Orchestration tier — services/solva_voice_audit/orchestration/ + voice/
+    Reasoning tier     — services/solva_voice_audit/reasoning/ (Shield-routed)
 
 Single-voice invariant: ONLY `voice/question_bank.py` +
 `voice/synthesis_renderer.py` + `voice/refusal_voice.py` produce

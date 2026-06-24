@@ -98,7 +98,7 @@ async def _login(c: AsyncClient, email: str, password: str) -> Dict[str, str]:
 # Unit tests — state machine.
 # ─────────────────────────────────────────────────────────────────────
 def test_state_machine_canonical_sequence():
-    from services.solva.orchestration.state_machine import advance
+    from services.solva_voice_audit.orchestration.state_machine import advance
     seq = ["entry"]
     cur = "entry"
     while cur != "done":
@@ -113,13 +113,13 @@ def test_state_machine_canonical_sequence():
 
 
 def test_state_machine_rejects_advance_from_done():
-    from services.solva.orchestration.state_machine import advance, InvalidLayerTransition
+    from services.solva_voice_audit.orchestration.state_machine import advance, InvalidLayerTransition
     with pytest.raises(InvalidLayerTransition):
         advance("done")
 
 
 def test_state_machine_can_advance_to_strict():
-    from services.solva.orchestration.state_machine import can_advance_to
+    from services.solva_voice_audit.orchestration.state_machine import can_advance_to
     assert can_advance_to("entry", "framing") is True
     assert can_advance_to("layer_1", "layer_2") is True
     assert can_advance_to("entry", "layer_3") is False  # no skipping
@@ -130,7 +130,7 @@ def test_state_machine_can_advance_to_strict():
 # Unit tests — single-voice invariant.
 # ─────────────────────────────────────────────────────────────────────
 def test_single_voice_scan_catches_far_vocabulary():
-    from services.solva.voice.invariants import scan_for_internal_artefacts
+    from services.solva_voice_audit.voice.invariants import scan_for_internal_artefacts
     bad = "Your Frame Audit Record verdict is sufficient_with_caveats."
     hits = scan_for_internal_artefacts(bad)
     assert len(hits) >= 1
@@ -140,7 +140,7 @@ def test_single_voice_scan_catches_far_vocabulary():
 def test_single_voice_scan_catches_legacy_leak_string():
     """The user's screenshot leak — 'a couple of pieces are thin' was
     rendered as user content. The new voice tier must NEVER emit it."""
-    from services.solva.voice.invariants import scan_for_internal_artefacts
+    from services.solva_voice_audit.voice.invariants import scan_for_internal_artefacts
     hits = scan_for_internal_artefacts(
         "Your framing is workable, but a couple of pieces are thin."
     )
@@ -148,7 +148,7 @@ def test_single_voice_scan_catches_legacy_leak_string():
 
 
 def test_single_voice_scan_clean_passes():
-    from services.solva.voice.invariants import scan_for_internal_artefacts
+    from services.solva_voice_audit.voice.invariants import scan_for_internal_artefacts
     clean = (
         "Here is where I've landed. The reading that holds up best is this: "
         "your customer mix has concentrated since Q2 and the renewal pattern is "
@@ -160,8 +160,8 @@ def test_single_voice_scan_clean_passes():
 def test_question_bank_layer_1_opening_no_far_vocabulary():
     """Brief deliverable #2 — Layer 1 opening question must come from
     question_bank.py and must NOT contain FAR verdict text."""
-    from services.solva.voice.question_bank import next_question
-    from services.solva.voice.invariants import scan_for_internal_artefacts
+    from services.solva_voice_audit.voice.question_bank import next_question
+    from services.solva_voice_audit.voice.invariants import scan_for_internal_artefacts
     for sub in ("seek_clarity", "develop_strategy", "simulate_hypothesis", "get_perspective"):
         for suffix in ("default", "with_caveats", "conversational"):
             key = f"{sub}.layer_1.opening.{suffix}"
@@ -177,8 +177,8 @@ def test_question_bank_layer_1_opening_no_far_vocabulary():
 def test_synthesis_renderer_output_clean():
     """The voice tier's synthesis renderer must produce single-voice
     output for any reasonable input."""
-    from services.solva.voice.synthesis_renderer import render_synthesis
-    from services.solva.voice.invariants import scan_for_internal_artefacts
+    from services.solva_voice_audit.voice.synthesis_renderer import render_synthesis
+    from services.solva_voice_audit.voice.invariants import scan_for_internal_artefacts
     body = render_synthesis(
         sub_module="seek_clarity",
         scenarios=[{
@@ -203,7 +203,7 @@ def test_synthesis_renderer_output_clean():
 # Unit tests — refusal logic.
 # ─────────────────────────────────────────────────────────────────────
 def test_refusal_fires_on_insufficient_evidence():
-    from services.solva.reasoning.refusal_logic import evaluate_refusal, RefusalReason
+    from services.solva_voice_audit.reasoning.refusal_logic import evaluate_refusal, RefusalReason
     decision = evaluate_refusal(
         far=None,
         triangulation=None,
@@ -217,7 +217,7 @@ def test_refusal_fires_on_insufficient_evidence():
 
 
 def test_refusal_holds_when_evidence_sufficient():
-    from services.solva.reasoning.refusal_logic import evaluate_refusal
+    from services.solva_voice_audit.reasoning.refusal_logic import evaluate_refusal
     decision = evaluate_refusal(
         far=None,
         triangulation=None,
@@ -234,9 +234,9 @@ def test_refusal_holds_when_evidence_sufficient():
 
 
 def test_refusal_voice_no_far_vocabulary():
-    from services.solva.voice.refusal_voice import render_refusal
-    from services.solva.reasoning.refusal_logic import RefusalReason
-    from services.solva.voice.invariants import scan_for_internal_artefacts
+    from services.solva_voice_audit.voice.refusal_voice import render_refusal
+    from services.solva_voice_audit.reasoning.refusal_logic import RefusalReason
+    from services.solva_voice_audit.voice.invariants import scan_for_internal_artefacts
     body = render_refusal(
         sub_module="seek_clarity",
         reason=RefusalReason.INSUFFICIENT_EVIDENCE,
@@ -316,7 +316,7 @@ async def test_full_session_round_trip_audit_ids_grow(client, authed, db_conn):
     assert payload["next_question"]["layer"] == "layer_1"
     assert payload["next_question"]["question_text"]
     # Single-voice invariant on the user-visible payload.
-    from services.solva.voice.invariants import scan_for_internal_artefacts
+    from services.solva_voice_audit.voice.invariants import scan_for_internal_artefacts
     user_visible = (
         payload["next_question"]["question_text"]
         + " "
@@ -360,7 +360,7 @@ async def test_full_session_round_trip_audit_ids_grow(client, authed, db_conn):
     if payload["layer_state"] == "layer_4":
         assert payload["layer_3"]["rendered_synthesis"]
         # Single-voice invariant on the synthesis prose.
-        from services.solva.voice.invariants import scan_for_internal_artefacts
+        from services.solva_voice_audit.voice.invariants import scan_for_internal_artefacts
         assert scan_for_internal_artefacts(payload["layer_3"]["rendered_synthesis"]) == []
     elif payload["layer_state"] == "refused":
         # Refusal-by-rule (likely Rule 1: all candidates fell back to
@@ -446,7 +446,7 @@ async def test_operator_refusal_endpoint(client, authed):
     # The coach-voice refusal copy lives in refusal_rendering.
     rendering = body["layer_3"].get("refusal_rendering") or ""
     assert rendering
-    from services.solva.voice.invariants import scan_for_internal_artefacts
+    from services.solva_voice_audit.voice.invariants import scan_for_internal_artefacts
     assert scan_for_internal_artefacts(rendering) == []
     # Subsequent operator-refuse on the same session is a 409.
     r = await client.post(

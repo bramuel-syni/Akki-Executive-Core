@@ -102,7 +102,7 @@ def _file_context(fp: str) -> str:
         return "synisense"
     if "/app/backend/services/solva_v2/" in fp:
         return "solva"
-    if "/app/backend/services/solva/" in fp:
+    if "/app/backend/services/solva_voice_audit/" in fp:
         return "solva"
     if "/app/backend/services/workbook_analyzer/" in fp:
         return "akki"  # Akki-adjacent library

@@ -25,7 +25,7 @@ import re
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
-from services.solva.models import (
+from services.solva_voice_audit.models import (
     CandidateRecord, FrameAuditRecord, Layer3Record, ScenarioRecord,
     SituationClass, SituationClassRecord, TensionRecord,
     TriangulationClaim,

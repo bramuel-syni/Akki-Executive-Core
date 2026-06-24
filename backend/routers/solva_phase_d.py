@@ -3,7 +3,7 @@
 Mounted at `/api/contexts/{context_id}/solva/v2/...` — distinct from
 the legacy `/api/solva/v2/...` paths in `routers/solva_v2.py`. New
 sessions written here flow through the Phase D state machine
-(`services/solva/`) and persist into the `solva_phase_d_sessions`
+(`services/solva_voice_audit/`) and persist into the `solva_phase_d_sessions`
 Mongo collection.
 
 Strict scoping: every endpoint enforces `account_id == tenant_id ==
@@ -30,16 +30,16 @@ from documents_service import (
 )
 from services import clamav_service
 from services.clamav_service import ClamAVUnreachable
-from services.solva import (
+from services.solva_voice_audit import (
     SUB_MODULES,
     LAYER_SEQUENCE,
     TERMINAL_STATES,
 )
-from services.solva.orchestration.state_machine import (
+from services.solva_voice_audit.orchestration.state_machine import (
     advance,
     InvalidLayerTransition,
 )
-from services.solva.reasoning import (
+from services.solva_voice_audit.reasoning import (
     run_frame_audit,
     classify_situation,
     generate_candidates,
@@ -49,20 +49,20 @@ from services.solva.reasoning import (
     evaluate_refusal,
     RefusalReason,
 )
-from services.solva.reasoning.candidate_generation import refine_candidates
-from services.solva.voice import (
+from services.solva_voice_audit.reasoning.candidate_generation import refine_candidates
+from services.solva_voice_audit.voice import (
     next_question,
     LOCKED_REFLECTION_QUESTIONS,
     render_synthesis,
     render_acknowledgement,
     render_refusal,
 )
-from services.solva.voice.question_bank import _resolve_variants as _resolve_bank_variants
-from services.solva.telemetry import (
+from services.solva_voice_audit.voice.question_bank import _resolve_variants as _resolve_bank_variants
+from services.solva_voice_audit.telemetry import (
     record_variant_seen,
     record_key_emission,
 )
-from services.solva.guardrails import (
+from services.solva_voice_audit.guardrails import (
     run_guardrail_ladder,
     GuardrailOutcome,
 )
@@ -529,7 +529,7 @@ async def create_session(
     # for "vanilla" Solva sessions started without a source item.
     if source_handoff and source_handoff.get("source") and source_handoff.get("source_id"):
         try:
-            from services.solva.telemetry import record_handoff
+            from services.solva_voice_audit.telemetry import record_handoff
             await record_handoff(
                 surface="solva",
                 ctx_type=source_handoff["source"],
@@ -1202,7 +1202,7 @@ async def submit_answer(
             )
 
             # Phase E Sub-task C (2026-05-16) — tension auto-activation.
-            from services.solva.reasoning.tension_detection import auto_activate as _auto_act
+            from services.solva_voice_audit.reasoning.tension_detection import auto_activate as _auto_act
             ten_decision = _auto_act(
                 candidates=refined,
                 triangulation_result={
@@ -1269,9 +1269,9 @@ async def _run_layer_3(session_id: str, context_id: str, account_id: str) -> Non
     layer_2_answers = (session.get("layer_2") or {}).get("answers") or []
 
     # Reconstruct Pydantic-shaped inputs for the refusal evaluator.
-    from services.solva.reasoning.frame_audit_engine import FrameAuditOutput, FARDimension
-    from services.solva.reasoning.triangulation_engine import TriangulationOutput, Divergence
-    from services.solva.reasoning.refusal_logic import compute_layer_2_resolved
+    from services.solva_voice_audit.reasoning.frame_audit_engine import FrameAuditOutput, FARDimension
+    from services.solva_voice_audit.reasoning.triangulation_engine import TriangulationOutput, Divergence
+    from services.solva_voice_audit.reasoning.refusal_logic import compute_layer_2_resolved
 
     far_obj = FrameAuditOutput(
         verdict=far_dict.get("verdict", "sufficient"),

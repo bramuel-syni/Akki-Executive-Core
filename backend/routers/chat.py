@@ -747,7 +747,7 @@ async def create_chat(
     lc = rec.get("linked_context") or {}
     if lc.get("ctx_type") and lc.get("ctx_id"):
         try:
-            from services.solva.telemetry import record_handoff
+            from services.solva_voice_audit.telemetry import record_handoff
             await record_handoff(
                 surface="chat",
                 ctx_type=lc["ctx_type"],

@@ -95,7 +95,7 @@ async def get_variant_coverage(
     When called without `user_id` returns global per-key coverage
     aggregated across all users."""
     _require_admin(current)
-    from services.solva.voice.question_bank import _resolve_variants
+    from services.solva_voice_audit.voice.question_bank import _resolve_variants
 
     match: Dict[str, Any] = {}
     if user_id:

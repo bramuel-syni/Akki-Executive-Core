@@ -162,7 +162,7 @@ def test_synthesis_renderer_does_not_emit_invalidation_phrases():
     """Pure unit test on the renderer — even if caller passes
     `carry_forward_caveats` (back-compat), the renderer MUST NOT emit
     them."""
-    from services.solva.voice.synthesis_renderer import render_synthesis
+    from services.solva_voice_audit.voice.synthesis_renderer import render_synthesis
     output = render_synthesis(
         sub_module="seek_clarity",
         scenarios=[{
@@ -199,7 +199,7 @@ def test_synthesis_renderer_does_not_emit_invalidation_phrases():
 def test_synthesis_renderer_strips_entity_placeholders():
     """Even if a scenario description contains hallucinated `[[ENT_*]]`
     tokens, the renderer must strip them before returning."""
-    from services.solva.voice.synthesis_renderer import render_synthesis
+    from services.solva_voice_audit.voice.synthesis_renderer import render_synthesis
     output = render_synthesis(
         sub_module="seek_clarity",
         scenarios=[{
@@ -228,7 +228,7 @@ def test_synthesis_renderer_strips_entity_placeholders():
 
 def test_entity_placeholder_strip_helper():
     """Direct test of `_strip_entity_placeholders`."""
-    from services.solva.voice.synthesis_renderer import _strip_entity_placeholders
+    from services.solva_voice_audit.voice.synthesis_renderer import _strip_entity_placeholders
     cleaned, n = _strip_entity_placeholders(
         "The [[ENT_PROJECT_001]] initiative and [[ENT_PERSON_007]] memo."
     )
@@ -295,7 +295,7 @@ async def test_single_voice_synthesis_no_far_vocabulary_well_framed(client, auth
     if not l3.get("refusal_flag"):
         synthesis = l3.get("rendered_synthesis") or ""
         diagnosis = l3.get("primary_diagnosis_prose") or ""
-        from services.solva.voice.invariants import scan_for_internal_artefacts
+        from services.solva_voice_audit.voice.invariants import scan_for_internal_artefacts
         assert scan_for_internal_artefacts(synthesis) == [], (
             f"rendered_synthesis leaked artefact vocabulary:\n{synthesis}"
         )
@@ -339,7 +339,7 @@ async def test_single_voice_refusal_rendering_no_far_vocabulary(client, authed):
     session = r.json()
     l3 = session.get("layer_3") or {}
     if session["status"] == "refused":
-        from services.solva.voice.invariants import scan_for_internal_artefacts
+        from services.solva_voice_audit.voice.invariants import scan_for_internal_artefacts
         rendering = l3.get("refusal_rendering") or l3.get("rendered_synthesis") or ""
         assert rendering, "Refused session missing refusal_rendering"
         assert scan_for_internal_artefacts(rendering) == [], (
@@ -351,7 +351,7 @@ async def test_single_voice_refusal_rendering_no_far_vocabulary(client, authed):
 
 def test_compute_layer_2_resolved_thin_answers():
     """The helper that drives Rule 3 — pure unit test."""
-    from services.solva.reasoning.refusal_logic import compute_layer_2_resolved
+    from services.solva_voice_audit.reasoning.refusal_logic import compute_layer_2_resolved
     thin = [{"text": "yes"}, {"text": "no"}, {"text": "dunno"}, {"text": "maybe"}]
     assert compute_layer_2_resolved(layer_1_answers=thin, layer_2_answers=thin) is False
     substantive = [
@@ -366,10 +366,10 @@ def test_compute_layer_2_resolved_thin_answers():
 
 def test_refusal_logic_low_consistency_rule():
     """New Rule 5 — low triangulation consistency."""
-    from services.solva.reasoning.refusal_logic import (
+    from services.solva_voice_audit.reasoning.refusal_logic import (
         evaluate_refusal, RefusalReason,
     )
-    from services.solva.reasoning.triangulation_engine import TriangulationOutput
+    from services.solva_voice_audit.reasoning.triangulation_engine import TriangulationOutput
     tri = TriangulationOutput(
         overall_consistency=0.2,   # below MIN_TRIANGULATION_CONSISTENCY = 0.4
         divergences=[], extracted_claims=[],
@@ -393,7 +393,7 @@ def test_refusal_logic_low_consistency_rule():
 
 def test_refusal_logic_synthetic_candidates_do_not_count():
     """Synthetic fallback candidates must not satisfy Rule 1 grounded threshold."""
-    from services.solva.reasoning.refusal_logic import evaluate_refusal, RefusalReason
+    from services.solva_voice_audit.reasoning.refusal_logic import evaluate_refusal, RefusalReason
     decision = evaluate_refusal(
         far=None,
         triangulation=None,
@@ -413,7 +413,7 @@ def test_refusal_logic_synthetic_candidates_do_not_count():
 
 def test_invariant_scanner_catches_invalidation_terms():
     """Scanner must catch the Phase D fix-bundle terms."""
-    from services.solva.voice.invariants import scan_for_internal_artefacts
+    from services.solva_voice_audit.voice.invariants import scan_for_internal_artefacts
     for bad in [
         "If no explicit decision the diagnosis would inform, the lead reading shifts.",
         "The invalidation_condition flag was set.",
@@ -433,7 +433,7 @@ def test_synthesis_strips_all_placeholder_families():
     """The renderer must strip placeholders of EVERY Shield family,
     not just `[[ENT_*]]`. Phase D fix bundle v2 widened the regex
     from `[[ENT_*_NNN]]` to `[[<UPPER>_<digits>]]`."""
-    from services.solva.voice.synthesis_renderer import render_synthesis
+    from services.solva_voice_audit.voice.synthesis_renderer import render_synthesis
     output = render_synthesis(
         sub_module="seek_clarity",
         scenarios=[{
@@ -467,7 +467,7 @@ def test_synthesis_strips_all_placeholder_families():
         f"Family-wide placeholder strip leaked: {hits}\nOutput:\n{output}"
     )
     # Belt-and-braces: scanner agrees.
-    from services.solva.voice.invariants import scan_for_internal_artefacts
+    from services.solva_voice_audit.voice.invariants import scan_for_internal_artefacts
     violations = scan_for_internal_artefacts(output)
     assert violations == [], (
         f"Scanner flagged: {[v.term for v in violations]}\nOutput:\n{output}"
@@ -477,7 +477,7 @@ def test_synthesis_strips_all_placeholder_families():
 def test_synthesis_strips_diagnose_macro_and_siblings():
     """LLM-hallucinated macro headers (`DIAGNOSE`, `EVIDENCE`,
     `CANDIDATES`, etc.) must NOT appear in user prose."""
-    from services.solva.voice.synthesis_renderer import (
+    from services.solva_voice_audit.voice.synthesis_renderer import (
         render_synthesis, _strip_macro_names,
     )
     # Direct helper test.
@@ -516,7 +516,7 @@ def test_synthesis_strips_diagnose_macro_and_siblings():
 def test_invariant_scanner_catches_all_placeholder_families():
     """Scanner must flag any `[[<UPPER>_<digits>]]` token + any
     macro-name header — including categories we haven't pre-enumerated."""
-    from services.solva.voice.invariants import scan_for_internal_artefacts
+    from services.solva_voice_audit.voice.invariants import scan_for_internal_artefacts
     for token in [
         "[[ENT_PERSON_001]]", "[[DATE_4]]", "[[MONEY_12]]",
         "[[ORG_2]]", "[[EMAIL_9]]", "[[PHONE_E164_3]]",
@@ -618,7 +618,7 @@ async def test_far_refusal_reachable_with_substantive_but_thin_inputs(client, au
     rendering = (l3.get("refusal_rendering") or "").lower()
     assert rendering, f"refusal_rendering missing on session: {l3}"
     # Single-voice scan on the refusal rendering.
-    from services.solva.voice.invariants import scan_for_internal_artefacts
+    from services.solva_voice_audit.voice.invariants import scan_for_internal_artefacts
     violations = scan_for_internal_artefacts(l3.get("refusal_rendering") or "")
     assert violations == [], (
         f"Refusal rendering leaked vocabulary: {[v.term for v in violations]}"

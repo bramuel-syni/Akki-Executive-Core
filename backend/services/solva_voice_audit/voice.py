@@ -17,7 +17,7 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
-from services.solva.models import (
+from services.solva_voice_audit.models import (
     FrameAuditRecord, ScenarioRecord, SituationClassRecord, SubModule,
 )
 

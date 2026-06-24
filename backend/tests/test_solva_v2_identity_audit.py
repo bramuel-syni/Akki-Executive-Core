@@ -26,7 +26,7 @@ WHAT THIS DOES NOT GUARD:
     are internal Mongo audit-log routing keys and renaming them would
     break stored historical data. The audit log is INTERNAL — never
     user-facing — so the SURFACE tag does not affect product identity.
-  • The `services/solva/` (v3) tree, which already uses canonical Solva
+  • The `services/solva_voice_audit/` (v3) tree, which already uses canonical Solva
     naming and is not part of this slice's scope.
 """
 from __future__ import annotations

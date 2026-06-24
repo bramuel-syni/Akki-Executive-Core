@@ -40,7 +40,7 @@ def test_variant_rotation_across_fresh_uuids():
     variant_index values MUST surface. This is the regression guard
     on the picker — if someone changes session_id to a stable user_id
     in future, this test catches it instantly."""
-    from services.solva.voice.question_bank import next_question, _BANK
+    from services.solva_voice_audit.voice.question_bank import next_question, _BANK
 
     key = "seek_clarity.layer_1.opening.default"
     assert len(_BANK[key]) >= 2, "test pre-condition: key needs ≥2 variants"
@@ -58,7 +58,7 @@ def test_variant_rotation_across_fresh_uuids():
 def test_variant_rotation_same_session_stable():
     """Belt-and-braces: the same session_id MUST always land on the
     same variant (reproducibility invariant)."""
-    from services.solva.voice.question_bank import next_question
+    from services.solva_voice_audit.voice.question_bank import next_question
 
     sid = "sol-" + uuid.uuid4().hex
     key = "seek_clarity.layer_1.opening.default"
@@ -82,7 +82,7 @@ def test_phase_d2_bank_coverage_health_check():
     most users see "Take me deeper on one piece — what's the part of
     this that's harder to name than the rest?" on every probe across
     every session. The fix is to expand the bank, not the picker."""
-    from services.solva.voice.question_bank import _BANK, _resolve_variants
+    from services.solva_voice_audit.voice.question_bank import _BANK, _resolve_variants
 
     sub_modules = ["seek_clarity", "develop_strategy",
                    "simulate_hypothesis", "get_perspective"]
@@ -118,7 +118,7 @@ def test_phase_d2_bank_coverage_health_check():
 async def test_record_variant_seen_idempotent():
     """Same (user, key, variant) tuple written 3 times → exactly 1 row.
     get_variants_seen returns the canonical list."""
-    from services.solva.telemetry import (
+    from services.solva_voice_audit.telemetry import (
         record_variant_seen,
         get_variants_seen,
     )
@@ -149,7 +149,7 @@ async def test_record_variant_seen_idempotent():
 async def test_variant_cycle_complete_emits_event_once():
     """When all variants are seen, exactly ONE
     `solva.variant.cycle_complete` audit_log row is written."""
-    from services.solva.telemetry import record_variant_seen
+    from services.solva_voice_audit.telemetry import record_variant_seen
     from core import db
 
     uid = f"test-d2-{uuid.uuid4().hex[:8]}"
@@ -185,7 +185,7 @@ async def test_key_usage_admin_endpoint_returns_sorted_data():
     the other); GET /api/admin/solva/key-usage returns them sorted by
     count desc. Auth-gated to admin role."""
     from server import app  # noqa: F401
-    from services.solva.telemetry import record_key_emission
+    from services.solva_voice_audit.telemetry import record_key_emission
     from core import db, hash_password
     import uuid as _uuid
 
@@ -282,7 +282,7 @@ async def test_record_handoff_writes_audit_log_row():
     """record_handoff writes an audit_log row with the canonical
     `handoff.<surface>_attached.<ctx_type>` action and includes
     {ctx_type, ctx_id} in metadata."""
-    from services.solva.telemetry import record_handoff
+    from services.solva_voice_audit.telemetry import record_handoff
     from core import db
 
     uid = f"test-d2-{uuid.uuid4().hex[:8]}"
