@@ -199,6 +199,9 @@ jobs:
               KNOWN_MAPPINGS = {
                   "PIPELINE_LOG_SYNC": "Pipeline-Log-Sync",
                   "TL0_THINKLAB_PREREAD": "TL0",
+                  # Track Chat (B-prefixed) phase identifiers — Phase B0
+                  # introduced 2026-06-24; future B1/B2/... map here.
+                  "B0_CHAT_PREREAD": "B0",
               }
               for prefix, identifier in KNOWN_MAPPINGS.items():
                   if stem.startswith(prefix):

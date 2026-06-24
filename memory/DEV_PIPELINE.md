@@ -6,11 +6,11 @@
 
 ## 1. Current State
 
-Builder idle. Awaiting user Flag 3 (ThinkLab reference deck anchor) decision before TL1.1 dispatch.
+Builder idle. Awaiting user direction on Track Chat B1+ scope after Phase B0 close (TL Flag 3 also still open in parallel).
 
 ## 2. Active Dispatch
 
-None — TL0 closed 2026-06-24. Builder idle. Awaiting orchestrator's TL1.1 brief.
+None — Phase B0 closed 2026-06-24. Builder idle.
 
 ## 3. Parallel Tracks
 
@@ -40,11 +40,17 @@ None — TL0 closed 2026-06-24. Builder idle. Awaiting orchestrator's TL1.1 brie
   - **Owning context**: Akki (orchestration/persistence/UI). Every turn calls SyniSense `shield_invoke(...)` — the only outbound path to LLMs (Anthropic Claude Sonnet 4.5 via Emergent LLM Key).
   - **Integrations**: `get_synisense().shield_invoke` + `issue_trust_receipt` + `get_shield_audit_by_chat`; `get_akki().mark_solva_escalation_clicked`; quota gating via `services/llm_quota.py`.
   - **Known debt**: 6 `/api/chats/*` endpoints still `Optional[Dict[str, Any]]` with `# phase-3.0:narrow-in-3.1` marker (Phase 5.2 Part B partial narrowing); streaming Shield UI parked in Trust Center; per-tenant retention policy lacks central admin UI.
-- **Planned next track (consumer-grade redesign) — queued behind TL1.2:**
-  - **Locked decisions:** sub-300ms first-token latency bar · providers = Claude + OpenAI + Gemini (no long tail) · in-org retrieval trigger = model-tool-call with explicit-attach fallback (no intent classifier) · Work Studio fix-first then model-tool-call (manual affordance interim) · NO SyniSense tokenization change in scope · Shield as ONLY outbound path.
-  - **Locked B0 scope:** fidelity probe matrix (text/PNG/PDF/DOCX/XLSX/image-with-text → PASS/PARTIAL/DEGRADE/FAIL) + streaming-reidentify verification + Emergent proxy fronts all 3 providers confirm + in-org retrieval mechanism inventory + Work Studio actual-state probe.
-  - **Next dispatch:** Chat B0 (read-only pre-read) — fires after TL1.2 closes.
-  - **Then:** Chat B1+ sized at ~3-4 phases after B0 returns honest scope.
+- **Planned next track (consumer-grade redesign) — Phase B0 CLOSED 2026-06-24:**
+  - **B0 verdicts** (all 6 probes resolved — full report at `sprints/PHASE_B0_CHAT_PREREAD.md`):
+    - **Fidelity matrix**: text PASS · PNG PARTIAL · PDF PARTIAL · DOCX PARTIAL · XLSX PARTIAL · image-with-text PARTIAL. All modalities pass through shield via text-extraction (`documents_service.py::extract_text`); no FAIL, no raw-leak; multimodal "model sees image directly" NOT supported.
+    - **Streaming-reidentify**: **EXISTS** — `StreamingReidentifier` at `reidentifier.py:178-333` + wired in chat.py:3187 (`messages/stream`). Per-chunk inversion proven.
+    - **Emergent proxy / keys**: **PROXY FRONTS ALL THREE** — Claude/OpenAI/Gemini all proxied via `litellm` + `EMERGENT_LLM_KEY` per `llm_router.py:140-200`. Two-day feature confirmed.
+    - **In-org retrieval (RAG)**: **EXISTS BUT BM25-only + invocation-driven** — Phase 11 ITEM C `_retrieve_grounding_paragraphs` at `chat.py:1505-1596`. Tenant-scoped via membership check. Citation-pinned via `[[cite:<anchor>]]` markers. NOT model-tool-call driven; NOT vector-embedded.
+    - **Tool-calling carriage**: **MISSING** — shield's `invoke_with_metering` signature has no `tools=` parameter; no `tool_use` references anywhere in `services/synisense/shield/`. Manual affordance becomes the honest interim per locked product call.
+    - **Work Studio actual state**: **AMBIGUOUS** — BE code (6 routers, ~4,400 LOC) + module spec (Live) + 6/8 BE tests passing contradict user's "most document generation not working" claim. Verifiable from read-only BE inventory: routers + FE pages exist, tests largely green. User-supplied UX reproduction steps needed for further triage.
+  - **Locked decisions** (carried into B1+): sub-300ms first-token latency bar · providers = Claude + OpenAI + Gemini (no long tail) · in-org retrieval trigger = model-tool-call with explicit-attach fallback (no intent classifier) · Work Studio fix-first then model-tool-call (manual affordance interim) · NO SyniSense tokenization change in scope · Shield as ONLY outbound path.
+  - **Next dispatch:** B1 — sized per B0 verdicts. Best case: 3 phases (provider routing → manual Work Studio + retrieval affordance → tool-call carriage as a Shield sub-phase). Per B0's honest scope estimate.
+  - **Then:** B2-B3 as B0 returns honest scope per the 3-scenario sizing.
 
 ## 4. Invariant Ladder Snapshot
 
@@ -96,6 +102,7 @@ Held since Phase 4.1 close.
 
 | Phase | Closed | Summary | Sprint Memo |
 |---|---|---|---|
+| B0 | 2026-06-24 | Chat consumer-grade redesign pre-read: 6 probes resolved (fidelity matrix, streaming-reidentify EXISTS, proxy fronts all 3, RAG BM25-exists, tool-call MISSING, Work Studio ambiguous); honest B1+ scope sized across 3 scenarios | `sprints/PHASE_B0_CHAT_PREREAD.md` |
 | Pipeline-Log-Sync | 2026-06-24 | Sprint-memo ↔ DEV_PIPELINE §9 row consistency CI gate; first dogfooded by this entry | `sprints/PHASE_PIPELINE_LOG_SYNC.md` |
 | TL0 | 2026-06-24 | ThinkLab pre-read; Gates A (PARTIAL) + B (GREEN) + layer-order SHARED; 3 stop-and-report flags surfaced | `sprints/PHASE_TL0_THINKLAB_PREREAD.md` |
 | 5.5.2 | 2026-06-24 | Track A real closure; 2 production bug fixes (StateOnlyResponse + HTTP transport Pydantic kwargs); 86/86 quarantined unlocked end-to-end | `sprints/PHASE_5_5_2_TRACK_A_REAL_FIXES.md` |
