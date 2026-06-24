@@ -1,5 +1,16 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# AKKI Audit (2026-06-24) — committed dev-DB dumps were scrubbed
+# from history in Phase AUDIT_P0. Block any future re-commit at
+# the .gitignore layer so the next backup run can't re-introduce
+# the leak. Sprint memo: memory/sprints/PHASE_AUDIT_P0.md.
+backup/
+*.bson
+*.metadata.json
+*.dump
+*.archive
+*.sql
+
 # IDE and editors
 .idea/
 .vscode/

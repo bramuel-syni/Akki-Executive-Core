@@ -209,6 +209,12 @@ jobs:
                   # WS1 repair pass).
                   "WS0_CLASSIFY": "WS0",
                   "WS1_REPAIR": "WS1",
+                  # Audit Close-Out (2026-06-24) — three-phase sweep
+                  # P0/P1/P2 against committed DB dumps + CI hygiene
+                  # + correctness invariants.
+                  "AUDIT_P0": "AUDIT_P0",
+                  "AUDIT_P1": "AUDIT_P1",
+                  "AUDIT_P2": "AUDIT_P2",
                   # Orchestration phases (non-numeric).
                   "SPRINT_PLAN_INIT": "SPRINT_PLAN_INIT",
               }

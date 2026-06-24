@@ -6,11 +6,13 @@
 
 ## 1. Current State
 
-Track Chat — Phase B1.1 closed 2026-06-24. Manual Work Studio affordance live on `/app/chat`: composer toolbar "Create" button opens a modal with all 6 kinds (brief/deck/report/minutes/committee_pack/board_pack) + mechanically-prefilled description (last 6 turns) / objective (last user message) / scope (context + chat title). Handoff to the WS1-uniform `/api/contexts/{ctx}/work-studio/export/{kind}` route. End-to-end chain verified: modal payload → `export_id=7fd6da82` → COMPLETE → 38 891-byte DOCX with valid ZIP magic. Prefill is 100% pure JS — zero net-new LLM calls (static code audit confirms only 3 network calls in the modal, all gated behind explicit user actions: Create / poll / Download). Disabled-out-of-org tooltip surfaces honestly. ThinkLab Gate A still queued.
+**Audit Close-Out — Phase AUDIT_P0 CLOSED** (2026-06-24). Committed dev-DB dumps purged from git history via `git filter-repo --path backup/ --invert-paths --force`: 3 561 tracked files removed across 15 snapshot dirs (1 022.9 MiB on disk; 49 MiB packfile reclaimed). `.gitignore` extended to block re-commit at the source. CI lane triage classified zero REAL failures (both REDs are POLICY/allowlist polish, queued for P1). Exposure assessment at `memory/audit/P0_exposure_report.md`; CI triage at `memory/audit/P0_ci_log_triage.md`; sprint memo at `sprints/PHASE_AUDIT_P0.md`.
+
+**Track Chat — Phase B1.1 closed 2026-06-24** (prior). Manual Work Studio affordance live on `/app/chat`: composer toolbar "Create" button opens a modal with all 6 kinds (brief/deck/report/minutes/committee_pack/board_pack) + mechanically-prefilled description (last 6 turns) / objective (last user message) / scope (context + chat title). Handoff to the WS1-uniform `/api/contexts/{ctx}/work-studio/export/{kind}` route. End-to-end chain verified: modal payload → `export_id=7fd6da82` → COMPLETE → 38 891-byte DOCX with valid ZIP magic.
 
 ## 2. Active Dispatch
 
-None — B1.1 closed. ThinkLab Gate A render-check + Flag 3 verification is next per consolidated dispatch queue.
+AUDIT_P0 closed. P1 (CI lane greens) awaits user approval per dispatch protocol. ThinkLab Gate A queued behind P2.
 
 ## 3. Parallel Tracks
 
@@ -84,6 +86,7 @@ None — B1.1 closed. ThinkLab Gate A render-check + Flag 3 verification is next
 | Deploy | deploy-smoke present (CI gate) | ✅ |
 | CI gates | codemod-drift + dep-audit-strict + invariants.yml + backend-tests.yml (scoped) | ✅ |
 | CI gates | pipeline-log-sync (sprint memo ↔ DEV_PIPELINE §9 row consistency) | ✅ |
+| Repo hygiene | committed dev-DB dumps scrubbed from history (`backup/` + `*.bson` blocked in `.gitignore`); AUDIT_P0 close-out 2026-06-24 | ✅ |
 | Decisions+sequence | `SPRINT_PLAN.md` — canonical for sprint goal · tracks · sequence · protocols · locks · agreements · mixups | ✅ |
 
 ## 5. Surface Ratchet
@@ -118,6 +121,7 @@ Held since Phase 4.1 close.
 
 | Phase | Closed | Summary | Sprint Memo |
 |---|---|---|---|
+| AUDIT_P0 | 2026-06-24 | Committed dev-DB dumps purged from git history (`git filter-repo --path backup/ --invert-paths --force`): 3 561 tracked files across 15 snapshot dirs removed (1 022.9 MiB on disk; 49 MiB packfile reclaimed). `.gitignore` extended to block re-commit. CI lane triage produced — zero REAL failures, 2 RED lanes (requirements-guard, gitleaks) classified as POLICY/allowlist polish for P1. Exposure report + CI triage at `memory/audit/`. | `sprints/PHASE_AUDIT_P0.md` |
 | B1.1 | 2026-06-24 | Chat manual Work Studio affordance: composer toolbar "Create" button → modal with all 6 generation kinds + mechanically-prefilled description / objective / scope from live conversation; handoff to WS1-uniform `/api/contexts/{ctx}/work-studio/export/{kind}`. Chain green: 38 891-byte DOCX with valid ZIP magic. Prefill is pure JS — zero net-new LLM calls. New component `WorkStudioAffordanceModal.jsx`. | `sprints/PHASE_B1_1_CHAT_WS_AFFORDANCE.md` |
 | WS1 | 2026-06-24 | Work Studio repair pass: all 6 generation kinds now reach `/export` (committee_pack dispatcher branch + board_pack added to `_VALID_KINDS` + Pass-2 schema_doc + enhance + synisense-breakdown parity); committee_pack DOCX 38 777 bytes + board_pack DOCX 39 835 bytes verified end-to-end with correct ZIP magic + MIME. Overlay reclassified to WORKS (WS0 was a test-time misclassification — id picked from `db.documents`, not `db.work_studio_exports`). Compile-then-render smoke green for DOCX/PPTX/PDF on an artefact with non-empty structured_content. Chat B1.1 handoff matrix: 6/6 kinds safe. | `sprints/PHASE_WS1_REPAIR.md` |
 | WS0 | 2026-06-24 | Work Studio runtime classification (read-only + execution-based, no product code touched): 8-capability matrix produced; 4 generate-kinds WORK (brief/deck/report/minutes), 1 BROKEN-AT-SEAM (committee_pack render dispatcher), 1 DEFERRED via `/export` (board_pack); Phase-C/C2 WORKS, overlay RUNS-BUT-AMBIGUOUS, render AMBIGUOUS (needs compile-then-render smoke), Analyze spreadsheet-only confirmed; objective→content TRUE, objective→kind FALSE; AnalyzeDrawer Phase-3 = CLEAN-PLACEHOLDER | `sprints/PHASE_WS0_CLASSIFY.md` |
