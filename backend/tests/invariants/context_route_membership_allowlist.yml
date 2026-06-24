@@ -1,0 +1,202 @@
+# AUDIT_P2.2 — `{context_id}` route membership-gate allowlist (audit-derived).
+#
+# This file is the explicit, justified register of every FastAPI route whose
+# URL path contains `{context_id}` (and is therefore tenant-scoped) but whose
+# handler does NOT use the canonical factory dep
+# `Depends(require_context_membership(...))` or `Depends(require_role(...))`
+# from `backend/services/rbac.py`.
+#
+# Any new route with `{context_id}` in its path that lacks BOTH a canonical
+# factory dep AND an entry in this allowlist will fail the invariant scanner
+# `test_context_route_membership_gate.py`. This is the explicit ratchet that
+# AUDIT_P2.1 introduced — it prevents silent-omission IDOR/BOLA defects of
+# the class that audit caught in `strategic_goal_evolution.py`.
+#
+# Each entry MUST document the *inline* gate mechanism the handler uses
+# instead of the canonical factory, plus a 1-line justification. Adding an
+# entry here is a documented, reviewed audit decision — NOT a routine code
+# edit. PR reviewers should challenge new entries unless the justification
+# is unambiguous.
+#
+# Categories of allowed non-factory gates (audit-derived, 2026-06-24):
+#   - `_require_superadmin`      : Admin bypass (audited, superadmin-only)
+#   - `_resolve_report_access`   : Tier-based report-access inline check
+#                                  (author/reviewer chain, see cycle.py:880)
+#   - `_verify_ned_context`      : NED-membership inline check (ned_cycle.py)
+#   - sandbox owner-only filter  : `db.contexts.find_one({"id": context_id,
+#                                  "owner_account_id": current["id"],
+#                                  "type": "sandbox"})` — sandboxes are
+#                                  owner-scoped, not membership-scoped.
+#   - worker-stamp pattern       : doc-meta/summary/commentary/diff async
+#                                  endpoints stamp `account_id=current["id"]`
+#                                  on the queued job; worker re-validates
+#                                  via the sync entry-point's contract.
+#                                  ⚠ Subtle: input route does not membership-
+#                                    gate before queueing. Flagged for a
+#                                    deeper audit follow-up (see §9).
+#
+# Initial population (2026-06-24): 21 entries across 5 files.
+
+entries:
+
+  # ─────────────────────────────────────────────────────────────────────
+  # admin_tenants.py — Superadmin bypass routes
+  # ─────────────────────────────────────────────────────────────────────
+  - file: backend/routers/admin_tenants.py
+    line: 137
+    route: "GET /api/admin/tenants/{context_id}/extractions"
+    handler: get_tenant_extractions
+    gate_mechanism: "Depends(_require_superadmin)"
+    justification: "Superadmin-gated; intentionally bypasses per-account membership (per file docstring at L1-15). Read-only count/timestamp data only — no LLM/chat/doc-body content."
+
+  - file: backend/routers/admin_tenants.py
+    line: 207
+    route: "GET /api/admin/tenants/{context_id}"
+    handler: get_tenant
+    gate_mechanism: "Depends(_require_superadmin)"
+    justification: "Superadmin-gated; intentionally bypasses per-account membership (per file docstring at L1-15). Returns sanitized context + member-ids/roles only."
+
+  # ─────────────────────────────────────────────────────────────────────
+  # cycle.py — Tiered report-access (author/reviewer chain)
+  # ─────────────────────────────────────────────────────────────────────
+  - file: backend/routers/cycle.py
+    line: 957
+    route: "GET /api/contexts/{context_id}/reports/{rid}"
+    handler: get_report
+    gate_mechanism: "_resolve_report_access(context_id, rid, current)"
+    justification: "Inline tier-based access policy. Author + named reviewer chain + context members can read; helper raises 403/404 on mismatch. See cycle.py:880+ for the resolver."
+
+  - file: backend/routers/cycle.py
+    line: 966
+    route: "PATCH /api/contexts/{context_id}/reports/{rid}"
+    handler: patch_report
+    gate_mechanism: "_resolve_report_access(context_id, rid, current)"
+    justification: "Inline tier-based access policy; same resolver as get_report. Editing further restricted to (author in draft) or (current reviewer in in_review)."
+
+  - file: backend/routers/cycle.py
+    line: 1000
+    route: "POST /api/contexts/{context_id}/reports/{rid}/send_up"
+    handler: send_report_up
+    gate_mechanism: "_resolve_report_access(context_id, rid, current)"
+    justification: "Author advances draft→in_review. Resolver gates by author identity; same canonical access surface as get/patch."
+
+  - file: backend/routers/cycle.py
+    line: 1138
+    route: "POST /api/contexts/{context_id}/reports/{rid}/review"
+    handler: review_report
+    gate_mechanism: "_resolve_report_access(context_id, rid, current)"
+    justification: "Current reviewer approves or sends back. Resolver gates by reviewer identity on the chain; same canonical surface."
+
+  - file: backend/routers/cycle.py
+    line: 1231
+    route: "GET /api/contexts/{context_id}/reports/{rid}/export.pdf"
+    handler: export_report_pdf
+    gate_mechanism: "_resolve_report_access(context_id, rid, current)"
+    justification: "PDF export. Available to context members + author + any reviewer. Resolver gates; same canonical surface as get_report."
+
+  - file: backend/routers/cycle.py
+    line: 1263
+    route: "GET /api/contexts/{context_id}/reports/{rid}/export.deck.pdf"
+    handler: export_report_deck_pdf
+    gate_mechanism: "_resolve_report_access(context_id, rid, current)"
+    justification: "Landscape deck export of a finalised report. Resolver gates; same canonical surface as get_report."
+
+  - file: backend/routers/cycle.py
+    line: 1338
+    route: "POST /api/contexts/{context_id}/reports/{rid}/polish"
+    handler: polish_report
+    gate_mechanism: "_resolve_report_access(context_id, rid, current)"
+    justification: "LLM-polish of report body; gated to (author in draft) or (current reviewer in in_review) by the resolver."
+
+  # ─────────────────────────────────────────────────────────────────────
+  # documents_async_mirror.py — Worker-stamp pattern (⚠ subtle, see header)
+  # ─────────────────────────────────────────────────────────────────────
+  - file: backend/routers/documents_async_mirror.py
+    line: 139
+    route: "POST /api/contexts/{context_id}/documents/generate-meta/async"
+    handler: generate_meta_async
+    gate_mechanism: "job_queue stamps account_id=current['id'] + worker reads under that account"
+    justification: "Async-mirror of the sync /generate-meta route. Worker re-validates membership via the sync codepath's contract. ⚠ Subtle: input route does not membership-gate before queueing; flagged for §9 audit follow-up."
+
+  - file: backend/routers/documents_async_mirror.py
+    line: 155
+    route: "POST /api/contexts/{context_id}/documents/{doc_id}/summary/async"
+    handler: generate_summary_async
+    gate_mechanism: "job_queue stamps account_id=current['id'] + worker reads under that account"
+    justification: "Async-mirror of the sync /summary route. Worker re-validates membership via the sync codepath's contract. ⚠ Subtle: same flag as generate_meta_async."
+
+  - file: backend/routers/documents_async_mirror.py
+    line: 172
+    route: "POST /api/contexts/{context_id}/documents/{doc_id}/journal-commentary/async"
+    handler: generate_commentary_async
+    gate_mechanism: "job_queue stamps account_id=current['id'] + worker reads under that account"
+    justification: "Async-mirror of the sync /journal-commentary route. Worker re-validates. ⚠ Same flag as generate_meta_async."
+
+  - file: backend/routers/documents_async_mirror.py
+    line: 189
+    route: "POST /api/contexts/{context_id}/documents/{doc_id}/evolution-diff/async"
+    handler: evolution_diff_async
+    gate_mechanism: "job_queue stamps account_id=current['id'] + worker reads under that account"
+    justification: "Async-mirror of the sync /evolution-diff route. Worker re-validates. ⚠ Same flag as generate_meta_async."
+
+  # ─────────────────────────────────────────────────────────────────────
+  # ned_cycle.py — Inline NED-membership check
+  # ─────────────────────────────────────────────────────────────────────
+  - file: backend/routers/ned_cycle.py
+    line: 496
+    route: "GET /api/ned/committee/{context_id}/{committee}"
+    handler: committee_through_line
+    gate_mechanism: "_verify_ned_context(account['id'], context_id)"
+    justification: "Inline NED-context membership check. Returns reverse-chrono meetings + decisions across the NED's tenure on (context, committee), STRICTLY scoped by account_id at every downstream DB call. See _verify_ned_context defn."
+
+  # ─────────────────────────────────────────────────────────────────────
+  # sandbox.py — Owner-only sandbox contexts
+  # ─────────────────────────────────────────────────────────────────────
+  - file: backend/routers/sandbox.py
+    line: 410
+    route: "POST /api/contexts/{context_id}/capture-email"
+    handler: capture_email
+    gate_mechanism: "db.contexts.find_one({'id': context_id, 'owner_account_id': current['id'], 'type': 'sandbox'})"
+    justification: "Sandbox contexts are owner-scoped (not membership-scoped). The owner_account_id filter is the canonical gate for sandbox-type contexts."
+
+  - file: backend/routers/sandbox.py
+    line: 453
+    route: "GET /api/contexts/{context_id}/tutorial"
+    handler: sandbox_tutorial
+    gate_mechanism: "db.contexts.find_one({'id': context_id, 'owner_account_id': current['id']})"
+    justification: "Sandbox owner-only. Same canonical gate as capture_email."
+
+  - file: backend/routers/sandbox.py
+    line: 530
+    route: "POST /api/contexts/{context_id}/tutorial/dismiss"
+    handler: dismiss_tutorial
+    gate_mechanism: "db.contexts.find_one({'id': context_id, 'owner_account_id': current['id']})"
+    justification: "Sandbox owner-only. Same canonical gate."
+
+  - file: backend/routers/sandbox.py
+    line: 558
+    route: "GET /api/contexts/{context_id}/sample-doc"
+    handler: sandbox_sample_doc
+    gate_mechanism: "db.contexts.find_one({'id': context_id, 'owner_account_id': current['id']}) + type=='sandbox' check"
+    justification: "Sandbox owner-only + type guard. Same canonical gate."
+
+  - file: backend/routers/sandbox.py
+    line: 619
+    route: "POST /api/contexts/{context_id}/sample-doc/accept"
+    handler: sandbox_sample_doc_accept
+    gate_mechanism: "db.contexts.find_one({'id': context_id, 'owner_account_id': current['id']}) + type=='sandbox' check"
+    justification: "Sandbox owner-only + type guard. Same canonical gate."
+
+  - file: backend/routers/sandbox.py
+    line: 689
+    route: "GET /api/contexts/{context_id}/objective-check"
+    handler: get_objective_check
+    gate_mechanism: "db.contexts.find_one({'id': context_id, 'owner_account_id': current['id']}) + type=='sandbox' check"
+    justification: "Sandbox owner-only + type guard. Same canonical gate."
+
+  - file: backend/routers/sandbox.py
+    line: 734
+    route: "POST /api/contexts/{context_id}/objective-check"
+    handler: answer_objective_check
+    gate_mechanism: "db.contexts.find_one({'id': context_id, 'owner_account_id': current['id']}) + type=='sandbox' check"
+    justification: "Sandbox owner-only + type guard. Same canonical gate."

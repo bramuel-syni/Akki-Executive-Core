@@ -1,0 +1,589 @@
+# AUDIT_P2.2 — Tenancy escape-hatch allowlist (audit-derived).
+# This file is the explicit, justified register of every place product
+# code intentionally bypasses the canonical "tenant key in filter" rule.
+# Any callsite of `untenanted=True` (kwarg) or `# tenancy:allow-no-account-id`
+# (line marker) that is NOT in this list will fail the invariant scanner
+# `test_tenancy_escape_hatch_allowlist.py`.
+#
+# Each entry was mechanically extracted from the existing codebase by the
+# generator script in P2.2's sprint memo. Adding/removing entries here is
+# an audit decision, NOT a routine code edit.
+#
+# Initial population (2026-06-24): 12 untenanted=True callsites + 179 tenancy:allow markers = 191 total entries.
+
+untenanted_true_callsites:
+  - file: backend/routers/comments.py
+    line: 78
+    justification: "see contract docstring at backend/contracts/akki.py:259/287/342 or backend/contracts/synisense.py:89 (resolver pattern: caller validates membership via require_context_membership upstream)"
+  - file: backend/routers/cycle.py
+    line: 1739
+    justification: "see contract docstring at backend/contracts/akki.py:259/287/342 or backend/contracts/synisense.py:89 (resolver pattern: caller validates membership via require_context_membership upstream)"
+  - file: backend/routers/lens.py
+    line: 90
+    justification: "see contract docstring at backend/contracts/akki.py:259/287/342 or backend/contracts/synisense.py:89 (resolver pattern: caller validates membership via require_context_membership upstream)"
+  - file: backend/routers/pulse.py
+    line: 550
+    justification: "see contract docstring at backend/contracts/akki.py:259/287/342 or backend/contracts/synisense.py:89 (resolver pattern: caller validates membership via require_context_membership upstream)"
+  - file: backend/routers/shares.py
+    line: 59
+    justification: "see contract docstring at backend/contracts/akki.py:259/287/342 or backend/contracts/synisense.py:89 (resolver pattern: caller validates membership via require_context_membership upstream)"
+  - file: backend/routers/solva_v2.py
+    line: 2014
+    justification: "see contract docstring at backend/contracts/akki.py:259/287/342 or backend/contracts/synisense.py:89 (resolver pattern: caller validates membership via require_context_membership upstream)"
+  - file: backend/routers/solva_v2.py
+    line: 2034
+    justification: "see contract docstring at backend/contracts/akki.py:259/287/342 or backend/contracts/synisense.py:89 (resolver pattern: caller validates membership via require_context_membership upstream)"
+  - file: backend/routers/solva_v2.py
+    line: 255
+    justification: "see contract docstring at backend/contracts/akki.py:259/287/342 or backend/contracts/synisense.py:89 (resolver pattern: caller validates membership via require_context_membership upstream)"
+  - file: backend/routers/studio_blocks.py
+    line: 474
+    justification: "see contract docstring at backend/contracts/akki.py:259/287/342 or backend/contracts/synisense.py:89 (resolver pattern: caller validates membership via require_context_membership upstream)"
+  - file: backend/routers/synisense_metrics.py
+    line: 210
+    justification: "see contract docstring at backend/contracts/akki.py:259/287/342 or backend/contracts/synisense.py:89 (resolver pattern: caller validates membership via require_context_membership upstream)"
+  - file: backend/routers/trust_center.py
+    line: 81
+    justification: "see contract docstring at backend/contracts/akki.py:259/287/342 or backend/contracts/synisense.py:89 (resolver pattern: caller validates membership via require_context_membership upstream)"
+  - file: backend/routers/trust_center.py
+    line: 737
+    justification: "see contract docstring at backend/contracts/akki.py:259/287/342 or backend/contracts/synisense.py:89 (resolver pattern: caller validates membership via require_context_membership upstream)"
+
+tenancy_allow_no_account_id_markers:
+  - file: backend/routers/account_deletion.py
+    line: 167
+    justification: "account-deletion cascade; `owned_ctx_ids` is exactly the deleting user's owner_account_id-stamped contexts (computed above)"
+  - file: backend/routers/active_context.py
+    line: 88
+    justification: "`context_ids` came from the caller's own memberships above; this is the active-context picker for the current account"
+  - file: backend/routers/active_context.py
+    line: 169
+    justification: "set-active-context: ctx fetched by id then membership verified at L175-181 before commit; explicit post-find gate"
+  - file: backend/routers/active_context.py
+    line: 197
+    justification: "set-active-context fallback path; same explicit post-find membership gate as L168"
+  - file: backend/routers/admin_extractions.py
+    line: 111
+    justification: "admin extractions inventory; super-admin gate enforced by route dependency; doc_ids already harvested from the admin-scoped page"
+  - file: backend/routers/admin_sandbox_kpi.py
+    line: 65
+    justification: "admin sandbox-KPI dashboard; super-admin gate enforced by route dependency"
+  - file: backend/routers/admin_sandbox_kpi.py
+    line: 158
+    justification: "admin sandbox-objectives listing; super-admin gate enforced by route dependency"
+  - file: backend/routers/admin_shield_backfill.py
+    line: 128
+    justification: "admin-wide pending-count probe; super-admin only (route gate at L62-79 enforces this)"
+  - file: backend/routers/admin_signal_kpi.py
+    line: 49
+    justification: "admin-only route (super-admin gate at file entry); cross-tenant KPI aggregation"
+  - file: backend/routers/admin_signal_kpi.py
+    line: 55
+    justification: "admin-only route (super-admin gate at file entry); cross-tenant KPI aggregation  # boundary:allow-direct-call (Phase 4.2 deviation #1 — signals stays Akki-owned in scanner; SyniSense self-read kept as escape hatch; Phase 4.3 HTTP transport will route through `SyniSenseContract.li"
+  - file: backend/routers/admin_tenants.py
+    line: 106
+    justification: "admin tenant inventory count; super-admin gate at route dep"
+  - file: backend/routers/admin_tenants.py
+    line: 109
+    justification: "admin tenant inventory listing; super-admin gate at route dep (same as L106 above)"
+  - file: backend/routers/admin_tenants.py
+    line: 167
+    justification: "admin tenant inventory; super-admin gate via route dep; doc_ids already harvested from admin extraction-rows"
+  - file: backend/routers/admin_tenants.py
+    line: 214
+    justification: "admin per-tenant detail; super-admin gate at route dep"
+  - file: backend/routers/auth.py
+    line: 163
+    justification: "`context_ids` were just fetched from `db.memberships.find({account_id: account[\"id\"]})` at L153-158; the set is the user's own contexts by construction"
+  - file: backend/routers/auth.py
+    line: 241
+    justification: "`context_ids` from `db.memberships.find({account_id: current[\"id\"]})` above; user's own contexts by construction"
+  - file: backend/routers/chat.py
+    line: 1434
+    justification: "retention sweep is a cross-tenant operational task (cron); each row is then processed under its own account_id, see L1430+"
+  - file: backend/routers/chat.py
+    line: 1550
+    justification: "`d` was loaded from this chat's grounding doc set via context_id-gated path; update is a write-back of paragraphs cache, no cross-tenant exposure"
+  - file: backend/routers/chat.py
+    line: 2785
+    justification: "`_event_gen` worker closure inside `stream_message`; `chat.context_id` resolved earlier from a chat row loaded with account_id gate"
+  - file: backend/routers/compilations.py
+    line: 279
+    justification: "compilation pre-validated by upstream find_one with context_id; row-id-targeted update"
+  - file: backend/routers/contexts.py
+    line: 503
+    justification: "preview-invitation; `inv` was looked up by the public invitation token (token IS the auth surface for invitations)"
+  - file: backend/routers/contexts.py
+    line: 551
+    justification: "accept-invitation; `inv` was looked up by the public invitation token at the route entry"
+  - file: backend/routers/cycle.py
+    line: 1248
+    justification: "cycle export-PDF; `context_id` came from the cycle row loaded with membership gate upstream"
+  - file: backend/routers/cycle.py
+    line: 1282
+    justification: "cycle export-deck-PDF; same gate as L1241"
+  - file: backend/routers/cycle_assignments.py
+    line: 365
+    justification: "inserted_rows accumulator: each row stamped with context_id+assignee_account_id+ned_id (L321-360); non-literal scanner cannot follow loop accumulation"
+  - file: backend/routers/cycle_assignments.py
+    line: 475
+    justification: "assignment pre-validated by upstream find_one with context_id; row-id-targeted cancel"
+  - file: backend/routers/cycle_manager.py
+    line: 215
+    justification: "handler is context-membership-gated upstream; cycle fetched by row id"
+  - file: backend/routers/cycles.py
+    line: 319
+    justification: "handler is context-membership-gated; counts_filt is $or over (context_id + seed_marker_visible_for) — both tenant-scoped"
+  - file: backend/routers/cycles.py
+    line: 320
+    justification: "handler is context-membership-gated; counts_filt is $or over (context_id + seed_marker_visible_for) — both tenant-scoped"
+  - file: backend/routers/cycles.py
+    line: 321
+    justification: "handler is context-membership-gated; counts_filt is $or over (context_id + seed_marker_visible_for) — both tenant-scoped"
+  - file: backend/routers/cycles.py
+    line: 322
+    justification: "handler is context-membership-gated; counts_filt is $or over (context_id + seed_marker_visible_for) — both tenant-scoped"
+  - file: backend/routers/cycles.py
+    line: 329
+    justification: "handler is context-membership-gated; filt is $or over (context_id + seed_marker_visible_for) — both tenant-scoped"
+  - file: backend/routers/cycles.py
+    line: 332
+    justification: "handler is context-membership-gated; filt is $or over (context_id + seed_marker_visible_for) — both tenant-scoped"
+  - file: backend/routers/cycles.py
+    line: 340
+    justification: "handler is context-membership-gated; filt is $or over (context_id + seed_marker_visible_for) — both tenant-scoped"
+  - file: backend/routers/daily_review.py
+    line: 85
+    justification: "daily-review aggregator; `ctx_ids` derive from the caller's accessible contexts upstream"
+  - file: backend/routers/daily_review.py
+    line: 450
+    justification: "handler is context-membership-gated; queue item fetched/updated by row id"
+  - file: backend/routers/daily_review.py
+    line: 491
+    justification: "handler is context-membership-gated; queue item updated by row id"
+  - file: backend/routers/daily_review.py
+    line: 553
+    justification: "handler is context-membership-gated; queue item updated by row id"
+  - file: backend/routers/daily_review.py
+    line: 567
+    justification: "handler is context-membership-gated; queue item fetched by row id"
+  - file: backend/routers/daily_review.py
+    line: 578
+    justification: "handler is context-membership-gated; queue item updated by row id"
+  - file: backend/routers/daily_review.py
+    line: 960
+    justification: "handler is context-membership-gated; queue item fetched by row id"
+  - file: backend/routers/decks.py
+    line: 668
+    justification: "deep-link resolver: deck fetched by id THEN membership verified against deck.context_id (L666-671); resolver IS the tenancy contract"
+  - file: backend/routers/depth.py
+    line: 68
+    justification: "primary-sector resolver; `m` is the caller's own membership row (db.memberships find filtered by account_id upstream)"
+  - file: backend/routers/document_engagement.py
+    line: 177
+    justification: "share record pre-validated by upstream find_one with context_id; row-id-targeted email-send-id backfill"
+  - file: backend/routers/documents.py
+    line: 1339
+    justification: "upload-paragraphs flow; context_id membership check happens on the following read of doc.context_id (see L1330+)"
+  - file: backend/routers/documents.py
+    line: 1521
+    justification: "`id_set` derived from document_attachments rows linked to `doc_id` which was already context_id-gated upstream; peers share the same tenant by attachment-invariant"
+  - file: backend/routers/documents.py
+    line: 1553
+    justification: "ancestor walk; `current` starts from `doc.parent_doc_id` where `doc` was context_id-gated upstream; lineage stays within tenant per parent_doc_id invariant"
+  - file: backend/routers/documents.py
+    line: 1564
+    justification: "descendants of `doc_id` (already context_id-gated upstream); lineage stays within tenant"
+  - file: backend/routers/documents.py
+    line: 1598
+    justification: "attach-related endpoint; doc_id from URL path, target_doc_id from request body. Cross-tenant attach prevented by membership check on the resulting context_id below + the route's account-scoped dependency"
+  - file: backend/routers/documents.py
+    line: 1603
+    justification: "see L1585; target check follows the same pattern"
+  - file: backend/routers/documents.py
+    line: 1685
+    justification: "patch-lineage endpoint; account dependency enforces auth; parent-cycle check below treats parent_doc_id as a within-tenant invariant"
+  - file: backend/routers/documents.py
+    line: 1705
+    justification: "cycle-detection walk; `cur` starts from `body.parent_doc_id` validated against existing tenant doc above; parent_doc_id invariant keeps walk within tenant"
+  - file: backend/routers/documents.py
+    line: 1718
+    justification: "`doc` already loaded with context_id-gated read at L1672; this is the matching write"
+  - file: backend/routers/documents.py
+    line: 2406
+    justification: "`d` loaded above with require_context_membership; uploader/admin check enforced inline at L2391"
+  - file: backend/routers/documents.py
+    line: 2498
+    justification: "`d` was loaded via the paragraphs-compute flow which is gated by require_context_membership at the handler entry"
+  - file: backend/routers/documents.py
+    line: 2639
+    justification: "paragraphs cache-rebuild cron; X-Cron-Secret gated above (L2615-2622); cross-tenant sweep is intentional for a maintenance worker"
+  - file: backend/routers/documents_async_mirror.py
+    line: 55
+    justification: "async-mirror context hydrator; `context_id` flows from a tenant-gated document handler"
+  - file: backend/routers/exco_teams.py
+    line: 252
+    justification: "team pre-validated by upstream find_one with context_id (L239); row-id-targeted update"
+  - file: backend/routers/exco_teams.py
+    line: 255
+    justification: "team pre-validated by upstream find_one with context_id (L239); row-id-targeted readback"
+  - file: backend/routers/exco_teams.py
+    line: 275
+    justification: "team pre-validated by upstream find_one with context_id (L269); row-id-targeted member add"
+  - file: backend/routers/exco_teams.py
+    line: 286
+    justification: "team pre-validated by upstream find_one with context_id (L269); row-id-targeted readback"
+  - file: backend/routers/exco_teams.py
+    line: 305
+    justification: "team pre-validated by upstream find_one with context_id; row-id-targeted member remove"
+  - file: backend/routers/exco_teams.py
+    line: 316
+    justification: "team pre-validated by upstream find_one with context_id; row-id-targeted readback"
+  - file: backend/routers/exco_teams.py
+    line: 335
+    justification: "team pre-validated by upstream find_one with context_id; row-id-targeted ownership change"
+  - file: backend/routers/exco_teams.py
+    line: 342
+    justification: "team pre-validated by upstream find_one with context_id; row-id-targeted readback"
+  - file: backend/routers/first_session.py
+    line: 276
+    justification: "first-session context-object write; `context_id` was just created earlier in this same handler with owner_account_id=current[\"id\"]"
+  - file: backend/routers/first_session.py
+    line: 388
+    justification: "submit-intake context-row read; `context_id` was just created earlier in the same handler with owner_account_id=current[\"id\"]"
+  - file: backend/routers/first_session.py
+    line: 393
+    justification: "submit-intake context-row write; same gate as L386"
+  - file: backend/routers/governance.py
+    line: 56
+    justification: "`ctx_ids` were filtered to the caller's accessible contexts at the route entry"
+  - file: backend/routers/governance.py
+    line: 423
+    justification: "admin governance KPI route (super-admin gate at file entry); cross-tenant aggregation"
+  - file: backend/routers/governance.py
+    line: 435
+    justification: "admin governance KPI route (super-admin gate at file entry); cross-tenant aggregation"
+  - file: backend/routers/ideas.py
+    line: 73
+    justification: "digest is IdeasDigest model.dump() with account_id field (stamped at synthesize_digest call L60-66); non-literal scanner cannot resolve through model.dump()"
+  - file: backend/routers/inbound_email.py
+    line: 278
+    justification: "inbound-email mailbox resolver; routing is by the unique mailbox address (inbound_address) on the context row, not by caller identity"
+  - file: backend/routers/inbound_email.py
+    line: 297
+    justification: "mailbox-resolver fallback path; same address-routed contract as L278"
+  - file: backend/routers/inbound_email.py
+    line: 370
+    justification: "get-inbound-address read; `ctx_id` validated against the caller's accessible-context set at the route boundary"
+  - file: backend/routers/inbound_email.py
+    line: 378
+    justification: "get-inbound-address write; same gate as L368"
+  - file: backend/routers/inbound_email.py
+    line: 748
+    justification: "contributor email reply: token validated upstream, then task updated by row id"
+  - file: backend/routers/inbound_email.py
+    line: 764
+    justification: "contributor email reply: token validated upstream, then task fetched by row id"
+  - file: backend/routers/inbound_email.py
+    line: 777
+    justification: "contributor email reply: token validated upstream, then task updated by row id"
+  - file: backend/routers/inbound_queue.py
+    line: 100
+    justification: "context-name hydrator; `context_ids` derived from the caller's own inbound-queue rows above"
+  - file: backend/routers/inbound_queue.py
+    line: 219
+    justification: "queue item pre-validated by upstream find_one with context_id; row-id-targeted update"
+  - file: backend/routers/inbound_queue.py
+    line: 300
+    justification: "queue item pre-validated by upstream find_one with context_id; row-id-targeted update"
+  - file: backend/routers/inbound_queue.py
+    line: 348
+    justification: "queue item pre-validated by upstream find_one with context_id; row-id-targeted update"
+  - file: backend/routers/influence_map.py
+    line: 389
+    justification: "cron weekly digest; sweeps contexts marked for the digest (route gated by X-Cron-Secret upstream)"
+  - file: backend/routers/learn.py
+    line: 74
+    justification: "research-corpus resolver; `current` is the authenticated account, `context_id` was looked up upstream via the user's accessible contexts"
+  - file: backend/routers/ned_cycle.py
+    line: 61
+    justification: "`ctx_ids` were fetched from db.memberships keyed by (account_id=caller, role=ned)"
+  - file: backend/routers/oauth_google.py
+    line: 419
+    justification: "cred resolved upstream by user_id+context_id; row-id-targeted write"
+  - file: backend/routers/oauth_google.py
+    line: 436
+    justification: "cred resolved upstream by user_id+context_id; row-id-targeted write"
+  - file: backend/routers/oauth_google.py
+    line: 447
+    justification: "cred resolved upstream by user_id+context_id; row-id-targeted write"
+  - file: backend/routers/oauth_google.py
+    line: 535
+    justification: "cred resolved upstream by user_id+context_id; row-id-targeted write"
+  - file: backend/routers/oauth_google.py
+    line: 586
+    justification: "cred resolved upstream by user_id+context_id; row-id-targeted write"
+  - file: backend/routers/observability.py
+    line: 40
+    justification: "admin/observability cron route: cross-tenant by design; gated by admin-only invocation"
+  - file: backend/routers/portfolio.py
+    line: 168
+    justification: "portfolio aggregator; `ctx_ids` come from `db.memberships.find({account_id: current[\"id\"]})` above"
+  - file: backend/routers/portfolio_data.py
+    line: 175
+    justification: "boards-to-watch; `ctx_ids` derive from the caller's accessible contexts upstream"
+  - file: backend/routers/portfolio_data.py
+    line: 344
+    justification: "last-action context-name lookup; `cid` from the caller's accessible board ids set above"
+  - file: backend/routers/sandbox.py
+    line: 281
+    justification: "`seeds[\"documents\"]` built by build_seed_payload(owner_account_id=...) which stamps account_id on every row; scanner can't trace into the builder"
+  - file: backend/routers/sandbox.py
+    line: 326
+    justification: "`ctx_id` was just created by `_seed_sandbox` for the same disposable account; rollback path"
+  - file: backend/routers/sandbox.py
+    line: 374
+    justification: "cleanup_expired_sandboxes cron; cross-tenant sweep of expired sandbox-type contexts by hard_delete_at; route gated by X-Cron-Secret upstream"
+  - file: backend/routers/sandbox.py
+    line: 395
+    justification: "cleanup_expired_sandboxes cron; soft-delete write within the same cron sweep as L365"
+  - file: backend/routers/sandbox.py
+    line: 421
+    justification: "`ctx` loaded earlier with `{owner_account_id: current[\"id\"], type: sandbox}` gate; this is the matching write"
+  - file: backend/routers/sandbox.py
+    line: 544
+    justification: "`ctx` loaded above with `{owner_account_id: current[\"id\"]}` gate; matching tutorial-dismissed write"
+  - file: backend/routers/sandbox.py
+    line: 655
+    justification: "`ctx` loaded earlier with `{owner_account_id: current[\"id\"], type: sandbox}` gate; matching sample-doc-accepted write"
+  - file: backend/routers/sandbox.py
+    line: 754
+    justification: "`ctx` loaded with `{owner_account_id: current[\"id\"]}` gate above; skip-dismissal write"
+  - file: backend/routers/sandbox.py
+    line: 768
+    justification: "`ctx` loaded with `{owner_account_id: current[\"id\"]}` gate above; objective-check answer write"
+  - file: backend/routers/sandbox.py
+    line: 830
+    justification: "`m` from db.memberships.find({account_id: current[\"id\"]}) above; the caller's own sandbox contexts being converted"
+  - file: backend/routers/sandbox.py
+    line: 855
+    justification: "same membership-derived ids as L806; deletion path for non-kept sandboxes"
+  - file: backend/routers/sandbox.py
+    line: 876
+    justification: "pre-fill source for First Session form; `my_ctx_ids` are the caller's own contexts from db.memberships above"
+  - file: backend/routers/sandbox.py
+    line: 1021
+    justification: "`seeds[\"documents\"]` built by build_seed_payload(owner_account_id=...) which stamps account_id on every row; scanner can't trace into the builder"
+  - file: backend/routers/sandbox.py
+    line: 1037
+    justification: "read-back of the seeded context just created earlier in this same handler with owner_account_id=current[\"id\"]"
+  - file: backend/routers/sandbox.py
+    line: 1486
+    justification: "sandbox-seeded session: ctx loaded with owner_account_id upstream; session fetched by row id"
+  - file: backend/routers/search.py
+    line: 60
+    justification: "universal search resolver; `context_ids` come from the caller's own memberships harvested above"
+  - file: backend/routers/shares.py
+    line: 461
+    justification: "share-aggregator; `context_ids` are the caller's accessible contexts pre-filtered above"
+  - file: backend/routers/shares.py
+    line: 504
+    justification: "`documents_q` includes `context_id ∈ active_ctx_ids` (L478) where active_ctx_ids derives from the share-token holder's accessible contexts; tenant scope enforced via context_id ∈ allow-list rather than account_id"
+  - file: backend/routers/solva_v2.py
+    line: 219
+    justification: "seed resolver: question fetched by id THEN explicit context_id cross-check at L223 (resolver IS the tenancy contract)"
+  - file: backend/routers/solva_v2.py
+    line: 447
+    justification: "session pre-validated by upstream find_one with account_id; row-id-targeted update"
+  - file: backend/routers/solva_v2.py
+    line: 457
+    justification: "session pre-validated by upstream find_one with account_id; row-id-targeted update"
+  - file: backend/routers/solva_v2.py
+    line: 601
+    justification: "`_run_grounding` worker closure; `context_id` is a closure capture from the upstream-gated session-creation handler"
+  - file: backend/routers/solva_v2.py
+    line: 1178
+    justification: "session pre-validated by upstream find_one with account_id; row-id-targeted update"
+  - file: backend/routers/solva_v2.py
+    line: 1209
+    justification: "session pre-validated by upstream find_one with account_id; row-id-targeted update"
+  - file: backend/routers/solva_v2.py
+    line: 2402
+    justification: "cron sweep: gated by x_cron_secret (admin-only); cross-tenant stale-session reaper by design"
+  - file: backend/routers/solva_v2.py
+    line: 2487
+    justification: "session pre-validated by upstream find_one with account_id; row-id-targeted update"
+  - file: backend/routers/solva_v2_artefact.py
+    line: 79
+    justification: "Solva v2 evidence-card payload; `cid` came from a Solva session that was account-gated upstream"
+  - file: backend/routers/solva_v2_artefact.py
+    line: 206
+    justification: "Solva v2 reasoning stream; same session-gated `cid` as L78"
+  - file: backend/routers/solva_v2_artefact.py
+    line: 304
+    justification: "Solva v2 PPTX export; session-gated `cid`"
+  - file: backend/routers/solva_v2_artefact.py
+    line: 400
+    justification: "Solva v2 chair notes; session-gated `cid`, optional (cid may be None for unattached sessions)"
+  - file: backend/routers/strategic_goals.py
+    line: 222
+    justification: "row-id-targeted readback after L218-219 validated write with context_id"
+  - file: backend/routers/studio.py
+    line: 762
+    justification: "public share-token-resolved render; `cid` came from the share record validated against the token at the route entry"
+  - file: backend/routers/studio_blocks.py
+    line: 473
+    justification: "block hydrator: parent block validated via _resolve_artefact upstream; signal fetched by row id"
+  - file: backend/routers/studio_blocks.py
+    line: 491
+    justification: "citation-block hydrator; `c.doc_id` was stamped on a tenant-scoped block originally; only fetches name+classification for display"
+  - file: backend/routers/studio_blocks.py
+    line: 524
+    justification: "sensitivity-floor computation; `doc_id` from a tenant-scoped citation block; only reads `classification` for the floor calc"
+  - file: backend/routers/synisense_metrics.py
+    line: 209
+    justification: "Phase J public chat metrics endpoint; access is via chat_id (UUID) without auth, returns aggregated counters keyed off the chat's stored account_id below. Pre-existing surface contract — Phase 2.1 preserves behaviour"
+  - file: backend/routers/tasks.py
+    line: 504
+    justification: "task pre-validated by upstream find_one with account_id; row-id-targeted update"
+  - file: backend/routers/tasks.py
+    line: 506
+    justification: "task pre-validated by upstream find_one with account_id; row-id-targeted readback"
+  - file: backend/routers/tasks.py
+    line: 727
+    justification: "task pre-validated by upstream find_one with account_id; row-id-targeted update"
+  - file: backend/routers/tasks.py
+    line: 965
+    justification: "contributor-token-gated link; `row` looked up via opaque token, `doc_ids` come from `row.draft_artefact_ids` stamped at link mint"
+  - file: backend/routers/tasks.py
+    line: 969
+    justification: "contributor-token flow: token validated upstream, then task fetched by row id"
+  - file: backend/routers/tasks.py
+    line: 1150
+    justification: "contributor-token flow: token validated upstream, then task fetched by row id"
+  - file: backend/routers/tasks.py
+    line: 1276
+    justification: "contributor-token flow: token validated upstream, then task updated by row id"
+  - file: backend/routers/tasks.py
+    line: 1290
+    justification: "contributor-token flow: task fetched by row id after token validation"
+  - file: backend/routers/tasks.py
+    line: 1309
+    justification: "contributor-token flow: task updated by row id after token validation"
+  - file: backend/routers/team_catalogue.py
+    line: 85
+    justification: "existing row pre-validated by upstream find_one with context_id (L77); row-id-targeted resurrect-update"
+  - file: backend/routers/team_catalogue.py
+    line: 93
+    justification: "existing row pre-validated by upstream find_one with context_id (L77); row-id-targeted readback"
+  - file: backend/routers/team_catalogue.py
+    line: 96
+    justification: "existing row pre-validated by upstream find_one with context_id (L77); row-id-targeted name update"
+  - file: backend/routers/team_catalogue.py
+    line: 100
+    justification: "existing row pre-validated by upstream find_one with context_id (L77); row-id-targeted readback"
+  - file: backend/routers/team_catalogue.py
+    line: 162
+    justification: "row pre-validated by upstream find_one with context_id (L132); row-id-targeted patch update"
+  - file: backend/routers/team_catalogue.py
+    line: 168
+    justification: "row pre-validated by upstream find_one with context_id (L132); row-id-targeted readback"
+  - file: backend/routers/trust_center.py
+    line: 80
+    justification: "lookup is intentionally chat_id-only; the membership check below enforces tenant scope. A direct account_id filter here would convert 403 → 404 for foreign chats, masking the existence check the Trust Center needs"
+  - file: backend/routers/trust_center.py
+    line: 155
+    justification: "Trust Center session lookup; `chat.context_id` came from `_load_chat_or_403` membership-gated read above"
+  - file: backend/routers/trust_center.py
+    line: 270
+    justification: "Trust Center session detail; chat already loaded with membership check upstream"
+  - file: backend/routers/walkin.py
+    line: 126
+    justification: "walkin-question helper; `context_id` came from the body validated against the caller's accessible-context list above"
+  - file: backend/routers/work_studio_export.py
+    line: 385
+    justification: "phase-marker write from `_set_export_phase()` helper; `export_id` is a UUID stamped at export creation under the caller's context+account; this helper has no context_id arg by design (called from many phase boundaries, each carrying their own scope)"
+  - file: backend/routers/work_studio_export.py
+    line: 661
+    justification: "`_run_export` worker closure; `context_id` is a closure capture from `start_export` which was gated by require_context_membership"
+  - file: backend/routers/work_studio_export.py
+    line: 1145
+    justification: "`documents_row_id` resolved upstream from the export's tenant-scoped artefact; this is a mirror write of confidence_pct"
+  - file: backend/routers/work_studio_export.py
+    line: 1383
+    justification: "`_run_enhance` worker closure; `context_id` is a closure capture from `enhance_export` which was gated by require_context_membership"
+  - file: backend/routers/work_studio_overlay.py
+    line: 436
+    justification: "`clone` spreads `{**row, ...}` where `row` was loaded via the context_id-gated find at L390; account_id + context_id flow through the spread but the scanner can't trace into the variable"
+  - file: backend/routers/workbook_analysis.py
+    line: 129
+    justification: "blob fetched by analysis_id; parent workbook_analyses row validated with account_id upstream (L88-95)"
+  - file: backend/routers/workbook_analysis.py
+    line: 294
+    justification: "model.dump() insert: analysis carries account_id+context_id fields stamped at WorkbookAnalysis(...) constructor (L274-286); non-literal scanner cannot resolve through model.dump()"
+  - file: backend/routers/workbook_analysis.py
+    line: 724
+    justification: "model.dump() insert: analysis carries account_id+context_id fields stamped at build_analysis_from_uploads(account_id, context_id) call (L710-716); non-literal scanner cannot resolve through model.dump()"
+  - file: backend/routers/workbook_analysis.py
+    line: 726
+    justification: "blob_docs accumulator: each blob stamped with account_id+context_id at build_analysis_from_uploads; non-literal scanner cannot resolve through list accumulation"
+  - file: backend/services/backfill_shield_v1.py
+    line: 276
+    justification: "backfill service processes a single chat scoped via `id` (UUID); each chat already loaded by the runner with its account_id"
+  - file: backend/services/backfill_shield_v1.py
+    line: 333
+    justification: "see comment at L276; chat already loaded in batch outer scope"
+  - file: backend/services/backfill_shield_v1.py
+    line: 339
+    justification: "see comment at L276"
+  - file: backend/services/backfill_shield_v1.py
+    line: 411
+    justification: "admin backfill runner; `query` selects pre-v1 chats globally for the batch job per design"
+  - file: backend/services/documents/intelligence_service.py
+    line: 139
+    justification: "intelligence promoter: doc validated with account_id upstream; signal updated by id+context_id"
+  - file: backend/services/documents/intelligence_service.py
+    line: 243
+    justification: "promoter invoked after doc validated with account_id+context_id upstream; upsert stamps context_id in $set payload (L249); row-id-targeted upsert"
+  - file: backend/services/documents/intelligence_service.py
+    line: 278
+    justification: "orphan close-out: walks rows with id matching the validated doc's prefix (q4y:from_intel:{doc_id}:*); by design rows owned by the upstream-validated doc"
+  - file: backend/services/documents/intelligence_service.py
+    line: 301
+    justification: "orphan close-out: update against row already visited in the doc-prefix-anchored cursor (L280); row-id-targeted close"
+  - file: backend/services/ideas_engine/scheduler.py
+    line: 126
+    justification: "digest is IdeasDigest model.dump() with account_id field (stamped at synthesize_digest call L118-125); non-literal scanner cannot resolve through model.dump()"
+  - file: backend/services/inbox_routing/backfill.py
+    line: 354
+    justification: "admin/cron backfill worker: cross-tenant by design; gated by admin-only invocation"
+  - file: backend/services/inbox_routing/context_resolver.py
+    line: 40
+    justification: "default-inbox context_resolver; `ctx_id` is the caller's primary context resolved by the routing pipeline upstream"
+  - file: backend/services/inbox_routing/context_resolver.py
+    line: 386
+    justification: "cycle-id resolver; `context_id` resolved via the mailbox routing pipeline (caller authenticated upstream)"
+  - file: backend/services/signal_dedup.py
+    line: 85
+    justification: "dedup helper called with account-gated signal payload; merge by fingerprint within tenant scope"
+  - file: backend/services/signal_dedup.py
+    line: 96
+    justification: "dedup helper called with account-gated signal payload; insert with full provenance"
+  - file: backend/services/tasks/compile_service.py
+    line: 153
+    justification: "service invoked by router with tenant-gated entry; row-id-targeted update"
+  - file: backend/services/tasks/compile_service.py
+    line: 390
+    justification: "service invoked by router with tenant-gated entry; row-id-targeted readback"
+  - file: backend/services/tasks/compile_service.py
+    line: 474
+    justification: "`doc` loaded above at L454 with `{\"id\": doc_id, \"task_id\": tid}` (task_id is an alt-key for documents per Phase 2.2 widening); this is the matching write of the rewritten body"
+  - file: backend/services/tasks/compile_service.py
+    line: 533
+    justification: "rollback path; `did` was just committed by the same task-scoped commit loop above (L516, `task_id` alt-key gated); state restore is within-task"
+  - file: backend/services/tasks/compile_service.py
+    line: 560
+    justification: "service invoked by router with tenant-gated entry; row-id-targeted update"
+  - file: backend/services/work_studio_overlay.py
+    line: 62
+    justification: "one-shot backfill migration for legacy rows missing `lifecycle_state`; cross-tenant sweep is intentional for a maintenance worker (idempotent, only touches missing-field rows)"
