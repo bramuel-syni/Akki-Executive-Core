@@ -655,6 +655,73 @@ Status legend:
 
   **Iteration budget**: 1/3 used. Iter-2 = Phase 5.5.2 (product fixes for candidates A + B). Iter-3 = Phase 5.5.3 (Q1 rewrite + delete per-test skips on Q4/Q5).
 
+- Phase 5.5.2 (Track-A Real Closure — Candidates A + B P0 Product Bugs): 2 surgical product fixes resolving the Phase 5.5.1-surfaced production regressions (`StateOnlyResponse.state` typing bug + HTTP transport Pydantic-kwarg serialization); 2 new build-breaking invariants pin both fixes against future regression; ALL 24 honest-skip markers from Phase 5.5.1 LIFTED; **86/86 originally-quarantined Track-A tests now passing**; 9 cross-file failures in `test_j1_stages_1_2.py` unblocked as a bonus → ✅ SHIPPED 2026-06-24 (full close — iter-1 only). **70 PASS, 10 docs-skip, 0 fail** on invariants suite (was 60 in 5.5.1; +10 new invariants). **Public surface ratchet held** (`/api/* = cdcb23322bb82895`, `/v1/* = acc51822aa8818ae`, combined `ca9429c64e44570c`).
+
+  **Track A is fully closed**: 5.5 quarantined 86 → 5.5.1 unlocked 62 + queued 24 → **5.5.2 unlocked all remaining 24 + closed both product bugs**. The 5 quarantined files now ship 86/86 tests; the cross-file `test_j1_stages_1_2.py` is at 15/15 (was 6/15 in 5.5.1 probe).
+
+  **Grep audit verdict (Part A — central fix preferred):**
+  - 133 contract call sites across 47 unique methods.
+  - Exactly **1 known Pydantic-kwarg site**: `get_solva().narrate_analysis(workbook_analysis=wba)` at `routers/workbook_analysis.py:1089`.
+  - All other methods accept primitives / dicts / lists / dataclasses. The `SolvaInputs` dataclass (`@dataclass(frozen=True)`) is covered defensively by the sanitizer's dataclass branch.
+  - **Choice: central fix at `_HTTPAdapterBase._call`.** Defends against future Pydantic-kwarg sites; integration point is a single shared method inherited by all 3 HTTP adapters.
+
+  **Candidate A — `StateOnlyResponse.state` typing fix** ✅ COMPLETE.
+  - `contracts/responses.py:22-37` — widened `state: Optional[str]` to `state: Optional[Dict[str, Any]]` (matches the 6 `/api/me/first-session/*` handlers' genuine return shape via `_sanitize_state()` at `routers/first_session.py:195-244`). `extra='allow'` rail preserves per-route optional siblings (`questions`, `landing_cycle_id`).
+  - **Invariant**: `tests/invariants/test_invariant_first_session_response_shape.py` (NEW, 2 tests): live wire test on all 6 routes via ASGI in-process (HUMAN_REQUIRED on seed precondition; honest skip on missing) + static `model_fields` check on `StateOnlyResponse.state.annotation` (build-breaking regardless of seed state).
+  - **Unblocks**: 13 Q4 tests + 9 cross-file failures in `test_j1_stages_1_2.py`.
+
+  **Candidate B — HTTP transport Pydantic-kwarg serialization fix** ✅ COMPLETE.
+  - `contracts/_adapters/_http_client.py:41-86` — added `_sanitize_kwargs_for_json()` helper (~28 LOC pure-function pre-encoder). Walks `kwargs` recursively; converts `BaseModel` → `.model_dump(mode='json')` (handles datetime → ISO via Pydantic v2 mode) + `@dataclass` → `dataclasses.asdict()`. Plain dicts/lists/primitives pass through unchanged.
+  - `contracts/_adapters/_http_client.py:225` — `_HTTPAdapterBase._call` now calls `json_kwargs = _sanitize_kwargs_for_json(kwargs)` before `client.post(url, json=json_kwargs, ...)`. Single integration point inherited by `HTTPSolvaAdapter` / `HTTPSyniSenseAdapter` / `HTTPAkkiAdapter`.
+  - **Invariant**: `tests/invariants/test_invariant_http_transport_pydantic_kwargs.py` (NEW, 8 tests): unit tests across 7 representative kwarg shapes (top-level Pydantic, nested Pydantic, datetime via mode='json', frozen dataclass, plain-kwarg no-regression, Pydantic-in-dict-value, Pydantic-in-list) + AST-level pin on `_HTTPAdapterBase._call` invoking `_sanitize_kwargs_for_json` (catches refactors that bypass the sanitizer).
+  - **Unblocks**: 8 Q1 tests + 3 Q5 tests.
+
+  **Test-side companion fix** (test infrastructure, NOT product code; logged as D1):
+  - Q1 + Q5 also needed an `_force_inproc_transport` autouse fixture because the original tests were authored against in-process transport (using `monkeypatch.setattr(narr, "shield_invoke", ...)`). Under `BOUNDED_CONTEXT_TRANSPORT=http`, the test's monkeypatch is bypassed (HTTP adapter routes to a separate uvicorn process). Mirrors the inverse pattern in `test_phase4_2_http_transport_smoke.py` which forces `=http`.
+
+  **Bonus rewrite** (Track-B Phase-B1b stale assertion; logged as D2):
+  - Q4's `test_cycle_door_routes_to_setup_wizard_query_string` asserted the pre-Track-B-Phase-B1b cycle-door target. Track B Phase B1b (2026-06-04) deliberately changed the cycle-door target per Onboarding QA item 4 — rewrote the test to `test_cycle_door_routes_to_task_manager` asserting `navigate("/app/task-manager")`. Pure Cat-5 stale-test rewrite (product change was already shipped in Track B).
+
+  **Skip cleanup table:**
+  | Skip marker (5.5.1) | File | Count | 5.5.2 disposition |
+  |---|---|---:|---|
+  | `_INTAKE_RESPONSE_MODEL_SKIP` | `test_j2_stage_3.py` | 13 | REMOVED (cand. A unblock) |
+  | `_HTTP_TRANSPORT_PYDANTIC_SKIP` | `test_track_a_phase6_inline_edit_and_bc_removal.py` | 3 | REMOVED (cand. B unblock) |
+  | File-level `pytest.mark.skip` | `test_track_a_phase4_versioning_multi.py` | 8 (whole file) | REMOVED (cand. B unblock) |
+  | **TOTAL** | — | **24** | All 24 honest-skips LIFTED |
+
+  **Files touched:**
+  - **Created (4)**: `backend/tests/invariants/test_invariant_first_session_response_shape.py`; `backend/tests/invariants/test_invariant_http_transport_pydantic_kwargs.py`; `memory/sprints/PHASE_5_5_2_TRACK_A_REAL_FIXES.md`.
+  - **Modified (product code — 2 files, ~52 LOC net)**: `backend/contracts/responses.py`; `backend/contracts/_adapters/_http_client.py`.
+  - **Modified (test code — 3 files)**: `backend/tests/test_track_a_phase4_versioning_multi.py` (file-level skip removed; inproc fixture added); `backend/tests/test_track_a_phase6_inline_edit_and_bc_removal.py` (3 per-test skips removed; inproc fixture added; marker constant removed); `backend/tests/test_j2_stage_3.py` (13 per-test skips removed; marker constant removed; 1 stale assertion rewritten — D2).
+  - **Regenerated (mechanical — schema widening)**: `backend/openapi-sdk/{synisense,solva,akki}.openapi.json` via `python scripts/generate_sdk_slices.py`.
+  - **Modified (memo)**: `memory/MASTER_STATE.md` (this entry).
+
+  **Verification evidence (this env):**
+  - The 5 originally-quarantined files: `pytest <5 Q files> -q` → **86 passed, 0 skipped, 0 failed** in 32.47s.
+  - Cross-file unblock: `pytest tests/test_j1_stages_1_2.py -q` → **15 passed** (was 6/15 in 5.5.1 probe).
+  - Invariants: `pytest tests/invariants/ -q` → **70 passed, 10 skipped, 0 failed** in 48.15s.
+  - Phase 4 transport smokes: `pytest tests/test_phase4_2_http_transport_smoke.py tests/test_phase4_4_dual_mount_smoke.py -q` → **45 passed, 0 failed**.
+  - `backend-tests.yml` scoped lane (clean state): **199 passed, 7 skipped, 5 deselected, 0 failed** (was 165 in 5.5.1; +34 = 24 unlocked + 10 new invariants).
+  - Public ratchet HELD: `/api/* = cdcb23322bb82895`, `/v1/* = acc51822aa8818ae`, combined `ca9429c64e44570c` (verified by `test_phase4_4_dual_mount_smoke.py` pin tests).
+  - OpenAPI SDK slices regenerated; `test_invariant_sdk_slices.py::test_slice_files_match_live_openapi` PASSES post-regen.
+  - `test_invariant_no_silent_skips`: **1/1 PASS** post-cleanup.
+
+  **Deviations log** (3 — full details in memo §8):
+  - **D1** Test-side companion fix (`_force_inproc_transport` fixture on Q1 + Q5). Test infrastructure, not product code; mirrors existing Phase 4.2 smoke pattern.
+  - **D2** Bonus stale-assertion rewrite in Q4 (cycle-door target — Track-B Phase-B1b product change already shipped; pure Cat-5 rewrite).
+  - **D3** One transient flake observed: `test_no_audit_row_for_pre_shield_failure` failed once on `-q` run, passed on `-v` re-run + isolated run. Async Mongo timing smell; not Phase 5.5.2-caused (test predates this dispatch). Investigate in a future QA-cleanup dispatch if it recurs.
+
+  **Track-A closure statement**: 5.5 quarantined 86 → 5.5.1 unlocked 62 + queued 24 → 5.5.2 unlocked the remaining 24 + closed both surfaced product bugs. **Track A test debt fully cleared**. Plus 9 bonus cross-file unblocks.
+
+  Memo: `sprints/PHASE_5_5_2_TRACK_A_REAL_FIXES.md`.
+
+  **Iteration budget**: 1/3 used. Iter-2/3 reserved if regression CI surfaces issues.
+
+  **What's NOT in this phase** (per dispatch):
+  - Phase 5.5.2 candidate C (broader-suite drift across ~7+ test files NOT in original Q1-Q5) — stays Phase 5.5.3 / future.
+  - Full-tree `backend-tests.yml` CI lane expansion — parked until candidate C is triaged.
+
 
 ### Track B — QA cleanup
 - Phase B1 (small mechanical onboarding + signin): **O4** ✅ + **O6** ✅ + **G1** ✅ (Fig 20 — `/sign-in` → `/signin` × 4 buttons) + **G2 Fig 22 modal** ✅ (SessionTimeoutGuard handler gated on `account`); **O7** ✅ Fig 7. Phase status: ✅ SHIPPED — tester PASS Journeys 4-v2, 6, 7, 8, 9 (5/5 incl. regression), 2026-06-04. Memos: `sprints/TRACK_B_PHASE1_FIG7_V2_ROOT_CAUSE_FIX.md`, `sprints/TRACK_B_PHASE1B_O4_O6_FIG20_FIG22.md`.

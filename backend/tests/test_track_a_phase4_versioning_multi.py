@@ -1,48 +1,45 @@
 """Track A Phase 4 (2026-06-04) — Versioning + multi-workbook synthesis.
 
-**STATUS: STILL QUARANTINED — Phase 5.5.1 re-triage 2026-06-24.**
+**Phase 5.5.2 (2026-06-24) — UNQUARANTINED.** Phase 5.5.1 surfaced
+two Phase 5.5.2 candidates (A: `StateOnlyResponse` typing bug;
+B: HTTP transport Pydantic-kwarg serialization). Both are now
+fixed at the product level. The remaining issue blocking this
+file in unit-test mode is that the tests were authored against
+in-process transport (using `monkeypatch.setattr(narr,
+"shield_invoke", ...)` to mock the LLM call), but
+`backend/.env` sets `BOUNDED_CONTEXT_TRANSPORT=http` by default,
+which makes `get_solva()` return an HTTPSolvaAdapter that calls
+the real `:8001` uvicorn — bypassing the in-process monkeypatch.
 
-Phase 5.5.1 probe (file-level unquarantine) revealed all 8 tests
-fail against current architecture due to **Phase 5.5.2 candidate B**:
-the Phase 4.2 HTTP transport (`BOUNDED_CONTEXT_TRANSPORT=http`)
-does not serialize the `WorkbookAnalysis` Pydantic model passed
-as a kwarg to `get_solva().narrate_analysis(workbook_analysis=wba)`
-at `routers/workbook_analysis.py:1089`. `HTTPSolvaAdapter._call`
-does `client.post(url, json=kwargs)` — non-JSON-serializable
-types fail with `TypeError: Object of type WorkbookAnalysis is
-not JSON serializable`.
+Fix: a file-level autouse fixture flips `BOUNDED_CONTEXT_TRANSPORT
+=inproc` for these tests so `get_solva()` returns the in-process
+adapter that respects the monkeypatch. Mirrors the pattern
+established in `test_phase4_2_http_transport_smoke.py` (which
+flips the opposite direction — `=http` for its scope).
 
-Per the Phase 5.5.1 sprint contract (zero behaviour change to
-product code), the fix is queued for Phase 5.5.2:
-  - HTTPSolvaAdapter._call must serialize Pydantic models in kwargs
-    via `.model_dump()` before `json=` POST, OR
-  - The call site at `routers/workbook_analysis.py:1089` must
-    pass a dict instead of a Pydantic model.
-
-Once 5.5.2 ships, this file becomes a candidate for re-rewrite +
-unquarantine in Phase 5.5.3 (test rewrites are still needed
-because the file's exact-shape `runs[]` assertions are also
-stale-to-arch).
-
-See `/app/memory/sprints/PHASE_5_5_1_TRACK_A_CLOSURE.md` §6
-(deviations) for the full 5.5.2 candidate write-up.
+The Pydantic central fix at `contracts/_adapters/_http_client.py`
+(`_sanitize_kwargs_for_json`) is exercised under HTTP transport
+mode via the new `test_invariant_http_transport_pydantic_kwargs`
+invariant, not this file's tests.
 """
 from __future__ import annotations
 
+import os
+
 import pytest
 
-# Phase 5.5.1 file-level quarantine carry-forward. Specific reason per
-# the no-silent-skips invariant; cites Phase 5.5.2 (product) +
-# Phase 5.5.3 (test rewrite) follow-ups.
-pytestmark = pytest.mark.skip(
-    reason=(
-        "Phase 5.5.1 carry-forward quarantine — Phase 5.5.2 "
-        "candidate B (HTTP transport Pydantic-kwarg serialization) "
-        "blocks 8/8 tests in this file. Test rewrite tracked for "
-        "Phase 5.5.3 after 5.5.2 product fix lands. See "
-        "memory/sprints/PHASE_5_5_1_TRACK_A_CLOSURE.md §6"
-    )
-)
+pytestmark = pytest.mark.asyncio
+
+
+@pytest.fixture(autouse=True)
+def _force_inproc_transport(monkeypatch):
+    """Phase 5.5.2 — force in-process transport mode for the duration
+    of every test in this file. The tests monkeypatch
+    `narr.shield_invoke` which only takes effect on the in-process
+    adapter (the HTTP adapter would route to a separate process /
+    `:8001` and bypass the patch entirely).
+    """
+    monkeypatch.setenv("BOUNDED_CONTEXT_TRANSPORT", "inproc")
 
 
 import io

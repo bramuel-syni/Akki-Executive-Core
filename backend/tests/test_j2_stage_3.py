@@ -1,33 +1,22 @@
 """J2 (Stage 3 — First Cycle invitation) — G21 4-door layout + G22 demo-attach.
 
-**Phase 5.5.1 rewrite (2026-06-24):** file-level quarantine lifted.
-9 static / source-string tests pass against current architecture;
-13 tests that drive the `/api/me/first-session/intake` HTTP path
-are blocked on **Phase 5.5.2 candidate A** — the
-`StateOnlyResponse` Pydantic model at `contracts/responses.py:22`
-declares `state: Optional[str] = None`, but the intake handler
-returns `state: dict` (the full first-session state envelope).
-FastAPI's response-model validator raises
-`ResponseValidationError`, so the endpoint returns 500.
-
-**Confirmation via cross-file sweep:** `test_j1_stages_1_2.py`
-also has 9 failures stemming from the same `StateOnlyResponse`
-typing error, proving the bug is not test-side.
-
-Per the Phase 5.5.1 sprint contract (zero behaviour change to
-product code), the fix is queued for Phase 5.5.2:
-  - Drop `response_model=Optional[StateOnlyResponse]` from the 6
-    `/api/me/first-session/*` routes, OR
-  - Widen `StateOnlyResponse.state: Optional[Any]` (typed dict), OR
-  - Author a proper `FirstSessionStateResponse` envelope model.
+**Phase 5.5.2 (2026-06-24) — full unquarantine.** All 22 tests now
+run. Phase 5.5.1 had per-test-skipped 13 tests that exercise the
+`/api/me/first-session/intake` HTTP path because the
+`StateOnlyResponse.state: Optional[str]` model (contracts/
+responses.py:22) did not match the dict envelope the handler
+returns, causing `ResponseValidationError` → 500 on every intake
+call. Phase 5.5.2 candidate A widened the model to
+`state: Optional[Dict[str, Any]]` matching the genuine handler
+contract; all 13 intake-path tests now pass.
 
 The original Phase 5.5 quarantine reason ("audit-row keys drifted
-from v1.1") was incorrect on re-triage: `ALLOWED_DOORS` and the
-audit-row shape both still match the v1.1 baseline. Re-triage
-correction logged in §6 of the closure memo.
+from v1.1 baseline") was incorrect — `ALLOWED_DOORS` and the
+audit-row shape both still match the v1.1 baseline. The actual
+blocker was the unrelated `StateOnlyResponse` bug.
 
-See `/app/memory/sprints/PHASE_5_5_1_TRACK_A_CLOSURE.md` §2.Q4
-+ §6 (deviations) for the full 5.5.2 candidate A write-up.
+See `/app/memory/sprints/PHASE_5_5_2_TRACK_A_REAL_FIXES.md` §3
+(candidate A evidence) for the unquarantine + skip-cleanup table.
 """
 from __future__ import annotations
 
@@ -53,25 +42,6 @@ from routers.first_session import (
     DEMO_SEED_MARKER,
     DEMO_BEARING_COLLECTIONS,
     DEMO_LANDING_CYCLE_ID,
-)
-
-
-# Phase 5.5.1 — per-test skip for the 13 tests blocked on Phase 5.5.2
-# candidate A (StateOnlyResponse.state typing bug on /api/me/first-
-# session/intake). Each carries a SPECIFIC reason per the
-# no-silent-skips invariant.
-_INTAKE_RESPONSE_MODEL_SKIP = pytest.mark.skip(
-    reason=(
-        "Phase 5.5.2 candidate A — StateOnlyResponse.state: "
-        "Optional[str] (contracts/responses.py:22) does not match "
-        "the dict envelope returned by /api/me/first-session/intake "
-        "(routers/first_session.py:323). FastAPI's response-model "
-        "validator returns 500 on every intake call. Fix path: "
-        "drop response_model from the 6 first-session routes, OR "
-        "widen StateOnlyResponse.state to Optional[Any], OR author "
-        "a proper FirstSessionStateResponse envelope. See "
-        "memory/sprints/PHASE_5_5_1_TRACK_A_CLOSURE.md §6"
-    )
 )
 
 
@@ -187,7 +157,6 @@ def test_g21_door_card_verbatim_headings_per_spec():
         assert h in src, f"Missing verbatim heading: {h!r}"
 
 
-@_INTAKE_RESPONSE_MODEL_SKIP
 @pytest.mark.parametrize("door", ["cycle", "upload", "solve", "demo"])
 @pytest.mark.asyncio
 async def test_g21_backend_accepts_each_new_door(door):
@@ -200,7 +169,6 @@ async def test_g21_backend_accepts_each_new_door(door):
         assert r.status_code == 200, r.text
 
 
-@_INTAKE_RESPONSE_MODEL_SKIP
 @pytest.mark.asyncio
 async def test_g21_backend_rejects_legacy_email_door():
     async with _client() as c:
@@ -211,7 +179,6 @@ async def test_g21_backend_rejects_legacy_email_door():
 
 
 # ── G21 — door semantics (transitions) ──────────────────────────────
-@_INTAKE_RESPONSE_MODEL_SKIP
 @pytest.mark.asyncio
 async def test_g21_cycle_door_completes_first_session():
     """J2.3 false-green fix (2026-05-25) — cycle door now flips
@@ -231,7 +198,6 @@ async def test_g21_cycle_door_completes_first_session():
         assert st["door_taken"] == "cycle"
 
 
-@_INTAKE_RESPONSE_MODEL_SKIP
 @pytest.mark.asyncio
 async def test_g21_demo_door_completes_first_session_and_returns_landing():
     """Demo door flips first_session → completed and returns the
@@ -251,7 +217,6 @@ async def test_g21_demo_door_completes_first_session_and_returns_landing():
 
 
 # ── G22 — Demo-attach mechanic ──────────────────────────────────────
-@_INTAKE_RESPONSE_MODEL_SKIP
 @pytest.mark.asyncio
 async def test_g22_demo_door_stamps_seed_marker_visible_for_on_all_demo_rows():
     """Picking the demo door $addToSet's the user's account_id onto
@@ -324,7 +289,6 @@ async def test_g22_demo_door_is_idempotent_on_re_click():
             )
 
 
-@_INTAKE_RESPONSE_MODEL_SKIP
 @pytest.mark.asyncio
 async def test_g22_demo_door_writes_onboarding_demo_attached_audit_row():
     """Spec §3 Stage 3 + §5: every state transition writes an audit
@@ -349,7 +313,6 @@ async def test_g22_demo_door_writes_onboarding_demo_attached_audit_row():
     assert (audit.get("metadata") or {}).get("seed_marker") == DEMO_SEED_MARKER
 
 
-@_INTAKE_RESPONSE_MODEL_SKIP
 @pytest.mark.asyncio
 async def test_g22_demo_attached_user_can_see_demo_cycle_via_detail_endpoint():
     """Spec acceptance: `For Door D: the user can navigate to
@@ -382,7 +345,6 @@ async def test_g22_demo_attached_user_can_see_demo_cycle_via_detail_endpoint():
         )
 
 
-@_INTAKE_RESPONSE_MODEL_SKIP
 @pytest.mark.asyncio
 async def test_g22_demo_cycle_appears_in_user_list_after_attach():
     """The cycles LIST endpoint must include the demo cycle in the
@@ -403,7 +365,6 @@ async def test_g22_demo_cycle_appears_in_user_list_after_attach():
         )
 
 
-@_INTAKE_RESPONSE_MODEL_SKIP
 @pytest.mark.asyncio
 async def test_g22_un_attached_user_cannot_see_demo_cycle():
     """Negative — a user who has NOT clicked the demo door must NOT
@@ -425,17 +386,27 @@ async def test_g22_un_attached_user_cannot_see_demo_cycle():
         assert r_detail.status_code == 404, r_detail.text
 
 
-# ── Cycle door wiring — Setup Wizard still enforces G4/G5 ───────────
-@_INTAKE_RESPONSE_MODEL_SKIP
-def test_cycle_door_routes_to_setup_wizard_query_string():
-    """Frontend wire — the cycle door handler navigates to
-    `/app/cycle?wizard=1&intake_seed=1`. The Setup Wizard mounted
-    there is the same T5 component subject to G4/G5 validation
-    (unchanged in J2)."""
+# ── Cycle door wiring — Track B Phase B1b re-dispatch (2026-06-04) ───
+def test_cycle_door_routes_to_task_manager():
+    """Frontend wire — Track B Phase B1b (2026-06-04) re-dispatched the
+    cycle door target per Onboarding QA item 4: the user lands on
+    the Task Manager Module (App.js:446 `<Route path="/app/task-
+    manager" ...>`), NOT the Cycle Setup Wizard. The `intake_seed=1`
+    query param is dropped because Task Manager doesn't consume it
+    (it was a Cycle Setup Wizard concept). Intake stays persisted
+    on the account doc and is available via `/me/first-session` if
+    the surface ever wants to read it. Phase 5.5.2 re-pinned the
+    door target after the original Phase 5.5 J2 lockdown asserted
+    the pre-B1b target.
+    """
     src = (Path(__file__).resolve().parents[2]
            / "frontend/src/pages/FirstSession.jsx").read_text()
-    assert 'navigate(`/app/cycle?wizard=1&intake_seed=1`)' in src or (
-        'navigate("/app/cycle?wizard=1&intake_seed=1")' in src
+    assert 'navigate("/app/task-manager")' in src or (
+        "navigate('/app/task-manager')" in src
+    ), (
+        "Cycle door must route to /app/task-manager per Track B "
+        "Phase B1b re-dispatch (see FirstSession.jsx:364 comment "
+        "block). Original Cycle Setup Wizard target retired."
     )
 
 

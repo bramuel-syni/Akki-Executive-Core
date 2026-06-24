@@ -1,25 +1,19 @@
 """Track A Phase 6 (2026-06-04) — Document Review Drawer inline editing
 + Revise-with-AI restoration + BC mirror removal lockdowns.
 
-**Phase 5.5.1 (2026-06-24) rewrite:** file-level quarantine lifted.
-9/12 tests pass against current architecture; 3 tests (the
-`synthesize_*` + `get_response_shape_contract_*` family) hit a
-PRODUCT BUG surfaced during Phase 5.5.1 probe: the Phase 4.2 HTTP
-transport (`BOUNDED_CONTEXT_TRANSPORT=http`) doesn't serialize the
-`WorkbookAnalysis` Pydantic model passed as a kwarg to
-`get_solva().narrate_analysis(workbook_analysis=wba, ...)` at
-`routers/workbook_analysis.py:1089`. The transport's
-`HTTPSolvaAdapter._call` does `client.post(url, json=kwargs)` —
-non-JSON-serializable types fail.
+**Phase 5.5.2 (2026-06-24) — full unquarantine.** All 12 default
+tests now run. Phase 5.5.1 had per-test-skipped 3 tests that
+drove the synthesize endpoint via HTTP transport (Phase 5.5.2
+candidate B). The product fix at `contracts/_adapters/_http_
+client.py` (the `_sanitize_kwargs_for_json` helper) handles
+production Pydantic-kwarg serialization. For unit-test mode this
+file additionally pins `BOUNDED_CONTEXT_TRANSPORT=inproc` via an
+autouse fixture so the existing `monkeypatch.setattr(narr,
+"shield_invoke", ...)` patches take effect on the in-process
+adapter (the HTTP adapter would bypass them).
 
-This is **Phase 5.5.2 candidate B** — the HTTP transport must
-serialize Pydantic models in kwargs (e.g. via `.model_dump()`)
-OR the call site must pass dicts. Per the Phase 5.5.1 sprint
-contract, no product code is shipped here. The 3 affected tests
-carry a per-test skip pointing to the 5.5.2 entry.
-
-See `/app/memory/sprints/PHASE_5_5_1_TRACK_A_CLOSURE.md` §2.Q5
-for the contract-vs-implementation justification.
+See `/app/memory/sprints/PHASE_5_5_2_TRACK_A_REAL_FIXES.md` §4
+(candidate B evidence) for the unquarantine + skip-cleanup table.
 """
 from __future__ import annotations
 
@@ -48,22 +42,15 @@ pytestmark = [
 ]
 
 
-# Phase 5.5.1 — per-test skip for the 3 tests blocked on Phase 5.5.2
-# candidate B (HTTP transport Pydantic-kwarg serialization bug). Each
-# carries a SPECIFIC reason per the no-silent-skips invariant.
-_HTTP_TRANSPORT_PYDANTIC_SKIP = pytest.mark.skip(
-    reason=(
-        "Phase 5.5.2 candidate B — HTTP transport "
-        "(BOUNDED_CONTEXT_TRANSPORT=http) does not serialize the "
-        "WorkbookAnalysis Pydantic model passed as a kwarg to "
-        "get_solva().narrate_analysis() at "
-        "routers/workbook_analysis.py:1089. Fix path: "
-        "HTTPSolvaAdapter._call must convert Pydantic models in "
-        "kwargs (.model_dump()) before json= serialization, OR "
-        "the call site must pass dicts. See "
-        "memory/sprints/PHASE_5_5_1_TRACK_A_CLOSURE.md §6 (deviations)."
-    )
-)
+@pytest.fixture(autouse=True)
+def _force_inproc_transport(monkeypatch):
+    """Phase 5.5.2 — force in-process transport mode for the duration
+    of every test in this file. The tests monkeypatch
+    `narr.shield_invoke` which only takes effect on the in-process
+    adapter (the HTTP adapter would route to a separate process /
+    `:8001` and bypass the patch entirely).
+    """
+    monkeypatch.setenv("BOUNDED_CONTEXT_TRANSPORT", "inproc")
 
 
 # ─── Fixtures ────────────────────────────────────────────────────
@@ -151,7 +138,6 @@ _OK_NARRATION = {
 # ─── BC mirror removal — 4 tests ───────────────────────────────
 
 
-@_HTTP_TRANSPORT_PYDANTIC_SKIP
 async def test_synthesize_does_not_write_top_level_narration(transport, monkeypatch):
     """Phase 6 — synthesize endpoint MUST NOT write top-level
     `narration` on the analyses row. The runs[-1] entry is the
@@ -407,7 +393,6 @@ async def test_commit_still_fires_pre_commit_snapshot_after_bc_removal(transport
 # ─── Narration regression — 3 tests ───────────────────────────
 
 
-@_HTTP_TRANSPORT_PYDANTIC_SKIP
 async def test_synthesize_fresh_row_has_no_top_level_narration(transport, monkeypatch):
     """A fresh synthesize on a brand-new analysis MUST NOT leave
     top-level `narration` on the DB row."""
@@ -443,7 +428,6 @@ async def test_notes_post_fresh_row_has_no_top_level_notes_or_notes_updated_at(t
         assert "notes_updated_at" not in row
 
 
-@_HTTP_TRANSPORT_PYDANTIC_SKIP
 async def test_get_response_shape_contract_no_bc_mirrors_leak(transport, monkeypatch):
     """End-to-end response shape contract: synthesize + notes →
     GET /v2/analyses/{aid} returns NO top-level BC mirror keys."""

@@ -21,6 +21,17 @@ entry is the return type's dataclass. Lists return a list of that
 dataclass; `Optional[X]` returns either `X` or `None`. The
 dispatcher introspects the in-process adapter's annotations once at
 class load to build this map automatically.
+
+Phase 5.5.2 (2026-06-24) — kwargs sanitization. When a contract
+method accepts a Pydantic model (`narrate_analysis.workbook_analysis`
+is the known site; future-Pydantic-kwarg sites are also covered),
+`json=kwargs` would raise `TypeError` because httpx's encoder
+doesn't know how to serialize `BaseModel`. The central fix is the
+`_sanitize_kwargs_for_json` helper that walks `kwargs` recursively
+and converts `BaseModel` → `.model_dump(mode='json')` dict +
+dataclass → `dataclasses.asdict` dict. Plain dicts / primitives /
+lists pass through unchanged. Build-breaking invariant at
+`tests/invariants/test_invariant_http_transport_pydantic_kwargs.py`.
 """
 from __future__ import annotations
 
@@ -34,6 +45,7 @@ import typing
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple, Type
 
 import httpx
+from pydantic import BaseModel
 
 logger = logging.getLogger("contracts.http_transport")
 
@@ -108,6 +120,39 @@ def _reconstruct(value: Any, dto_class: Optional[Type[Any]]) -> Any:
     return value
 
 
+def _sanitize_kwargs_for_json(value: Any) -> Any:
+    """Phase 5.5.2 — walk a kwargs tree and convert non-JSON-serializable
+    Pydantic models and dataclass instances to JSON-safe dicts.
+
+    Why: `httpx.AsyncClient.post(json=kwargs)` uses `json.dumps` under
+    the hood, which doesn't know how to serialize `pydantic.BaseModel`
+    or `@dataclass` instances. Without this helper, the single known
+    call site (`narrate_analysis(workbook_analysis=wba)` at
+    `routers/workbook_analysis.py:1089`) raises `TypeError: Object of
+    type WorkbookAnalysis is not JSON serializable`.
+
+    Recursion rules:
+    - `BaseModel` instances → `.model_dump(mode='json')` (Pydantic v2;
+      preserves datetimes/Enums as ISO/value strings).
+    - Dataclass instances → `dataclasses.asdict` (recursive).
+    - Plain dicts → recurse into values, preserving key order.
+    - Plain lists / tuples → recurse into elements.
+    - Everything else (str, int, float, bool, None) → passed through.
+
+    The original kwargs object is NOT mutated; this returns a fresh
+    JSON-safe copy.
+    """
+    if isinstance(value, BaseModel):
+        return value.model_dump(mode="json")
+    if dataclasses.is_dataclass(value) and not isinstance(value, type):
+        return dataclasses.asdict(value)
+    if isinstance(value, dict):
+        return {k: _sanitize_kwargs_for_json(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_sanitize_kwargs_for_json(v) for v in value]
+    return value
+
+
 def _build_return_map(adapter_cls: Type[Any]) -> Dict[str, Tuple[Optional[Type[Any]], bool]]:
     """Inspect the in-process adapter class to build a method-name →
     (dto_class, is_list) map. `dto_class=None` for primitives.
@@ -168,12 +213,17 @@ class _HTTPAdapterBase:
     async def _call(self, method_name: str, **kwargs: Any) -> Any:
         url = f"{self._base_url}/api/internal/v1/{self.context_name}/method/{method_name}"
         headers = {"X-Internal-Auth": _internal_secret(), "Content-Type": "application/json"}
+        # Phase 5.5.2 — sanitize Pydantic / dataclass kwargs into JSON-
+        # safe dicts before the httpx.post(json=...) call. Plain dicts
+        # / primitives / lists pass through unchanged. See the
+        # `_sanitize_kwargs_for_json` docstring for the contract.
+        json_kwargs = _sanitize_kwargs_for_json(kwargs)
         last_exc: Optional[Exception] = None
         attempts = max(1, self._retries)
         for attempt in range(1, attempts + 1):
             try:
                 async with httpx.AsyncClient(timeout=self._timeout_s) as client:
-                    resp = await client.post(url, json=kwargs, headers=headers)
+                    resp = await client.post(url, json=json_kwargs, headers=headers)
                 if resp.status_code == 200:
                     payload = resp.json()
                     raw_result = payload.get("result")

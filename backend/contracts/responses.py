@@ -20,11 +20,25 @@ from pydantic import BaseModel, ConfigDict
 
 
 class StateOnlyResponse(BaseModel):
-    """Common shape across `/me/first-session/*` and intake-style routes:
-    `{"state": "<phase>", ...optional extras...}`.
+    """`/me/first-session/*` (6 routes) and intake-style state-envelope
+    responses. The wire shape is `{"state": <dict>, ...optional extras}`
+    where `state` is the first-session state envelope (a dict with
+    keys `status / started_at / completed_at / current_step /
+    door_taken / artefact / intake / grandfathered`), and the optional
+    extras include `questions` (GET /), `landing_cycle_id` (POST
+    /choose-door under the demo door).
+
+    Phase 5.5.2 (2026-06-24) — `state` was originally typed as
+    `Optional[str]` under the Phase 3.0 narrowing batch. The first-
+    session handlers genuinely return a dict, so FastAPI's response-
+    model validator was raising `ResponseValidationError` and the 6
+    routes were 500ing in production. Widened to `Optional[Dict[str,
+    Any]]` to match the handler contract. `extra='allow'` preserves
+    the optional sibling keys (`questions`, `landing_cycle_id`)
+    documented above.
     """
     model_config = ConfigDict(extra="allow")
-    state: Optional[str] = None
+    state: Optional[Dict[str, Any]] = None
 
 
 class OkResponse(BaseModel):

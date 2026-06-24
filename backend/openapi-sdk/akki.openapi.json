@@ -8381,12 +8381,13 @@
       },
       "StateOnlyResponse": {
         "additionalProperties": true,
-        "description": "Common shape across `/me/first-session/*` and intake-style routes:\n`{\"state\": \"<phase>\", ...optional extras...}`.",
+        "description": "`/me/first-session/*` (6 routes) and intake-style state-envelope\nresponses. The wire shape is `{\"state\": <dict>, ...optional extras}`\nwhere `state` is the first-session state envelope (a dict with\nkeys `status / started_at / completed_at / current_step /\ndoor_taken / artefact / intake / grandfathered`), and the optional\nextras include `questions` (GET /), `landing_cycle_id` (POST\n/choose-door under the demo door).\n\nPhase 5.5.2 (2026-06-24) \u2014 `state` was originally typed as\n`Optional[str]` under the Phase 3.0 narrowing batch. The first-\nsession handlers genuinely return a dict, so FastAPI's response-\nmodel validator was raising `ResponseValidationError` and the 6\nroutes were 500ing in production. Widened to `Optional[Dict[str,\nAny]]` to match the handler contract. `extra='allow'` preserves\nthe optional sibling keys (`questions`, `landing_cycle_id`)\ndocumented above.",
         "properties": {
           "state": {
             "anyOf": [
               {
-                "type": "string"
+                "additionalProperties": true,
+                "type": "object"
               },
               {
                 "type": "null"
