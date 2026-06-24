@@ -29,9 +29,7 @@ import QuickActionBar from "@/components/cycle/QuickActionBar";
 import CycleSetupWizard from "@/components/cycle/CycleSetupWizard";
 import CompilationReadinessSection from "@/components/cycle/CompilationReadinessSection";
 import CompilationWizard from "@/components/work_studio/CompilationWizard";
-import { api } from "@/lib/api";
-
-
+import api from "@/lib/api/apiV2";
 const SUBTITLE = "Cycle Manager is where you organise your team to produce collaborative outputs. Set the agenda, assign contributors, and commission Agent Cycle to follow up and keep readiness moving until you ship.";
 
 

@@ -22,7 +22,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import { Send, Eye, RotateCcw, Loader2 } from "lucide-react";
 

@@ -12,7 +12,8 @@ import {
   Building2, Loader2, RefreshCw, Search, Users, FileText, Clock,
   Sparkles, CheckCircle2, AlertTriangle, XCircle, ExternalLink,
 } from "lucide-react";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import AppShell from "@/components/layout/AppShell";
 import { Input } from "@/components/ui/input";

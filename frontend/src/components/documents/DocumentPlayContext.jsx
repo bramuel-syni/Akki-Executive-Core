@@ -9,7 +9,7 @@
  */
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { Compass, ArrowRight } from "lucide-react";
 
 const STAGE_LABELS = {

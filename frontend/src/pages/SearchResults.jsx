@@ -17,7 +17,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import { Search, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { SearchResultRow } from "@/components/search/SearchResultRow";
 import ConfirmContextSwitchModal from "@/components/search/ConfirmContextSwitchModal";
 

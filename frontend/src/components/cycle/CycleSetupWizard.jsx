@@ -39,7 +39,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus, Trash2 } from "lucide-react";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { toast } from "sonner";
 
 const READINESS_OPTIONS = [80, 85, 90, 95, 100];

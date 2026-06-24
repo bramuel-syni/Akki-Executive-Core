@@ -10,7 +10,7 @@
  * so non-admins never trigger a 401/403 in the background.
  */
 import { useEffect, useState, useCallback } from "react";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { useAuth } from "@/contexts/AuthContext";
 
 const POLL_INTERVAL_MS = 60_000;

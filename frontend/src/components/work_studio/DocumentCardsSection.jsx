@@ -27,7 +27,8 @@
  */
 import React, { useEffect, useState, useCallback } from "react";
 import { Download, Lock, FileText, Loader2, MoreHorizontal, Share2, Trash2 } from "lucide-react";
-import { api, apiErrorMessage, resolveBackendOrigin } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage, resolveBackendOrigin } from "@/lib/api";
 import { toast } from "sonner";
 import {
   DropdownMenu,

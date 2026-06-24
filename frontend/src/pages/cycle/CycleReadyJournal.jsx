@@ -17,7 +17,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { ArrowLeft } from "lucide-react";
 import CycleCard from "@/components/cycle/CycleCard";
 

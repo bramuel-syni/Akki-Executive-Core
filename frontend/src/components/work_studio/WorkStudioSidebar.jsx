@@ -38,7 +38,7 @@ import {
   Sparkles, Plus, FileText, RefreshCw, BookOpen, Loader2,
   ArrowRight, AlertCircle,
 } from "lucide-react";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { Button } from "@/components/ui/button";
 
 

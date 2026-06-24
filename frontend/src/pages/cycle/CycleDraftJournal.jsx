@@ -24,7 +24,7 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { ArrowLeft, Mail, Send, X } from "lucide-react";
 import { toast } from "sonner";
 

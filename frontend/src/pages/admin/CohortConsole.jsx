@@ -14,7 +14,8 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2, RefreshCw, X, Activity, UserPlus } from "lucide-react";
 import InviteFounderModal from "@/pages/admin/InviteFounderModal";

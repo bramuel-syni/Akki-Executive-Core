@@ -13,7 +13,7 @@
  */
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { useAuth } from "@/contexts/AuthContext";
 import { Activity, Loader2, ArrowRight } from "lucide-react";
 

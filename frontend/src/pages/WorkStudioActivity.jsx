@@ -18,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import WorkspaceEntryGate from "@/components/transitions/WorkspaceEntryGate";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { RefreshCw, ChevronLeft, Loader2 } from "lucide-react";
 
 

@@ -12,7 +12,7 @@
  */
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { FileText, Loader2, ArrowRight } from "lucide-react";
 
 

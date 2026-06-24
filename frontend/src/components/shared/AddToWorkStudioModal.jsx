@@ -29,7 +29,7 @@ import {
 import {
   Loader2, FileText, Presentation, Newspaper, Layers, Briefcase,
 } from "lucide-react";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { toast } from "sonner";
 
 // Display label (spec verbatim) → backend kind key.

@@ -19,7 +19,8 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { Loader2, Calendar, Users, Inbox } from "lucide-react";
 import { toast } from "sonner";
 import StrategicRow from "@/components/strategic_row/StrategicRow";

@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 /**
  * Home stream — "In progress" chips for any active or paused Plays in the
  * active context. Restrained, single-line, oxblood-underlined Play name.

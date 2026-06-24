@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { Search, ArrowRight, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { SearchResultRow } from "@/components/search/SearchResultRow";
 
 const DEBOUNCE_MS = 300;

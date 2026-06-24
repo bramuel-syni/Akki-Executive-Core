@@ -15,9 +15,7 @@ import React, { useState } from "react";
 import { Download, Loader2, FileText } from "lucide-react";
 import { toast } from "sonner";
 
-import { api } from "../../../lib/api";
-
-
+import api from "../../../lib/api/apiV2";
 function _filenameFromContentDisposition(headerValue) {
   if (!headerValue) return null;
   const m = /filename="?([^"]+)"?/.exec(headerValue);

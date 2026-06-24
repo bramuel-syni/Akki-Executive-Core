@@ -12,7 +12,7 @@
  * `/api/chats/{cid}/privacy-report.pdf`.
  */
 import React, { useState, useEffect } from "react";
-import { api } from "../../lib/api";
+import api from "../../lib/api/apiV2";
 import { ShieldCheck, FileDown } from "lucide-react";
 
 export default function AggregateStrip({ chatId, refreshNonce = 0 }) {

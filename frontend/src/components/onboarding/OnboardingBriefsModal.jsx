@@ -20,7 +20,7 @@
  */
 import React, { useEffect, useState, useCallback } from "react";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function OnboardingBriefsModal() {

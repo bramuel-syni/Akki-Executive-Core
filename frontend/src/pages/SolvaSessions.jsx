@@ -20,7 +20,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Search, ChevronLeft, Pencil } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { useAuth } from "@/contexts/AuthContext";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 
 const STATUS_CHIPS = [

@@ -12,7 +12,8 @@
  *   <WalkInCard kind="deck"    contextId={cid} artefactId={deck.id}  />
  */
 import React, { useEffect, useState } from "react";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { ArrowRight, Loader2, RefreshCw, MessageCircle } from "lucide-react";
 
 export default function WalkInCard({ kind, contextId, artefactId, initial }) {

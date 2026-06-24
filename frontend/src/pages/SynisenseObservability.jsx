@@ -12,7 +12,7 @@
  */
 import React, { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck, ReceiptText, Activity } from "lucide-react";
 

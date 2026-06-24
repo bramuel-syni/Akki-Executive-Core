@@ -16,7 +16,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { TOKEN, FONT, SUBMODULE_LABELS, SUBMODULE_FRAMING_COPY } from "./tokens";
 import ProgressIndicator from "./ProgressIndicator";
 import PrimaryButton, { GhostLink } from "./PrimaryButton";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function FramingScreen({

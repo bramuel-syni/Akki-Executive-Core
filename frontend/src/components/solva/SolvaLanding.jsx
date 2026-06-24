@@ -37,7 +37,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 // Phase D.1 (2026-05-26) — pre-conversation briefing deck.
 import SolvaBriefingDeck from "@/components/solva/SolvaBriefingDeck";
 import { SUBMODULE_TO_AREA } from "@/data/solva-briefings";

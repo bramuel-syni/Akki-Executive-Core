@@ -34,7 +34,7 @@
  */
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { Button } from "@/components/ui/button";
 import {
   Sparkles, RefreshCw, AlertCircle, Loader2, BookOpenCheck, ArrowRight, FileText,

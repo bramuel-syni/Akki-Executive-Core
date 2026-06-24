@@ -28,7 +28,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { api, apiErrorMessage, API_BASE } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage, API_BASE } from "@/lib/api";
 import { Download, ExternalLink, FileText, Loader2, X, AlertTriangle } from "lucide-react";
 
 export default function DocumentBodyModal({

@@ -13,8 +13,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Quote, ArrowRight } from "lucide-react";
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 function firstSentenceCapped(body, cap = 180) {
   const text = (body || "").replace(/\s+/g, " ").trim();
   if (!text) return "";

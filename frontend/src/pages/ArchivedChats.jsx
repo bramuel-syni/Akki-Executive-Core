@@ -9,7 +9,7 @@
  */
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../lib/api";
+import api from "../lib/api/apiV2";
 import { Button } from "../components/ui/button";
 import { ArchiveRestore, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";

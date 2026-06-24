@@ -14,7 +14,8 @@ import { useSearchParams } from "react-router-dom";
 import {
   Sparkles, Loader2, RefreshCw, CheckCircle2, AlertTriangle, XCircle, X,
 } from "lucide-react";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import AppShell from "@/components/layout/AppShell";
 

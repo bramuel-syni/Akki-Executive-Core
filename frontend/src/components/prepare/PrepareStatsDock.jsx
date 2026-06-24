@@ -13,7 +13,7 @@
  * fill, no gradients, no animation jitter.
  */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { ScrollText, Activity, BookOpen } from "lucide-react";
 
 function ProgressBar({ pct, tone = "accent" }) {

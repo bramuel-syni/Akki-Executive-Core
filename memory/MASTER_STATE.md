@@ -420,6 +420,56 @@ Status legend:
 
   **Iteration budget**: 1/3 used. Iter-2/3 reserved for unforeseen architectural surprises only (e.g. CI deploy lane uncovers a real boot bug requiring a follow-up corrective dispatch).
 
+- Phase 5.2 (Debt Closure + 7-Module Product Specs): cold-path raw-axios migration (155 files via codemod) + 2 new build-breaking invariants (no-raw-axios + polymorphic-response-ratchet) + 7-module product spec doc with bundle.zip mirror → ⚠️ **PARTIAL SHIP** 2026-06-24 (iter-1; Parts A + B-invariant + D shipped; Part B-narrowing + Part C deferred due to honestly-counted scope explosion). **49 PASS, 10 documented skips** on full invariants suite (was 44 PASS pre-5.2; +5 from the 2 new invariants). **37/37 Phase 4.4 dual-mount smoke PASS** — public surface ratchet untouched.
+
+  **What shipped:**
+
+  • **Part A — FE raw-axios cold-path migration** ✅ COMPLETE. Codemod `/app/scripts/codemod_raw_axios_to_apiv2.py` (~120 LOC, idempotent, with `--dry-run` + `--verbose`) splits mixed `import { api[, ...] }` statements correctly. Migration applied: **155 files** rewritten in a single pass; post-migration grep finds **0 in-scope files** still on the raw `api` import. The remaining 9 files all sit on a documented whitelist (6 wrapper internals, 2 mock-test files that need raw `{ api }` for `mockReset()`, 5 archived dead-code files slated for future cleanup). Build-breaking invariant `backend/tests/invariants/test_invariant_no_raw_axios.py` (~150 LOC, 2 assertions) runs every default pytest invocation and fails the build on any new file importing `{ api }` from `lib/api` outside the whitelist.
+
+  • **Part B — Polymorphic-response ratchet** ✅ INVARIANT SHIPPED; narrowing carry-forward. Build-breaking invariant `backend/tests/invariants/test_invariant_polymorphic_response_ratchet.py` (~140 LOC, 3 assertions) pins the current count at **49 routes / 55 markers** and fails the build if either count grows OR if marker/route drift exceeds the small tolerance (catches half-rename regressions). Actual narrowing of the 49 routes: NOT performed in this dispatch (scope-too-large for a single context window; each route needs shape investigation + Pydantic model + per-route diff harness verification). OpenAPI ratchet untouched (`/api/* = cdcb23322bb82895`, `/v1/* = acc51822aa8818ae`, combined `ca9429c64e44570c`) — verified via 37/37 Phase 4.4 dual-mount smoke.
+
+  • **Part C — Track A failures triage** ⚠️ DEFERRED; collection-error fix shipped. Two test files (`test_iter70_inbound_edge.py`, `test_iter70_inbound_triage.py`) had module-import-time `os.environ["POSTMARK_SERVER_TOKEN"]` calls that raised `KeyError` before the module-level `pytest.mark.skip` could apply — full pytest collection was blocked (`2 errors during collection`). Fix: defensive `os.environ.get(...) or ""` fallback. Result: full pytest collection now succeeds (**4347 tests collected**). 15-failure triage NOT done — actual failure count is **50+** (3-5× the handoff's stated "15"), visible from partial pytest sweep. Honest scope-finding logged in the sprint memo §1; recommend follow-up dispatch (Phase 5.3 — Track A triage) which is now unblocked.
+
+  • **Part D — 7-Module Product Specs** ✅ COMPLETE. `/app/memory/MODULE_PRODUCT_SPECS.md` (~39 KB) — module-lens companion to `PRODUCT_FEATURE_REVIEW.md` (which is context-lens). All 7 modules (Chat / Solva / Work Studio / Task Manager / Monitor / Pulse / Learn) covered with all 11 mandatory sub-sections each: value statement, persona, capabilities, UI entry points, backend endpoints (legacy `/api/*` + versioned `/v1/{context}/*`), owning bounded context, data-model touched, integration surfaces, status, known limitations & debt, future plans. Honesty rule applied — **Learn** is **Partial** (live endpoint, no persistence layer, FE deep-link `/app/learn/:id` forward-declared but re-runs the LLM on every visit); the other 6 are **Live**. Bundle mirror: `routers/docs_download.py` extended (`_resolve_doc_paths()` + `_DOWNLOAD_FILENAMES` add a `module_specs` entry); verified via `curl /api/docs/bundle.zip` → HTTP 200, 4 files including `AKKI_MODULE_PRODUCT_SPECS.md` (38,735 bytes). Every endpoint cited resolves in `routers/*.py`; every UI route resolves in `App.js`.
+
+  **HONEST SCOPE FINDING (logged in sprint memo §1):**
+  | Part | Handoff stated | Actual count |
+  |---|---|---|
+  | A — FE raw-axios sites | 314 | **631 grep hits / 156 files** |
+  | B — polymorphic BE routes | 55 | **49 routes / 55 markers** (close) |
+  | C — Track A pre-existing failures | 15 | **50+ at 34% pytest progress** (3-5× under-counted) |
+
+  Per dispatch's "no mid-dispatch ask_human; log deviations in sprint memo" rail, shipped what was tractable in one context window; documented the rest.
+
+  **Files touched:**
+  - **Created**: `scripts/codemod_raw_axios_to_apiv2.py`; `backend/tests/invariants/test_invariant_no_raw_axios.py`; `backend/tests/invariants/test_invariant_polymorphic_response_ratchet.py`; `memory/MODULE_PRODUCT_SPECS.md`; `memory/sprints/PHASE_5_2_DEBT_CLOSE_AND_MODULE_SPECS.md`.
+  - **Modified**: 155 FE files (single import-line rewrite each, via codemod — no manual edits); `backend/routers/docs_download.py` (4 added lines for the bundle-mirror); `backend/tests/test_iter70_inbound_{edge,triage}.py` (2-line defensive env-var fallback each); `memory/MASTER_STATE.md` (this entry).
+  - **Net delta**: ~155 FE files (mechanical 1-line edits) + ~750 LOC across new memo/invariants/codemod/spec doc.
+
+  **Verification evidence (this env):**
+  - `pytest tests/invariants/` → **49 PASS, 10 documented skips** (was 44 PASS pre-5.2; +5 = 2 new invariants × 2/3 assertions each).
+  - `pytest tests/test_phase4_4_dual_mount_smoke.py` → **37/37 PASS** (public surface ratchet preserved).
+  - `yarn test --testPathPattern="apiV2|validatedCall"` → **10/10 PASS** (wrapper unit tests not regressed by the codemod).
+  - `yarn test` (broader) → 99/103 pass; 4 pre-existing failures (`solvaFlow.test.js` state-machine drift, `clauseStream.test.js` uses `node:test`); confirmed pre-existing by `git stash` + re-run.
+  - `curl /api/docs/bundle.zip` → HTTP 200; zip contains 4 files including `AKKI_MODULE_PRODUCT_SPECS.md` (38,735 bytes).
+  - Smoke screenshots: public homepage + `/app/learn` (auth-gated loading) → both render cleanly, no JS errors.
+
+  **Deviations log** (carried into memo §7):
+  - **D1** — Part A 2 smoke screens instead of 5 (auth-gated cold paths require creds; pattern verified on public + gated-loading).
+  - **D2** — `yarn build` (CRA prod) has pre-existing TS-resolver error; verified pre-existing by `git stash`. Out-of-scope for Phase 5.2.
+  - **D3** — Part B 49 routes not narrowed (scope-too-large); invariant landed as the upstream gate.
+  - **D4** — Per-route diff harness deferred to first narrowing batch.
+  - **D5** — OpenAPI ratchet unshifted (no narrowing = no shift).
+  - **D6** — Part C 15-failure triage replaced with collection-error fix + scope finding; full triage deferred to Phase 5.3.
+  - **D7** — Full backend suite ≠ 0 failures; invariants suite + Phase 4.4 ratchet are 100% green (the architectural contract that matters).
+  - **D8** — Handoff baseline numbers materially under-counted (recommend tightening handoff process for future dispatches).
+
+  Memo: `sprints/PHASE_5_2_DEBT_CLOSE_AND_MODULE_SPECS.md`.
+
+  **Iteration budget**: 1/3 used. Iter-2/3 reserved for:
+  - Phase 5.3 (Track A triage) — full triage of the actual 50+ failure population; now unblocked by the collection-error fix.
+  - OR Phase 5.4 (Part B narrowing batch) — narrow the top 10 highest-traffic polymorphic routes + ship the per-route diff harness + drop the ratchet baseline from 49 → 39.
+
 
 ### Track B — QA cleanup
 - Phase B1 (small mechanical onboarding + signin): **O4** ✅ + **O6** ✅ + **G1** ✅ (Fig 20 — `/sign-in` → `/signin` × 4 buttons) + **G2 Fig 22 modal** ✅ (SessionTimeoutGuard handler gated on `account`); **O7** ✅ Fig 7. Phase status: ✅ SHIPPED — tester PASS Journeys 4-v2, 6, 7, 8, 9 (5/5 incl. regression), 2026-06-04. Memos: `sprints/TRACK_B_PHASE1_FIG7_V2_ROOT_CAUSE_FIX.md`, `sprints/TRACK_B_PHASE1B_O4_O6_FIG20_FIG22.md`.

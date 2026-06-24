@@ -31,8 +31,7 @@ import { HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import WebsiteShell from "@/website/WebsiteShell";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 export default function SetPasswordRequired() {
   const navigate = useNavigate();
   const location = useLocation();

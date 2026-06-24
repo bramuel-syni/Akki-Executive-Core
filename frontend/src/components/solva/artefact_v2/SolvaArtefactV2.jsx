@@ -27,7 +27,8 @@
  * appear in the slide-kind inventory.
  */
 import React, { useEffect, useState } from "react";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { Loader2, AlertCircle } from "lucide-react";
 import SectionDivider from "./SectionDivider";
 import SolvaReasoningTicker from "./SolvaReasoningTicker";

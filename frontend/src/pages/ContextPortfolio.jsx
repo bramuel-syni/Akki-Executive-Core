@@ -32,7 +32,7 @@ import { useNavigate } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import NewsStrip from "@/components/news/NewsStrip";
 import {
   Landmark, Briefcase, Plus, Layers, Flame, History, Newspaper,

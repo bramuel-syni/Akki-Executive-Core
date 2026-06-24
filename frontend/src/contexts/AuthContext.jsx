@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { api, readActiveContextId, writeActiveContextId } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
+import { readActiveContextId, writeActiveContextId } from "@/lib/api";
 const AuthContext = createContext(null);
 
 /**

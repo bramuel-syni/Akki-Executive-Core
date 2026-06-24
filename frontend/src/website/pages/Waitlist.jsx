@@ -15,8 +15,8 @@ import React, { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import WebsiteShell from "../WebsiteShell";
-import { api, resolveApiUrl } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
+import { resolveApiUrl } from "@/lib/api";
 export default function Waitlist() {
   const [params] = useSearchParams();
   const sourceApplicationId = useMemo(

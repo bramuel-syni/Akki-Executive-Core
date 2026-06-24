@@ -34,16 +34,18 @@ def _resolve_doc_paths() -> Dict[str, Path]:
     """Return the canonical source paths for each downloadable doc."""
     memory_dir = Path(os.environ.get("AKKI_MEMORY_DIR") or "/app/memory")
     return {
-        "product":     memory_dir / "PRODUCT.md",
-        "development": memory_dir / "DEVELOPMENT.md",
-        "features":    memory_dir / "PRODUCT_FEATURE_REVIEW.md",
+        "product":      memory_dir / "PRODUCT.md",
+        "development":  memory_dir / "DEVELOPMENT.md",
+        "features":     memory_dir / "PRODUCT_FEATURE_REVIEW.md",
+        "module_specs": memory_dir / "MODULE_PRODUCT_SPECS.md",
     }
 
 
 _DOWNLOAD_FILENAMES: Dict[str, str] = {
-    "product":     "AKKI_PRODUCT.md",
-    "development": "AKKI_DEVELOPMENT.md",
-    "features":    "AKKI_PRODUCT_FEATURE_REVIEW.md",
+    "product":      "AKKI_PRODUCT.md",
+    "development":  "AKKI_DEVELOPMENT.md",
+    "features":     "AKKI_PRODUCT_FEATURE_REVIEW.md",
+    "module_specs": "AKKI_MODULE_PRODUCT_SPECS.md",
 }
 
 

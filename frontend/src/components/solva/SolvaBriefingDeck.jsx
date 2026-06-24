@@ -28,7 +28,7 @@
  */
 import React, { useEffect, useMemo, useState } from "react";
 import { SOLVA_AREAS } from "@/data/solva-briefings";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import {
   Dialog, DialogContent, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";

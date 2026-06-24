@@ -16,7 +16,8 @@
  *                                 the parent can refresh the table
  */
 import React, { useEffect, useState } from "react";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import { UserPlus, Loader2, AlertCircle } from "lucide-react";
 import {

@@ -17,7 +17,8 @@ import PerSectionSynisenseBadge from "@/components/solva/artefact/PerSectionSyni
 import { Download, MessageSquare, RefreshCw, Workflow } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { takeToSolva } from "@/lib/takeToSolva";
 import { TOKEN, FONT, SUBMODULE_LABELS } from "../flow/tokens";
 import ProbabilityBar from "./ProbabilityBar";

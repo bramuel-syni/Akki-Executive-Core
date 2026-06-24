@@ -15,7 +15,7 @@
  * session. Used on the Solva session detail surface.
  */
 import React, { useState, useCallback } from "react";
-import { api } from "../../lib/api";
+import api from "../../lib/api/apiV2";
 import { Button } from "../ui/button";
 import { Loader2, ShieldCheck, ChevronDown, ChevronUp, ArrowDown } from "lucide-react";
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Copy, Mail, Inbox } from "lucide-react";
 import { toast } from "sonner";

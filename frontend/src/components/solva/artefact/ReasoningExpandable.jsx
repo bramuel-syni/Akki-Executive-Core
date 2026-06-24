@@ -12,7 +12,7 @@
  */
 import React, { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { TOKEN, FONT } from "../flow/tokens";
 import usePrefersReducedMotion from "../flow/usePrefersReducedMotion";
 

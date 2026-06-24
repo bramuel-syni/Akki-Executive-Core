@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, ArrowRight, ShieldCheck, Paperclip, FileText, X, Info } from "lucide-react";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 // Phase D.1 (2026-05-26) — briefing deck reopen via (i) icon.
 import SolvaBriefingDeck from "@/components/solva/SolvaBriefingDeck";
 import { SUBMODULE_TO_AREA } from "@/data/solva-briefings";

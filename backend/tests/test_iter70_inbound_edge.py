@@ -38,8 +38,8 @@ for key in ("POSTMARK_WEBHOOK_SECRET", "POSTMARK_SERVER_TOKEN"):
                     os.environ[key] = ln.split("=", 1)[1].strip().strip('"').strip("'")
                     break
 
-BASE_URL = os.environ["REACT_APP_BACKEND_URL"].rstrip("/")
-POSTMARK_SECRET = os.environ.get("POSTMARK_WEBHOOK_SECRET") or os.environ["POSTMARK_SERVER_TOKEN"]
+BASE_URL = (os.environ.get("REACT_APP_BACKEND_URL") or "").rstrip("/")
+POSTMARK_SECRET = os.environ.get("POSTMARK_WEBHOOK_SECRET") or os.environ.get("POSTMARK_SERVER_TOKEN") or ""
 
 BRAMUEL_EMAIL = "bramuel@syni.ai"
 BRAMUEL_PASSWORD = "Bramuel2026!"

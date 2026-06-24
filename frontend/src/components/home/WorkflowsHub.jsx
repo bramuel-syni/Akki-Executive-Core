@@ -14,7 +14,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import PlayReadyCards from "@/components/home/PlayReadyCards";
 import AgendaEvolutionCard from "@/components/home/AgendaEvolutionCard";
 import PlaysInProgressStrip from "@/components/home/PlaysInProgressStrip";

@@ -28,7 +28,8 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import {
   Layers, AlertTriangle, CheckCircle2, FileText, Sparkles, Loader2, Plus,

@@ -15,8 +15,7 @@
  *     no additional navigation; the modal IS the surface.
  */
 import React, { useEffect, useState } from "react";
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 export function SourceMessageModal({ origin, onClose, isSuperadmin }) {
   const [loading, setLoading] = useState(false);
   const [item, setItem] = useState(null);

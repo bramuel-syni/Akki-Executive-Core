@@ -27,8 +27,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CheckCircle2, Circle, Loader2 } from "lucide-react";
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 const POLL_INTERVAL_MS = 1500;
 
 export default function LoadingChecklistModal({

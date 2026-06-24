@@ -25,8 +25,7 @@ import React, { useMemo } from "react";
 import { ShieldCheck, X, FileLock2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 /**
  * Render the original text with `<mark>` highlights at every span
  * boundary. Outside-of-span text is rendered as plain children to

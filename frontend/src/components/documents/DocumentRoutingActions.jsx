@@ -22,7 +22,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { Layers, FileText, Compass } from "lucide-react";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { toast } from "sonner";
 import AddToCycleModal from "@/components/shared/AddToCycleModal";
 import AddToWorkStudioModal from "@/components/shared/AddToWorkStudioModal";

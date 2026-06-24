@@ -11,8 +11,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { ArrowRight, Loader2, Check } from "lucide-react";
-import { api, apiErrorMessage } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 const ROLES = [
   { value: "executive", label: "Executive" },
   { value: "ned", label: "NED" },

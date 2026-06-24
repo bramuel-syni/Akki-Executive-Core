@@ -30,7 +30,8 @@
  * mono kicker. NO new design tokens.
  */
 import React, { useEffect, useMemo, useState } from "react";
-import { api, apiErrorMessage, apiErrorCode } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage, apiErrorCode } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

@@ -29,8 +29,7 @@ import FollowUpDraftsCard from "@/components/tasks/FollowUpDraftsCard";
 import RecentTaskActivityCard from "@/components/tasks/RecentTaskActivityCard";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 export default function TaskManager() {
   const { activeContext } = useAuth();
   const cid = activeContext?.id;

@@ -8,7 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   LEARN_ARTICLES, LEARN_VIDEOS, LEARN_NEWS, TOPIC_LABEL, CONTENT_TYPE_LABEL,
 } from "@/lib/learnContent";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {

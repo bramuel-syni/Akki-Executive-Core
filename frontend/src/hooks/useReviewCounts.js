@@ -6,8 +6,7 @@
  * polling-only, no SSE / websockets).
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 const POLL_MS = 60_000;
 
 export default function useReviewCounts({ enabled = true } = {}) {

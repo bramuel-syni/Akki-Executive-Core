@@ -28,7 +28,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import AppShell from "@/components/layout/AppShell";
 import {
   ArrowLeft, Mail, ClipboardCheck, AlertTriangle, MessageSquare,

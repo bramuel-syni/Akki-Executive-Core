@@ -16,8 +16,7 @@
  * line.
  */
 import React, { useEffect, useState } from "react";
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 const REGION_LABELS = {
   GB: "United Kingdom", US: "United States", KE: "Kenya",
   IN: "India",          HK: "Hong Kong",     NG: "Nigeria",

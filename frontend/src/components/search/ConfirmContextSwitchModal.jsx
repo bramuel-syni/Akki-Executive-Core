@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { toast } from "sonner";
 
 export default function ConfirmContextSwitchModal({ pending, onClose }) {

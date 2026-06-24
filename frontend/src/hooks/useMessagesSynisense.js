@@ -21,8 +21,7 @@
  * data.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 const POLL_INTERVAL_MS = 30000;
 
 export function useMessagesSynisense({ chatId, msgIds }) {

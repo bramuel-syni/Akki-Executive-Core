@@ -18,7 +18,8 @@
 import React, { useEffect, useState } from "react";
 import AppShell from "@/components/layout/AppShell";
 import PulseMasterTabs from "@/components/pulse/PulseMasterTabs";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 

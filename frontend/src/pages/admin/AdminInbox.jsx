@@ -22,7 +22,7 @@
  */
 import React, { useEffect, useMemo, useState } from "react";
 import DOMPurify from "dompurify";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { toast } from "sonner";
 
 const STATUS_LABELS = {

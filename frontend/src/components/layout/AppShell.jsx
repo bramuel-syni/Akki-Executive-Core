@@ -4,7 +4,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 // nav entrance caused a first-paint flash and added zero value after the
 // initial visit. Plain divs render instantly.
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import Logo from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";

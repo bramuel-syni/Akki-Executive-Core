@@ -17,7 +17,7 @@
  */
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { Button } from "@/components/ui/button";
 
 // Inline SVG icons (no external dependency — these are the standard

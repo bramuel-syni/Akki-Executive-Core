@@ -16,7 +16,7 @@
  * animations on the modal/drawer).
  */
 import React, { useEffect, useMemo, useState } from "react";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { Button } from "@/components/ui/button";
 import { Users, Plus, X as XIcon, Archive, UserMinus, UserPlus } from "lucide-react";
 

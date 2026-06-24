@@ -21,8 +21,7 @@
  * Network failures are silent (non-critical telemetry).
  */
 import { useEffect } from "react";
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 export function useTrackRecentView({
   surfacePath,
   label,

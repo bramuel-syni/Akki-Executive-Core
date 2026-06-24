@@ -19,7 +19,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Loader2, Upload, FileText, FolderOpen, Search } from "lucide-react";
 
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+
+import { apiErrorMessage } from "@/lib/api";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";

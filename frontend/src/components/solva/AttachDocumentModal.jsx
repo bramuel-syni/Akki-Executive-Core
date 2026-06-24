@@ -17,9 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Upload, FileText, FolderOpen, Search } from "lucide-react";
-import { api } from "@/lib/api";
-
-
+import api from "@/lib/api/apiV2";
 const ACCEPT_EXTENSIONS = [
   ".pdf", ".docx", ".pptx", ".txt", ".md", ".rtf",
   ".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif",

@@ -6,7 +6,8 @@
 import React, { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { Activity, Sparkles, BarChart3, Target, ArrowRight, ShieldCheck, FileText, Building2 } from "lucide-react";
 
 export default function AdminIndex() {

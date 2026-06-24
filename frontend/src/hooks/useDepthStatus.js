@@ -9,7 +9,7 @@
  * and a minute of staleness on nav gating is harmless.
  */
 import { useCallback, useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { useAuth } from "@/contexts/AuthContext";
 
 // Module-scope cache so multiple consumers share one fetch.

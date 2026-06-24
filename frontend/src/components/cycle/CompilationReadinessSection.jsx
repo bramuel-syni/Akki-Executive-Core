@@ -23,7 +23,7 @@
  */
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import {
   AlertCircle, RefreshCw, Loader2,
 } from "lucide-react";

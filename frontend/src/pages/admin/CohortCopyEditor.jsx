@@ -16,7 +16,8 @@
  * so the save button disables BEFORE the founder hits 422.
  */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import { Save, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 

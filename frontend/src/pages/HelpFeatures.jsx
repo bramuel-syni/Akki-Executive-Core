@@ -15,8 +15,7 @@ import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 import { resolveBackendOrigin } from "@/lib/api";
 const API_BASE = resolveBackendOrigin();
 

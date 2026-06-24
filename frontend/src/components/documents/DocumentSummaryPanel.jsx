@@ -11,7 +11,8 @@
  *   • Questions — what to walk into the room with
  */
 import React, { useCallback, useEffect, useState } from "react";
-import { api, apiErrorMessage } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import { Sparkles, Loader2, RotateCw, BookOpen, AlertCircle, Send } from "lucide-react";
 import ShareModal from "@/components/share/ShareModal";

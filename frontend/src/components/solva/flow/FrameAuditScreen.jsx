@@ -23,7 +23,8 @@
  */
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, apiErrorMessage, API_BASE } from "@/lib/api";
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage, API_BASE } from "@/lib/api";
 import { toast } from "sonner";
 import StreamingLogScene from "@/components/transitions/StreamingLogScene";
 import useStreamingProgress from "@/hooks/useStreamingProgress";

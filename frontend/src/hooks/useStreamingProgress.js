@@ -30,8 +30,7 @@
  * detects the disconnect via `request.is_disconnected()`.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 const INITIAL_STATE = {
   surface: null,
   phases: [],

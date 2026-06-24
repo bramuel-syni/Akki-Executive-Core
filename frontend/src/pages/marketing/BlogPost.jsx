@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import MarketingShell from "@/components/marketing/MarketingShell";
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import { ArrowLeft, ExternalLink, Loader2 } from "lucide-react";
 
 function shortDate(iso) {

@@ -11,8 +11,8 @@
  *   edit(item)                      — POST /edit, returns {edit_url, inline}
  */
 import { useCallback, useEffect, useState } from "react";
-import { api, apiErrorMessage } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
+import { apiErrorMessage } from "@/lib/api";
 export default function useReviewQueue() {
   const [items, setItems] = useState([]);
   const [totalPending, setTotalPending] = useState(0);

@@ -19,8 +19,7 @@
  * Polling cadence: 1.5 s for the first 30 s, then exponential
  * backoff up to a 5 s cap, with a hard 6-minute ceiling.
  */
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 const FAST_INTERVAL_MS = 1500;
 const SLOW_INTERVAL_CAP_MS = 5000;
 const FAST_PHASE_S = 30;

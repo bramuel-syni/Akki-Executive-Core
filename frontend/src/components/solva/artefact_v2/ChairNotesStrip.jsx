@@ -8,8 +8,7 @@
  * fonts, no new colour tokens.
  */
 import React, { useEffect, useState } from "react";
-import { api } from "../../../lib/api";
-
+import api from "../../../lib/api/apiV2";
 export default function ChairNotesStrip({ sessionId, slideKind, visible }) {
   const [byKind, setByKind] = useState(null);
   useEffect(() => {
