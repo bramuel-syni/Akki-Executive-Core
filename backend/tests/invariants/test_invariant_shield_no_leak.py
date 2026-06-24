@@ -1,4 +1,4 @@
-"""Shield-no-leak invariant — Phase 0.
+"""Shield-no-leak invariant — Phase 0 + Phase B1 generalisation.
 
 Generalisation of the Phase 14 chat-fluency test. Every user-visible
 surface that calls the Shield MUST NOT have any `[[ENT_...]]` token
@@ -10,6 +10,12 @@ end-to-end proof.
 Surfaces covered (parametrised):
 
   * chat — POST /api/chats/{cid}/messages → assistant_message.content
+    PARAMETRISED per provider: Claude (anthropic) · GPT (openai) ·
+    Gemini (google). Phase B1 (2026-06-24) extension — pre-B1 the
+    chat surface was pinned to `claude-sonnet-4-5` only, masking
+    the question of whether the OpenAI + Gemini provider paths
+    honour the same no-leak contract. The B1 generalisation runs
+    the SAME multi-entity prompt through each provider.
   * solva-analyze — POST /api/workbook/v2/analyses/{aid}/synthesize
     → narration.headline + narration.observations (every observation
     body)
@@ -25,6 +31,13 @@ default sweep; run with `pytest -m integration`.
 The Phase 14 file `test_chat_fluency_no_shield_leak.py` REMAINS as
 the chat-specific lockdown. This file parametrises the same prompt
 fixture across multiple surfaces for the generalised guarantee.
+
+Phase B1 (2026-06-24) — also adds a DELIBERATE-VIOLATION SMOKE test
+(synthetic, non-integration). The smoke proves the `[[ENT_` assertion
+isn't a no-op: it constructs a fake LLM payload containing the
+forbidden marker and asserts `_assert_no_token_leak` raises. Without
+this rail, a future refactor that mis-spells the regex (or drops it)
+would silently green the integration tests.
 """
 from __future__ import annotations
 
@@ -43,7 +56,25 @@ import server  # noqa: F401
 from server import app
 
 
-pytestmark = [pytest.mark.asyncio, pytest.mark.integration]
+pytestmark: list = []
+
+# Strings forbidden from any user-visible surface — exposed at module
+# level so the deliberate-violation smoke (at the bottom of this file)
+# can exercise it directly without touching the FastAPI app or DB.
+TOKEN_LEAK_RE = re.compile(r"\[\[ENT_")
+
+
+# Phase B1 (2026-06-24) — chat surface providers.
+# `id` matches the SUPPORTED_MODELS table in `routers/chat.py:82-104`.
+# Tone string only included for human-readable test ids.
+CHAT_PROVIDERS = [
+    pytest.param("claude-sonnet-4-5", "anthropic.claude-sonnet-4-5",
+                 id="chat-anthropic-claude-sonnet-4-5"),
+    pytest.param("gpt-5-2", "openai.gpt-5-2",
+                 id="chat-openai-gpt-5-2"),
+    pytest.param("gemini-2-5-flash", "gemini.gemini-2-5-flash",
+                 id="chat-gemini-2-5-flash"),
+]
 
 # Reuse the Phase 14 prompt fixture so the generalised test exercises
 # the same multi-entity payload (people, org, place, payment card).
@@ -60,9 +91,6 @@ ANALYZE_OBJECTIVE = (
     "Summarise the topline movement and call out any anomalies for "
     "Mary Anne and Bramuel."
 )
-
-# Strings forbidden from any user-visible surface.
-TOKEN_LEAK_RE = re.compile(r"\[\[ENT_")
 
 
 @pytest_asyncio.fixture
@@ -101,8 +129,18 @@ def _assert_no_token_leak(label: str, blob: str) -> None:
 
 # ───────────────────────── surface 1: chat ─────────────────────────
 
-async def test_chat_surface_no_token_leak(db_conn):
-    """Generalised chat surface — `/api/chats/{cid}/messages`."""
+@pytest.mark.integration
+@pytest.mark.asyncio
+@pytest.mark.parametrize("model_id,_provider_label", CHAT_PROVIDERS)
+async def test_chat_surface_no_token_leak(db_conn, model_id, _provider_label):
+    """Generalised chat surface — `/api/chats/{cid}/messages`.
+
+    Phase B1 (2026-06-24) — parametrised across all three Shield-
+    backed providers. Pre-B1 only Claude was pinned. The parametrise
+    proves the SAME multi-entity prompt is rehydrated for every
+    provider, closing the gap B0 surfaced (proxy fronts all three
+    providers; no-leak rail must follow).
+    """
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test", timeout=180.0) as ac:
         admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
@@ -115,8 +153,8 @@ async def test_chat_surface_no_token_leak(db_conn):
             "id":               chat_id,
             "account_id":       admin_row["id"],
             "context_id":       None,
-            "title":            "Invariant: shield no leak (chat)",
-            "model_id":         "claude-sonnet-4-5",
+            "title":            f"Invariant: shield no leak (chat / {model_id})",
+            "model_id":         model_id,
             "shielding_policy": "auto",
             "status":           "active",
             "messages":         [],
@@ -131,24 +169,26 @@ async def test_chat_surface_no_token_leak(db_conn):
             )
             if r.status_code != 200:
                 pytest.skip(
-                    f"HUMAN_REQUIRED: chat round-trip non-200 ({r.status_code}). "
-                    f"body={r.text[:200]!r}"
+                    f"HUMAN_REQUIRED: chat round-trip non-200 ({r.status_code}) "
+                    f"on model_id={model_id}. body={r.text[:200]!r}"
                 )
             body = r.json()
             asst = body.get("assistant_message") or {}
             reply = asst.get("content") or ""
             if not reply or reply.startswith("(LLM error:"):
                 pytest.skip(
-                    f"HUMAN_REQUIRED: chat LLM did not return usable reply. "
-                    f"reply={reply[:200]!r}"
+                    f"HUMAN_REQUIRED: chat LLM did not return usable reply on "
+                    f"model_id={model_id}. reply={reply[:200]!r}"
                 )
-            _assert_no_token_leak("chat", reply)
+            _assert_no_token_leak(f"chat[{model_id}]", reply)
         finally:
             await db_conn.chats.delete_one({"id": chat_id})
 
 
 # ───────────────────── surface 2: solva-analyze ────────────────────
 
+@pytest.mark.integration
+@pytest.mark.asyncio
 async def test_solva_analyze_surface_no_token_leak(db_conn):
     """Solva v2 narration on `/api/workbook/v2/analyses/{aid}/synthesize`.
 
@@ -223,6 +263,62 @@ async def test_solva_analyze_surface_no_token_leak(db_conn):
             # Cleanup the synthetic analysis to keep prod-like state.
             await db_conn.analyses.delete_one({"id": aid})
             await db_conn.analysis_blobs.delete_many({"analysis_id": aid})
+
+
+# ─────────────── Phase B1 deliberate-violation smoke ──────────────
+#
+# These tests run on the DEFAULT sweep (no `integration` marker) — they
+# don't touch the FastAPI app, MongoDB, or any provider. Their sole
+# purpose is to prove the `[[ENT_` assertion isn't a no-op. If a
+# refactor mis-spells the regex OR replaces `_assert_no_token_leak`
+# with a tautology, these tests trip immediately on the default lane
+# — the integration suite would otherwise stay green for weeks until
+# a real provider regression surfaced the gap.
+
+def test_deliberate_violation_token_leak_detected():
+    """Synthetic: a payload containing the raw Shield token shape
+    MUST trip the leak assertion. Proves the regex is wired."""
+    blob = (
+        "I can't parse the redacted token [[ENT_PERSON_001]] in your "
+        "message — could you clarify?"
+    )
+    # Not using `_assert_no_token_leak` directly here so we can
+    # surface the AssertionError as expected. Same regex.
+    with pytest.raises(AssertionError) as exc_info:
+        _assert_no_token_leak("deliberate-violation", blob)
+    msg = str(exc_info.value)
+    assert "Shield-mechanics leak" in msg, (
+        f"AssertionError message shape drifted — expected to contain "
+        f"'Shield-mechanics leak'; got: {msg[:200]!r}"
+    )
+
+
+@pytest.mark.parametrize("token", [
+    "[[ENT_PERSON_001]]",
+    "[[ENT_ORG_042]]",
+    "[[ENT_PLACE_009]]",
+    "[[ENT_PAYMENT_CARD_001]]",
+    "[[ENT_UK_NI_NUMBER_001]]",
+])
+def test_deliberate_violation_per_token_type_detected(token):
+    """Catch a forbidden token shape regardless of the entity type
+    label. The regex pins on `[[ENT_` prefix only — the per-type
+    suffix can be any of the production de-identifier emits."""
+    with pytest.raises(AssertionError):
+        _assert_no_token_leak("per-type-violation",
+                              f"Response prelude {token} response tail.")
+
+
+def test_clean_payload_does_not_trip_assertion():
+    """No-regression rail: a payload with no `[[ENT_` marker MUST
+    NOT trip. Prevents a regex over-broadening drift."""
+    blob = (
+        "Mary Anne and Bramuel are meeting in Nairobi on Friday to "
+        "discuss the malaria response programme. The corporate card "
+        "ending 7689 covers the venue."
+    )
+    # Should not raise.
+    _assert_no_token_leak("clean-payload", blob)
 
 
 # ───────────────────────── future surfaces ─────────────────────────

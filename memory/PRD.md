@@ -1,6 +1,29 @@
 # AKKI Sandbox — Product Requirements Document (PRD)
 
 
+> **2026-06-24 update — canonical surfaces split.** This PRD remains the
+> durable historical record. The three live sources of truth are now:
+>   • `/app/memory/SPRINT_PLAN.md` — decisions + sequence + locks +
+>     orchestration protocols + agreements ledger (canonical for "what
+>     are we building, in what order, against which acceptance bars").
+>   • `/app/memory/DEV_PIPELINE.md` — live state + QA dashboard
+>     (canonical for "what is the builder doing right now and what
+>     just landed"). Includes the active dispatch, the 4-track state
+>     (Re-architecture · ThinkLab · Chat · Work Studio), invariant
+>     ladder, surface ratchet, and the §9 Phase History append-only
+>     log enforced by the `pipeline-log-sync` CI gate.
+>   • `/app/memory/sprints/PHASE_*.md` — per-phase close memos with
+>     execution evidence.
+>
+> Recent closes (2026-06-24): SPRINT_PLAN_INIT · B1 (Chat consumer
+> surface — grouped 3-provider picker + AST invariant on
+> `StreamingReidentifier` + generalised shield-no-leak invariant) ·
+> WS0 (Work Studio runtime classification — 8-capability matrix,
+> 4 generate-kinds work end-to-end, 1 BROKEN-AT-SEAM committee_pack,
+> 1 DEFERRED board_pack-via-`/export`, objective→content TRUE,
+> objective→kind FALSE).
+
+
 ### Production state reconciliation (2026-02 fork-resume — post-Q4Y-FIX deploy)
 
 **Corrected per user evidence.** Production at `https://akki.syni.ai` IS on the new build — e1_tester verified the deployed JS bundle uses single `/api/` prefix; live `GET /api/me/questions` returns 200; openapi.json includes `mark-answered`, `admin/qa/seed/question`, `admin/qa/first-session/reset`, and `briefings/generate`. The `GET /api/api/me/questions 404` log lines refer to pre-deploy traffic replay or cached/stale browser bundles — NOT live failures. **No re-deploy needed.**

@@ -1560,6 +1560,20 @@ function ChatHeader({ chat, models, activeModel, activeContext, onPatch, onArchi
   );
 }
 
+// Provider display metadata for the grouped two-level picker.
+// Phase B1 (2026-06-24) — converted the flat-list ModelPicker into
+// a grouped provider→version layout. Keeps the same `models` shape
+// (each entry already carries `provider` ∈ "anthropic"|"openai"|"gemini"),
+// just renders the menu as three sub-sections instead of one long
+// scroll. Per the B1 dispatch: "two-level — provider group → version.
+// No long flat list." Each selection still routes through the
+// SAME Shield (no provider-side bypass).
+const PROVIDER_GROUPS = [
+  { id: "anthropic", label: "Claude",  blurb: "Anthropic" },
+  { id: "openai",    label: "GPT",     blurb: "OpenAI" },
+  { id: "gemini",    label: "Gemini",  blurb: "Google" },
+];
+
 function ModelPicker({ models, value, onChange }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -1569,6 +1583,31 @@ function ModelPicker({ models, value, onChange }) {
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
   const active = models.find((m) => m.id === value);
+  // Group the models list once per render — cheap (<10 items).
+  // Provider order is determined by PROVIDER_GROUPS; any model whose
+  // provider isn't in the group list falls into a synthetic "Other"
+  // bucket so it never gets silently dropped from the picker.
+  const grouped = useMemo(() => {
+    const byProvider = {};
+    for (const m of models) {
+      const key = m.provider || "other";
+      (byProvider[key] = byProvider[key] || []).push(m);
+    }
+    const rows = [];
+    for (const g of PROVIDER_GROUPS) {
+      const items = byProvider[g.id];
+      if (items && items.length) {
+        rows.push({ ...g, items });
+        delete byProvider[g.id];
+      }
+    }
+    // Surface any unmapped providers under "Other" so we don't hide them.
+    const leftover = Object.entries(byProvider).flatMap(([_, items]) => items);
+    if (leftover.length) {
+      rows.push({ id: "other", label: "Other", blurb: "", items: leftover });
+    }
+    return rows;
+  }, [models]);
   return (
     <div className="relative" ref={ref} data-testid="chat-model-picker">
       <button
@@ -1585,20 +1624,38 @@ function ModelPicker({ models, value, onChange }) {
         <ChevronDown className={`w-3 h-3 text-[var(--muted)] transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-30 min-w-[280px] bg-white border border-[var(--rule)] rounded-sm shadow-lg py-1" data-testid="chat-model-menu">
-          {models.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => { onChange(m.id); setOpen(false); }}
-              className={`w-full text-left px-3 py-2 text-[13px] hover:bg-[var(--cream-deep)]/40 flex items-center gap-2.5 ${m.id === value ? "bg-[var(--cream-deep)]/30" : ""}`}
-              data-testid={`chat-model-opt-${m.id}`}
+        <div
+          className="absolute right-0 top-full mt-1 z-30 min-w-[320px] bg-white border border-[var(--rule)] rounded-sm shadow-lg py-1.5"
+          data-testid="chat-model-menu"
+        >
+          {grouped.map((group, gi) => (
+            <div
+              key={group.id}
+              className={gi === 0 ? "" : "mt-1.5 pt-1.5 border-t border-[var(--rule)]"}
+              data-testid={`chat-model-group-${group.id}`}
             >
-              <ModelAvatar model={m} size="sm" />
-              <div className="flex-1 min-w-0">
-                <p className="text-[var(--ink)]">{m.label}</p>
-                <p className="text-[11px] text-[var(--muted)] italic">{m.tone}</p>
+              <div
+                className="px-3 pb-1 text-[10.5px] uppercase tracking-[0.08em] text-[var(--muted)] flex items-baseline justify-between"
+                data-testid={`chat-model-group-header-${group.id}`}
+              >
+                <span>{group.label}</span>
+                {group.blurb && <span className="italic font-normal">{group.blurb}</span>}
               </div>
-            </button>
+              {group.items.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => { onChange(m.id); setOpen(false); }}
+                  className={`w-full text-left px-3 py-2 text-[13px] hover:bg-[var(--cream-deep)]/40 flex items-center gap-2.5 ${m.id === value ? "bg-[var(--cream-deep)]/30" : ""}`}
+                  data-testid={`chat-model-opt-${m.id}`}
+                >
+                  <ModelAvatar model={m} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[var(--ink)]">{m.label}</p>
+                    <p className="text-[11px] text-[var(--muted)] italic">{m.tone}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
           ))}
         </div>
       )}

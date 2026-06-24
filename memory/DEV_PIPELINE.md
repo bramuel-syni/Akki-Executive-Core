@@ -6,11 +6,11 @@
 
 ## 1. Current State
 
-Builder idle. SPRINT_PLAN.md established as canonical decisions+sequence source. Awaiting (a) user decisions on TL Flag 3 + Gate A render check (blocks TL1.1) and (b) user-blessed brief for Track Work Studio / WS0 (blocks B1).
+Tracks Chat B1 + Work Studio WS0 both closed 2026-06-24. Chat consumer-surface (grouped 3-provider picker + AST invariant on `StreamingReidentifier` + generalised no-leak invariant + deliberate-violation rail). WS0 produced the 8-capability execution-evidence classification matrix: 4 generate-kinds work end-to-end (brief/deck/report/minutes), 1 broken-at-seam (committee_pack render dispatcher), 1 deferred (board_pack via `/export`), Phase-C/C2 works, overlay runs-but-ambiguous, render ambiguous (needs compile-then-render smoke), Analyze spreadsheet-only confirmed. ThinkLab Gate A render-check + Flag 3 demoted in queue per consolidated dispatch (awaits fresh orchestrator call).
 
 ## 2. Active Dispatch
 
-None — `PHASE_SPRINT_PLAN_INIT` closed 2026-06-24. Builder idle.
+None — Chat B1 + WS0 both closed. ThinkLab Gate A queued; WS1 repair scope sized (committee_pack dispatcher patch + board_pack `_VALID_KINDS` extension + render branch); awaits user prioritisation.
 
 ## 3. Parallel Tracks
 
@@ -27,8 +27,9 @@ None — `PHASE_SPRINT_PLAN_INIT` closed 2026-06-24. Builder idle.
 - **Sprint memos:** `/app/memory/sprints/PHASE_TL0_THINKLAB_PREREAD.md`
 
 ### 3.3 Track Chat — Consumer-Grade Chat UX
-- **Status:** Currently **LIVE** (operational); consumer-grade redesign queued behind TL1.2 close.
+- **Status:** Currently **LIVE** (operational); B1 consumer-surface build closed 2026-06-24.
 - **Prior history:**
+  - **Phase B1** (2026-06-24) — Chat consumer-surface build: grouped two-level model picker (Claude · GPT · Gemini provider groups) + AST invariant `test_invariant_chat_streaming_reidentify_present.py` pinning `StreamingReidentifier(...)` in `stream_message` + generalised `test_invariant_shield_no_leak.py` chat surface across all 3 providers + deliberate-violation smoke rail (7 default-lane tests). Pre-B1 FE regressions repaired (missing `tsconfig.json` + `SessionTimeoutGuard` apiV2/raw-axios mix-up). · `sprints/PHASE_B1_CHAT_BUILD.md`.
   - **Phase 5.10** (2026-02-23 fork-resume) — Chat resilience: production cancellation + audit-panel red error fix on `/app/chat` + `/api/chats/{cid}/messages/stream` · `sprints/P5_10_chat_resilience.md`.
   - **Phase F** (2026-05-21) — Akki Chat boundary-removal pass: chrome refinement only, no palette/typography/IA changes · `sprints/PHASE_F_CHAT_BOUNDARY_STATE.md`.
   - **H2** (2026-05-24, read-only) — Shield Uniformity Audit: forensic check that LLMs never see confidential data + Shield-always-on across roles/surfaces; surfaced P0 caveats → H2.5 · `sprints/H2_SHIELD_UNIFORMITY_AUDIT.md`.
@@ -52,6 +53,25 @@ None — `PHASE_SPRINT_PLAN_INIT` closed 2026-06-24. Builder idle.
   - **Next dispatch:** B1 — sized per B0 verdicts. Best case: 3 phases (provider routing → manual Work Studio + retrieval affordance → tool-call carriage as a Shield sub-phase). Per B0's honest scope estimate.
   - **Then:** B2-B3 as B0 returns honest scope per the 3-scenario sizing.
 
+### 3.4 Track Work Studio — runtime classification (parallel)
+- **Status:** WS0 CLOSED 2026-06-24. Read-only + execution-based runtime classification produced; product code untouched.
+- **WS0 verdict matrix (execution evidence, not status fields):**
+  - **Generate per kind (1):** `brief` / `deck` / `report` / `minutes` → **WORKS**; `committee_pack` → **BROKEN-AT-SEAM** (render dispatcher at `routers/work_studio_export.py:778` has no committee_pack branch despite `_AUTO_FORMAT` accepting it); `board_pack` → **DEFERRED via `/export`** (not in `_VALID_KINDS`) but **WORKS via `/from-document`**.
+  - **Compose/stitch Phase-C (2):** `/api/work_studio/picker` live; full P-C flow surface live. **WORKS-AT-SURFACE.**
+  - **Review Phase-C2 (3):** brief meta + revisions + enhance round-trip verified; new revision_id chains via parent_revision_id. **WORKS.**
+  - **Overlay (4):** **RUNS-BUT-AMBIGUOUS** — `list_documents` returns 20 items but `get_document(same_id)` returns 404; list and per-id resolvers don't share the same table.
+  - **From-source (5):** Solva session → **WORKS** (artefact + brief + revision + redirect_url); chat artefact → **EXISTS-NOT-EXERCISED**; document → separate `/from-document` route (5 kinds inc. board_pack) → **WORKS**.
+  - **Render (6):** **AMBIGUOUS** — endpoint live but reads from `work_studio_documents.structured_content`; the from-source path lands in a different table; needs an end-to-end compile-then-render smoke.
+  - **Export (7):** DOCX + PPTX → **WORKS** (verified 39 258 + 38 324 bytes with correct MIME); deck-PDF → **PARTIAL** (soft-forks to pptx); signed-token download with 15-min TTL → **WORKS**.
+  - **Analyze (8):** spreadsheet-only (50 analyses in DB; tenancy gate honored). **WORKS-AT-SURFACE** + matches `PART 3` "spreadsheet-only today".
+- **Critical verifications:**
+  - Objective steers CONTENT: **TRUE** (`work_studio_export.py:334` concatenates objective into the LLM prompt verbatim).
+  - Objective does NOT steer KIND: **TRUE** (kind is path param; no read of `body.objective` in routing logic).
+  - AnalyzeDrawer Phase-3 stubs: **1 CLEAN-PLACEHOLDER** (Export tab description copy at AnalyzeDrawer.jsx:545); the `synthesize` endpoint is already wired at line 124-137. No HALF-IMPLEMENTED stubs.
+- **Cross-track Chat B1 handoff sub-matrix:** `brief` / `deck` / `report` / `minutes` = YES; `committee_pack` / `board_pack` (via `/export`) = NO until WS1 repair lands. Cleanest path for the chat manual affordance: fix the export dispatcher (one-line patch) + extend `_VALID_KINDS` so a single target route covers all 6 kinds.
+- **Stop-and-report:** none tripped — all classified gaps are REPAIR-class, not REBUILD; no Shield/tenancy/audit weakening required.
+- **Sprint memo:** `sprints/PHASE_WS0_CLASSIFY.md`.
+
 ## 4. Invariant Ladder Snapshot
 
 | Layer | Invariant | State |
@@ -65,7 +85,8 @@ None — `PHASE_SPRINT_PLAN_INIT` closed 2026-06-24. Builder idle.
 | FE hygiene | no-raw-axios (codemod 001 enforced) | ✅ |
 | BE hygiene | polymorphic-response-ratchet (42 remaining, shrinking) | ✅ |
 | Test hygiene | no-silent-skips (AST scan) | ✅ |
-| Schema correctness | first-session-response-shape + http-transport-pydantic-kwargs | ✅ |
+| Schema correctness | first-session-response-shape + http-transport-pydantic-kwargs + chat-streaming-reidentify-present | ✅ |
+| Schema correctness | shield-no-leak (3 providers · deliberate-violation rail · 7 default-lane tests + 4 integration-marked) | ✅ |
 | Deploy | deploy-smoke present (CI gate) | ✅ |
 | CI gates | codemod-drift + dep-audit-strict + invariants.yml + backend-tests.yml (scoped) | ✅ |
 | CI gates | pipeline-log-sync (sprint memo ↔ DEV_PIPELINE §9 row consistency) | ✅ |
@@ -103,6 +124,8 @@ Held since Phase 4.1 close.
 
 | Phase | Closed | Summary | Sprint Memo |
 |---|---|---|---|
+| WS0 | 2026-06-24 | Work Studio runtime classification (read-only + execution-based, no product code touched): 8-capability matrix produced; 4 generate-kinds WORK (brief/deck/report/minutes), 1 BROKEN-AT-SEAM (committee_pack render dispatcher), 1 DEFERRED via `/export` (board_pack); Phase-C/C2 WORKS, overlay RUNS-BUT-AMBIGUOUS, render AMBIGUOUS (needs compile-then-render smoke), Analyze spreadsheet-only confirmed; objective→content TRUE, objective→kind FALSE; AnalyzeDrawer Phase-3 = CLEAN-PLACEHOLDER | `sprints/PHASE_WS0_CLASSIFY.md` |
+| B1 | 2026-06-24 | Chat consumer-surface build: grouped two-level provider→version model picker on `/app/chat`; build-breaking AST invariant on `StreamingReidentifier` wire-up; shield-no-leak generalised across Claude/GPT/Gemini + deliberate-violation rail (7 default-lane tests); pre-B1 FE regressions repaired (`tsconfig.json` + `SessionTimeoutGuard.__raw`) | `sprints/PHASE_B1_CHAT_BUILD.md` |
 | SPRINT_PLAN_INIT | 2026-06-24 | `SPRINT_PLAN.md` established as canonical decisions+sequence source (8 sections: sprint goal · tracks · sequence · protocols · locks · agreements · mixups · external action items); zero overlap with `DEV_PIPELINE.md` (live state) and `MASTER_STATE.md` (history) per §0 role boundary | `sprints/PHASE_SPRINT_PLAN_INIT.md` |
 | B0 | 2026-06-24 | Chat consumer-grade redesign pre-read: 6 probes resolved (fidelity matrix, streaming-reidentify EXISTS, proxy fronts all 3, RAG BM25-exists, tool-call MISSING, Work Studio ambiguous); honest B1+ scope sized across 3 scenarios | `sprints/PHASE_B0_CHAT_PREREAD.md` |
 | Pipeline-Log-Sync | 2026-06-24 | Sprint-memo ↔ DEV_PIPELINE §9 row consistency CI gate; first dogfooded by this entry | `sprints/PHASE_PIPELINE_LOG_SYNC.md` |

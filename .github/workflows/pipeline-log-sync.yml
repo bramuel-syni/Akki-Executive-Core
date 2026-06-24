@@ -202,6 +202,10 @@ jobs:
                   # Track Chat (B-prefixed) phase identifiers — Phase B0
                   # introduced 2026-06-24; future B1/B2/... map here.
                   "B0_CHAT_PREREAD": "B0",
+                  "B1_CHAT_BUILD": "B1",
+                  # Track Work Studio (WS-prefixed) phase identifiers.
+                  # Introduced 2026-06-24 (WS0 classification dispatch).
+                  "WS0_CLASSIFY": "WS0",
                   # Orchestration phases (non-numeric).
                   "SPRINT_PLAN_INIT": "SPRINT_PLAN_INIT",
               }

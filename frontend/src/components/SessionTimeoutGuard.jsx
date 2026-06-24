@@ -46,11 +46,17 @@ export default function SessionTimeoutGuard() {
 
   useEffect(() => {
     // Wire the axios bump.
-    const reqId = api.interceptors.request.use((config) => {
+    // Phase B1 (2026-06-24) — apiV2 is the wrapper; raw axios with
+    // `.interceptors` lives at `.__raw` (see lib/api/apiV2.js:52). The
+    // earlier mass-migration to apiV2 broke this hook by hitting
+    // `api.interceptors.request.use(...)` on the wrapper (no
+    // `interceptors` property → "Cannot read properties of undefined
+    // (reading 'request')" + ErrorBoundary on every authed page).
+    const reqId = api.__raw.interceptors.request.use((config) => {
       bumpActivity();
       return config;
     });
-    return () => { api.interceptors.request.eject(reqId); };
+    return () => { api.__raw.interceptors.request.eject(reqId); };
   }, [bumpActivity]);
 
   useEffect(() => {

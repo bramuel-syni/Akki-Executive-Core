@@ -12,7 +12,9 @@
  * baseURL handles that. We auto-prefix `/api` when missing so both work.
  */
 
-// eslint-disable-next-line import/no-unresolved
+// Note: the import is .ts but craco/CRA resolves cross-file imports
+// of .ts modules from .js consumers via babel-loader once `tsconfig.json`
+// is present at /app/frontend/tsconfig.json (Phase B1 follow-up, 2026-06-24).
 import { endpoints } from "./schemas.gen";
 
 // Pre-compile a matcher per endpoint. `path` has shape "/api/contexts/:id/..."

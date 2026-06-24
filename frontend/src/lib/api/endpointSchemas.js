@@ -9,9 +9,11 @@
  * with `alias` = operationId and `response` = zod schema). We index it.
  */
 
-// Note: the import is .ts but craco/CRA 5.0.1 handles cross-file imports
-// of .ts modules from .js consumers via babel-loader.
-// eslint-disable-next-line import/no-unresolved
+// Note: the import is .ts but craco/CRA resolves cross-file imports
+// of .ts modules from .js consumers via babel-loader once
+// `tsconfig.json` is present at /app/frontend/tsconfig.json
+// (Phase B1 follow-up, 2026-06-24 — replaced jsconfig.json with
+// tsconfig.json so CRA enables TypeScript file resolution).
 import { endpoints } from "./schemas.gen";
 
 /**
