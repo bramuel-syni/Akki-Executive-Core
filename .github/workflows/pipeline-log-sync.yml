@@ -215,6 +215,15 @@ jobs:
                   "AUDIT_P0": "AUDIT_P0",
                   "AUDIT_P1": "AUDIT_P1",
                   "AUDIT_P2": "AUDIT_P2",
+                  # AKKI Full Runway (2026-06-24) — five-stage end-to-end
+                  # security-hygiene-canonicalization-build sequence.
+                  # Stage 1 collapses prior AUDIT_P2.1/P2.2/P2.4
+                  # dispatches into one security ratchet ship.
+                  "STAGE_1_SECURITY_RATCHET": "STAGE_1",
+                  "STAGE_2_CLEAN_BOARD": "STAGE_2",
+                  "STAGE_3_CANONICALIZATION": "STAGE_3",
+                  "STAGE_4_WORK_STUDIO": "STAGE_4",
+                  "STAGE_5_SHELL_FRONTENDS": "STAGE_5",
                   # Orchestration phases (non-numeric).
                   "SPRINT_PLAN_INIT": "SPRINT_PLAN_INIT",
               }
