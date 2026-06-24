@@ -105,8 +105,16 @@ def _rewrite(content: str) -> Tuple[str, int]:
 def main(argv: List[str]) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="Preview only.")
+    ap.add_argument(
+        "--check",
+        action="store_true",
+        help="CI gate: preview-only AND exit non-zero if any changes are pending.",
+    )
     ap.add_argument("--verbose", "-v", action="store_true")
     args = ap.parse_args(argv)
+    # --check implies --dry-run.
+    if args.check:
+        args.dry_run = True
 
     files_touched: List[Path] = []
     total_edits = 0
@@ -134,8 +142,19 @@ def main(argv: List[str]) -> int:
         if not args.dry_run:
             path.write_text(new, encoding="utf-8")
 
-    mode = "DRY-RUN" if args.dry_run else "APPLIED"
+    mode = "CHECK" if args.check else ("DRY-RUN" if args.dry_run else "APPLIED")
     print(f"\n[{mode}] {len(files_touched)} files; {total_edits} import-line rewrites.")
+    # CI gate: non-zero exit if pending changes remain.
+    if args.check and total_edits > 0:
+        print(
+            f"\n[CHECK] codemod 001 reports {total_edits} pending rewrite(s) "
+            f"across {len(files_touched)} file(s). Run "
+            f"`python /app/scripts/codemods/001_raw_axios_to_apiv2.py` "
+            f"to apply, then commit. See "
+            f"`/app/scripts/codemods/README.md` for the convention.",
+            file=sys.stderr,
+        )
+        return 1
     return 0
 
 

@@ -135,8 +135,15 @@ def _rewrite(content: str, file_label: str) -> Tuple[str, int, List[str]]:
 def main(argv: List[str]) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument(
+        "--check",
+        action="store_true",
+        help="CI gate: preview-only AND exit non-zero if any changes are pending.",
+    )
     ap.add_argument("--verbose", "-v", action="store_true")
     args = ap.parse_args(argv)
+    if args.check:
+        args.dry_run = True
 
     files_touched: List[Path] = []
     total_edits = 0
@@ -175,9 +182,19 @@ def main(argv: List[str]) -> int:
             file=sys.stderr,
         )
 
-    mode = "DRY-RUN" if args.dry_run else "APPLIED"
+    mode = "CHECK" if args.check else ("DRY-RUN" if args.dry_run else "APPLIED")
     print(f"\n[{mode}] {len(files_touched)} files; {total_edits} decorator rewrites.")
     if all_missing:
+        return 1
+    if args.check and total_edits > 0:
+        print(
+            f"\n[CHECK] codemod 002 reports {total_edits} pending rewrite(s) "
+            f"across {len(files_touched)} file(s). Run "
+            f"`python /app/scripts/codemods/002_dict_any_to_pydantic_model.py` "
+            f"to apply, then commit. See "
+            f"`/app/scripts/codemods/README.md` for the convention.",
+            file=sys.stderr,
+        )
         return 1
     return 0
 

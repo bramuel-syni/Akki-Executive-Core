@@ -1,0 +1,10 @@
+{
+  "shape": {
+    "created_at": "<dynamic>:str",
+    "export_id": "<dynamic>:str",
+    "kind": "str",
+    "output_format": "str",
+    "status": "str"
+  },
+  "blessed_at": "2026-06-24T03:12:53.187237+00:00"
+}

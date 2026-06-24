@@ -1,0 +1,67 @@
+name: codemod-drift
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+# Phase 5.5 (2026-06) — Codemod drift detection gate.
+#
+# This workflow detects when a manual edit has drifted from a codemod's
+# post-state, OR when new code was added that bypasses an established
+# codemod convention.
+#
+# Each codemod in /app/scripts/codemods/ exposes a `--check` flag:
+#   exit 0 → codemod has zero pending rewrites (codebase matches the
+#            codemod's post-state).
+#   exit 1 → codemod has N pending rewrites (someone bypassed the
+#            convention; CI fails with a diagnostic pointing to the
+#            offending file).
+#
+# Codemod convention is documented at:
+#   /app/scripts/codemods/README.md
+#
+# To approve a NEW exception (e.g. a file that legitimately needs the
+# pre-codemod shape):
+#   1. Add the file to the codemod's `SKIP` set (or `_WHITELIST` in the
+#      paired invariant test).
+#   2. Document the reason inline in the codemod source.
+#   3. Cite both edits in your PR.
+#
+# We iterate codemods in numeric order so a later codemod that
+# assumes an earlier one has run can rely on that assumption.
+
+jobs:
+  codemod-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run each codemod in --check mode (numeric order)
+        run: |
+          # Iterate codemods in numeric order (NNN_*.py). Each codemod
+          # MUST support a `--check` flag that:
+          #   - exits 0 with `[CHECK] 0 files; 0 rewrites` on a clean codebase
+          #   - exits 1 with a diagnostic on stderr if pending rewrites exist
+          # See /app/scripts/codemods/README.md for the convention.
+          set -e
+          shopt -s nullglob
+          failures=0
+          for codemod in $(ls scripts/codemods/[0-9][0-9][0-9]_*.py | sort); do
+            echo "::group::$codemod"
+            if ! python "$codemod" --check; then
+              echo "::error title=Codemod drift::$(basename "$codemod") detected pending rewrites — see /app/scripts/codemods/README.md"
+              failures=$((failures + 1))
+            fi
+            echo "::endgroup::"
+          done
+          if [ "$failures" -gt 0 ]; then
+            echo "::error::$failures codemod(s) detected drift. Fix by running each affected codemod (without --check) and committing the diff."
+            exit 1
+          fi
+          echo "All codemods pass --check (no drift detected)."

@@ -385,13 +385,18 @@ async def test_owner_roles_returns_canonical_with_counts(client, f_seeded):
     assert role_to_count.get("CFO") == 2
     # COO: 1 obj (case-insensitive match on 'Coo').
     assert role_to_count.get("COO") == 1
-    # Audit Committee: 1 obj.
-    assert role_to_count.get("Audit Committee") == 1
-    # Other = 3 (investor_relations + null declared_role + null owner_account_id).
-    assert role_to_count.get("Other") == 3
+    # Phase 5.5 (2026-06-24, Track-A triage Category 5): the canonical
+    # owner-role list was tightened to the C-suite set
+    # (CANONICAL_OWNER_ROLES in monitor_v2.py — CEO/CFO/COO/CRO/CTO/
+    # CHRO/CMO/CIO/OTHER). "Audit Committee" is no longer canonical,
+    # so the seeded objective with that declared_role now buckets
+    # under "Other" instead of getting its own row. Other now = 4:
+    # Audit Committee + investor_relations + null declared_role +
+    # null owner_account_id.
+    assert role_to_count.get("Other") == 4
     # Canonical order preserved; "Other" emitted last.
     role_order = [row["role"] for row in body["roles"]]
-    canonical_order = ["CEO", "CFO", "COO", "Audit Committee", "Other"]
+    canonical_order = ["CEO", "CFO", "COO", "Other"]
     assert role_order == canonical_order
 
 
@@ -480,9 +485,12 @@ async def test_list_items_filters_by_owner_role_other_sentinel(client, f_seeded)
     )
     assert r.status_code == 200
     items = r.json()["items"]
-    # 3 "Other" objectives (investor_relations + null declared_role +
-    # null owner_account_id).
-    assert len(items) == 3
+    # Phase 5.5 (2026-06-24, Track-A triage Category 5): the canonical
+    # owner-role list was tightened (see test_owner_roles_returns_
+    # canonical_with_counts for the explanation). 4 "Other" objectives
+    # now: Audit Committee + investor_relations + null declared_role
+    # + null owner_account_id.
+    assert len(items) == 4
 
 
 @pytest.mark.asyncio

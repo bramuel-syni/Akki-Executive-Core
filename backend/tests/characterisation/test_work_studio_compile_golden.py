@@ -140,7 +140,20 @@ async def test_work_studio_compile_start_golden_shape(db_conn):
         # The simpler start payload: blank kind so no source document
         # is required. Pins the documented endpoint contract whether
         # or not seed documents are present.
+        # Phase 5.5 (2026-06-24, Track-A triage Category 5): the
+        # `/work-studio/export/blank` route added required `description`
+        # and `objective` fields in a later product iteration. Updated
+        # the golden payload to send them.
         payload = {
+            "description": (
+                "Operating metric review note — hypothetical board-prep "
+                "document for Lemasy Limited."
+            ),
+            "objective": (
+                "Surface the operating metrics that the board will want "
+                "to discuss next quarter."
+            ),
+            "scope": "Operating metrics for Lemasy Limited's next board meeting.",
             "instructions": (
                 "Two-paragraph note explaining a hypothetical operating "
                 "metric review for Lemasy Limited."
@@ -148,8 +161,14 @@ async def test_work_studio_compile_start_golden_shape(db_conn):
             "format": "docx",
         }
 
+        # Phase 5.5 (2026-06-24, Track-A triage Category 5): the
+        # `kind` enum was tightened in a later product iteration —
+        # `blank` was retired in favour of the 5 typed kinds (brief,
+        # deck, report, minutes, committee_pack). Using `brief` keeps
+        # the characterisation test alive against the simplest typed
+        # kind without changing the documented response shape.
         r = await ac.post(
-            f"/api/contexts/{cid}/work-studio/export/blank",
+            f"/api/contexts/{cid}/work-studio/export/brief",
             json=payload,
             headers=admin,
         )

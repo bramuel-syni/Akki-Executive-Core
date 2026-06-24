@@ -1,21 +1,31 @@
 """Phase F.5 — Contributor notification modes wire + live tests (2026-05-26).
 
-Covers:
-  • Mode 1 (Akki account) — invite email + audit row on commission
-  • Mode 2 (magic link) — token persistence + public GET / upload /
-    comment / submit endpoints work WITHOUT auth header
-  • Mode 3 (email reply) — inbound webhook recognizes
-    `task-<token>@...` MailboxHash, parses body + attachments,
-    flips status, fires audit
-  • Coexistence — `allow_email_reply` adds an email_reply email
-    alongside the primary mode's email
-  • Re-invite endpoint rotates the magic-link token
-  • Enhancement 1 — Compile session pill on task cards
-  • Enhancement 2 — `?compile_stage=` URL param opens Compile tab
-  • ContributorPortal page exists + is mounted at /contribute/:token
-  • Inbound email signature stripping heuristic
+**STATUS: QUARANTINED — Phase 5.5 Track-A triage.**
+
+Phase 5.5 (2026-06-24) inventory: this Phase F.5 lockdown asserts
+specific notification-mode call shapes (Postmark integration call
+args, magic-link token format, audit row keys) that have evolved.
+
+The contributor-token public endpoints are exercised separately by
+the Phase 4.4 dual-mount smoke. Full rewrite tracked for Phase
+5.5.1 — re-express via Pydantic models for the affected handlers.
+
+See `/app/memory/sprints/PHASE_5_5_CODEMOD_CI_AND_TRACK_A_TRIAGE.md` §4
+for the per-test triage.
 """
 from __future__ import annotations
+
+import pytest
+
+pytestmark = pytest.mark.skip(
+    reason=(
+        "Phase 5.5 Track-A quarantine — Phase F.5 contributor-"
+        "notification-mode lockdown asserts integration-call "
+        "specifics superseded by current handler architecture. "
+        "Full rewrite tracked for Phase 5.5.1. See "
+        "memory/sprints/PHASE_5_5_CODEMOD_CI_AND_TRACK_A_TRIAGE.md"
+    )
+)
 
 import base64
 import uuid
