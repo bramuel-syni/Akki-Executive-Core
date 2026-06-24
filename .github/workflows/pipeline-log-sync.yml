@@ -204,8 +204,10 @@ jobs:
                   "B0_CHAT_PREREAD": "B0",
                   "B1_CHAT_BUILD": "B1",
                   # Track Work Studio (WS-prefixed) phase identifiers.
-                  # Introduced 2026-06-24 (WS0 classification dispatch).
+                  # Introduced 2026-06-24 (WS0 classification dispatch +
+                  # WS1 repair pass).
                   "WS0_CLASSIFY": "WS0",
+                  "WS1_REPAIR": "WS1",
                   # Orchestration phases (non-numeric).
                   "SPRINT_PLAN_INIT": "SPRINT_PLAN_INIT",
               }

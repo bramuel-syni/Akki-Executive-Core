@@ -140,7 +140,7 @@ class ExportStatusOut(BaseModel):
 # wise a committee pack uses the same docx-report render path as
 # a Report — the renderer doesn't need a new code path, only the
 # kind guard.
-_ENHANCE_KINDS = ("deck", "report", "minutes", "committee_pack")
+_ENHANCE_KINDS = ("deck", "report", "minutes", "committee_pack", "board_pack")
 _ENHANCE_MAX_BYTES = 25 * 1024 * 1024  # 25 MB ceiling, mirrors chat_attach
 _ENHANCE_ACCEPTED_EXT_BY_KIND = {
     "deck":    {".pptx", ".pdf"},
@@ -148,6 +148,10 @@ _ENHANCE_ACCEPTED_EXT_BY_KIND = {
     "minutes": {".docx", ".pdf", ".txt"},
     # QA-2026-05-16-043 — committee pack ships as DOCX/PDF input.
     "committee_pack": {".docx", ".pdf"},
+    # WS1 (2026-06-24) — board pack mirrors committee pack input/output
+    # shape (DOCX/PDF). See _AUTO_FORMAT at line 162 + the render
+    # dispatcher group at line 760 + the category table at line 1173.
+    "board_pack": {".docx", ".pdf"},
 }
 
 
@@ -155,8 +159,12 @@ _ENHANCE_ACCEPTED_EXT_BY_KIND = {
 # Output-format selection
 # =============================================================================
 # QA-2026-05-16-043 — committee_pack mirrors report shape (docx-out).
-_AUTO_FORMAT = {"brief": "docx", "deck": "pptx", "report": "docx", "minutes": "docx", "committee_pack": "docx"}
-_VALID_KINDS = ("brief", "deck", "report", "minutes", "committee_pack")
+# WS1 (2026-06-24) — board_pack added: mirrors report shape per category
+# table at line 1155 (committee_pack rolls under board_pack category) +
+# matches /from-document's `_VALID_FROM_DOC_KINDS` so all 6 user-facing
+# kinds are reachable via /export.
+_AUTO_FORMAT = {"brief": "docx", "deck": "pptx", "report": "docx", "minutes": "docx", "committee_pack": "docx", "board_pack": "docx"}
+_VALID_KINDS = ("brief", "deck", "report", "minutes", "committee_pack", "board_pack")
 
 
 def _resolve_format(kind: str, requested: str) -> str:
@@ -544,6 +552,30 @@ async def _run_two_pass_for_export(
             '0-8 actions for the board, each phrased as "<owner> to '
             '<action> by <when>"), citations.'
         ),
+        # WS1 (2026-06-24) — Board Pack shape. Mirrors Committee Pack
+        # at the schema level (renderer is shared; category table at
+        # line 1173 rolls both under the same Work Studio tab). The
+        # prompt steers the model towards a main-board deliverable:
+        # cover, executive summary aimed at directors, sections like
+        # "Performance / Risk / Strategy / Governance" (per
+        # services/tasks/compile_service.py:187), and a clean action
+        # list at the end. Recommendations key is reused so the
+        # renderer schema stays untouched.
+        "board_pack": (
+            'Required keys: title (e.g. "<Org> Board Pack — <date>"), '
+            'subtitle (board chair + date line), classification, period, '
+            'generated_for, executive_summary (one short paragraph of '
+            'context aimed at directors, covering performance, risk, '
+            'and the strategic question for the meeting), '
+            'sections (4-6 items typically Performance / Risk / '
+            'Strategy / Governance per the compile-service catalogue, '
+            'each {heading, subheading (optional), paragraphs (list '
+            'of 2-4 strings capturing the substance and the '
+            'recommendation), pullquote (optional, a verbatim board '
+            'decision or director quote), cites}), recommendations '
+            '(list of 0-8 actions for the board, each phrased as '
+            '"<owner> to <action> by <when>"), citations.'
+        ),
     }[kind]
 
     cite_manifest_text = "\n".join(
@@ -751,7 +783,7 @@ async def _run_export(
         }
         if output_format == "docx" and kind == "brief":
             data, sha, fname = _ex.render_brief_docx(content_dict, ctx_meta_full)
-        elif output_format == "docx" and kind in ("report", "minutes"):
+        elif output_format == "docx" and kind in ("report", "minutes", "committee_pack", "board_pack"):
             # Track A Phase 5 iter-2 (2026-06-04) — minutes shares the
             # report DOCX renderer. Content shape is already aligned
             # via validate_content; the visual cover-page + sections
@@ -759,15 +791,28 @@ async def _run_export(
             # minutes (the LLM emits headings like "Attendees" /
             # "Decisions" / "Action items" instead of report sections,
             # which the report DOCX template renders cleanly).
+            #
+            # QA-2026-05-16-043 (2026-05-18) — committee_pack joined
+            # this group in the ENHANCE path (line 1476 below); WS1
+            # (2026-06-24) brought start_export's _run_export
+            # dispatcher to parity. Same renderer, same content shape.
+            #
+            # WS1 (2026-06-24) — board_pack joined the same group per
+            # the category table (committee_pack rolls under board_pack
+            # category at line 1156 below); the report DOCX template
+            # renders both equivalently. A bespoke board-pack renderer
+            # can branch off this when PO finalises distinct styling.
             data, sha, fname = _ex.render_report_docx(content_dict, ctx_meta_full)
         elif output_format == "pptx" and kind == "deck":
             data, sha, fname = _ex.render_deck_pptx(content_dict, ctx_meta_full)
         elif output_format == "pdf" and kind == "brief":
             data, sha, fname = _ex.render_brief_pdf(content_dict, ctx_meta_full)
-        elif output_format == "pdf" and kind in ("report", "minutes"):
-            # Same rationale as docx — minutes uses the report PDF
-            # template. Verified content_dict shape compatibility
-            # via Phase 5 iter-2 J27 enhance trace.
+        elif output_format == "pdf" and kind in ("report", "minutes", "committee_pack", "board_pack"):
+            # Same rationale as docx — minutes / committee_pack /
+            # board_pack use the report PDF template. Verified
+            # content_dict shape compatibility via Phase 5 iter-2 J27
+            # enhance trace (report+minutes) and WS1 dispatcher parity
+            # (committee_pack + board_pack).
             data, sha, fname = _ex.render_report_pdf(content_dict, ctx_meta_full)
         elif output_format == "pdf" and kind == "deck":
             # Soft fork — should have been resolved at request time.
@@ -1479,6 +1524,15 @@ async def _run_enhance(
             # output format. A bespoke renderer can branch off this
             # once the PO finalises committee-specific styling.
             data, sha, fname = _ex.render_report_docx(content_dict, ctx_meta_full)
+        elif output_format == "docx" and kind == "board_pack":
+            # WS1 (2026-06-24) — Board Pack uses the same DOCX renderer
+            # as Report + Committee Pack per the category table
+            # (committee_pack rolls under board_pack category at
+            # routers/work_studio_export.py:1156). Brought the enhance
+            # dispatcher to parity with start_export's _run_export so
+            # both /export and Compose-then-Enhance produce a board
+            # pack from the same content shape.
+            data, sha, fname = _ex.render_report_docx(content_dict, ctx_meta_full)
         elif output_format == "pptx" and kind == "deck":
             data, sha, fname = _ex.render_deck_pptx(content_dict, ctx_meta_full)
         elif output_format == "pdf" and kind == "report":
@@ -1486,6 +1540,11 @@ async def _run_enhance(
         elif output_format == "pdf" and kind == "minutes":
             data, sha, fname = _ex.render_report_pdf(content_dict, ctx_meta_full)
         elif output_format == "pdf" and kind == "committee_pack":
+            data, sha, fname = _ex.render_report_pdf(content_dict, ctx_meta_full)
+        elif output_format == "pdf" and kind == "board_pack":
+            # WS1 (2026-06-24) — PDF parity for board_pack via the
+            # same report PDF template (matches the start_export
+            # dispatcher group at line 771).
             data, sha, fname = _ex.render_report_pdf(content_dict, ctx_meta_full)
         else:
             raise _ex.ContentValidationError(
@@ -1747,7 +1806,7 @@ async def get_studio_synisense_breakdown(
     Filter is on `artefact_id` (post-sprint sessions) with a fallback to
     account_id + surface family when no artefact_id is present (legacy
     artefacts created before the threading)."""
-    if kind not in {"briefing", "deck", "report", "brief", "minutes", "committee_pack"}:
+    if kind not in {"briefing", "deck", "report", "brief", "minutes", "committee_pack", "board_pack"}:
         raise HTTPException(status_code=400, detail=f"Unknown artefact kind: {kind}")
     # Map the artefact kind → the set of surface keys we aggregate over.
     # Every kind also includes its corresponding `enhance` surface so
@@ -1761,6 +1820,10 @@ async def get_studio_synisense_breakdown(
         # QA-2026-05-16-043 — committee_pack is a first-class artefact
         # kind alongside deck/report/minutes.
         "committee_pack": ["committee_pack", "enhance"],
+        # WS1 (2026-06-24) — board_pack joined the first-class artefact
+        # set when /export was extended (line 163 + dispatcher group at
+        # line 760).
+        "board_pack": ["board_pack", "enhance"],
     }[kind]
 
     pipeline = [

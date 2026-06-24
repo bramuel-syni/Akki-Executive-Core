@@ -6,11 +6,11 @@
 
 ## 1. Current State
 
-Tracks Chat B1 + Work Studio WS0 both closed 2026-06-24. Chat consumer-surface (grouped 3-provider picker + AST invariant on `StreamingReidentifier` + generalised no-leak invariant + deliberate-violation rail). WS0 produced the 8-capability execution-evidence classification matrix: 4 generate-kinds work end-to-end (brief/deck/report/minutes), 1 broken-at-seam (committee_pack render dispatcher), 1 deferred (board_pack via `/export`), Phase-C/C2 works, overlay runs-but-ambiguous, render ambiguous (needs compile-then-render smoke), Analyze spreadsheet-only confirmed. ThinkLab Gate A render-check + Flag 3 demoted in queue per consolidated dispatch (awaits fresh orchestrator call).
+Track Work Studio — Phase WS1 closed 2026-06-24. All four WS1 repair items shipped end-to-end with execution evidence: (1) committee_pack render dispatcher branch + (2) board_pack via `/export` (Pass-2 schema_doc + dispatcher + enhance + synisense-breakdown parity) — both new kinds produce real DOCX bytes (38 777 + 39 835) with correct ZIP magic + MIME; (3) overlay list/get verdict reclassified to **WORKS** (WS0 was a test-time misclassification — id picked from `db.documents` instead of `db.work_studio_exports`); (4) compile-then-render smoke green for DOCX (36 650 bytes) + PPTX (29 085 bytes) + PDF (1 631 bytes). All 6 user-facing generation kinds now reach `/export`. ThinkLab Gate A still queued; Chat B1.1 manual Work Studio affordance unblocked.
 
 ## 2. Active Dispatch
 
-None — Chat B1 + WS0 both closed. ThinkLab Gate A queued; WS1 repair scope sized (committee_pack dispatcher patch + board_pack `_VALID_KINDS` extension + render branch); awaits user prioritisation.
+None — WS1 closed. Chat B1.1 + ThinkLab Gate A both unblocked; await orchestrator pick.
 
 ## 3. Parallel Tracks
 
@@ -54,23 +54,16 @@ None — Chat B1 + WS0 both closed. ThinkLab Gate A queued; WS1 repair scope siz
   - **Then:** B2-B3 as B0 returns honest scope per the 3-scenario sizing.
 
 ### 3.4 Track Work Studio — runtime classification (parallel)
-- **Status:** WS0 CLOSED 2026-06-24. Read-only + execution-based runtime classification produced; product code untouched.
-- **WS0 verdict matrix (execution evidence, not status fields):**
-  - **Generate per kind (1):** `brief` / `deck` / `report` / `minutes` → **WORKS**; `committee_pack` → **BROKEN-AT-SEAM** (render dispatcher at `routers/work_studio_export.py:778` has no committee_pack branch despite `_AUTO_FORMAT` accepting it); `board_pack` → **DEFERRED via `/export`** (not in `_VALID_KINDS`) but **WORKS via `/from-document`**.
-  - **Compose/stitch Phase-C (2):** `/api/work_studio/picker` live; full P-C flow surface live. **WORKS-AT-SURFACE.**
-  - **Review Phase-C2 (3):** brief meta + revisions + enhance round-trip verified; new revision_id chains via parent_revision_id. **WORKS.**
-  - **Overlay (4):** **RUNS-BUT-AMBIGUOUS** — `list_documents` returns 20 items but `get_document(same_id)` returns 404; list and per-id resolvers don't share the same table.
-  - **From-source (5):** Solva session → **WORKS** (artefact + brief + revision + redirect_url); chat artefact → **EXISTS-NOT-EXERCISED**; document → separate `/from-document` route (5 kinds inc. board_pack) → **WORKS**.
-  - **Render (6):** **AMBIGUOUS** — endpoint live but reads from `work_studio_documents.structured_content`; the from-source path lands in a different table; needs an end-to-end compile-then-render smoke.
-  - **Export (7):** DOCX + PPTX → **WORKS** (verified 39 258 + 38 324 bytes with correct MIME); deck-PDF → **PARTIAL** (soft-forks to pptx); signed-token download with 15-min TTL → **WORKS**.
-  - **Analyze (8):** spreadsheet-only (50 analyses in DB; tenancy gate honored). **WORKS-AT-SURFACE** + matches `PART 3` "spreadsheet-only today".
-- **Critical verifications:**
-  - Objective steers CONTENT: **TRUE** (`work_studio_export.py:334` concatenates objective into the LLM prompt verbatim).
-  - Objective does NOT steer KIND: **TRUE** (kind is path param; no read of `body.objective` in routing logic).
-  - AnalyzeDrawer Phase-3 stubs: **1 CLEAN-PLACEHOLDER** (Export tab description copy at AnalyzeDrawer.jsx:545); the `synthesize` endpoint is already wired at line 124-137. No HALF-IMPLEMENTED stubs.
-- **Cross-track Chat B1 handoff sub-matrix:** `brief` / `deck` / `report` / `minutes` = YES; `committee_pack` / `board_pack` (via `/export`) = NO until WS1 repair lands. Cleanest path for the chat manual affordance: fix the export dispatcher (one-line patch) + extend `_VALID_KINDS` so a single target route covers all 6 kinds.
-- **Stop-and-report:** none tripped — all classified gaps are REPAIR-class, not REBUILD; no Shield/tenancy/audit weakening required.
-- **Sprint memo:** `sprints/PHASE_WS0_CLASSIFY.md`.
+- **Status:** WS1 CLOSED 2026-06-24. WS0 classification + WS1 repair pass both shipped.
+- **WS1 verdict (post-repair, execution evidence):**
+  - **All 6 generation kinds reach `/export`** end-to-end (brief / deck / report / minutes / **committee_pack** / **board_pack**). Both new kinds verified to download as real DOCX (38 777 + 39 835 bytes, ZIP magic `504b0304`, correct OpenXML MIME).
+  - **Overlay** reclassified to **WORKS** — list + get round-trip on same id round-trips green. WS0 verdict was a test-time misclassification (id picked from `db.documents` table, not `db.work_studio_exports`).
+  - **Render (compile-then-render)** classified as **WORKS** — `/contexts/{cid}/work-studio/documents/{aid}/render?format={fmt}` on an artefact with non-empty `structured_content.sections`: DOCX (36 650 bytes), PPTX (29 085 bytes), PDF (1 631 bytes) all green.
+- **Files touched (product code):**
+  - `backend/routers/work_studio_export.py` — `_VALID_KINDS` extended to 6 kinds; `_AUTO_FORMAT["board_pack"]="docx"`; `_ENHANCE_KINDS` + `_ENHANCE_ACCEPTED_EXT_BY_KIND["board_pack"]` added; start_export render dispatcher group at line 760 extended to `("report","minutes","committee_pack","board_pack")` (docx + pdf); Pass-2 schema_doc dict gained a `board_pack` entry; enhance render dispatcher gained `board_pack` docx + pdf branches for parity; synisense-breakdown allow-list + `surface_family` map extended to board_pack.
+- **Cross-track Chat handoff sub-matrix (POST-WS1):** all 6 kinds now safe for B1.1 manual affordance via the single `/export/{kind}` route. No exception list.
+- **WS0 sprint memo:** `sprints/PHASE_WS0_CLASSIFY.md` (classification).
+- **WS1 sprint memo:** `sprints/PHASE_WS1_REPAIR.md` (repair pass).
 
 ## 4. Invariant Ladder Snapshot
 
@@ -124,6 +117,7 @@ Held since Phase 4.1 close.
 
 | Phase | Closed | Summary | Sprint Memo |
 |---|---|---|---|
+| WS1 | 2026-06-24 | Work Studio repair pass: all 6 generation kinds now reach `/export` (committee_pack dispatcher branch + board_pack added to `_VALID_KINDS` + Pass-2 schema_doc + enhance + synisense-breakdown parity); committee_pack DOCX 38 777 bytes + board_pack DOCX 39 835 bytes verified end-to-end with correct ZIP magic + MIME. Overlay reclassified to WORKS (WS0 was a test-time misclassification — id picked from `db.documents`, not `db.work_studio_exports`). Compile-then-render smoke green for DOCX/PPTX/PDF on an artefact with non-empty structured_content. Chat B1.1 handoff matrix: 6/6 kinds safe. | `sprints/PHASE_WS1_REPAIR.md` |
 | WS0 | 2026-06-24 | Work Studio runtime classification (read-only + execution-based, no product code touched): 8-capability matrix produced; 4 generate-kinds WORK (brief/deck/report/minutes), 1 BROKEN-AT-SEAM (committee_pack render dispatcher), 1 DEFERRED via `/export` (board_pack); Phase-C/C2 WORKS, overlay RUNS-BUT-AMBIGUOUS, render AMBIGUOUS (needs compile-then-render smoke), Analyze spreadsheet-only confirmed; objective→content TRUE, objective→kind FALSE; AnalyzeDrawer Phase-3 = CLEAN-PLACEHOLDER | `sprints/PHASE_WS0_CLASSIFY.md` |
 | B1 | 2026-06-24 | Chat consumer-surface build: grouped two-level provider→version model picker on `/app/chat`; build-breaking AST invariant on `StreamingReidentifier` wire-up; shield-no-leak generalised across Claude/GPT/Gemini + deliberate-violation rail (7 default-lane tests); pre-B1 FE regressions repaired (`tsconfig.json` + `SessionTimeoutGuard.__raw`) | `sprints/PHASE_B1_CHAT_BUILD.md` |
 | SPRINT_PLAN_INIT | 2026-06-24 | `SPRINT_PLAN.md` established as canonical decisions+sequence source (8 sections: sprint goal · tracks · sequence · protocols · locks · agreements · mixups · external action items); zero overlap with `DEV_PIPELINE.md` (live state) and `MASTER_STATE.md` (history) per §0 role boundary | `sprints/PHASE_SPRINT_PLAN_INIT.md` |
