@@ -35,6 +35,7 @@ import {
   FileText, Presentation, FileSpreadsheet, ClipboardList,
   Users, Building, Download, Loader2, ExternalLink, CheckCircle2,
 } from "lucide-react";
+import { recommendKind as _recommendKind } from "./workStudioRecommender";
 
 const KINDS = [
   { id: "brief",          label: "Brief",          blurb: "1-2 page summary", Icon: FileText },
@@ -44,6 +45,12 @@ const KINDS = [
   { id: "committee_pack", label: "Committee Pack", blurb: "Multi-section pack", Icon: Users },
   { id: "board_pack",     label: "Board Pack",     blurb: "Board-grade pack", Icon: Building },
 ];
+
+// ─────────────────────────────────────────────────────────────────
+// Stage 4.2 — Objective → best-fit kind recommender lives in the
+// sibling `workStudioRecommender.js` so the heuristic can be
+// unit-tested without React. The modal just consumes the result.
+// ─────────────────────────────────────────────────────────────────
 
 // Mechanical pre-fill helpers — pure JS, no LLM.
 const _truncateChars = (s, n) => (s && s.length > n ? s.slice(0, n - 1) + "…" : s || "");
@@ -101,6 +108,11 @@ export default function WorkStudioAffordanceModal({
   const [exportId, setExportId] = useState(null);
   const [exportRow, setExportRow] = useState(null);
   const [errMsg, setErrMsg] = useState("");
+  // Stage 4.2 — user explicit kind override flag. Set true the
+  // moment the user clicks a kind tile; from that point on the
+  // recommender no longer overwrites their choice as they keep
+  // editing the objective.
+  const [userPickedKind, setUserPickedKind] = useState(false);
 
   // Mechanical pre-fill — computed once on open, then user-editable.
   const preDesc = useMemo(
@@ -113,10 +125,19 @@ export default function WorkStudioAffordanceModal({
     [contextName, chatTitle]
   );
 
+  // Stage 4.2 — live recommendation derived from the current
+  // objective + description (debounce-free; the regex is cheap).
+  const recommendation = useMemo(
+    () => _recommendKind(objective, description),
+    [objective, description]
+  );
+
   useEffect(() => {
     if (open) {
+      const initialRec = _recommendKind(preObj, preDesc);
       setStep("pick");
-      setKind("brief");
+      setKind(initialRec.id);
+      setUserPickedKind(false);
       setDescription(preDesc);
       setObjective(preObj);
       setScope(preScope);
@@ -125,6 +146,16 @@ export default function WorkStudioAffordanceModal({
       setErrMsg("");
     }
   }, [open, preDesc, preObj, preScope]);
+
+  // Stage 4.2 — when the user edits objective / description live
+  // before clicking a tile, keep the suggested kind in sync. Once
+  // they've explicitly picked a tile (userPickedKind=true), respect
+  // their choice and stop auto-overwriting.
+  useEffect(() => {
+    if (!open) return;
+    if (userPickedKind) return;
+    if (kind !== recommendation.id) setKind(recommendation.id);
+  }, [open, userPickedKind, recommendation.id, kind]);
 
   // Poll the export status when working.
   useEffect(() => {
@@ -253,26 +284,52 @@ export default function WorkStudioAffordanceModal({
                 className="grid grid-cols-3 gap-2"
                 data-testid="chat-ws-kind-grid"
               >
-                {KINDS.map(({ id, label, blurb, Icon }) => (
+                {KINDS.map(({ id, label, blurb, Icon }) => {
+                  const isRecommended = recommendation.id === id && recommendation.reason;
+                  return (
                   <button
                     key={id}
                     type="button"
-                    onClick={() => { setKind(id); setStep("review"); }}
-                    className={`text-left px-2.5 py-2 border rounded-sm transition-colors ${
+                    onClick={() => {
+                      setKind(id);
+                      setUserPickedKind(true);
+                      setStep("review");
+                    }}
+                    className={`relative text-left px-2.5 py-2 border rounded-sm transition-colors ${
                       kind === id
                         ? "border-[var(--accent)] bg-white"
                         : "border-[var(--rule)] bg-white/60 hover:bg-white"
                     }`}
                     data-testid={`chat-ws-kind-${id}`}
                   >
+                    {isRecommended && (
+                      <span
+                        className="absolute -top-1.5 right-1.5 text-[9px] uppercase tracking-[0.10em] font-mono px-1.5 py-[1px] rounded-sm bg-[var(--accent)] text-white"
+                        data-testid={`chat-ws-kind-${id}-recommended-pill`}
+                      >
+                        Suggested
+                      </span>
+                    )}
                     <div className="flex items-center gap-1.5 text-[13px] text-[var(--ink)]">
                       <Icon className="w-3.5 h-3.5 text-[var(--accent)]" />
                       <span>{label}</span>
                     </div>
                     <p className="text-[10.5px] text-[var(--muted)] italic mt-0.5">{blurb}</p>
                   </button>
-                ))}
+                  );
+                })}
               </div>
+              {/* Stage 4.2 — explain the recommendation when we have
+                  one and the user hasn't yet overridden. Quiet line,
+                  doesn't interrupt the grid. */}
+              {recommendation.reason && !userPickedKind && (
+                <p
+                  className="text-[11px] text-[var(--muted)] italic mt-1.5"
+                  data-testid="chat-ws-kind-recommendation-reason"
+                >
+                  {recommendation.reason}. Click any tile to override.
+                </p>
+              )}
             </div>
 
             {step === "review" && (
