@@ -275,18 +275,168 @@ The user should choose between these two postures before P2.2 ships.
 
 Repair (option 1) is recommended. Awaiting explicit "OK to patch" from user before touching product code.
 
+## FE Caller Analysis (post-dispatch precondition for the patch)
+
+User dispatch required: *"the behaviour-change claim — 'frontend already operates under an active context, no UI regression' — must be SHOWN, not asserted."*
+
+### Endpoint inventory in audited file
+
+```
+$ grep -nE '@router\.|@app\.' backend/routers/strategic_goal_evolution.py
+81:@router.get("/{context_id}/strategic-goals/{goal_id}/evolution")
+```
+
+Single endpoint. Single canonical caller in the FE.
+
+### FE callers of the affected route
+
+```
+$ grep -rn -E 'strategic-goals/[^/]+/evolution' frontend/src
+frontend/src/lib/api/schemas.gen.ts:13504:    path: "/api/contexts/:context_id/strategic-goals/:goal_id/evolution",
+frontend/src/components/monitor/StrategicGoalsPanel.jsx:554:  `/contexts/${contextId}/strategic-goals/${goal.id}/evolution`,
+```
+
+Two hits: (1) auto-generated OpenAPI schema (not a runtime caller), (2) `StrategicGoalsPanel.jsx:554` — the only runtime caller.
+
+### Caller analysis — `StrategicGoalsPanel.jsx`
+
+The call (lines 545-565) has a hard guard `if (!goal?.id || !contextId) return;`. The `contextId` prop is threaded from `Monitor.jsx`:
+
+```jsx
+// pages/Monitor.jsx:71-75
+const { account, activeContext, ... } = useAuth();
+const cid = activeContext?.id;
+// L201-207
+<StrategicGoalsPanel contextId={cid} ... />
+```
+
+`useAuth().activeContext` is derived in `AuthContext.jsx` from `activeContextId` ∩ `contexts`, where `contexts` is the **membership-authoritative** list fetched by `/api/me/contexts`:
+
+```jsx
+// contexts/AuthContext.jsx:61-85
+const fetchAuthoritativeContexts = useCallback(async () => {
+  const { data } = await api.get("/me/contexts");
+  return (data?.items || []).map((m) => ({ id: m.context_id, my_role: m.role, ... }));
+}, []);
+```
+
+And `/api/me/contexts` server-side filters by `db.memberships.find({"account_id": current["id"], "status": "active"})`:
+
+```python
+# backend/routers/active_context.py
+async def list_my_contexts(current = Depends(get_current_account)):
+    memberships = await db.memberships.find(
+        {"account_id": current["id"], "status": "active"}, ...
+    )
+```
+
+This is **the same query** the new `require_context_membership` dep runs. They cannot disagree.
+
+Boot guard at `AuthContext.jsx:109-122` additionally clears stale `activeContextId` if it's not in the membership list (covers mid-session revocation + cross-tab scenarios).
+
+### Caller-by-caller verdict
+
+| Caller | `context_id` source | Membership-aware? | Verdict |
+|---|---|---|---|
+| `StrategicGoalsPanel.jsx:554` (only runtime caller) | `useAuth().activeContext.id` → `/api/me/contexts` membership list, boot-guarded | ✅ | **PASS** — no UI regression risk |
+| `schemas.gen.ts:13504` | auto-generated type only | n/a | **N/A** |
+
+### FE caller analysis verdict: **PASS**
+
+No FE call path can construct a `context_id` the user isn't a member of. Applying the patch:
+- Legitimate FE callers → same 200 OK (the new dep accepts them by construction).
+- Attackers (no membership) → 403 Forbidden (was 200 OK pre-patch).
+
+## Patch applied
+
+```diff
+diff --git a/backend/routers/strategic_goal_evolution.py b/backend/routers/strategic_goal_evolution.py
+index 9bff7cf4..c221eb69 100644
+--- a/backend/routers/strategic_goal_evolution.py
++++ b/backend/routers/strategic_goal_evolution.py
+@@ -51,7 +51,7 @@ from typing import Any, Dict, List, Optional
+ from fastapi import APIRouter, Depends, HTTPException
+-from core import db, get_current_account
++from core import db, require_context_membership
+
+@@ -82,7 +82,7 @@ async def goal_evolution(
+     context_id: str,
+     goal_id: str,
+-    current: Dict[str, Any] = Depends(get_current_account),
++    ctx: Dict[str, Any] = Depends(require_context_membership()),
+ ) -> Dict[str, Any]:
+```
+
+2 single-token edits. No filter changes (all 4 DB-call filters were already `context_id`-scoped, which is correct and matches the sibling-router convention).
+
+## Post-patch verification
+
+### Backend hot-reload + curl smoke
+
+Backend RUNNING, no errors in `/var/log/supervisor/backend.err.log`. Hot reload took the change. Unauthenticated curl returns 401 from the inner `get_current_account` dep (unchanged behaviour for unauthenticated callers).
+
+```
+$ curl -s -o /dev/null -w "HTTP %{http_code}\n" \
+    "$REACT_APP_BACKEND_URL/api/contexts/no-such-ctx/strategic-goals/no-such-goal/evolution"
+HTTP 401
+```
+
+### Test-suite verification
+
+Updated `backend/tests/test_monitor_drawer_progress_timeline.py`:
+1. Added `db.contexts` + `db.memberships` seeds to the 2 existing positive tests so the new membership gate accepts them.
+2. Added a NEW security test `test_evolution_endpoint_blocks_cross_tenant_access` that:
+   - Seeds a victim tenant's goal + sensitive document.
+   - Authenticates as an attacker account with NO membership in victim's context.
+   - Asserts the response is **403 Forbidden**, NOT 200 OK.
+   - Asserts the response body does NOT contain the leaked title strings.
+
+Run output:
+```
+$ python3 -m pytest backend/tests/test_monitor_drawer_progress_timeline.py -v
+... test_evolution_router_registered_in_server  FAILED   (pre-existing, source-text drift, see below)
+... test_evolution_endpoint_aggregates_multi_source_events  PASSED
+... test_evolution_endpoint_empty_for_pristine_goal  PASSED
+... test_evolution_endpoint_blocks_cross_tenant_access  PASSED   ← NEW P2.1 security test
+... test_drawer_timeline_renders_required_testids  PASSED
+... test_drawer_no_manual_milestone_cta  PASSED
+... test_drawer_empty_state_copy_verbatim  PASSED
+... test_drawer_timeline_fetches_evolution_endpoint  PASSED
+... test_drawer_timeline_uses_tailwind_short_brand_purple  PASSED
+
+1 failed, 8 passed, 21 warnings in 4.67s
+```
+
+The single failure (`test_evolution_router_registered_in_server`) is **pre-existing**, not caused by P2.1. Verified by `git stash` + re-run:
+
+```
+$ git stash && python3 -m pytest .../test_evolution_router_registered_in_server -v
+FAILED  ← fails identically PRE-PATCH
+$ git stash pop
+```
+
+The test asserts `"app.include_router(strategic_goal_evolution_router.router)" in server.py`, but a prior refactor moved router mounting to `akki_app.py:187`:
+```
+backend/akki_app.py:122:from routers import strategic_goal_evolution as _strategic_goal_evolution
+backend/akki_app.py:187:    _strategic_goal_evolution.router,
+```
+Out of scope for P2.1. Will surface in §9 as a follow-up.
+
+### Security claim verified (shown, not asserted)
+
+The new `test_evolution_endpoint_blocks_cross_tenant_access` PASSES, which means:
+- Non-member call returns **403 Forbidden** (was 200 OK pre-patch).
+- Victim's goal title `"CONFIDENTIAL board KPI"` and document title `"Secret board capital plan Q3"` are NOT present in the response body.
+- The CVE-class IDOR/BOLA is closed.
+
+The behaviour-change claim from §"Recommended fix" is now **SHOWN, not asserted** — per the user's standing rule.
+
 ## Files touched in this audit pass
 
-- Created: `memory/audit/P2_sge_tenancy_audit.md` (this file).
-- **NO** product code changes.
-- **NO** test code changes.
+- Updated: `memory/audit/P2_sge_tenancy_audit.md` (this file).
+- Product code (the ONLY permitted edit): `backend/routers/strategic_goal_evolution.py` — 2-token-edit security patch.
+- Test code: `backend/tests/test_monitor_drawer_progress_timeline.py` — membership seeds + new cross-tenant 403 security test.
 
 ## Stop-and-report
 
-🔴 **STOP GATE TRIPPED** per dispatch's strict no-silent-patch rule.
-
-> *"if any UNTENANTED row is found, STOP P2.1, surface the audit table, and wait for explicit user approval before patching. No silent edits to product code."*
-
-P2.2/P2.3/P2.4 are blocked behind this decision since they depend on resolving the canonical-pattern question (whether `require_context_membership` is the canonical gate, or whether a new escape-hatch marker for "no-membership-gate" is being introduced).
-
-Awaiting user direction.
+✅ **GATE RELEASED.** P2.1 patch applied per user dispatch (option b: patch + hard ratchet in P2.2). FE caller analysis passed, post-patch verification passed (8/9 tests green, the 1 fail is pre-existing source-text drift unrelated to the patch), security claim shown via the new dedicated test. Moving on to P2.2 + P2.4 per dispatch.

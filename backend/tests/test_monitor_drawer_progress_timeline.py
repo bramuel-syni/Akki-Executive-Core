@@ -52,6 +52,7 @@ async def test_evolution_endpoint_aggregates_multi_source_events():
     cid = f"evo-cid-{uuid.uuid4().hex[:8]}"
     gid = f"evo-goal-{uuid.uuid4().hex[:8]}"
     doc_id = f"evo-doc-{uuid.uuid4().hex[:8]}"
+    fake_aid = "evo-user"  # matches _fake_user["id"] below
 
     await db.strategic_goals.insert_one({
         "id": gid, "context_id": cid, "title": "Lift CET1 ratio",
@@ -72,9 +73,25 @@ async def test_evolution_endpoint_aggregates_multi_source_events():
         "kind": "tasks", "count": 4, "failures": 0,
         "created_at": "2026-01-20T01:00:00+00:00",
     })
+    # AUDIT_P2.1 (2026-06-24) — endpoint now sits behind
+    # `require_context_membership`. Seed context + active membership
+    # for the fake account so the membership gate accepts the call.
+    await db.contexts.update_one(
+        {"id": cid},
+        {"$setOnInsert": {"id": cid, "name": "evo test ctx", "kind": "company"}},
+        upsert=True,
+    )
+    await db.memberships.update_one(
+        {"account_id": fake_aid, "context_id": cid},
+        {"$set": {
+            "account_id": fake_aid, "context_id": cid,
+            "role": "owner", "status": "active", "sub_role": "admin",
+        }},
+        upsert=True,
+    )
 
     async def _fake_user():
-        return {"id": "evo-user", "email": "u@e.com"}
+        return {"id": fake_aid, "email": "u@e.com"}
 
     app.dependency_overrides[get_current_account] = _fake_user
     try:
@@ -102,7 +119,7 @@ async def test_evolution_endpoint_aggregates_multi_source_events():
             assert second["delta"]["from"] == 50
             assert second["delta"]["to"] == 65
             assert second["delta"]["direction"] == "up"
-            # 404 on unknown goal.
+            # 404 on unknown goal (context exists + caller is a member).
             r2 = await c.get(f"/api/contexts/{cid}/strategic-goals/does-not-exist/evolution")
             assert r2.status_code == 404
     finally:
@@ -110,6 +127,8 @@ async def test_evolution_endpoint_aggregates_multi_source_events():
         await db.strategic_goals.delete_one({"id": gid})
         await db.documents.delete_one({"id": doc_id})
         await db.extractions_log.delete_many({"document_id": doc_id})
+        await db.memberships.delete_one({"account_id": fake_aid, "context_id": cid})
+        await db.contexts.delete_one({"id": cid})
 
 
 @pytest.mark.asyncio
@@ -119,12 +138,27 @@ async def test_evolution_endpoint_empty_for_pristine_goal():
 
     cid = f"evo-cid-pristine-{uuid.uuid4().hex[:8]}"
     gid = f"evo-goal-pristine-{uuid.uuid4().hex[:8]}"
+    fake_aid = "evo-user-2"
     await db.strategic_goals.insert_one({
         "id": gid, "context_id": cid, "title": "Pristine",
     })
+    # AUDIT_P2.1 (2026-06-24) — seed context + active membership.
+    await db.contexts.update_one(
+        {"id": cid},
+        {"$setOnInsert": {"id": cid, "name": "evo pristine ctx", "kind": "company"}},
+        upsert=True,
+    )
+    await db.memberships.update_one(
+        {"account_id": fake_aid, "context_id": cid},
+        {"$set": {
+            "account_id": fake_aid, "context_id": cid,
+            "role": "owner", "status": "active", "sub_role": "admin",
+        }},
+        upsert=True,
+    )
 
     async def _fake_user():
-        return {"id": "evo-user-2", "email": "u@e.com"}
+        return {"id": fake_aid, "email": "u@e.com"}
 
     app.dependency_overrides[get_current_account] = _fake_user
     try:
@@ -135,6 +169,80 @@ async def test_evolution_endpoint_empty_for_pristine_goal():
     finally:
         app.dependency_overrides.pop(get_current_account, None)
         await db.strategic_goals.delete_one({"id": gid})
+        await db.memberships.delete_one({"account_id": fake_aid, "context_id": cid})
+        await db.contexts.delete_one({"id": cid})
+
+
+@pytest.mark.asyncio
+async def test_evolution_endpoint_blocks_cross_tenant_access():
+    """AUDIT_P2.1 (2026-06-24) — verifies the security claim.
+
+    Pre-patch behaviour: any authenticated caller could pass any
+    `context_id`/`goal_id` and receive a 200 OK with cross-tenant
+    data (board doc titles, audit log, etc.). This is the IDOR/BOLA
+    the P2.1 audit caught.
+
+    Post-patch behaviour (require_context_membership): a non-member
+    caller (no row in db.memberships for {account_id, context_id})
+    receives 403 Forbidden BEFORE the handler runs. No data leak.
+    """
+    from server import app  # type: ignore
+    from core import db, get_current_account  # type: ignore
+
+    victim_cid = f"evo-victim-{uuid.uuid4().hex[:8]}"
+    victim_gid = f"evo-victim-goal-{uuid.uuid4().hex[:8]}"
+    victim_doc_id = f"evo-victim-doc-{uuid.uuid4().hex[:8]}"
+    attacker_aid = "evo-attacker"
+
+    # Seed the victim tenant's data — strategic goal + a sensitive
+    # linked document title that the attacker MUST NOT see.
+    await db.contexts.update_one(
+        {"id": victim_cid},
+        {"$setOnInsert": {"id": victim_cid, "name": "Victim Corp", "kind": "company"}},
+        upsert=True,
+    )
+    await db.strategic_goals.insert_one({
+        "id": victim_gid, "context_id": victim_cid,
+        "title": "CONFIDENTIAL board KPI",
+        "current_score": 88, "status": "on_track",
+        "score_history": [{"recorded_at": "2026-03-01T00:00:00+00:00", "score": 88}],
+    })
+    await db.documents.insert_one({
+        "id": victim_doc_id, "context_id": victim_cid,
+        "title": "Secret board capital plan Q3",
+        "category": "report", "linked_objective_id": victim_gid,
+        "created_at": "2026-02-15T00:00:00+00:00",
+    })
+
+    # NO membership seeded for attacker_aid in victim_cid — the gate
+    # MUST 403 this caller.
+    async def _fake_attacker():
+        return {"id": attacker_aid, "email": "attacker@evil.com"}
+
+    app.dependency_overrides[get_current_account] = _fake_attacker
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as c:
+            r = await c.get(
+                f"/api/contexts/{victim_cid}/strategic-goals/{victim_gid}/evolution",
+            )
+            # P2.1 SECURITY ASSERTION: non-member must get 403,
+            # NOT 200 with the victim's data.
+            assert r.status_code == 403, (
+                f"P2.1 security regression: non-member call should 403, "
+                f"got {r.status_code}: {r.text[:200]}"
+            )
+            # And the response body MUST NOT contain the leaked title.
+            assert "Secret board capital plan" not in r.text, (
+                "P2.1 security regression: victim's doc title leaked in 403 body"
+            )
+            assert "CONFIDENTIAL" not in r.text, (
+                "P2.1 security regression: victim's goal title leaked in 403 body"
+            )
+    finally:
+        app.dependency_overrides.pop(get_current_account, None)
+        await db.strategic_goals.delete_one({"id": victim_gid})
+        await db.documents.delete_one({"id": victim_doc_id})
+        await db.contexts.delete_one({"id": victim_cid})
 
 
 # ─────────────────────────────────────────────────────────────────

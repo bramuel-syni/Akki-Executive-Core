@@ -51,7 +51,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from core import db, get_current_account
+from core import db, require_context_membership
 
 
 log = logging.getLogger(__name__)
@@ -82,7 +82,7 @@ def _direction(prev: Optional[int], curr: int) -> str:
 async def goal_evolution(
     context_id: str,
     goal_id: str,
-    current: Dict[str, Any] = Depends(get_current_account),
+    ctx: Dict[str, Any] = Depends(require_context_membership()),
 ) -> Dict[str, Any]:
     """Aggregate every time-series signal for one goal into a single
     chronological feed."""
