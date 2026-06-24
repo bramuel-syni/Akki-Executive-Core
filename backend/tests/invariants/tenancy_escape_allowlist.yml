@@ -519,13 +519,13 @@ tenancy_allow_no_account_id_markers:
     line: 129
     justification: "blob fetched by analysis_id; parent workbook_analyses row validated with account_id upstream (L88-95)"
   - file: backend/routers/workbook_analysis.py
-    line: 294
+    line: 323
     justification: "model.dump() insert: analysis carries account_id+context_id fields stamped at WorkbookAnalysis(...) constructor (L274-286); non-literal scanner cannot resolve through model.dump()"
   - file: backend/routers/workbook_analysis.py
-    line: 724
+    line: 753
     justification: "model.dump() insert: analysis carries account_id+context_id fields stamped at build_analysis_from_uploads(account_id, context_id) call (L710-716); non-literal scanner cannot resolve through model.dump()"
   - file: backend/routers/workbook_analysis.py
-    line: 726
+    line: 755
     justification: "blob_docs accumulator: each blob stamped with account_id+context_id at build_analysis_from_uploads; non-literal scanner cannot resolve through list accumulation"
   - file: backend/services/backfill_shield_v1.py
     line: 276

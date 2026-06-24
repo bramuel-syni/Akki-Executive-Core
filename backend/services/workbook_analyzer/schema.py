@@ -212,6 +212,23 @@ class WorkbookAnalysis(BaseModel):
     forecasts: List[ForecastRun] = Field(default_factory=list)
     anomalies: List[AnomalyRow] = Field(default_factory=list)
 
+    # Stage 4.3 (2026-06-24) — Analyze narration carriage.
+    #
+    # When a `db.analyses` (ana-*) row has been synthesized via
+    # POST /workbook/v2/analyses/{aid}/synthesize, the resulting
+    # solva_v2 narration is cached on the row (`row.headline` +
+    # `row.observations`). The adapter that builds a
+    # WorkbookAnalysis view for export reads those fields onto
+    # these two optional carriers so the PPTX/DOCX/XLSX builders
+    # can surface the narrative rather than ship an empty shell.
+    #
+    # Both fields are Optional/empty by default so the existing
+    # `wba-*` legacy pipeline (no narration shape) keeps shipping
+    # byte-identical files. Builders branch on
+    # `analyze_narration_headline` being non-empty.
+    analyze_narration_headline: Optional[str] = None
+    analyze_narration_observations: List[Dict[str, Any]] = Field(default_factory=list)
+
     schema_version: str = "workbook.analyze.1.0"
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())

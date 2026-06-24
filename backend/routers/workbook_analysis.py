@@ -161,13 +161,24 @@ async def _load_analysis(analysis_id: str, account_id: str) -> WorkbookAnalysis:
 # Blast radius = three call sites; everything else unchanged.
 
 def _adapt_new_analysis_to_workbook_analysis(row: Dict[str, Any]) -> WorkbookAnalysis:
-    """Build a minimal `WorkbookAnalysis` view from a new-entity
-    `Analysis` row so the existing PPTX/DOCX/XLSX builders can
-    consume it without modification.
+    """Build a `WorkbookAnalysis` view from a new-entity `Analysis`
+    row so the existing PPTX/DOCX/XLSX builders can consume it
+    without modification.
 
-    Phase 1 carries no synthesis data — empty signals /
-    simulations / forecasts / anomalies. Phase 3 will replace
-    this shim with real per-source narration via Solva v2."""
+    Stage 4.3 (2026-06-24) — narration carriage. The Phase 1 shim
+    returned empty signals/simulations/forecasts/anomalies AND
+    silently dropped the cached solva_v2 narration so exports were
+    content-free. After Phase 3 the synthesize endpoint persists
+    `row.headline` + `row.observations` (mirror of `runs[-1]`); we
+    surface those onto the new optional carriers `analyze_narration_*`
+    so the report builders can prepend a Bottom Line section.
+
+    Note: signals/forecasts/anomalies remain empty for ana-* rows.
+    Re-running the deterministic pipeline on every export would
+    double the runtime cost (and re-parse the same blobs the
+    synthesize endpoint already touched). The narration block IS
+    the content for ana-* exports today.
+    """
     sources = row.get("sources", []) or []
     columns = [
         WorkbookColumn(
@@ -199,6 +210,22 @@ def _adapt_new_analysis_to_workbook_analysis(row: Dict[str, Any]) -> WorkbookAna
         sources[0].get("filename") if sources else "analysis"
     )
 
+    # Stage 4.3 — pick up the cached narration. The synthesize
+    # endpoint mirrors the headline + observations on the top-level
+    # row (lines 1098-1114 of routers/workbook_analysis.py) so we
+    # read those directly. Fall back to runs[-1] if the legacy
+    # mirror is absent (defensive — should always be present after
+    # synthesize but the row shape pre-Phase-3 might not have it).
+    narration_headline: Optional[str] = row.get("headline") or None
+    narration_observations: List[Dict[str, Any]] = list(row.get("observations") or [])
+    if not narration_headline:
+        runs = row.get("runs") or []
+        if runs:
+            last_run = runs[-1] or {}
+            narration_headline = last_run.get("headline") or None
+            if not narration_observations:
+                narration_observations = list(last_run.get("observations") or [])
+
     return WorkbookAnalysis(
         id=row["id"],
         account_id=row["account_id"],
@@ -217,6 +244,8 @@ def _adapt_new_analysis_to_workbook_analysis(row: Dict[str, Any]) -> WorkbookAna
         simulations=[],
         forecasts=[],
         anomalies=[],
+        analyze_narration_headline=narration_headline,
+        analyze_narration_observations=narration_observations,
         created_at=row.get("created_at") or _now_iso(),
         updated_at=row.get("updated_at") or _now_iso(),
     )

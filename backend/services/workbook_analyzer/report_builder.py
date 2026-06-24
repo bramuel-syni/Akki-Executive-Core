@@ -89,6 +89,40 @@ def build_pptx_report(analysis: WorkbookAnalysis) -> bytes:
         f"appendix at the end lists the exact ranges."
     ))
 
+    # ─── Stage 4.3 — Bottom Line section (Analyze narration) ─────
+    # When the source `analyses` row has been synthesized via the
+    # Run-Synthesis button, the cached Solva v2 narration rides on
+    # `analyze_narration_*`. Prepend a Bottom Line slide + one
+    # observation slide so the export carries the narrative
+    # voice the user sees in the Analyze drawer.
+    if analysis.analyze_narration_headline:
+        bl_bullets = [analysis.analyze_narration_headline]
+        bl_slide = _add_text_slide(prs, "Bottom line", bl_bullets)
+        _set_notes(bl_slide, (
+            f"This is the headline read on the workbook produced by Solva v2 "
+            f"synthesis. It accretes from the signals, forecasts, and anomalies "
+            f"detected in the underlying data; the supporting observations on "
+            f"the next slide carry the citation pointers back to the source."
+        ))
+        obs_lines: List[str] = []
+        for o in (analysis.analyze_narration_observations or [])[:8]:
+            title = (o.get("title") or "").strip()
+            body = (o.get("detail") or o.get("body") or "").strip()
+            cites = o.get("citations") or []
+            cite_hint = ""
+            if cites:
+                first = cites[0] if isinstance(cites[0], dict) else {}
+                cite_hint = f" [{first.get('cell_range', '')}]" if first.get("cell_range") else ""
+            obs_lines.append(f"• {title}: {body}{cite_hint}".strip())
+        if obs_lines:
+            obs_slide = _add_text_slide(prs, "Observations", obs_lines)
+            _set_notes(obs_slide, (
+                f"This slide lists the cited observations from the Solva v2 "
+                f"synthesis run. Each entry references a cell range in the "
+                f"source workbook; readers may want to open the workbook to "
+                f"a cited range and confirm the value in context."
+            ))
+
     # ─── Sheet overview (max 3 sheets) ───────────────────────────
     for sheet in analysis.sheets[:3]:
         bullets = [
@@ -256,6 +290,37 @@ def build_docx_report(analysis: WorkbookAnalysis) -> bytes:
         f"the appendix at the end lists the exact ranges."
     ), label="docx/cover"))
 
+    # Stage 4.3 — Bottom Line section (Analyze narration). When the
+    # source `analyses` row has been synthesized via Run-Synthesis,
+    # the cached Solva v2 narration rides on `analyze_narration_*`.
+    # Prepend a Bottom Line heading + one paragraph per observation
+    # so the DOCX carries the narrative voice the user sees in the
+    # Analyze drawer.
+    if analysis.analyze_narration_headline:
+        doc.add_heading("Bottom line", level=2)
+        doc.add_paragraph(_validate_block(
+            analysis.analyze_narration_headline,
+            label="docx/analyze_narration/headline",
+        ))
+        if analysis.analyze_narration_observations:
+            doc.add_heading("Observations", level=2)
+            for o in analysis.analyze_narration_observations[:12]:
+                title = (o.get("title") or "").strip()
+                body = (o.get("detail") or o.get("body") or "").strip()
+                cites = o.get("citations") or []
+                cite_hint = ""
+                if cites:
+                    first = cites[0] if isinstance(cites[0], dict) else {}
+                    if first.get("cell_range"):
+                        cite_hint = f"  [{first.get('cell_range', '')}]"
+                if title and body:
+                    line = f"{title}: {body}{cite_hint}"
+                elif body:
+                    line = f"{body}{cite_hint}"
+                else:
+                    continue
+                doc.add_paragraph(_validate_block(line, label=f"docx/analyze_narration/{title}"))
+
     # Sheets (max 3)
     for sheet in analysis.sheets[:3]:
         doc.add_heading(f"Sheet: {sheet.name}", level=2)
@@ -377,6 +442,36 @@ def build_xlsx_report(analysis: WorkbookAnalysis) -> bytes:
     summary.append(["status", analysis.status])
     summary.append(["created_at", analysis.created_at])
     summary.append(["updated_at", analysis.updated_at])
+
+    # Stage 4.3 — Bottom Line sheet (Analyze narration). When the
+    # source `analyses` row has been synthesized via Run-Synthesis,
+    # the cached Solva v2 narration rides on `analyze_narration_*`.
+    # Add a sheet up front with the headline + one row per
+    # observation so the XLSX export carries the narrative voice.
+    if analysis.analyze_narration_headline:
+        bl_ws = wb.create_sheet("Bottom Line", 0)  # insert as first sheet
+        bl_ws.append(["section", "value"])
+        bl_ws.append([
+            "headline",
+            _validate_block(
+                analysis.analyze_narration_headline,
+                label="xlsx/analyze_narration/headline",
+            ),
+        ])
+        bl_ws.append(["", ""])
+        bl_ws.append(["observation_kind", "title", "body", "cell_range"])
+        for o in analysis.analyze_narration_observations[:24]:
+            title = (o.get("title") or "").strip()
+            body = (o.get("detail") or o.get("body") or "").strip()
+            kind = (o.get("kind") or o.get("tab") or "synthesis").strip()
+            cites = o.get("citations") or []
+            cell_range = ""
+            if cites:
+                first = cites[0] if isinstance(cites[0], dict) else {}
+                cell_range = first.get("cell_range", "")
+            if body:
+                _validate_block(body, label=f"xlsx/analyze_narration/{title or kind}")
+            bl_ws.append([kind, title, body, cell_range])
 
     # Signals
     sig_ws = wb.create_sheet("Signals")

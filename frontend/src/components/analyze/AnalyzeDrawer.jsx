@@ -541,9 +541,10 @@ export default function AnalyzeDrawer({ aid, onClose }) {
                   data-testid="analyze-drawer-export"
                 >
                   <p className="text-[12px] text-[var(--muted)] mb-4">
-                    Download a report containing the analysis content + source inventory.
-                    Solva narration arrives in Phase 3; the present exports carry the
-                    deterministic content available today.
+                    Download a report containing the Bottom Line headline, the
+                    Solva v2 observations (with citations), and the source
+                    inventory. Run synthesis first if you want the narrative
+                    to land in the export.
                   </p>
                   <div className="flex flex-col gap-2 max-w-md">
                     <Button
