@@ -9,15 +9,44 @@ on:
     - cron: "0 6 * * 1"   # Monday 06:00 UTC
   workflow_dispatch:
 
-# Phase P3.6 (2026-02) — Dependency vulnerability scan gate.
-# Fails the job on HIGH or CRITICAL vulnerabilities for both Python and
-# Node ecosystems. MODERATE / LOW surface as warnings (job stays green
-# so we don't block all PRs on transitive moderates — Dependabot is the
-# slow-burn channel for those).
+# Phase 5.4 (2026-06) — Strict-mode dependency vulnerability scan gate.
+#
+# Both jobs fail the workflow when an unapproved vulnerability is
+# detected at the configured severity threshold. This is a real
+# branch-protection gate, not a slow-burn warning channel.
+#
+# The pip-audit job uses JSON parsing + an explicit IGNORED_VULNS
+# allowlist. Every entry in IGNORED_VULNS must have a matching active
+# entry in:
+#   backend/SECURITY_EXCEPTIONS.md
+# with: CVE id, package, severity, why no fix, attack-surface
+# impact analysis, tracker link, and sunset condition. The only
+# acceptable form of "leaving a CVE" is via that file.
+#
+# We do NOT use `pip-audit --strict` because our requirements.txt
+# legitimately references 3 private/local packages that are not on
+# PyPI (`en-core-web-lg`, `en-core-web-sm`, `emergentintegrations`).
+# `--strict` would escalate those to failures unconditionally.
+# Instead we parse the JSON output and fail on any unignored vuln —
+# strict semantics, scoped to the right surface.
+#
+# The npm/yarn-audit job is strict at --level high (HIGH+CRITICAL).
+# MODERATE / LOW findings remain Dependabot's slow-burn channel.
+#
+# To approve a NEW exception:
+#   1. Update backend/SECURITY_EXCEPTIONS.md with the full entry.
+#   2. Add the CVE id to the IGNORED_VULNS env var below.
+#   3. Cite the SECURITY_EXCEPTIONS.md commit in your PR.
 
 jobs:
   pip-audit:
     runs-on: ubuntu-latest
+    env:
+      # Phase 5.4 exception cluster: 7 litellm CVEs blocked on the
+      # emergentintegrations upstream openai==1.99.9 pin. See
+      # backend/SECURITY_EXCEPTIONS.md for full attack-surface
+      # analysis + sunset conditions.
+      IGNORED_VULNS: "CVE-2026-35029,CVE-2026-35030,CVE-2026-42271,CVE-2026-47101,CVE-2026-47102,CVE-2026-49468,GHSA-69x8-hrgq-fjj8"
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -28,28 +57,36 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install pip-audit
-      - name: Audit backend requirements
+      - name: Audit backend requirements (strict, with documented exceptions)
         run: |
-          # pip-audit returns non-zero on any vulnerability; we filter
-          # the JSON output for severity >= HIGH and exit accordingly.
           set +e
           pip-audit -r backend/requirements.txt --format json > audit.json
           set -e
           python3 - <<'PY'
-          import json, sys
+          import json, os, sys
+
           data = json.load(open("audit.json"))
+          ignored = {s.strip() for s in os.environ.get("IGNORED_VULNS","").split(",") if s.strip()}
+
           hits = []
           for pkg in data.get("dependencies", []):
               for vuln in pkg.get("vulns", []):
-                  sev = ((vuln.get("aliases") or []) and "HIGH") or vuln.get("description","").upper()
-                  # Treat anything pip-audit reports as needing attention.
-                  fix_versions = vuln.get("fix_versions") or []
-                  hits.append((pkg["name"], vuln.get("id"), fix_versions))
+                  vid = vuln.get("id")
+                  if vid in ignored:
+                      print(f"::notice title=Vuln-ignored::{pkg['name']} {vid} "
+                            f"-- see backend/SECURITY_EXCEPTIONS.md")
+                      continue
+                  hits.append((pkg["name"], vid, vuln.get("fix_versions") or []))
+
           if hits:
               for n, vid, fixes in hits:
-                  print(f"::warning title=Vuln {vid}::{n} → fix in {fixes}")
-              # Currently lenient — flips to `sys.exit(1)` once the
-              # initial backlog is cleared.
+                  print(f"::error title=Vuln-blocking::{n} {vid} -> fix in {fixes}")
+              print(f"\nBlocking vulnerabilities: {len(hits)}", file=sys.stderr)
+              print(f"Either bump the package or add the CVE id to IGNORED_VULNS "
+                    f"AND backend/SECURITY_EXCEPTIONS.md.", file=sys.stderr)
+              sys.exit(1)
+
+          print("pip-audit: clean (all findings ignored via SECURITY_EXCEPTIONS).")
           PY
 
   npm-audit:
@@ -72,8 +109,8 @@ jobs:
           yarn audit --groups dependencies --level high
           status=$?
           set -e
-          # Exit code 16 = vulns found at the configured level → fail
-          # the gate. Any other non-zero → also fail (audit infra error).
+          # Exit code 16 = vulns found at the configured level -> fail
+          # the gate. Any other non-zero -> also fail (audit infra error).
           if [ $status -ge 1 ]; then
             echo "::error title=npm-audit::yarn audit reported HIGH/CRITICAL vulnerabilities (exit=$status)"
             exit $status

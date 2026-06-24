@@ -292,3 +292,4 @@ Before opening the PR:
 | # | Date | Codemod | Files touched | Invariant lock |
 |---|---|---|---|---|
 | 001 | 2026-06-24 | `001_raw_axios_to_apiv2.py` | 155 FE files | `test_invariant_no_raw_axios.py` |
+| 002 | 2026-06-24 | `002_dict_any_to_pydantic_model.py` | 2 BE routers (7 routes — chat × 2, tasks × 5) | `test_invariant_polymorphic_response_ratchet.py` + `test_invariant_narrowing_byte_equivalence.py` |

@@ -588,3 +588,65 @@ class TaskContributeResponse(BaseModel):
     task: Optional[Any] = None
     your_due_date: Optional[str] = None
     your_status: Optional[str] = None
+
+
+
+# ─── Phase 5.4 Narrowing Batch 1 ─────────────────────────────────────
+
+
+class TaskCountsResponse(BaseModel):
+    """`GET /api/tasks/counts` — per-state count plus a total.
+
+    Wire shape is `{<state_name>: int, ..., "all": int}` where the keys
+    are dynamic (driven by `TASK_STATES`). The model declares the
+    invariant `all` field; sibling state-named keys flow through
+    `extra='allow'` unchanged.
+    """
+    model_config = ConfigDict(extra="allow")
+    all: Optional[int] = None
+
+
+class TaskResponse(BaseModel):
+    """Task-row shape returned by:
+      - `GET /api/tasks/{task_id}`
+      - `PATCH /api/tasks/{task_id}`
+      - `POST /api/tasks/{tid}/commission`
+      - `POST /api/tasks/{tid}/close`
+
+    The handler returns `_sanitize_task(row)` from the `tasks`
+    collection. Documented keys below are the stable contract; extras
+    (e.g. `status_history`, `team`, `output_spec`, ad-hoc audit
+    metadata) pass through via `extra='allow'`.
+    """
+    model_config = ConfigDict(extra="allow")
+    id: Optional[str] = None
+    account_id: Optional[str] = None
+    context_id: Optional[str] = None
+    name: Optional[str] = None
+    objective: Optional[str] = None
+    state: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class ChatResponse(BaseModel):
+    """Chat-row shape returned by:
+      - `GET /api/chats/{chat_id}` (with `messages: [...]` appended)
+      - `PATCH /api/chats/{chat_id}` (without `messages`)
+
+    The handler returns the chat document (Akki-owned `chats`
+    collection). On GET, a `messages` list is appended after the
+    Mongo read. Documented keys below are the stable contract;
+    sibling fields (`linked_context`, `shielding_policy`,
+    `archived_at`, etc.) pass through via `extra='allow'`.
+    """
+    model_config = ConfigDict(extra="allow")
+    id: Optional[str] = None
+    account_id: Optional[str] = None
+    context_id: Optional[str] = None
+    title: Optional[str] = None
+    model_id: Optional[str] = None
+    status: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    messages: Optional[List[Any]] = None

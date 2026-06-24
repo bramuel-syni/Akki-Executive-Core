@@ -1,0 +1,15 @@
+{
+  "id": "task-9c1",
+  "account_id": "acct-9f8e7d",
+  "context_id": "ctx-bd001",
+  "name": "Draft Q4 board paper",
+  "objective": "Compile materials for the Q4 board meeting",
+  "success_criteria": "Board paper signed off by chairs",
+  "state": "active",
+  "status_history": [
+    {"state": "draft", "at": "2026-06-23T08:00:00.000000+00:00", "kind": "created"},
+    {"state": "active", "at": "2026-06-24T02:45:00.000000+00:00", "kind": "commissioned"}
+  ],
+  "created_at": "2026-06-23T08:00:00.000000+00:00",
+  "updated_at": "2026-06-24T02:45:00.000000+00:00"
+}

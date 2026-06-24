@@ -30,6 +30,7 @@ from contracts.responses import (
     ChatAttachmentResponse,
     ChatAuditResponse,
     ChatModelsResponse,
+    ChatResponse,
     ItemsListResponse,
     OkResponse,
 )
@@ -1151,7 +1152,7 @@ async def search_chats(
     return {"items": items, "count": len(items)}
 
 
-@router.get("/chats/{chat_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/chats/{chat_id}", response_model=Optional[ChatResponse])  # Phase 5.4 narrowed
 async def get_chat(
     chat_id: str, request: Request,
     include_archived: bool = Query(False),
@@ -1185,7 +1186,7 @@ async def get_chat(
     return chat
 
 
-@router.patch("/chats/{chat_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.patch("/chats/{chat_id}", response_model=Optional[ChatResponse])  # Phase 5.4 narrowed
 async def patch_chat(
     chat_id: str, body: ChatPatchIn, request: Request,
     current: Dict[str, Any] = Depends(get_current_account),

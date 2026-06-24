@@ -38,14 +38,15 @@ from pathlib import Path
 
 ROUTERS_DIR = Path(__file__).resolve().parents[2] / "routers"
 
-# Baseline captured 2026-06-24 (Phase 5.2 Part B opening snapshot).
+# Baseline captured 2026-06-24 (Phase 5.4 Narrowing Batch 1 close — was 49 / 55
+# at Phase 5.2; 7 routes narrowed in this batch via codemod 002).
 # Decrement by 1 every time a route is narrowed.
-_BASELINE_POLY_ROUTE_COUNT = 49
+_BASELINE_POLY_ROUTE_COUNT = 42
 
 # `# phase-3.0:narrow-in-3.1` markers across all routers. Some markers
 # appear on `List[Dict[str, Any]]` shapes (not response_model lines)
 # so this count is slightly higher than the route count.
-_BASELINE_NARROW_MARKER_COUNT = 55
+_BASELINE_NARROW_MARKER_COUNT = 48
 
 # The grep pattern that defines a "polymorphic response-model route".
 # Matches FastAPI handler decorators with `response_model=Optional[Dict[str, Any]]`

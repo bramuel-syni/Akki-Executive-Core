@@ -1797,6 +1797,114 @@
         "title": "ChatPatchIn",
         "type": "object"
       },
+      "ChatResponse": {
+        "additionalProperties": true,
+        "description": "Chat-row shape returned by:\n  - `GET /api/chats/{chat_id}` (with `messages: [...]` appended)\n  - `PATCH /api/chats/{chat_id}` (without `messages`)\n\nThe handler returns the chat document (Akki-owned `chats`\ncollection). On GET, a `messages` list is appended after the\nMongo read. Documented keys below are the stable contract;\nsibling fields (`linked_context`, `shielding_policy`,\n`archived_at`, etc.) pass through via `extra='allow'`.",
+        "properties": {
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "context_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Id"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "messages": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Messages"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "title": "ChatResponse",
+        "type": "object"
+      },
       "ChecklistEdit": {
         "properties": {
           "note_to_reportee": {
@@ -8722,6 +8830,25 @@
         "title": "TaskContributeResponse",
         "type": "object"
       },
+      "TaskCountsResponse": {
+        "additionalProperties": true,
+        "description": "`GET /api/tasks/counts` \u2014 per-state count plus a total.\n\nWire shape is `{<state_name>: int, ..., \"all\": int}` where the keys\nare dynamic (driven by `TASK_STATES`). The model declares the\ninvariant `all` field; sibling state-named keys flow through\n`extra='allow'` unchanged.",
+        "properties": {
+          "all": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "All"
+          }
+        },
+        "title": "TaskCountsResponse",
+        "type": "object"
+      },
       "TaskHashResponse": {
         "additionalProperties": true,
         "description": "Task-hash / contributor-readiness shape:\n`{\"task_id\": \"...\", \"task_hash\": \"...\", \"status\": \"...\",\n  optional contributor_id / readiness_score / team}`.",
@@ -9034,6 +9161,102 @@
           }
         },
         "title": "TaskInitiativePatch",
+        "type": "object"
+      },
+      "TaskResponse": {
+        "additionalProperties": true,
+        "description": "Task-row shape returned by:\n  - `GET /api/tasks/{task_id}`\n  - `PATCH /api/tasks/{task_id}`\n  - `POST /api/tasks/{tid}/commission`\n  - `POST /api/tasks/{tid}/close`\n\nThe handler returns `_sanitize_task(row)` from the `tasks`\ncollection. Documented keys below are the stable contract; extras\n(e.g. `status_history`, `team`, `output_spec`, ad-hoc audit\nmetadata) pass through via `extra='allow'`.",
+        "properties": {
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "context_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Id"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "objective": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Objective"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "title": "TaskResponse",
         "type": "object"
       },
       "TeamMemberIn": {
@@ -15655,8 +15878,7 @@
                 "schema": {
                   "anyOf": [
                     {
-                      "additionalProperties": true,
-                      "type": "object"
+                      "$ref": "#/components/schemas/ChatResponse"
                     },
                     {
                       "type": "null"
@@ -15711,8 +15933,7 @@
                 "schema": {
                   "anyOf": [
                     {
-                      "additionalProperties": true,
-                      "type": "object"
+                      "$ref": "#/components/schemas/ChatResponse"
                     },
                     {
                       "type": "null"
@@ -37979,8 +38200,7 @@
                 "schema": {
                   "anyOf": [
                     {
-                      "additionalProperties": true,
-                      "type": "object"
+                      "$ref": "#/components/schemas/TaskCountsResponse"
                     },
                     {
                       "type": "null"
@@ -38027,8 +38247,7 @@
                 "schema": {
                   "anyOf": [
                     {
-                      "additionalProperties": true,
-                      "type": "object"
+                      "$ref": "#/components/schemas/TaskResponse"
                     },
                     {
                       "type": "null"
@@ -38083,8 +38302,7 @@
                 "schema": {
                   "anyOf": [
                     {
-                      "additionalProperties": true,
-                      "type": "object"
+                      "$ref": "#/components/schemas/TaskResponse"
                     },
                     {
                       "type": "null"
@@ -38820,8 +39038,7 @@
                 "schema": {
                   "anyOf": [
                     {
-                      "additionalProperties": true,
-                      "type": "object"
+                      "$ref": "#/components/schemas/TaskResponse"
                     },
                     {
                       "type": "null"
@@ -38869,8 +39086,7 @@
                 "schema": {
                   "anyOf": [
                     {
-                      "additionalProperties": true,
-                      "type": "object"
+                      "$ref": "#/components/schemas/TaskResponse"
                     },
                     {
                       "type": "null"

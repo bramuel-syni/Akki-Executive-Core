@@ -35,7 +35,9 @@ from contracts.responses import (
     OkResponse,
     TaskCirculationResponse,
     TaskContributeResponse,
+    TaskCountsResponse,
     TaskHashResponse,
+    TaskResponse,
 )
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
@@ -299,7 +301,7 @@ async def list_tasks(
 # ═════════════════════════════════════════════════════════════════════
 
 
-@router.post("/tasks/{tid}/commission", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/tasks/{tid}/commission", response_model=Optional[TaskResponse])  # Phase 5.4 narrowed
 async def commission_task(
     tid: str, current: Dict[str, Any] = Depends(get_current_account),
 ):
@@ -360,7 +362,7 @@ async def commission_task(
     return _sanitize_task(fresh)
 
 
-@router.post("/tasks/{tid}/close", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.post("/tasks/{tid}/close", response_model=Optional[TaskResponse])  # Phase 5.4 narrowed
 async def close_task(
     tid: str, current: Dict[str, Any] = Depends(get_current_account),
 ):
@@ -417,7 +419,7 @@ async def close_task(
 # ═════════════════════════════════════════════════════════════════════
 
 
-@router.get("/tasks/counts", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/tasks/counts", response_model=Optional[TaskCountsResponse])  # Phase 5.4 narrowed
 async def tasks_counts(
     context_id: Optional[str] = None,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -436,7 +438,7 @@ async def tasks_counts(
 # ═════════════════════════════════════════════════════════════════════
 # GET /api/tasks/{task_id}
 # ═════════════════════════════════════════════════════════════════════
-@router.get("/tasks/{task_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.get("/tasks/{task_id}", response_model=Optional[TaskResponse])  # Phase 5.4 narrowed
 async def get_task(
     task_id: str,
     current: Dict[str, Any] = Depends(get_current_account),
@@ -450,7 +452,7 @@ async def get_task(
 # ═════════════════════════════════════════════════════════════════════
 # PATCH /api/tasks/{task_id} — inline edits
 # ═════════════════════════════════════════════════════════════════════
-@router.patch("/tasks/{task_id}", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+@router.patch("/tasks/{task_id}", response_model=Optional[TaskResponse])  # Phase 5.4 narrowed
 async def patch_task(
     task_id: str,
     body: _TaskPatch,

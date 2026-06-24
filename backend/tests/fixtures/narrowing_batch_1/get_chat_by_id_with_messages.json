@@ -1,0 +1,32 @@
+{
+  "id": "chat-abc123",
+  "account_id": "acct-9f8e7d",
+  "context_id": "ctx-bd001",
+  "title": "Q4 risk review questions",
+  "model_id": "claude-sonnet-4-5",
+  "status": "active",
+  "shielding_policy": "default",
+  "linked_context": null,
+  "created_at": "2026-06-23T14:22:18.412000+00:00",
+  "updated_at": "2026-06-24T02:11:09.873000+00:00",
+  "messages": [
+    {
+      "id": "msg-001",
+      "chat_id": "chat-abc123",
+      "role": "user",
+      "content": "What is our top governance risk this quarter?",
+      "created_at": "2026-06-23T14:22:20.000000+00:00"
+    },
+    {
+      "id": "msg-002",
+      "chat_id": "chat-abc123",
+      "role": "assistant",
+      "content": "Based on the dossier, the top governance risk is...",
+      "shield_audit_id": "aud-zz9",
+      "trust_receipt_id": "rcp-pp4",
+      "tokens_in": 412,
+      "tokens_out": 178,
+      "created_at": "2026-06-23T14:22:45.000000+00:00"
+    }
+  ]
+}
