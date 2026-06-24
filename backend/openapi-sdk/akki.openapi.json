@@ -752,7 +752,7 @@
       "Body_attach_to_chat_v1_akki_d69f53af": {
         "properties": {
           "file": {
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File",
             "type": "string"
           }
@@ -766,7 +766,7 @@
       "Body_contributor_upload_v1_akki_4ab7db09": {
         "properties": {
           "file": {
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File",
             "type": "string"
           },
@@ -793,7 +793,7 @@
           "file": {
             "anyOf": [
               {
-                "format": "binary",
+                "contentMediaType": "application/octet-stream",
                 "type": "string"
               },
               {
@@ -876,7 +876,7 @@
             "title": "Display Name"
           },
           "file": {
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File",
             "type": "string"
           },
@@ -925,7 +925,7 @@
           "file": {
             "anyOf": [
               {
-                "format": "binary",
+                "contentMediaType": "application/octet-stream",
                 "type": "string"
               },
               {
@@ -9450,6 +9450,13 @@
       },
       "ValidationError": {
         "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
           "loc": {
             "items": {
               "anyOf": [

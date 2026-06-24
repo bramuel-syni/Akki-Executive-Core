@@ -2,7 +2,7 @@
 
 After Phase 3.2 (hot-path migration of 283 sites) and Phase 5.2 Part A
 (cold-path migration of the remaining ~155 files via the
-`/app/scripts/codemod_raw_axios_to_apiv2.py` codemod), every FE module
+`/app/scripts/codemods/001_raw_axios_to_apiv2.py` codemod), every FE module
 that does HTTP MUST route through `lib/api/apiV2.js` — which validates
 responses against the codegenned zod schemas and surfaces drift loudly.
 
@@ -111,7 +111,7 @@ def _scan_for_raw_api_imports() -> list[str]:
 def test_no_raw_api_imports_outside_whitelist() -> None:
     """No new files may import the raw `{ api }` from `lib/api`.
 
-    The codemod at `/app/scripts/codemod_raw_axios_to_apiv2.py`
+    The codemod at `/app/scripts/codemods/001_raw_axios_to_apiv2.py`
     handles the migration mechanically. If you've added a new file
     that needs HTTP, import the default from `lib/api/apiV2` instead:
 
@@ -135,7 +135,7 @@ def test_no_raw_api_imports_outside_whitelist() -> None:
         + "or, if the file legitimately needs the raw client, add its "
         + "relative path to `_WHITELIST` in this test file AND document "
         + "the reason in the sprint memo.\n\nThe codemod at "
-        + "`/app/scripts/codemod_raw_axios_to_apiv2.py` performs the "
+        + "`/app/scripts/codemods/001_raw_axios_to_apiv2.py` performs the "
         + "migration mechanically."
     )
 

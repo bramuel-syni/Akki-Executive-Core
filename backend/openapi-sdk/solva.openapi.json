@@ -115,7 +115,7 @@
           "files": {
             "description": "One or more xlsx/csv files",
             "items": {
-              "format": "binary",
+              "contentMediaType": "application/octet-stream",
               "type": "string"
             },
             "title": "Files",
@@ -153,7 +153,7 @@
       "Body_upload_workbook_v1_solva_21384245": {
         "properties": {
           "file": {
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File",
             "type": "string"
           }
@@ -653,6 +653,13 @@
       },
       "ValidationError": {
         "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
           "loc": {
             "items": {
               "anyOf": [

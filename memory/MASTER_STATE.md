@@ -470,6 +470,47 @@ Status legend:
   - Phase 5.3 (Track A triage) — full triage of the actual 50+ failure population; now unblocked by the collection-error fix.
   - OR Phase 5.4 (Part B narrowing batch) — narrow the top 10 highest-traffic polymorphic routes + ship the per-route diff harness + drop the ratchet baseline from 49 → 39.
 
+- Phase 5.3 (Dep-Audit Remediation + Codemod Institutionalisation): GitHub Actions `dep-audit` workflow blocker resolved — 46-of-53 Python CVEs fixed by direct version bumps; 7 documented as security exceptions blocked on upstream; ALL HIGH+ yarn-audit findings (29 of 29) resolved via `resolutions` block + 1 direct axios bump. Codemod pattern institutionalised: scripts moved into `/app/scripts/codemods/` with a 6-section README and 4 candidate-future-codemod entries → ✅ SHIPPED 2026-06-24 (iter-1 single-dispatch ship). **94/94 invariants PASS** (was 94 pre-Phase-5.3; held); **37/37 Phase 4.4 dual-mount smoke PASS** — public ratchet held untouched; **10/10 FE wrapper tests PASS** under new axios 1.16.0.
+
+  **What shipped:**
+
+  • **Part A — pip-audit + yarn-audit remediation** ✅ COMPLETE.
+    - **pip side**: 10 direct version bumps in `backend/requirements.txt` — `aiohttp 3.13.5→3.14.1`, `urllib3 2.6.3→2.7.0`, `cryptography 46.0.7→48.0.1`, `idna 3.11→3.15`, `pymongo 4.5.0→4.6.3`, `pyjwt 2.12.1→2.13.0`, `pypdf 6.10.2→6.13.3`, `python-multipart 0.0.24→0.0.31`, `fastapi 0.110.1→0.138.0`, `starlette 0.37.2→1.3.1` (co-bumped — FastAPI dictated the starlette range gate). pip-audit baseline 53 vulns → post-fix 7 vulns (all litellm, all documented in new `backend/SECURITY_EXCEPTIONS.md`).
+    - **yarn side**: 1 direct bump (`axios ^1.8.4 → ^1.16.0`) + 9 transitive pins via NEW `resolutions` block in `frontend/package.json` (`@babel/plugin-transform-modules-systemjs ~7.29.4`, `fast-uri >=3.1.2`, `form-data >=4.0.6`, `nth-check >=2.0.1`, `react-router ~7.15.0`, `serialize-javascript >=7.0.3`, `shell-quote >=1.8.4`, `underscore >=1.13.8`, `ws >=8.21.0`). Baseline 74 findings (29 HIGH+ 2 CRITICAL) → post-fix `yarn audit --level high` EXIT 0 (16 low + 24 moderate remain below threshold). Two cap-downs (`~7.29.4`, `~7.15.0`) needed for Node 20 compat — latest releases require Node ≥22.
+    - **`backend/SECURITY_EXCEPTIONS.md`** (NEW) documents the 7 unfixable litellm CVEs blocked on Emergent's `emergentintegrations` upstream (strict `openai==1.99.9` pin + URL-pinned custom litellm-1.80.0 wheel). Includes attack-surface analysis (server-side only, PII-stripped by Shield), tracker link, and sunset condition (when emergentintegrations relaxes the openai pin).
+
+  • **Part B — Codemod institutionalisation** ✅ COMPLETE.
+    - **File tree**: created `/app/scripts/codemods/`; moved `codemod_raw_axios_to_apiv2.py` → `001_raw_axios_to_apiv2.py`; refreshed all 3 cross-references in `tests/invariants/test_invariant_no_raw_axios.py`.
+    - **README**: `/app/scripts/codemods/README.md` (~280 lines) — 6 mandatory sections (when-to-use criteria, idempotency rule, naming convention, required structure, verification rule, non-destructive convention) + a history table + 4 candidate future codemods (`002_dict_any_to_pydantic_model` for Phase 5.4 narrowing, `print_to_logger_info` (verify scope first), `archived_dead_code_removal`, `emergent_envvar_to_typed_settings` for Phase 6).
+    - **Idempotency re-verified post-move**: `python /app/scripts/codemods/001_raw_axios_to_apiv2.py` → `[APPLIED] 0 files; 0 rewrites`. Invariant `test_invariant_no_raw_axios.py` still PASSES 2/2.
+
+  **Files touched:**
+  - **Created**: `backend/SECURITY_EXCEPTIONS.md`; `scripts/codemods/README.md`; `memory/sprints/PHASE_5_3_DEP_AUDIT_AND_CODEMOD.md`.
+  - **Modified**: `backend/requirements.txt` (10 version bumps); `frontend/package.json` (axios bump + new `resolutions` block of 9 entries); `frontend/yarn.lock` (regenerated via `yarn install`); `backend/openapi-sdk/{synisense,solva,akki}.openapi.json` (regenerated via `scripts/generate_sdk_slices.py` after FastAPI bump — slice byte content drift ~156 B/slice from FastAPI's internal serialization metadata changes; PUBLIC PATH content unchanged); `backend/tests/invariants/test_invariant_no_raw_axios.py` (3 path refs updated); `memory/MASTER_STATE.md` (this entry).
+  - **Moved**: `scripts/codemod_raw_axios_to_apiv2.py` → `scripts/codemods/001_raw_axios_to_apiv2.py`.
+
+  **Verification evidence (this env):**
+  - `pip-audit -r backend/requirements.txt` → 7 vulns (all documented exceptions); `pip-audit --strict` with the `--ignore-vuln` flags from `SECURITY_EXCEPTIONS.md` would exit 0.
+  - `yarn audit --groups dependencies --level high` → **EXIT 0** (16 low + 24 moderate below threshold).
+  - `pytest tests/invariants/ tests/test_phase4_4_dual_mount_smoke.py tests/test_phase4_2_http_transport_smoke.py` → **94 PASS, 10 docs-skip, 0 fail** in 49.22s.
+  - All 6 named ratchet/smoke tests PASS: no_raw_axios (2/2), polymorphic_response_ratchet (3/3), deploy_smoke_present (6/6), Phase 4.4 dual-mount (37/37), Phase 4.2 http-transport (8/8), sdk_slices (4/4).
+  - `yarn test --testPathPattern="apiV2|validatedCall"` → **10/10 PASS** under axios 1.16.0.
+  - Smoke screenshot of public homepage → renders cleanly post-bump.
+  - Composite healthcheck `/api/healthz/composite` → HTTP 200, 3/3 contexts green.
+
+  **Deviations log** (carried into memo §9):
+  - **D1** — 7 litellm CVEs remain (per dispatch A.5 exception path; sunset condition documented).
+  - **D2** — aiohttp 3.14.1 works despite litellm freeze because Emergent's custom litellm wheel relaxes upstream's strict aiohttp pin to `>=3.10`.
+  - **D3** — OpenAPI SDK slice byte drift ~156 B/slice from FastAPI bump (regenerated; public path content unchanged; ratchet hash held).
+  - **D4** — babel + react-router capped at Node 20-compatible latest (`~7.29.4`, `~7.15.0`); CVE fix versions still satisfied; re-bump when base image upgrades.
+  - **D5** — `form-data` resolution at `>=4.0.6` covers both react-scripts (3.x line) and axios (4.x line) transitive paths in a single resolution.
+
+  Memo: `sprints/PHASE_5_3_DEP_AUDIT_AND_CODEMOD.md`.
+  Codemod convention: `scripts/codemods/README.md`.
+  Security exceptions: `backend/SECURITY_EXCEPTIONS.md`.
+
+  **Iteration budget**: 1/3 used. Iter-2/3 reserved for follow-up if CI surfaces a missed finding OR a Node base image upgrade unlocks the babel/react-router cap-down.
+
 
 ### Track B — QA cleanup
 - Phase B1 (small mechanical onboarding + signin): **O4** ✅ + **O6** ✅ + **G1** ✅ (Fig 20 — `/sign-in` → `/signin` × 4 buttons) + **G2 Fig 22 modal** ✅ (SessionTimeoutGuard handler gated on `account`); **O7** ✅ Fig 7. Phase status: ✅ SHIPPED — tester PASS Journeys 4-v2, 6, 7, 8, 9 (5/5 incl. regression), 2026-06-04. Memos: `sprints/TRACK_B_PHASE1_FIG7_V2_ROOT_CAUSE_FIX.md`, `sprints/TRACK_B_PHASE1B_O4_O6_FIG20_FIG22.md`.
