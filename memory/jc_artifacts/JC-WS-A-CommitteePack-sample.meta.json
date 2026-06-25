@@ -1,0 +1,29 @@
+{
+  "kind": "committee_pack",
+  "label": "CommitteePack",
+  "description": "Compile a Risk Committee pack for Mara Heritage Bank's quarterly review. Synthesise the credit risk, capital adequacy, operational risk, and concentration-risk material on the platform into a single Risk Committee deliverable. Cover: NPL trajectory, CET1 buffer movement, single-name concentration, and the risk-tolerance bands the committee needs to set or affirm at this meeting.",
+  "objective": "Equip the Risk Committee with a focused, evidence-based read on where the bank's risk position sits versus tolerance, so members can recalibrate limits and approve the mitigation plans queued for this meeting.",
+  "scope": "Mara Heritage Bank \u2014 Risk Committee. Period: Q3 2025. Confidentiality: Restricted. Length: 5-8 pages.",
+  "source_document_ids_count": 19,
+  "formats": {
+    "docx": {
+      "ok": true,
+      "bytes": 42722,
+      "path": "/app/memory/jc_artifacts/JC-WS-A-CommitteePack-sample.docx",
+      "export_id": "607eda67-8f20-4b49-bba0-ea4b066a55ae"
+    },
+    "pptx": {
+      "ok": true,
+      "bytes": 42968,
+      "path": "/app/memory/jc_artifacts/JC-WS-A-CommitteePack-sample.pptx",
+      "export_id": "03196022-ec86-4213-9865-f89534fb7ff1"
+    },
+    "pdf": {
+      "ok": true,
+      "bytes": 38918,
+      "path": "/app/memory/jc_artifacts/JC-WS-A-CommitteePack-sample.pdf",
+      "export_id": "45e6d74d-145e-4211-ae4b-9e8e4d5f11e7"
+    }
+  },
+  "generated_at": "2026-06-25T11:48:36.989360+00:00"
+}

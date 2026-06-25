@@ -12,9 +12,12 @@
  *   • At Risk                 — relocated from CompilationRail (E.2)
  *   • Follow Up Drafts for You — F.2 new card
  *
- * F.3+ (Task Drawer, Compile flow, Contributor modes, side panel
- * polish) are queued. Clicking a task card opens a placeholder
- * "Task drawer coming soon" sheet via TaskListing.
+ * Phase F.3+ (TaskDrawer keystone, Compile flow, Contributor modes, side panel
+ * polish) — LIVE. Clicking a task card sets `?task_id=<uuid>` which mounts the
+ * real `TaskDrawer` (verified by execution 2026-06-25; see
+ * `/app/memory/audit/JC_TM_keystone_classification.md`). The original F.2
+ * "Task drawer coming soon" placeholder was superseded by F.3 — it no longer
+ * surfaces in this page.
  */
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
