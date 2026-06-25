@@ -1,0 +1,40 @@
+{
+  "artefact": "/app/memory/jc_artifacts/JC-WS-A-BoardPack-proving-slice.docx",
+  "byte_len": 41789,
+  "sha256": null,
+  "file_name": "mara-heritage-bank-board-pack-q3-2025.docx",
+  "sensitivity_band": "INTERNAL",
+  "sensitivity_score": null,
+  "pass_1_ms": null,
+  "pass_2_ms": null,
+  "llm_pass1": null,
+  "llm_pass2": null,
+  "completed_at": "2026-06-25T07:10:58.462764+00:00",
+  "export_id": "7409ae10-d33c-4267-8327-84e3302e095e",
+  "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
+  "source_docs_in_context": [
+    {
+      "id": "doc-tc1-test-cc728a9a",
+      "name": "TC1 intel-only doc",
+      "chars": 100
+    },
+    {
+      "id": "cb497013-4ac4-4bc6-b41b-03632afed4c7",
+      "name": "Digital Transformation Strategy \u2014 Strategic Refresh",
+      "chars": 3751
+    },
+    {
+      "id": "550ae771-f7f6-4efa-9cb2-c15599464e55",
+      "name": "Strategic Capital Allocation Framework",
+      "chars": 3558
+    },
+    {
+      "id": "0fed8723-3928-4603-afed-4eb84f2a9693",
+      "name": "Five-Year Strategic Plan 2024-2028 \u2014 Executive Summary",
+      "chars": 3096
+    }
+  ],
+  "intelligence_report": null,
+  "continue_chat_id": "5818ea65-199c-4632-9e05-d62d7f591e6c",
+  "continue_doc_id": "03450baa-4046-4019-9c5d-b96283cedab3"
+}
