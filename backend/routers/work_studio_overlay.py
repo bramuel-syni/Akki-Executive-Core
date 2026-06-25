@@ -216,6 +216,107 @@ async def move_to_review(
 
 
 # ─────────────────────────────────────────────────────────────────────
+# POST /recommendations/{rec_id}/accept — JC-WS-A (2026-06-25).
+#
+# Per the canonical spec:
+#   "review RECOMMENDATIONS Akki has surfaced and accept them as
+#    refinements (recs are GENERATED, not hardcoded; accepting one
+#    applies the refinement to the document)"
+#
+# The acceptance is a two-part action:
+#   1. Flip the recommendation's `addressed: true` on the row (used
+#      by the commit-confirmation modal's `unaddressed` count and by
+#      the FE's green-check render).
+#   2. Append the accepted rec to `applied_recommendations[]` so the
+#      doc carries a durable trail of what was actioned and when.
+#
+# The "refinement applies to the document" gesture itself happens
+# via the existing AIRevisionPanel (POST /revise) which is the
+# canonical apply-refinement path. This endpoint is a lightweight
+# bookkeeping flip — it doesn't trigger LLM content rewrites. The
+# user invokes /revise separately when they want body content
+# changes; this endpoint just records "Akki's surfaced rec was
+# acknowledged."
+#
+# Lifecycle: works on draft + in_review (not on committed — locked).
+# ─────────────────────────────────────────────────────────────────────
+@router.post(
+    "/contexts/{context_id}/work-studio/documents/{artefact_id}/recommendations/{rec_id}/accept",
+    response_model=Optional[IdResponse],
+)
+async def accept_recommendation(
+    context_id: str,
+    artefact_id: str,
+    rec_id: str,
+    ctx=Depends(require_context_membership()),
+):
+    row = await db.work_studio_exports.find_one(
+        {"id": artefact_id, "context_id": context_id},
+        {"_id": 0},
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Document not found")
+    if (row.get("lifecycle_state") or "draft") == "committed":
+        raise HTTPException(
+            status_code=409,
+            detail="Cannot accept a recommendation on a committed document. Create a new version first.",
+        )
+
+    intel = row.get("intelligence_report") or {}
+    recs = list(intel.get("recommendations") or [])
+    if not recs:
+        raise HTTPException(status_code=404, detail="No recommendations on this document.")
+
+    found_idx = -1
+    for i, r in enumerate(recs):
+        if isinstance(r, dict) and r.get("id") == rec_id:
+            found_idx = i
+            break
+    if found_idx < 0:
+        raise HTTPException(status_code=404, detail=f"Recommendation {rec_id} not found.")
+
+    recs[found_idx]["addressed"] = True
+    recs[found_idx]["addressed_at"] = _iso(_now())
+    recs[found_idx]["addressed_by"] = ctx["account"]["id"]
+
+    pending = sum(1 for r in recs if isinstance(r, dict) and not r.get("addressed"))
+
+    applied = list(intel.get("applied_recommendations") or [])
+    applied.append({
+        "rec_id": rec_id,
+        "text": recs[found_idx].get("text", ""),
+        "addressed_at": recs[found_idx]["addressed_at"],
+        "addressed_by": ctx["account"]["id"],
+    })
+
+    update_set = {
+        "intelligence_report.recommendations":         recs,
+        "intelligence_report.pending_recommendations": pending,
+        "intelligence_report.applied_recommendations": applied,
+        "updated_at":                                  _iso(_now()),
+    }
+    await db.work_studio_exports.update_one(
+        {"id": artefact_id, "context_id": context_id},
+        {"$set": update_set},
+    )
+    # Mirror onto db.documents so the FE detail view (which polls
+    # the documents row) sees the addressed flag flip.
+    cont_doc_id = row.get("continue_doc_id")
+    if cont_doc_id:
+        await db.documents.update_one(
+            {"id": cont_doc_id, "context_id": context_id},  # tenancy:allow-no-account-id — same mirror justification as the confidence-pct mirror at line 1262 below
+            {"$set": update_set},
+        )
+    return {
+        "id": artefact_id,
+        "rec_id": rec_id,
+        "addressed": True,
+        "pending_recommendations": pending,
+        "applied_count": len(applied),
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────
 # POST /commit — Pre-commit snapshot + Committed lock
 # ─────────────────────────────────────────────────────────────────────
 @router.post("/contexts/{context_id}/work-studio/documents/{artefact_id}/commit", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1

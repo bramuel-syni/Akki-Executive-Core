@@ -30091,6 +30091,71 @@
         "summary": "Move To Review V1 Akki 6Bc7Ae93"
       }
     },
+    "/v1/akki/contexts/{context_id}/work-studio/documents/{artefact_id}/recommendations/{rec_id}/accept": {
+      "post": {
+        "operationId": "accept_recommendation_v1_akki_c8dd1be0",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "context_id",
+            "required": true,
+            "schema": {
+              "title": "Context Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artefact_id",
+            "required": true,
+            "schema": {
+              "title": "Artefact Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "rec_id",
+            "required": true,
+            "schema": {
+              "title": "Rec Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/IdResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Accept Recommendation V1 Akki C8Dd1Be0"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Accept Recommendation V1 Akki C8Dd1Be0"
+      }
+    },
     "/v1/akki/contexts/{context_id}/work-studio/documents/{artefact_id}/render": {
       "get": {
         "description": "Server-produced render in DOCX / PDF / PPTX (G6 ratified).\n\nAuthorisation: the caller must be a member of `context_id`; the\nrequire_context_membership dependency enforces that. The artefact\nmust belong to the same context.\n\n422 paths:\n  - `format` not in {docx, pdf, pptx}\n\n404 paths:\n  - artefact not found in this context\n\n409 paths:\n  - artefact has no `structured_content` yet (e.g. fresh Draft\n    created via T3.1 D5 that hasn't been compiled)",

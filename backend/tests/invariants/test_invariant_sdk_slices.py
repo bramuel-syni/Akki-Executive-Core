@@ -73,6 +73,8 @@ def test_slice_path_counts_match_live() -> None:
     """Sum of per-context slice path counts must equal the live /v1/* slice count.
 
     The live `/v1/*` slice was pinned at 619 paths at Phase 4.4 close;
+    JC-WS-A (2026-06-25) added one route (`/recommendations/{rec_id}/accept`)
+    → 620. Update this baseline when intentionally adding/removing routes.
     the sum of per-context slice path counts must equal that to prove
     the slicer hasn't dropped any routes.
     """
@@ -85,7 +87,8 @@ def test_slice_path_counts_match_live() -> None:
         counts[ctx] = len(doc["paths"])
         total += counts[ctx]
     # Phase 4.4 close baseline: 619 /v1/* paths total.
-    EXPECTED = 619
+    # JC-WS-A (2026-06-25): +1 for /recommendations/{rec_id}/accept → 620.
+    EXPECTED = 620
     assert total == EXPECTED, (
         f"Per-context slice path counts sum to {total}, expected {EXPECTED} "
         f"(Phase 4.4 baseline). Counts: {counts}"

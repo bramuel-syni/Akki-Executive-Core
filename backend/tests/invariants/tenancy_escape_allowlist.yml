@@ -507,16 +507,22 @@ tenancy_allow_no_account_id_markers:
     line: 731
     justification: "`_run_export` worker closure; `context_id` is a closure capture from `start_export` which was gated by require_context_membership"
   - file: backend/routers/work_studio_export.py
-    line: 1159
+    line: 1259
+    justification: "JC-WS-A intelligence_report mirror onto db.documents; `documents_row_id` (cont_doc_id) was created by this worker closure under the same context_id flush; mirror write of narrative metadata fields"
+  - file: backend/routers/work_studio_export.py
+    line: 1297
     justification: "JC-WS-A explicit source-document resolver — widened to permit `account_id=None` (context-shared seed docs); context_id filter remains, route gated by require_context_membership"
   - file: backend/routers/work_studio_export.py
-    line: 1262
+    line: 1400
     justification: "`documents_row_id` resolved upstream from the export's tenant-scoped artefact; this is a mirror write of confidence_pct"
   - file: backend/routers/work_studio_export.py
-    line: 1500
+    line: 1638
     justification: "`_run_enhance` worker closure; `context_id` is a closure capture from `enhance_export` which was gated by require_context_membership"
   - file: backend/routers/work_studio_overlay.py
-    line: 436
+    line: 307
+    justification: "JC-WS-A accept-recommendation mirror onto db.documents; `cont_doc_id` was resolved from the export row already loaded via context_id-gated find at L246; mirror write of recommendation addressed flag"
+  - file: backend/routers/work_studio_overlay.py
+    line: 537
     justification: "`clone` spreads `{**row, ...}` where `row` was loaded via the context_id-gated find at L390; account_id + context_id flow through the spread but the scanner can't trace into the variable"
   - file: backend/routers/workbook_analysis.py
     line: 129

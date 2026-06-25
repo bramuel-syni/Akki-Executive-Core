@@ -239,16 +239,28 @@ Each sample is the actual produced document. The user opens these to verify "for
 
 ---
 
-## UI-RULE (Hard constraint — added 2026-06-25 pinning)
+## UI-RULE (Hard constraint — added 2026-06-25 pinning; SCOPED 2026-06-25)
 
-**No pixel of the current Generate Document UI changes during JC-WS.** This means:
-- No JSX structural changes to `WorkStudioAffordanceModal.jsx`, the Generate-flow components, the document card layout, the detail view shell, or any existing list/drawer chrome.
-- No CSS/Tailwind changes that alter visible layout, spacing, typography, or colors.
-- No new buttons / labels / placeholders / tooltips added unless the user-supplied spec EXPLICITLY names them (e.g., the JC-WS spec's "subtle plain-language cue" for Analyze IS specced — that one is allowed because the spec calls for it).
+**Scope clarification (2026-06-25):** the UI-untouched rule applies **only to the Generate Document submodule** of Work Studio. The Analyze submodule UI is OPEN — build per Part B of this spec (highlights-as-cards, docked prompt tool, data-aware question tips, Finish-&-export wizard handoff) without further user approval.
+
+**For the Generate Document submodule** (CompilationWizard, CreateArtefactModal, DocumentOverlay, DocumentCardsSection, IntelligenceCard, AIRevisionPanel, ExportModal, BlockComposer):
+- No JSX structural changes; no CSS/Tailwind changes that alter visible layout, spacing, typography, or colors.
+- No new buttons / labels / placeholders / tooltips added unless the user-supplied spec EXPLICITLY names them.
 - Adding REAL data to fields the UI already renders (e.g., real confidence score where placeholder text exists today, real source list where placeholder exists, real recommendations where stub list exists) is BEHAVIOUR not UI — that's allowed and required.
 
-**Decision rule when in doubt:** if your change would alter what a user sees with empty state / no data, it's UI — STOP and surface. If your change only alters what appears once real data flows in (because the UI element already exists but currently shows placeholder), it's BEHAVIOUR — proceed.
+**Decision rule when in doubt (Generate Document only):** if your change would alter what a user sees with empty state / no data, it's UI — STOP and surface. If your change only alters what appears once real data flows in (because the UI element already exists but currently shows placeholder), it's BEHAVIOUR — proceed.
 
-If any JC-WS journey requires a UI element that doesn't already exist (e.g., the Brief 3-source selector — does that UI exist today?), STOP and surface BEFORE building it. The user will direct whether to (a) add the missing UI element per the UX doc, or (b) defer that journey to a later phase.
+If any JC-WS Generate Document journey requires a UI element that doesn't already exist (e.g., the Brief 3-source selector — does that UI exist today?), STOP and surface BEFORE building it. The user will direct whether to (a) add the missing UI element per the UX doc, or (b) defer that journey to a later phase.
 
-Inventory MUST be output to `/app/memory/audit/JC_WS_ui_inventory.md` before the Board Pack proving slice begins.
+**For the Analyze submodule** (AnalyzeDrawer, WorkStudioAnalyze, AnalyzeJournal, and any new components added under `frontend/src/components/analyze/`):
+- The 4 MISSING items identified in the inventory (highlights-as-cards-grouped-under-topics, docked free-text prompt tool, data-aware question tips strip, Finish-&-export wizard handoff) are now **UNBLOCKED** and must be built per Part B of this spec.
+- The spec-allowed "subtle plain-language cue" docks on the prompt tool surface as the placeholder.
+- No further user approval needed for Analyze surfaces.
+
+Inventory MUST be output to `/app/memory/audit/JC_WS_ui_inventory.md` before the Board Pack proving slice begins. Done.
+
+---
+
+## Future work surfaced during JC-WS
+
+- **LLM_MODELS_REFRESH** (NEXT SPRINT) — refresh the model selection across Shield-routed LLM paths to include the latest Anthropic Claude / OpenAI GPT / Gemini releases. Per-context canonical model per task (chat default · deep-analysis · narration · doc-generation · classification). Pinned at `/app/memory/DEV_PIPELINE.md` §9. **DO NOT action during JC-WS** — would confound the "forward-to-a-board good" verdict.

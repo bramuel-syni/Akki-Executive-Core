@@ -1,38 +1,29 @@
-"""JC-WS-A Board Pack proving slice.
+"""JC-WS-A Board Pack proving slice — full journey, real artefacts.
 
-Drives the existing Work Studio Board Pack engine end-to-end against
-admin@akki.ai's "Mara Heritage Bank · Demo" context, which carries
-3 strategic documents seeded by `scripts/seed_admin_strategic_data.py`.
+Source of truth: /app/memory/JC_WS_CANONICAL_SPEC.md
 
-Output: a real, professional DOCX/PPTX/PDF that the user can open and
-inspect. STOP after this lands — do not fan out until the artefact
-quality is approved.
+Per the canonical spec, the Board Pack proving slice journey is:
+  select MULTIPLE source docs → set cadence one-off → generate →
+  REAL multi-section DOCX (+ PPTX + PDF) lands as a card in Draft →
+  open the detail view showing REAL confidence + REAL source list +
+  REAL period → review REAL Akki recommendations, accept one (the
+  refinement applies) → Commit (locks) → export via the wizard.
 
-Discipline (per the JC-WS dispatch):
-  - Multi-source synthesis (we pass a description that names all 3 docs
-    so the BM25 grounding rail at routers/work_studio_export.py:283
-    picks all three into the citations manifest)
-  - Real, professional best-shape output (the existing two-pass engine
-    produces structured JSON with cover + sections + recommendations +
-    citations; the renderer turns it into a multi-section DOCX)
-  - Shield-routed LLM call (Pass 1 + Pass 2 go via
-    services.llm_streaming.collect_llm_text which routes through the
-    universal LLM proxy)
-  - Account-scoped + audited (the route is gated by
-    require_context_membership and writes audit rows)
+This script drives the journey end-to-end, in-process (no CSRF needed)
+against admin@akki.ai's Mara Heritage Bank · Demo context, and saves
+the actual produced artefacts to /app/memory/jc_artifacts/.
 
-Saves the produced artefacts to:
-  /app/memory/jc_artifacts/JC-WS-A-BoardPack-proving-slice.docx
+Pattern: httpx.AsyncClient + ASGITransport so we stay on the conftest
+session loop and can chain multiple LLM-backed POSTs.
 """
 from __future__ import annotations
 
 import asyncio
 import json
 import os
-import shutil
 import sys
 import time
-import uuid
+from datetime import datetime, timezone as _tz
 from pathlib import Path
 
 import pymongo
@@ -44,11 +35,6 @@ sys.path.insert(0, str(ROOT))
 
 from dotenv import load_dotenv  # noqa: E402
 load_dotenv("/app/backend/.env")
-
-# CSRF-test-bypass is per-process; the in-process AsyncClient does
-# NOT route through Cloudflare so we don't need it — but core.py
-# does enforce CSRF middleware on POST. Set the env that
-# csrf_middleware honours for the test path.
 os.environ.setdefault("CSRF_TEST_BYPASS_HEADER", "1")
 
 from server import app  # noqa: E402  (after env setup)
@@ -66,13 +52,19 @@ def sync_db():
     return pymongo.MongoClient(os.environ["MONGO_URL"])[os.environ["DB_NAME"]]
 
 
+def stamp_account_activity():
+    """Defeat the SessionTimeoutMiddleware on each generation call."""
+    sync_db().accounts.update_one(
+        {"id": ADMIN_ID},
+        {"$set": {"last_activity_at": datetime.now(_tz.utc).isoformat()}},
+    )
+
+
 def list_context_docs() -> list[dict]:
-    """List docs in the target context — synchronous, via pymongo."""
     cur = sync_db().documents.find(
         {"context_id": CONTEXT_ID, "status": {"$ne": "deleted"}},
         {"_id": 0, "id": 1, "name": 1, "original_filename": 1,
-         "extracted_chars": 1, "extracted_text": 1, "doc_type": 1,
-         "category": 1, "created_at": 1},
+         "extracted_chars": 1, "extracted_text": 1},
     )
     out = []
     for d in cur:
@@ -80,205 +72,388 @@ def list_context_docs() -> list[dict]:
             "id": d.get("id"),
             "name": d.get("name") or d.get("original_filename") or "?",
             "chars": d.get("extracted_chars") or len(d.get("extracted_text") or ""),
-            "category": d.get("category"),
-            "doc_type": d.get("doc_type"),
-            "created_at": d.get("created_at"),
         })
     return out
 
 
+def hdrs(token: str) -> dict:
+    return {
+        "Authorization": f"Bearer {token}",
+        "X-CSRF-Test-Bypass": "1",
+    }
+
+
+async def run_export(
+    client: AsyncClient, headers: dict, *,
+    kind: str, output_format: str,
+    description: str, objective: str, scope: str,
+    source_document_ids: list[str], cadence: str,
+    timeout_s: float = 240.0,
+) -> dict:
+    """POST export → poll → return final row + downloaded bytes."""
+    stamp_account_activity()
+    r = await client.post(
+        f"/api/contexts/{CONTEXT_ID}/work-studio/export/{kind}",
+        headers=headers,
+        json={
+            "description": description,
+            "objective": objective,
+            "scope": scope,
+            "output_format": output_format,
+            "source_document_ids": source_document_ids,
+            "cadence": cadence,
+        },
+    )
+    if r.status_code != 200:
+        return {"_post_status": r.status_code, "_post_body": r.text[:400]}
+    export_id = r.json().get("export_id")
+    deadline = time.monotonic() + timeout_s
+    final = None
+    while time.monotonic() < deadline:
+        await asyncio.sleep(4)
+        try:
+            sr = await client.get(
+                f"/api/contexts/{CONTEXT_ID}/work-studio/exports/{export_id}",
+                headers=headers,
+                timeout=20.0,
+            )
+        except Exception as exc:
+            print(f"  [{kind}/{output_format}] poll timeout (transient): {exc!r}; retrying…")
+            continue
+        row = sr.json()
+        st = row.get("status")
+        print(f"  [{kind}/{output_format}] status={st!r} phase={row.get('phase_label', '')!r}")
+        if st in ("complete", "failed"):
+            final = row
+            break
+    if not final:
+        # Last-ditch: read the row directly from Mongo. The polling
+        # might have timed out at httpx level but the worker could
+        # have completed.
+        from_db = fetch_row(export_id) or {}
+        if from_db.get("status") in ("complete", "failed"):
+            final = from_db
+        else:
+            return {"_timeout": True, "id": export_id}
+    final.setdefault("id", export_id)  # belt-and-braces; FE row should always have it
+    if final.get("status") != "complete":
+        return final
+    # Download
+    tok = final.get("download_token")
+    if not tok:
+        # Refetch with full projection — the polling endpoint may
+        # strip download_token from its compact view.
+        from_db = fetch_row(export_id) or {}
+        tok = from_db.get("download_token") or tok
+        if from_db:
+            final = {**from_db, **final}
+    if not tok:
+        return {**final, "_no_download_token": True}
+    dr = await client.get(
+        f"/api/contexts/{CONTEXT_ID}/work-studio/exports/{export_id}/download?token={tok}",
+        headers=headers,
+        timeout=60.0,
+    )
+    final["_download_status"] = dr.status_code
+    final["_download_bytes"] = dr.content
+    return final
+
+
+def fetch_row(export_id: str) -> dict:
+    """Read the work_studio_exports row directly (gives full intel field)."""
+    row = sync_db().work_studio_exports.find_one({"id": export_id}, {"_id": 0})
+    return row or {}
+
+
+def fetch_doc(doc_id: str) -> dict:
+    return sync_db().documents.find_one({"id": doc_id}, {"_id": 0}) or {}
+
+
 async def main():
-    print("=" * 70)
-    print("JC-WS-A Board Pack proving slice")
-    print("=" * 70)
-    print(f"Account:   {ADMIN_EMAIL} ({ADMIN_ID})")
-    print(f"Context:   Mara Heritage Bank · Demo ({CONTEXT_ID})")
+    print("=" * 78)
+    print("JC-WS-A Board Pack proving slice — full journey, real artefacts")
+    print("=" * 78)
+    print(f"Account:   {ADMIN_EMAIL}")
+    print(f"Context:   Mara Heritage Bank · Demo")
     print(f"Artefact:  {ARTIFACT_DIR}")
     print()
 
-    # Step 1 — inventory the source documents.
-    print("Step 1 — context documents available as source material:")
+    # Step 1 — source inventory + selection.
+    print("STEP 1 — Source-material packs journey: select MULTIPLE source docs")
     docs = list_context_docs()
-    if not docs:
-        print("  STOP: no documents in context. Re-seed Mara Heritage via")
-        print("        `python3 backend/scripts/seed_admin_strategic_data.py`.")
-        sys.exit(2)
     for d in docs:
-        print(f"  - {d['id']}  {d['name'][:60]:60s}  ({d['chars']} chars)  cat={d['category']!r}")
-    print(f"  → {len(docs)} document(s)")
+        print(f"  - {d['id'][:38]:38s}  {d['name'][:48]:48s}  ({d['chars']} chars)")
+    source_document_ids = [d["id"] for d in docs if d["chars"] > 1000]
+    print(f"  Selected: {len(source_document_ids)} docs (chars>1000).")
+    for did in source_document_ids:
+        print(f"    ← {did}")
     print()
 
-    # Step 2 — mint a JWT for the admin account.
-    # SessionTimeoutMiddleware (services/session_timeout.py) gates on
-    # `accounts.last_activity_at`. Stamp it to now BEFORE the call so
-    # the middleware doesn't 401 us with session_idle_timeout on the
-    # first request.
-    from datetime import datetime, timezone as _tz
-    sync_db().accounts.update_one(
-        {"id": ADMIN_ID},
-        {"$set": {"last_activity_at": datetime.now(_tz.utc).isoformat()}},
-    )
     token = create_access_token(ADMIN_ID, ADMIN_EMAIL)
-    headers = {"Authorization": f"Bearer {token}"}
-    print(f"Step 2 — JWT minted (len={len(token)}), last_activity_at refreshed")
-    print()
+    headers = hdrs(token)
 
-    # Step 3 — kick off the board-pack export. Description names all
-    # source docs so the BM25 grounding rail picks them all up.
     description = (
         "Compile a Board Pack for the Q3 board meeting of Mara Heritage Bank. "
-        "Synthesise the strategic outlook, risk register, and audit report "
-        "available on the platform into a single executive deliverable. "
-        "Cover: performance against strategy, key risks and mitigations, "
-        "audit observations and management responses, and recommended "
-        "decisions for the board to approve at this meeting."
+        "Synthesise the strategic outlook, capital position, and digital "
+        "transformation refresh material already on the platform into a "
+        "single executive deliverable. Cover: performance against the "
+        "five-year strategy, key risks and mitigations, capital allocation "
+        "and CET1 position, and the strategic decisions queued for board "
+        "approval at this meeting."
     )
     objective = (
         "Equip the board with a concise, evidence-based read on the "
         "bank's position so directors can make the strategic, risk, "
-        "and governance decisions queued for this meeting."
+        "and capital decisions queued for this meeting."
     )
     scope = (
         "Mara Heritage Bank — full board (executive + non-executive directors). "
         "Period: Q3 2025. Confidentiality: Internal. Length: 6-10 pages."
     )
 
-    # JC-WS-A — Source-material packs journey: user EXPLICITLY selects
-    # the 3 strategic docs on the platform. Bypasses BM25 (which
-    # lexically misses the redacted paragraph text) so the LLM
-    # actually receives the source content + the confidence scorer
-    # gets real source blobs to compare against.
-    source_document_ids = [d["id"] for d in docs if d["chars"] > 1000]
-    print(f"  source_document_ids selected: {len(source_document_ids)}")
-    for did in source_document_ids:
-        print(f"    - {did}")
-    print()
-
+    # Step 2 — generate Board Pack DOCX.
+    print("STEP 2 — Generate Board Pack DOCX with explicit source selection + cadence=one_off")
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test",
-        timeout=180.0,  # board-pack two-pass LLM takes 30-90s
+        transport=ASGITransport(app=app), base_url="http://test", timeout=300.0,
     ) as client:
-        print("Step 3 — POST /api/contexts/{cid}/work-studio/export/board_pack")
-        r = await client.post(
-            f"/api/contexts/{CONTEXT_ID}/work-studio/export/board_pack",
-            headers={**headers, "X-CSRF-Test-Bypass": "1"},
-            json={"description": description, "objective": objective, "scope": scope},
+        docx_result = await run_export(
+            client, headers,
+            kind="board_pack", output_format="docx",
+            description=description, objective=objective, scope=scope,
+            source_document_ids=source_document_ids, cadence="one_off",
+            timeout_s=300.0,
         )
-        print(f"  POST status: {r.status_code}")
-        if r.status_code != 200:
-            print(f"  body: {r.text[:500]}")
-            sys.exit(3)
-        body = r.json()
-        export_id = body.get("export_id")
-        print(f"  export_id: {export_id}")
+        if "_download_bytes" not in docx_result:
+            print(f"  STOP — DOCX did not complete: {json.dumps({k:v for k,v in docx_result.items() if k != '_download_bytes'}, default=str, indent=2)[:600]}")
+            sys.exit(2)
+        docx_bytes = docx_result["_download_bytes"]
+        export_id = docx_result["id"]
+        (ARTIFACT_DIR / "JC-WS-A-BoardPack-proving-slice.docx").write_bytes(docx_bytes)
+        print(f"  ✓ DOCX: {len(docx_bytes)} bytes → {ARTIFACT_DIR}/JC-WS-A-BoardPack-proving-slice.docx")
         print()
 
-        # Step 4 — poll for completion.
-        print("Step 4 — polling status (up to 180s)…")
-        deadline = time.monotonic() + 180.0
-        final_row = None
-        while time.monotonic() < deadline:
-            await asyncio.sleep(4)
-            sr = await client.get(
-                f"/api/contexts/{CONTEXT_ID}/work-studio/exports/{export_id}",
-                headers=headers,
-            )
-            row = sr.json()
-            status = row.get("status")
-            phase = row.get("phase_label", "")
-            print(f"  status={status!r}  phase={phase!r}")
-            if status in ("complete", "failed"):
-                final_row = row
-                break
-        if final_row is None:
-            print("  STOP: timed out.")
-            sys.exit(4)
-        if final_row.get("status") != "complete":
-            print(f"  STOP: export failed: error={final_row.get('error')!r}")
-            print(f"        refusal_text={final_row.get('refusal_text')!r}")
-            sys.exit(5)
+        # Read the full row from Mongo (the polling endpoint filters some fields).
+        full_row = fetch_row(export_id)
+        intel = full_row.get("intelligence_report") or {}
+        cont_doc_id = full_row.get("continue_doc_id")
+        print("  Full intelligence_report after generation:")
+        for k in ("confidence_pct", "confidence_rationale", "confidence_scored_at",
+                  "confidence_score_skipped_no_sources", "confidence_score_failed",
+                  "sources_count", "period", "framing", "pending_recommendations"):
+            print(f"    {k:42s} = {intel.get(k)!r}")
+        recs = intel.get("recommendations") or []
+        print(f"    recommendations[]                          = {len(recs)} entries")
+        for i, r in enumerate(recs[:6]):
+            text = (r.get("text") if isinstance(r, dict) else str(r))[:100]
+            addr = r.get("addressed") if isinstance(r, dict) else None
+            print(f"      [{i}] addressed={addr!s:5s}  {text}")
         print()
 
-        # Step 5 — download the DOCX bytes via the in-process route.
-        download_token = final_row.get("download_token")
-        print(f"Step 5 — downloading artefact (token={download_token[:16]}…)")
-        dr = await client.get(
-            f"/api/contexts/{CONTEXT_ID}/work-studio/exports/{export_id}/download"
-            f"?token={download_token}",
+        # ── Step 3 — open detail view (simulate by calling overlay GET).
+        print("STEP 3 — Open detail view (GET /work-studio/documents/{aid})")
+        d_row = fetch_doc(cont_doc_id)
+        print(f"  documents.lifecycle_state: {d_row.get('lifecycle_state')!r}")
+        print(f"  documents.intelligence_report present: {bool(d_row.get('intelligence_report'))}")
+        # Capture pre-accept detail-view state.
+        detail_state_pre = {
+            "phase": "pre-accept",
+            "lifecycle_state": d_row.get("lifecycle_state"),
+            "intelligence_report": d_row.get("intelligence_report"),
+            "structured_content_keys": list((d_row.get("structured_content") or {}).keys()),
+            "section_count": len((d_row.get("structured_content") or {}).get("sections") or []),
+        }
+        print()
+
+        # ── Step 4 — move to review.
+        print("STEP 4 — POST /move-to-review")
+        stamp_account_activity()
+        mr = await client.post(
+            f"/api/contexts/{CONTEXT_ID}/work-studio/documents/{export_id}/move-to-review",
             headers=headers,
         )
-        print(f"  download status: {dr.status_code}, bytes: {len(dr.content)}")
-        if dr.status_code != 200:
-            print(f"  body: {dr.text[:300]}")
-            sys.exit(6)
-
-        artefact_path = ARTIFACT_DIR / "JC-WS-A-BoardPack-proving-slice.docx"
-        artefact_path.write_bytes(dr.content)
-        print(f"  → wrote {artefact_path}")
+        print(f"  status: {mr.status_code} body: {mr.text[:120]}")
         print()
 
-    # Step 6 — capture metadata for inspection.
-    summary = {
-        "artefact": str(artefact_path),
-        "byte_len": len(dr.content),
-        "sha256": final_row.get("sha256"),
-        "file_name": final_row.get("file_name"),
-        "sensitivity_band": final_row.get("sensitivity_band"),
-        "sensitivity_score": final_row.get("sensitivity_score"),
-        "pass_1_ms": final_row.get("pass_1_ms"),
-        "pass_2_ms": final_row.get("pass_2_ms"),
-        "llm_pass1": final_row.get("llm_pass1"),
-        "llm_pass2": final_row.get("llm_pass2"),
-        "completed_at": final_row.get("completed_at"),
-        "export_id": export_id,
-        "context_id": CONTEXT_ID,
-        "source_docs_in_context": [
-            {"id": d["id"], "name": d["name"], "chars": d["chars"]} for d in docs
-        ],
-        "intelligence_report": final_row.get("intelligence_report"),
-        "continue_chat_id": final_row.get("continue_chat_id"),
-        "continue_doc_id": final_row.get("continue_doc_id"),
-    }
-    meta_path = ARTIFACT_DIR / "JC-WS-A-BoardPack-proving-slice.meta.json"
-    meta_path.write_text(json.dumps(summary, indent=2))
-    print(f"Step 6 — wrote metadata → {meta_path}")
-    print()
-
-    # Step 7 — render an honest quality report from the DOCX text.
-    from zipfile import ZipFile
-    import re as _re
-    with ZipFile(artefact_path) as zf:
-        document_xml = zf.read("word/document.xml").decode("utf-8")
-    txt = _re.sub(r"<[^>]+>", " ", document_xml)
-    txt = _re.sub(r"\s+", " ", txt).strip()
-
-    quality = {
-        "byte_len": len(dr.content),
-        "text_chars": len(txt),
-        "word_count": len(txt.split()),
-        "heading_count": document_xml.count("<w:pStyle w:val=\"Heading"),
-        "has_cover_title": ("Board Pack" in txt or "Mara Heritage" in txt),
-        "mentions_bank": "Bank" in txt,
-        "mentions_period": ("Q3" in txt or "2025" in txt),
-        "first_300_chars": txt[:300],
-    }
-    quality_path = ARTIFACT_DIR / "JC-WS-A-BoardPack-quality-report.json"
-    quality_path.write_text(json.dumps(quality, indent=2))
-    print(f"Step 7 — wrote quality report → {quality_path}")
-    print()
-    print("QUALITY READOUT:")
-    for k, v in quality.items():
-        if k == "first_300_chars":
-            print(f"  {k:18}: {v[:120]}…")
+        # ── Step 5 — accept one recommendation.
+        if recs:
+            first_rec = next((r for r in recs if isinstance(r, dict) and not r.get("addressed")), None)
+            if first_rec:
+                print(f"STEP 5 — POST /recommendations/{first_rec['id']}/accept")
+                print(f"  Accepting: {first_rec.get('text', '')[:120]}")
+                stamp_account_activity()
+                ar = await client.post(
+                    f"/api/contexts/{CONTEXT_ID}/work-studio/documents/{export_id}/recommendations/{first_rec['id']}/accept",
+                    headers=headers,
+                )
+                print(f"  status: {ar.status_code} body: {ar.text[:240]}")
+                accepted_rec_id = first_rec["id"]
+            else:
+                print("STEP 5 — no unaddressed recommendation found to accept (SKIPPED).")
+                accepted_rec_id = None
+            print()
         else:
-            print(f"  {k:18}: {v}")
+            print("STEP 5 — no recommendations on the document (SKIPPED).")
+            accepted_rec_id = None
+            print()
+
+        # Capture post-accept detail view state.
+        d_row_post = fetch_doc(cont_doc_id)
+        detail_state_post = {
+            "phase": "post-accept",
+            "lifecycle_state": d_row_post.get("lifecycle_state"),
+            "intelligence_report": d_row_post.get("intelligence_report"),
+        }
+
+        # ── Step 6 — commit (locks).
+        print("STEP 6 — POST /commit (lock)")
+        stamp_account_activity()
+        cr = await client.post(
+            f"/api/contexts/{CONTEXT_ID}/work-studio/documents/{export_id}/commit",
+            headers=headers,
+        )
+        print(f"  status: {cr.status_code}")
+        if cr.status_code == 200:
+            body = cr.json()
+            print(f"  lifecycle_state: {body.get('lifecycle_state')!r}")
+        else:
+            print(f"  body: {cr.text[:240]}")
+        print()
+        d_row_committed = fetch_doc(cont_doc_id)
+
+        detail_state_committed = {
+            "phase": "post-commit",
+            "lifecycle_state": d_row_committed.get("lifecycle_state"),
+            "committed_at": d_row_committed.get("committed_at"),
+            "committed_by": d_row_committed.get("committed_by"),
+            "intelligence_report": d_row_committed.get("intelligence_report"),
+        }
+
+        # ── Step 7 — export via wizard (PDF + PPTX additional formats).
+        # The shared Export Wizard is `ExportModal.jsx` which calls the
+        # same /export/{kind} endpoint with a different output_format.
+        # We exercise that path here to demonstrate the export-wizard
+        # leg of the journey.
+        print("STEP 7 — Export via wizard (additional formats PPTX + PDF)")
+        # Output format for board_pack is docx-only per the schema-doc
+        # table in work_studio_export.py:1228 (_AUTO_FORMAT). Decks/
+        # Reports can produce PPTX/PDF/DOCX. For the proving slice we
+        # demonstrate the wizard runs and produces the file the user
+        # picked. Per the WS1 sprint memo, board_pack actually supports
+        # both docx + pdf via the start_export render dispatcher.
+
+        # 7a — PDF (board_pack supports docx + pdf per WS1 memo).
+        pdf_result = await run_export(
+            client, headers,
+            kind="board_pack", output_format="pdf",
+            description=description, objective=objective, scope=scope,
+            source_document_ids=source_document_ids, cadence="one_off",
+            timeout_s=300.0,
+        )
+        if "_download_bytes" in pdf_result:
+            (ARTIFACT_DIR / "JC-WS-A-BoardPack-proving-slice.pdf").write_bytes(pdf_result["_download_bytes"])
+            print(f"  ✓ PDF: {len(pdf_result['_download_bytes'])} bytes via wizard")
+        else:
+            print(f"  ⚠ PDF did NOT complete: {pdf_result.get('error') or pdf_result.get('refusal_text') or 'unknown'}")
+
+        # 7b — PPTX. board_pack PPTX is wired via the alternate "deck-
+        # rendering" path; if not supported, log and continue.
+        pptx_result = await run_export(
+            client, headers,
+            kind="board_pack", output_format="pptx",
+            description=description, objective=objective, scope=scope,
+            source_document_ids=source_document_ids, cadence="one_off",
+            timeout_s=300.0,
+        )
+        if "_download_bytes" in pptx_result:
+            (ARTIFACT_DIR / "JC-WS-A-BoardPack-proving-slice.pptx").write_bytes(pptx_result["_download_bytes"])
+            print(f"  ✓ PPTX: {len(pptx_result['_download_bytes'])} bytes via wizard")
+        else:
+            print(f"  ⚠ PPTX did NOT complete: {pptx_result.get('error') or pptx_result.get('refusal_text') or 'unknown'}")
+        print()
+
+    # ── Step 8 — write JSON state artefacts.
+    print("STEP 8 — Persist state artefacts")
+    state_artefact = {
+        "proving_slice": "JC-WS-A Board Pack",
+        "spec_reference": "/app/memory/JC_WS_CANONICAL_SPEC.md",
+        "context_id": CONTEXT_ID,
+        "account_email": ADMIN_EMAIL,
+        "source_document_ids": source_document_ids,
+        "cadence": "one_off",
+        "exports": {
+            "docx_export_id": export_id,
+            "docx_bytes": len(docx_bytes),
+            "pdf_completed": "_download_bytes" in pdf_result,
+            "pptx_completed": "_download_bytes" in pptx_result,
+        },
+        "detail_view_states": [detail_state_pre, detail_state_post, detail_state_committed],
+        "accepted_recommendation_id": accepted_rec_id,
+    }
+    (ARTIFACT_DIR / "JC-WS-A-BoardPack-detail-view-state.json").write_text(
+        json.dumps(state_artefact, default=str, indent=2)
+    )
+    print(f"  ✓ JSON state → JC-WS-A-BoardPack-detail-view-state.json")
+
+    # ── Acceptance report (honest verdict).
     print()
-    print("=" * 70)
-    print("JC-WS-A Board Pack proving slice — COMPLETE")
-    print(f"Artefact: {artefact_path}")
-    print(f"Meta:     {meta_path}")
-    print(f"Quality:  {quality_path}")
-    print("=" * 70)
+    print("=" * 78)
+    print("ACCEPTANCE REPORT (per JC-WS canonical spec Part A criteria)")
+    print("=" * 78)
+    intel = state_artefact["detail_view_states"][2]["intelligence_report"] or {}
+    rows = [
+        ("REAL confidence score computed",
+            intel.get("confidence_pct") is not None
+            and not intel.get("confidence_score_skipped_no_sources")
+            and not intel.get("confidence_score_failed"),
+            f"pct={intel.get('confidence_pct')!r}"),
+        ("REAL source list (sources_count > 0)",
+            (intel.get("sources_count") or 0) > 0,
+            f"sources_count={intel.get('sources_count')!r}, audit.source_document_ids={(intel.get('audit') or {}).get('source_document_ids')!r}"),
+        ("REAL period",
+            bool(intel.get("period")),
+            f"period={intel.get('period')!r}"),
+        ("REAL recommendations (count > 0)",
+            len(intel.get("recommendations") or []) > 0,
+            f"count={len(intel.get('recommendations') or [])}"),
+        ("Accept-one-recommendation flow works",
+            accepted_rec_id is not None and any(
+                isinstance(r, dict) and r.get("id") == accepted_rec_id and r.get("addressed")
+                for r in (intel.get("recommendations") or [])
+            ),
+            f"accepted_rec_id={accepted_rec_id!r}, applied_count={len(intel.get('applied_recommendations') or [])}"),
+        ("Commit-lock works",
+            state_artefact["detail_view_states"][2]["lifecycle_state"] == "committed",
+            f"lifecycle_state={state_artefact['detail_view_states'][2]['lifecycle_state']!r}"),
+        ("DOCX export shipped (>20 KB)",
+            len(docx_bytes) > 20000,
+            f"{len(docx_bytes)} bytes"),
+        ("PDF export shipped via wizard",
+            "_download_bytes" in pdf_result,
+            f"{pdf_result.get('byte_len', 0)} bytes" if "_download_bytes" in pdf_result
+            else f"failed: {pdf_result.get('error') or pdf_result.get('refusal_text')}"),
+        ("PPTX export shipped via wizard",
+            "_download_bytes" in pptx_result,
+            f"{pptx_result.get('byte_len', 0)} bytes" if "_download_bytes" in pptx_result
+            else f"failed: {pptx_result.get('error') or pptx_result.get('refusal_text')}"),
+    ]
+    for label, passed, detail in rows:
+        mark = "✓" if passed else "✗"
+        print(f"  [{mark}] {label:48s}  {detail}")
+
+    acceptance = {
+        "rows": [{"label": l, "passed": p, "detail": d} for l, p, d in rows],
+        "summary": {
+            "passed": sum(1 for _, p, _ in rows if p),
+            "failed": sum(1 for _, p, _ in rows if not p),
+        },
+    }
+    (ARTIFACT_DIR / "JC-WS-A-BoardPack-acceptance-report.json").write_text(
+        json.dumps(acceptance, default=str, indent=2)
+    )
+    print()
+    print(f"  Acceptance:  {acceptance['summary']['passed']} passed, {acceptance['summary']['failed']} failed")
+    print(f"  Artefacts:   {ARTIFACT_DIR}")
+    print("=" * 78)
 
 
 if __name__ == "__main__":

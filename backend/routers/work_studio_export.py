@@ -1073,6 +1073,21 @@ async def _run_export(
             source_document_ids=explicit_doc_ids or None,
             documents_row_id=cont_doc_id,
         )
+        # JC-WS-A — mirror the LLM-generated narrative metadata onto
+        # `intelligence_report.*` so the FE IntelligenceCard +
+        # IntelligenceModal render REAL values (sources_count, period,
+        # framing, recommendations[], audit.source_document_ids[]).
+        # Pre-JC-WS the FE rendered placeholder
+        # "Intelligence report not captured for this document." even
+        # when generation succeeded — these fields were never
+        # populated.
+        await _mirror_narrative_metadata_to_intelligence_report(
+            export_id=export_id, context_id=context_id,
+            content_dict=content_dict if isinstance(content_dict, dict) else {},
+            citations_manifest=citations_manifest,
+            explicit_doc_ids=explicit_doc_ids,
+            body=body, kind=kind, documents_row_id=cont_doc_id,
+        )
     except Exception:  # noqa: BLE001
         # The scorer itself owns its failure-mode contract. This
         # outer except is a belt — if something blows up between
@@ -1121,6 +1136,129 @@ async def _run_export(
 # Track A Phase 7 — Confidence scoring helpers (shared by _run_export +
 # _run_enhance + commit recompute path in work_studio_overlay.py)
 # =============================================================================
+
+
+async def _mirror_narrative_metadata_to_intelligence_report(
+    *,
+    export_id: str,
+    context_id: str,
+    content_dict: Dict[str, Any],
+    citations_manifest: List[Dict[str, Any]],
+    explicit_doc_ids: List[str],
+    body: "ExportRequestIn",
+    kind: str,
+    documents_row_id: Optional[str] = None,
+) -> None:
+    """JC-WS-A (2026-06-25) — Mirror LLM-generated narrative metadata
+    onto `intelligence_report.*` for the FE IntelligenceCard +
+    IntelligenceModal.
+
+    The Pass-2 schema produces a structured JSON document
+    (`content_dict`) carrying `title`, `subtitle`, `period`,
+    `executive_summary`, `sections[]`, `recommendations[]`,
+    `citations[]`, etc. Pre-JC-WS those LLM outputs went only into
+    the rendered DOCX/PPTX/PDF — they were NEVER mirrored onto the
+    `intelligence_report.*` sub-fields the detail-view UI reads, so
+    the UI rendered placeholder ("Intelligence report not captured
+    for this document.") even when generation succeeded.
+
+    This helper writes the missing fields:
+      • intelligence_report.sources_count                 ← len(sources or citations_manifest)
+      • intelligence_report.period                        ← content_dict.period or body.scope-derived
+      • intelligence_report.framing                       ← content_dict.subtitle (compact framing line)
+      • intelligence_report.executive_summary             ← content_dict.executive_summary
+      • intelligence_report.recommendations               ← [{id, text, addressed: false}, ...]
+      • intelligence_report.pending_recommendations       ← count of unaddressed recs
+      • intelligence_report.audit.source_document_ids     ← explicit_doc_ids or citations doc_ids
+      • intelligence_report.audit.generated_at            ← iso(now)
+      • intelligence_report.audit.kind                    ← board_pack | committee_pack | ...
+
+    The fields are additive — the confidence-scorer sub-fields
+    (confidence_pct, confidence_rationale, ...) populated by
+    `_score_and_mirror_confidence` are not touched.
+    """
+    import uuid as _uuid
+
+    # Recommendations come from the Pass-2 JSON. Accept both shapes:
+    #   ["string", ...] (legacy / brief / deck)
+    #   [{owner, action, when}, ...] (some kinds emit structured objs)
+    # and normalize to {id, text, addressed} so the FE renderer at
+    # DocumentOverlay.jsx:685-693 can address them uniformly.
+    recs_raw = content_dict.get("recommendations") or []
+    recs_norm: List[Dict[str, Any]] = []
+    for r in recs_raw:
+        if isinstance(r, dict):
+            owner = (r.get("owner") or "").strip()
+            action = (r.get("action") or r.get("text") or "").strip()
+            when = (r.get("when") or r.get("deadline") or "").strip()
+            text = ((f"{owner} — " if owner else "") + action +
+                    (f" by {when}" if when else "")).strip(" ——")
+        else:
+            text = str(r or "").strip()
+        if not text:
+            continue
+        recs_norm.append({
+            "id": "rec-" + _uuid.uuid4().hex[:12],
+            "text": text,
+            "addressed": False,
+        })
+
+    # Sources count — explicit selection wins, else citation manifest,
+    # else len(content_dict.citations[]).
+    if explicit_doc_ids:
+        sources_count = len(explicit_doc_ids)
+        doc_id_audit = list(explicit_doc_ids)
+    else:
+        sources_count = len(citations_manifest)
+        doc_id_audit = [c.get("doc_id") for c in citations_manifest if c.get("doc_id")]
+
+    # Period — prefer the Pass-2 output if the LLM extracted one,
+    # else fall back to the body.scope text (capped). Scope often
+    # contains "Period: Q3 2025" or "FY2024-2028".
+    period = (content_dict.get("period") or "").strip()
+    if not period and body and body.scope:
+        # Try to extract a `Period: ...` substring; else surface a
+        # short scope preview.
+        import re as _re
+        m = _re.search(r"period\s*[:\-]\s*([^\.\n]+)", body.scope, _re.IGNORECASE)
+        period = m.group(1).strip() if m else body.scope.strip()[:60]
+
+    # Framing — subtitle is the compact one-liner ("Board Chair and
+    # CEO · Q3 2025"). The FE renders it after sources_count with a
+    # bullet separator.
+    framing = (content_dict.get("subtitle") or "").strip()[:160] or None
+
+    exec_summary = (content_dict.get("executive_summary") or "").strip()
+
+    intel_set: Dict[str, Any] = {
+        "intelligence_report.sources_count":           sources_count,
+        "intelligence_report.period":                  period or None,
+        "intelligence_report.framing":                 framing,
+        "intelligence_report.executive_summary":       exec_summary or None,
+        "intelligence_report.recommendations":         recs_norm,
+        "intelligence_report.pending_recommendations": sum(1 for r in recs_norm if not r["addressed"]),
+        "intelligence_report.audit": {
+            "generated_at":        iso(now()),
+            "kind":                kind,
+            "source_document_ids": doc_id_audit,
+            "model_version":       "anthropic_direct/claude-sonnet-4-5",
+        },
+    }
+
+    await db.work_studio_exports.update_one(
+        {"id": export_id, "context_id": context_id},
+        {"$set": intel_set},
+    )
+
+    # Mirror onto the documents row so DocumentOverlay's GET shows
+    # the same fields. The documents collection is the canonical
+    # source the FE polls; the work_studio_exports row carries the
+    # generation telemetry.
+    if documents_row_id:
+        await db.documents.update_one(
+            {"id": documents_row_id, "context_id": context_id},  # tenancy:allow-no-account-id — same justification as L1262 mirror_confidence path
+            {"$set": intel_set},
+        )
 
 
 async def _resolve_source_blobs_for_scoring(
@@ -1197,6 +1335,14 @@ async def _score_and_mirror_confidence(
         account_id=account_id, context_id=context_id,
         citations_manifest=citations_manifest,
         source_document_ids=source_document_ids,
+    )
+    logger.info(
+        "JC-WS-A confidence resolver debug: "
+        f"account_id={account_id!r}  context_id={context_id!r}  "
+        f"source_document_ids={source_document_ids!r}  "
+        f"citations_manifest_n={len(citations_manifest or [])}  "
+        f"blobs_n={len(blobs)}  "
+        f"blob_names={[b.get('name')[:30] for b in blobs[:5]]}"
     )
 
     score = await _score_confidence(
@@ -1858,6 +2004,14 @@ async def start_export(
         "source_count": 0,
         "contributor_count": 1,
         "akki_generated": True,
+        # JC-WS-A (2026-06-25) — per the canonical spec, every
+        # generated document is a card under its type, **entering as
+        # Draft**. Pre-JC-WS the field was absent at insert, so
+        # downstream handlers (e.g. move-to-review at line 207) read
+        # `row.get("lifecycle_state") or "committed"` → defaulted to
+        # "committed" → blocked the Draft → In Review transition.
+        # Setting "draft" here is consistent across all consumers.
+        "lifecycle_state": "draft",
     }
     await db.work_studio_exports.insert_one(row)
 
@@ -2322,6 +2476,8 @@ async def start_enhance(
         "source_count": 1,
         "contributor_count": 1,
         "akki_generated": True,
+        # JC-WS-A (2026-06-25) — enter as Draft per canonical spec.
+        "lifecycle_state": "draft",
     }
     await db.work_studio_exports.insert_one(row)
 
