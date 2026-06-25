@@ -46,10 +46,35 @@ Five entry patterns. Each MUST produce a real, professional document.
 - User types or pastes their own content into the editor, then prompts Akki to enhance/expand it.
 - Wire: editor content is the seed → enhance pass refines/expands → card in Draft.
 
-**3. Brief — three source origins (user picks ONE):**
-- (a) a chat artefact, (b) a Think Lab session, (c) documents + signals + cycle data on-platform.
-- User provides a description, the objective it should serve, and the scope it should cover.
-- Wire: resolve the chosen source → generate brief against description/objective/scope → card in Draft.
+**3. Brief — intent is captured at the SURFACE OF ORIGIN; Document Generation's brief service is the engine
+   underneath. Two distinct paths — do NOT build the old "docs + signals + cycle data" three-way picker
+   (that was the spec describing plumbing as a user choice; it is removed, not deferred):**
+
+**3a. ORIGIN-TRIGGERED briefs (built WITH each module, NOT in Work Studio now):**
+- A "brief this" action lives on Solva, Monitor, and Task Manager. The user is on that surface,
+  triggers a brief, the originating context is captured there, the doc-gen brief service fulfils it,
+  and the brief is delivered back AT THE ORIGIN surface. These triggers do not exist yet and are
+  net-new per surface — build each when its module is built. Not a Work Studio picker entry.
+
+**3b. IN-STUDIO briefs (build now) — two inputs, kept minimal on purpose:**
+- **Uploads** — from the document journal (the AddToWorkStudio path exists) or a fresh user upload.
+  Discrete and reliable. THIS ALONE IS A COMPLETE, WORKING BRIEF JOURNEY — ship it first.
+- **Add context from Akki** — the user NAMES the context they want in plain language ("the Q3 board
+  discussion"); Akki fetches matching material by REUSING the existing retrieval (chat's BM25 over
+  context documents / search_document_journal — do NOT build new search). Minimal honest flow:
+  name it → Akki fetches & assembles → user sees what went in and removes anything wrong → build.
+- **MATURITY GATES THE STEPS (load-bearing rule):** match the number of steps to how reliably retrieval
+  performs. A multi-step journey that half-works is WORSE than a simple one that works — a
+  frustrated user is the worse failure. So: get "name it → Akki fetches" returning genuinely
+  relevant material FIRST, prove it, and only then keep the "see-and-remove" step (the one step that
+  can't be dropped without hiding what's in the brief). Do NOT build a confirm/curate/refine/rebuild
+  gauntlet. If retrieval quality isn't there yet, the Akki-fetch input WAITS and Brief ships on
+  uploads alone — do not ship a frustrating half-working retrieval journey.
+- **Honesty floor:** if the named context returns nothing solid, Akki says so and asks the user to
+  upload or rename — it does NOT proceed on thin material or fabricate a brief.
+- For either in-Studio input, the user provides a description, the objective it should serve, and the
+  scope it should cover (these shape content).
+- Wire: resolve the chosen input → generate brief against description/objective/scope → card in Draft.
 
 **4. Enhance an existing document — Minutes, Reports, Decks:**
 - User uploads the document to improve + custom instructions; Akki applies the instructions to the file.
@@ -97,7 +122,10 @@ Cards persist per-account under their type. A document stays editable through Dr
 
 ### Fan out (after the Board Pack slice is shown)
 
-Replicate the proven pattern across Committee Pack, Minutes, Brief (3-source selector), Deck, Report, Draft, and the three enhance flows (minutes / reports / decks). Reuse the slice pattern; do not re-architect per kind.
+Replicate the proven pattern across Committee Pack, Minutes, Brief (in-Studio: uploads first, then the
+Akki-fetch input only once retrieval proves relevant), Deck, Report, Draft, and the three enhance flows
+(minutes / reports / decks). Origin-triggered briefs (from Solva / Monitor / Task Manager) build with
+those modules, not here. Reuse the slice pattern; do not re-architect per kind.
 
 ### Acceptance (Document Generation)
 

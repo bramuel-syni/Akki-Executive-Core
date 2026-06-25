@@ -26,16 +26,25 @@
 | Blank-source entry on Create modal | ✅ EXISTS-TODAY | `CreateArtefactModal.jsx:199` — radio option `Blank — I'll write it from scratch.` | NO. |
 | Editor for in-place composition (Reports / Decks) | ✅ EXISTS-TODAY | `BlockComposer` mounted via `StudioComposerPage.jsx` at `/app/studio/composer/:kind/:artefactId`. Deck renders slide-mode by Heading-1 boundaries. | YES — the JC-WS Blank-start spec says "user prompts Akki to enhance/expand it." Need to confirm the in-editor "ask Akki to enhance" affordance exists in BlockComposer; if not, this is a MISSING UI subsidiary surface. **NEEDS VERIFICATION** below. |
 
-### Journey 3 — Brief (3 source origins: chat artefact · ThinkLab session · docs+signals+cycle)
+### Journey 3 — Brief (REVISED 2026-06-25 per JC-WS Phase 3 dispatch)
+
+> **The original "3 source origins (chat artefact · ThinkLab session · docs+signals+cycle)" model is
+> SUPERSEDED.** That spec described plumbing as a user choice — it is removed, not deferred. The
+> revised canonical model has TWO paths: **(3a) ORIGIN-TRIGGERED** briefs (built WITH each module
+> on Solva / Monitor / Task Manager — net-new per surface, not a Work Studio picker entry) and
+> **(3b) IN-STUDIO** briefs (uploads + Akki-fetch-by-name, gated by retrieval maturity). Source of
+> truth: `/app/memory/JC_WS_CANONICAL_SPEC.md` Journey 3. The original MISSING items below are
+> closed out as SUPERSEDED.
 
 | Surface | Status | Evidence | Behaviour delta needed? |
 |---|---|---|---|
 | Brief kind entry | ✅ EXISTS-TODAY | "Create a Brief" button at `WorkStudio.jsx:191`; `CompilationWizard.jsx:42` lists `briefing`. | NO. |
-| Source picker: blank / brief / external_document | ✅ EXISTS-TODAY | `CreateArtefactModal.jsx:198-202` | YES — current options don't match the JC-WS spec exactly. |
-| **Source picker: chat artefact** | ❌ **MISSING** | No "Start from a chat artefact" option on `CreateArtefactModal`. The chat affordance modal (`WorkStudioAffordanceModal.jsx`) is one-shot; it doesn't persist a chat artefact you later "Start a brief from." | **STOP — surface to user.** |
-| **Source picker: ThinkLab session** | ❌ **MISSING** | No "Start from a ThinkLab session" option. ThinkLab sessions live in a separate surface (`solva_phase_d_sessions` collection); no FE picker pulls them into Brief creation. | **STOP — surface to user.** |
-| Source picker: docs + signals + cycle | ⚠️ **PARTIAL** | The current `external_document` source picker only takes a single document. "Signals + cycle data" aren't wired into the Brief picker. | **STOP — surface to user.** |
-| Description / Objective / Scope inputs | ✅ EXISTS-TODAY | `WorkStudioAffordanceModal.jsx` already collects all three (Stage 4.2 work). | NO. |
+| Source picker: uploads (document journal + fresh upload) | ✅ EXISTS-TODAY | `CreateArtefactModal.jsx:198-202` `external_document` path; document journal AddToWorkStudio path exists. | NO behaviour delta — this is the "uploads first" path of revised Journey 3b. |
+| **Source picker: Add context from Akki (name it → fetch by BM25)** | 🟡 **GATED BY RETRIEVAL QUALITY** | New input. Wire to existing chat BM25 / `search_document_journal`; do NOT build new search. Ship only after ≥2/3 named-context test cases return RELEVANT material per Phase 3 retrieval-quality gate. | **BUILD UPLOADS PATH FIRST; AKKI-FETCH WAITS ON GATE.** |
+| ~~Source picker: chat artefact~~ | ⛔ **SUPERSEDED 2026-06-25** | Original spec model removed. Chat-originated briefs land in Journey 3a (origin-triggered on the chat surface) when chat module gets its "brief this" affordance — not a Work Studio picker. | N/A — closed out. |
+| ~~Source picker: ThinkLab session~~ | ⛔ **SUPERSEDED 2026-06-25** | Original spec model removed. ThinkLab-originated briefs land in Journey 3a (origin-triggered on the ThinkLab surface) when ThinkLab module gets its "brief this" affordance. | N/A — closed out. |
+| ~~Source picker: docs + signals + cycle~~ | ⛔ **SUPERSEDED 2026-06-25** | Original spec model removed. Signals/cycle-originated briefs land in Journey 3a (origin-triggered on Monitor / Task Manager). | N/A — closed out. |
+| Description / Objective / Scope inputs | ✅ EXISTS-TODAY | `WorkStudioAffordanceModal.jsx` collects all three (Stage 4.2 work). | NO. |
 
 ### Journey 4 — Enhance existing document (Minutes · Reports · Decks)
 
