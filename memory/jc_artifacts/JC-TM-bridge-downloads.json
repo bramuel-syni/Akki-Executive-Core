@@ -1,0 +1,16 @@
+[
+  {
+    "export_id": "4f373bfb-1ef3-4fa3-897e-32547449c004",
+    "file": "JC-TM-bridge-compiled.docx",
+    "bytes": 41237,
+    "magic_4": "504b0304",
+    "format": "docx"
+  },
+  {
+    "export_id": "28911b7f-69b5-4ef1-abfe-198a42fb3bae",
+    "file": "JC-TM-bridge-compiled-2.pdf",
+    "bytes": 27414,
+    "magic_4": "25504446",
+    "format": "pdf"
+  }
+]

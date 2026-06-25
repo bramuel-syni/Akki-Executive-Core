@@ -2,6 +2,75 @@
 
 > Append-only history of shipped work. Newest first.
 
+## 2026-06-25 — JC-TM Stage 1 — Compile Bridge CLOSED
+
+The 2026-06-25 JC-TM proving slice surfaced an architectural fork:
+`compile_service` was writing LLM plain-text section bodies to
+`db.documents.extracted_text` and never produced a `.docx` / `.pdf`,
+violating the JC-TM canonical-spec rule "REUSE existing engines —
+compile must produce documents through the SAME generators and the
+SAME export wizard as Document Generation". User locked **Option A**
+(thin compile-as-orchestrator over `work_studio_export`). Shipped:
+
+- **`backend/services/tasks/compile_service.py` — `run_drafting`
+  rewritten** as a thin orchestrator. Builds an `ExportRequestIn` from
+  approved contributions (objective → `objective`, success_criteria →
+  `scope`, per-contributor summaries → `description`), resolves the
+  export kind from `task.output_spec.template_id` via a new
+  `_TPL_TO_EXPORT_KIND` mapping (unknown templates → `report`), then
+  `await _run_export(...)` ONE-per-format. Each `work_studio_exports`
+  row is pre-inserted with `source_task_id=<task_id>` so the TaskDrawer
+  pivot-back is preserved even if `_run_export` raises mid-run.
+  Legacy plain-text writer kept as a fallback ONLY when every requested
+  format fails — tagged `draft_artefact_kind="legacy_document"` so the
+  fallback is honest in the audit ledger.
+- **`run_commit` branched on `draft_artefact_kind`** — bridge path
+  flips `work_studio_exports.lifecycle_state` `"draft"`→`"committed"`,
+  which inherits JC-WS Phase 1's PATCH-after-commit→409 edit-lock
+  invariant verbatim (enforced by `routers/work_studio_overlay.py:134-138`).
+  Auto-close decision now reads the right collection for the artefact
+  kind in play.
+- **`backend/routers/tasks.py:start_compile_drafting`** sync/BG
+  branching switched from sections-count to formats-count.
+- **`backend/scripts/jc_tm_proving_slice.py`** Steps 7-10 + the
+  acceptance ledger augmented with 5 invariant-transfer rows + 3 new
+  evidence files. Polls `work_studio_exports/{eid}` to
+  `status=complete` (avoids racing the BackgroundTasks runner),
+  PATCH-probes for 409, downloads via the wizard's `download_token`
+  flow, captures file size + magic per format.
+
+### Acceptance — 14/14 GREEN
+
+All three JC-WS Phase 1 invariants transferred cleanly:
+- (1) **Commit lifecycle** — both rows post-commit show
+  `lifecycle_state="committed"` + `committed_at` ISO timestamp.
+- (2) **Edit-lock** — PATCH after commit on both export IDs → **409**
+  with body byte-identical to JC-WS Phase 1's "This document is
+  committed and read-only…" — proof we ride the same overlay route,
+  not a parallel implementation.
+- (3) **Confidence pct** — real numeric values (`40` and `30`) from
+  the SAME `_score_and_mirror_confidence` path JC-WS Phase 1 ratchets.
+
+### Real artefacts produced
+
+In `/app/memory/jc_artifacts/`:
+
+| File | Size | Magic | Purpose |
+|---|---:|---|---|
+| `JC-TM-bridge-compiled.docx` | 41 237 | `504b0304` (PK) | Board pack DOCX — cover + exec summary + 6 sections, 70 paragraphs of Shield-generated executive prose. |
+| `JC-TM-bridge-compiled-2.pdf` | 27 414 | `25504446` (`%PDF`) | Same content rendered to PDF. |
+| `JC-TM-bridge-export-row.json` | 1 022 | json | Both work_studio_exports rows post-commit. |
+| `JC-TM-bridge-edit-lock-proof.json` | 596 | json | PATCH probes (both 409 with the exact Phase 1 error body). |
+| `JC-TM-bridge-downloads.json` | 354 | json | File size + magic per format. |
+| `JC-TM-bridge-acceptance.json` | 4 426 | json | Full 14-row ledger + invariant rows + bridge metadata. |
+
+Sprint memo: `sprints/JC_TM_COMPILE_BRIDGE.md`. STOPPING per the user
+dispatch's hard rule before fanning out Stage 2 across the remaining
+six task journeys (Create / Coordinate / Manage / Readiness / Generate
+/ Monitor / Complete).
+
+---
+
 ## 2026-06-25 — JC-WS dispatch — Phase 1 (Board Pack) + Phase 2 (Analyze) CLOSED
 
 Two proving-slice journeys landed today as REAL artefacts in

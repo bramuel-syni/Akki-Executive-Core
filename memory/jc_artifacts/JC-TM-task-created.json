@@ -1,6 +1,6 @@
 {
   "task": {
-    "id": "task-60a408c73f1c",
+    "id": "task-4b4fc28b5646",
     "name": "Mara Heritage Bank \u2014 Q3 2025 Board Pack",
     "objective": "Equip the board with a concise, evidence-based read on the bank's strategic position so directors can take the capital, risk, and digital-transformation decisions queued at the Q3 meeting.",
     "success_criteria": "Each board member reads the pack in under 45 minutes and arrives able to vote on (a) Q4 capital allocation, (b) the digital-transformation refresh, and (c) the risk-tolerance recalibration.",
@@ -18,7 +18,7 @@
       {
         "name": "Sara Achieng",
         "role": "CHRO",
-        "email": "chro.q3-8b5bb0@mara-heritage.demo",
+        "email": "chro.q3-ee0ffa@mara-heritage.demo",
         "contribution": "People & culture section \u2014 Q3 attrition + key-talent retention",
         "due_date": null,
         "contribution_mode": "magic_link",
@@ -30,7 +30,7 @@
       {
         "name": "James Otieno",
         "role": "Chief Risk Officer",
-        "email": "cro.q3-d23418@mara-heritage.demo",
+        "email": "cro.q3-1c1ca6@mara-heritage.demo",
         "contribution": "Risk section \u2014 NPL trajectory, single-name concentration, op-risk",
         "due_date": null,
         "contribution_mode": "magic_link",
@@ -45,26 +45,26 @@
     "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
     "due_date": "2025-10-15",
     "readiness_score": 0,
-    "created_at": "2026-06-25T12:08:13.676244+00:00",
-    "updated_at": "2026-06-25T12:08:13.676244+00:00",
+    "created_at": "2026-06-25T15:12:43.465841+00:00",
+    "updated_at": "2026-06-25T15:12:43.465841+00:00",
     "status_history": [
       {
         "state": "active",
-        "at": "2026-06-25T12:08:13.676244+00:00"
+        "at": "2026-06-25T15:12:43.465841+00:00"
       }
     ],
     "origin": null,
     "contributor_comments": []
   },
   "contributor_1": {
-    "email": "chro.q3-8b5bb0@mara-heritage.demo",
+    "email": "chro.q3-ee0ffa@mara-heritage.demo",
     "role": "CHRO",
     "mode": "magic_link"
   },
   "contributor_2": {
-    "email": "cro.q3-d23418@mara-heritage.demo",
+    "email": "cro.q3-1c1ca6@mara-heritage.demo",
     "role": "CRO",
     "mode": "magic_link"
   },
-  "captured_at": "2026-06-25T12:08:14.350713+00:00"
+  "captured_at": "2026-06-25T15:12:43.997374+00:00"
 }

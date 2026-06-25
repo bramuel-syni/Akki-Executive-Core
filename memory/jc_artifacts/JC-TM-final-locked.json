@@ -1,15 +1,13 @@
 {
-  "task_id": "task-60a408c73f1c",
+  "task_id": "task-4b4fc28b5646",
   "commit": {
     "ok": true,
     "committed": [
-      "doc-20a98b45b4",
-      "doc-c94762ea6f",
-      "doc-e352da34fb",
-      "doc-25626b8349",
-      "doc-372721b9e2"
+      "4f373bfb-1ef3-4fa3-897e-32547449c004",
+      "28911b7f-69b5-4ef1-abfe-198a42fb3bae"
     ],
-    "task_closed": true
+    "task_closed": true,
+    "artefact_kind": "work_studio_export"
   },
-  "captured": "2026-06-25T12:09:10.213639+00:00"
+  "captured": "2026-06-25T15:18:01.448877+00:00"
 }

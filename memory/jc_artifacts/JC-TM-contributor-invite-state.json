@@ -1,16 +1,16 @@
 {
-  "task_id": "task-60a408c73f1c",
+  "task_id": "task-4b4fc28b5646",
   "selected_mode": "magic_link",
   "audit_log_rows": [
     {
-      "id": "8021d583-090b-4298-925a-322cbf069f27",
+      "id": "5886ff76-96ee-443d-9205-77a7adb94175",
       "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
       "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
       "action": "task.contributor.invited",
       "resource_type": "task",
-      "resource_id": "task-60a408c73f1c",
+      "resource_id": "task-4b4fc28b5646",
       "metadata": {
-        "contributor_email": "cro.q3-d23418@mara-heritage.demo",
+        "contributor_email": "cro.q3-1c1ca6@mara-heritage.demo",
         "mode": "magic_link",
         "allow_email_reply": false,
         "channels": [
@@ -20,17 +20,17 @@
           "sent"
         ]
       },
-      "created_at": "2026-06-25T12:08:14.348905+00:00"
+      "created_at": "2026-06-25T15:12:43.995681+00:00"
     },
     {
-      "id": "b52e4b3a-8d00-4282-bc0c-3f9844f37fe0",
+      "id": "ac5fd1db-2e2c-4583-9e56-6890e26b309c",
       "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
       "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
       "action": "task.contributor.invited",
       "resource_type": "task",
-      "resource_id": "task-60a408c73f1c",
+      "resource_id": "task-4b4fc28b5646",
       "metadata": {
-        "contributor_email": "chro.q3-8b5bb0@mara-heritage.demo",
+        "contributor_email": "chro.q3-ee0ffa@mara-heritage.demo",
         "mode": "magic_link",
         "allow_email_reply": false,
         "channels": [
@@ -40,22 +40,22 @@
           "sent"
         ]
       },
-      "created_at": "2026-06-25T12:08:14.156614+00:00"
+      "created_at": "2026-06-25T15:12:43.894214+00:00"
     },
     {
-      "id": "f611a110-2bfe-4a7c-9ed6-b9af3567adee",
+      "id": "e11e8af9-3a6a-40bb-a88f-8e6566b7c3f3",
       "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
       "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
       "action": "task.created",
       "resource_type": "task",
-      "resource_id": "task-60a408c73f1c",
+      "resource_id": "task-4b4fc28b5646",
       "metadata": {
         "state": "active",
         "name": "Mara Heritage Bank \u2014 Q3 2025 Board Pack"
       },
-      "created_at": "2026-06-25T12:08:13.676244+00:00"
+      "created_at": "2026-06-25T15:12:43.465841+00:00"
     }
   ],
   "magic_link_tokens": [],
-  "captured_at": "2026-06-25T12:08:14.379487+00:00"
+  "captured_at": "2026-06-25T15:12:44.258285+00:00"
 }

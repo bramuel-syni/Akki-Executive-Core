@@ -212,9 +212,108 @@ def _fallback_draft_body(task: Dict[str, Any], section: Optional[str] = None) ->
     )
 
 
+# ═════════════════════════════════════════════════════════════════════
+# JC-TM Stage 1 — Bridge Compile (2026-06-25)
+#
+# Per the JC-TM canonical spec (`/app/memory/JC_TM_CANONICAL_SPEC.md`
+# § Part 0 + § Integration point with JC-WS):
+#
+#   "REUSE existing engines. Critically: compile must produce documents
+#    through the SAME generators and the SAME export wizard as Document
+#    Generation (board packs, committee packs, briefings, decks,
+#    financial models/XLS). Do NOT build a parallel generation stack."
+#
+# Compile now becomes a thin orchestrator that routes approved
+# contributions through the work_studio_export two-pass pipeline. Each
+# requested output format produces a single composed document
+# (e.g. board_pack DOCX with all sections as headings — the
+# "forward-to-a-board good" shape JC-WS Phase 1 proved). The bridge
+# inherits JC-WS Phase 1's three invariants verbatim:
+#
+#   1. Commit lifecycle  — work_studio_exports.lifecycle_state
+#                           "draft" → "committed" on commit.
+#   2. Edit-lock         — PATCH after commit → 409 (enforced by
+#                           routers/work_studio_overlay.py:134-138).
+#   3. Confidence pct    — real numeric pct from the shared scorer
+#                           (_score_and_mirror_confidence).
+#
+# Mapping from task.output_spec.template_id → work_studio_export _VALID_KINDS.
+# Unknown templates fall back to "report" (the most permissive shape).
+# ═════════════════════════════════════════════════════════════════════
+_TPL_TO_EXPORT_KIND: Dict[str, str] = {
+    "board_pack":      "board_pack",
+    "committee_pack":  "committee_pack",
+    "strategy_deck":   "deck",
+    "deck":            "deck",
+    "fundraising":     "report",   # cover the underlying pitch as a report;
+                                    # the user can refine into deck later.
+    "minutes":         "minutes",
+    "report":          "report",
+    "brief":           "brief",
+    "briefing":        "brief",
+    "free_text":       "report",
+}
+
+
+def _build_export_body(task: Dict[str, Any], contributions: List[Dict[str, Any]]):
+    """Compose an ExportRequestIn from a task + approved contributions.
+    The three required string fields map naturally onto the existing
+    work_studio_export Pass-1/Pass-2 prompt shape:
+      • description — approved contributor inputs (the body to ground in)
+      • objective   — the task's verbatim objective
+      • scope       — the task's verbatim success criteria
+    """
+    # Lazy-import inside the function so the module-level import graph
+    # stays acyclic. See routers/compilations.py:234-235 for prior art.
+    from routers.work_studio_export import ExportRequestIn
+
+    objective_text = (task.get("objective") or task.get("name") or "Compile task")[:1900]
+    scope_text     = (task.get("success_criteria") or "Produce a professional document.")[:1900]
+
+    desc_parts = [
+        f"Task: {task.get('name', '')}",
+        "",
+        "Approved contributor inputs:",
+    ]
+    if not contributions:
+        desc_parts.append(
+            "  (no approved contributions yet — produce a polished placeholder "
+            "skeleton with TODO markers and a board-ready voice)"
+        )
+    else:
+        for c in contributions[:10]:
+            name    = c.get("name") or c.get("email") or "Contributor"
+            role    = c.get("role") or "—"
+            summary = (c.get("contribution") or c.get("note") or "(no description)")[:600]
+            status  = c.get("status") or "—"
+            desc_parts.append(f"  • {name} ({role}) — status={status}: {summary}")
+    desc_text = "\n".join(desc_parts)[:1900]
+
+    return ExportRequestIn(
+        description=desc_text or "Compile task from approved contributions.",
+        objective=objective_text or "Compile task.",
+        scope=scope_text or "Produce a professional document.",
+        output_format="auto",
+    )
+
+
 async def run_drafting(db, *, task: Dict[str, Any], account_id: str) -> List[str]:
-    """Generates one or more draft documents for the task. Returns
-    the list of created doc IDs."""
+    """JC-TM Stage 1 Bridge — routes through work_studio_export's
+    `_run_export` per the canonical-spec rule "compile must produce
+    documents through the SAME generators and the SAME export wizard
+    as Document Generation".
+
+    Per the user dispatch: one work_studio_exports row per requested
+    format (option (a) — sections appear as headings inside one
+    composed document). Each row carries `source_task_id=<task_id>` so
+    the TaskDrawer can pivot to the artefact.
+
+    The legacy plain-text-to-db.documents writer survives only as an
+    emergency fallback when _run_export raises a non-recoverable error
+    for every requested format, so the slice never strands.
+
+    Returns the list of created work_studio_exports IDs (or legacy
+    db.documents IDs if the bridge fully fell through to fallback)."""
     tid = task["id"]
     ctx_id = task.get("context_id")
     session = task.get("compile_session") or _empty_session()
@@ -225,68 +324,133 @@ async def run_drafting(db, *, task: Dict[str, Any], account_id: str) -> List[str
     await _set_session(db, task_id=tid, session=session)
     await _audit(db, task_id=tid, account_id=account_id,
                  action="task.compile.drafting.started", ctx_id=ctx_id,
-                 metadata={"output_spec": task.get("output_spec")})
+                 metadata={"output_spec": task.get("output_spec"),
+                           "bridge":      "work_studio_export"})
 
     # Pull contributions that are submitted/approved.
     contributions = [
         m for m in (task.get("team") or [])
         if m.get("status") in ("submitted", "approved")
     ]
-    # Fold in already-uploaded docs linked to this task (informational
-    # only at this stage — the LLM prompt synthesises them via the
-    # contribution summaries; raw bodies stay on disk).
-    _linked_docs = await db.documents.find(
-        {"task_id": tid}, {"_id": 0, "id": 1, "name": 1},
-    ).to_list(length=20)
-    del _linked_docs  # keeps lint happy; signal that we read the rows
 
-    spec = task.get("output_spec") or {}
-    tpl_id = spec.get("template_id")
-    sections = _TEMPLATE_PACK_SHAPES.get(tpl_id, [task.get("name") or "Draft"])
+    spec    = task.get("output_spec") or {}
+    tpl_id  = spec.get("template_id")
+    formats_in = spec.get("formats") or ["docx"]
+    valid_formats = {"docx", "pptx", "pdf"}
+    formats = [f for f in formats_in if f in valid_formats] or ["docx"]
 
-    created_ids: List[str] = []
-    for section in sections:
-        prompt = _build_drafting_prompt({**task, "name": f"{task.get('name')} — {section}"}, contributions)
-        result = await shield_invoke_bounded(
-            purpose=f"task_manager.compile.drafting.{(tpl_id or 'free').lower()}",
-            content=prompt,
-            tenant_id=account_id, user_id=account_id, consumer_id="tasks",
-        )
-        body: str
-        if result and result.get("__timeout__"):
-            await _record_llm_timeout(db, task_id=tid, account_id=account_id,
-                                      purpose=result.get("purpose", "drafting"))
-            body = _fallback_draft_body(task, section)
-        elif result and result.get("response"):
-            body = result["response"].strip() or _fallback_draft_body(task, section)
-        else:
-            body = _fallback_draft_body(task, section)
+    # Lazy-import to avoid circular ref (work_studio_export imports
+    # services indirectly).
+    from routers.work_studio_export import _run_export, _VALID_KINDS
 
-        did = f"doc-{uuid.uuid4().hex[:10]}"
-        doc = {
-            "id":                did,
+    kind = _TPL_TO_EXPORT_KIND.get((tpl_id or "").lower(), "report")
+    if kind not in _VALID_KINDS:
+        kind = "report"
+
+    body = _build_export_body(task, contributions)
+
+    created_export_ids: List[str] = []
+    bridge_errors:      List[Dict[str, Any]] = []
+
+    for fmt in formats:
+        # Pre-create the work_studio_exports row with source_task_id
+        # so the linkback is preserved even if _run_export raises mid-run.
+        # Schema mirrors routers/work_studio_export.py:2012-2047 + the
+        # bridge-only `source_task_id` field for the TaskDrawer pivot.
+        export_id = str(uuid.uuid4())
+        created_at = _now_iso()
+        row = {
+            "id":                export_id,
             "context_id":        ctx_id,
             "account_id":        account_id,
-            "task_id":           tid,
-            "name":              f"{task.get('name', 'Draft')} — {section}",
-            "extracted_text":    body,
-            "state":             "draft",
-            "origin":            "akki_generated",
-            "status":            "ready",
-            "doc_type":          tpl_id or "free_text",
-            "compile_session":   {"task_id": tid, "stage": "drafting", "section": section},
-            "created_at":        _now_iso(),
+            "kind":              kind,
+            "output_format":     fmt,
+            "status":            "running",
+            "description_chars": len(body.description),
+            "objective_chars":   len(body.objective),
+            "scope_chars":       len(body.scope),
+            "created_at":        created_at,
+            "completed_at":      None,
+            "file_name":         None,
+            "file_path":         None,
+            "sha256":            None,
+            "sensitivity_band":  None,
+            "error":             None,
+            "refusal_text":      None,
+            "chat_audit_id":     None,
+            "source_count":      0,
+            "contributor_count": max(1, len(contributions)),
+            "akki_generated":    True,
+            "lifecycle_state":   "draft",
+            # JC-TM Stage 1 Bridge link-back to the task.
+            "source_task_id":    tid,
         }
-        await db.documents.insert_one(dict(doc))
-        created_ids.append(did)
+        await db.work_studio_exports.insert_one(row)
 
-    session["draft_artefact_ids"] = created_ids
-    session["current_stage"]      = "drafting"
+        try:
+            await _run_export(
+                export_id=export_id, account_id=account_id,
+                context_id=ctx_id, kind=kind,
+                output_format=fmt, body=body,
+            )
+            # _run_export itself stamps the row with status=complete /
+            # status=failed; we trust that and just record the id.
+            created_export_ids.append(export_id)
+        except Exception as e:  # noqa: BLE001
+            log.exception("JC-TM bridge: _run_export crashed for fmt=%s", fmt)
+            bridge_errors.append({"format": fmt, "error": str(e)[:300],
+                                  "export_id": export_id})
+            await db.work_studio_exports.update_one(
+                {"id": export_id, "context_id": ctx_id},
+                {"$set": {"status": "failed",
+                          "error": f"bridge:{type(e).__name__}: {str(e)[:200]}",
+                          "completed_at": _now_iso()}},
+            )
+
+    # Honest fallback — only if EVERY format failed do we drop to the
+    # legacy plain-text writer so the slice never strands. The fallback
+    # is explicitly tagged so downstream evidence is honest.
+    fallback_doc_ids: List[str] = []
+    if not created_export_ids:
+        log.warning("JC-TM bridge: every format failed; falling back to legacy plain-text writer")
+        sections = _TEMPLATE_PACK_SHAPES.get(tpl_id, [task.get("name") or "Draft"])
+        for section in sections:
+            did = f"doc-{uuid.uuid4().hex[:10]}"
+            doc = {
+                "id":                did,
+                "context_id":        ctx_id,
+                "account_id":        account_id,
+                "task_id":           tid,
+                "name":              f"{task.get('name', 'Draft')} — {section}",
+                "extracted_text":    _fallback_draft_body(task, section),
+                "state":             "draft",
+                "origin":            "akki_generated",
+                "status":            "ready",
+                "doc_type":          tpl_id or "free_text",
+                "compile_session":   {"task_id": tid, "stage": "drafting_fallback",
+                                       "section": section},
+                "created_at":        _now_iso(),
+            }
+            await db.documents.insert_one(dict(doc))
+            fallback_doc_ids.append(did)
+
+    session["draft_artefact_ids"]  = created_export_ids or fallback_doc_ids
+    session["draft_artefact_kind"] = "work_studio_export" if created_export_ids else "legacy_document"
+    if fallback_doc_ids:
+        session["fallback_legacy_doc_ids"] = fallback_doc_ids
+    if bridge_errors:
+        session["bridge_errors"] = bridge_errors
+    session["current_stage"] = "drafting"
     await _set_session(db, task_id=tid, session=session)
     await _audit(db, task_id=tid, account_id=account_id,
                  action="task.compile.drafting.completed", ctx_id=ctx_id,
-                 metadata={"draft_artefact_ids": created_ids, "n_sections": len(sections)})
-    return created_ids
+                 metadata={"draft_artefact_ids": session["draft_artefact_ids"],
+                           "draft_artefact_kind": session["draft_artefact_kind"],
+                           "formats":             formats,
+                           "kind":                kind,
+                           "bridge_failures":     len(bridge_errors),
+                           "fallback_used":       bool(fallback_doc_ids)})
+    return session["draft_artefact_ids"]
 
 
 # ═════════════════════════════════════════════════════════════════════
@@ -512,42 +676,107 @@ async def run_commit(db, *, task: Dict[str, Any], account_id: str) -> Dict[str, 
     """Commit all draft documents to state="committed". Mongo's
     Motor client doesn't expose multi-doc transactions in our
     deployment so we do sequential commits + a best-effort rollback
-    if any commit fails midway. Per the brief's explicit scope cut."""
+    if any commit fails midway. Per the brief's explicit scope cut.
+
+    JC-TM Stage 1 Bridge (2026-06-25) — branches on
+    `session.draft_artefact_kind`:
+      • "work_studio_export" — flip
+        `work_studio_exports.lifecycle_state` "draft" → "committed";
+        this inherits JC-WS Phase 1's PATCH-after-commit → 409
+        edit-lock invariant verbatim (enforced by
+        routers/work_studio_overlay.py:134-138).
+      • "legacy_document" (fallback path only) — flip
+        `db.documents.state` "draft" → "committed" per the F.4
+        original behaviour.
+    """
     tid = task["id"]
     ctx_id = task.get("context_id")
     session = task.get("compile_session") or _empty_session()
     ids = list(session.get("final_artefact_ids") or session.get("draft_artefact_ids") or [])
     if not ids:
         return {"ok": False, "reason": "no_drafts"}
+    artefact_kind = session.get("draft_artefact_kind") or "legacy_document"
     committed: List[str] = []
     failed: Optional[str] = None
-    for did in ids:
-        try:
-            res = await db.documents.update_one(
-                {"id": did, "task_id": tid, "state": "draft"},
-                {"$set": {"state": "committed", "committed_at": _now_iso()}},
-            )
-            if res.modified_count != 1:
+
+    if artefact_kind == "work_studio_export":
+        # JC-TM Stage 1 Bridge — flip lifecycle_state on the
+        # work_studio_exports rows. Each row's `source_task_id` already
+        # links back to this task (set in run_drafting).
+        for eid in ids:
+            try:
+                res = await db.work_studio_exports.update_one(
+                    {"id": eid, "context_id": ctx_id, "lifecycle_state": "draft"},
+                    {"$set": {"lifecycle_state": "committed",
+                              "committed_at":    _now_iso()}},
+                )
+                if res.modified_count != 1:
+                    # Either the row is missing, the context_id mismatched,
+                    # or it's already in a non-draft state. The slice's
+                    # last call should always find rows in draft state
+                    # (run_drafting just created them); anything else is a
+                    # real failure we should surface.
+                    row = await db.work_studio_exports.find_one(
+                        {"id": eid, "context_id": ctx_id}, {"_id": 0, "lifecycle_state": 1},
+                    )
+                    if row and row.get("lifecycle_state") == "committed":
+                        # Already committed by an earlier idempotent call — treat as success.
+                        committed.append(eid)
+                        continue
+                    failed = eid
+                    break
+                committed.append(eid)
+            except Exception as e:  # noqa: BLE001
+                log.error("bridge commit failed for export_id=%s: %s", eid, e)
+                failed = eid
+                break
+        if failed is not None:
+            for eid in committed:
+                try:
+                    await db.work_studio_exports.update_one(
+                        {"id": eid, "context_id": ctx_id},
+                        {"$set": {"lifecycle_state": "draft"},
+                         "$unset": {"committed_at": ""}},
+                    )
+                except Exception as e:  # noqa: BLE001
+                    log.error("bridge rollback failed for export_id=%s: %s", eid, e)
+            await _audit(db, task_id=tid, account_id=account_id,
+                         action="task.compile.commit.failed", ctx_id=ctx_id,
+                         metadata={"failed_artefact": failed,
+                                   "rolled_back":     committed,
+                                   "artefact_kind":   artefact_kind})
+            return {"ok": False, "reason": "partial_commit_failed", "failed": failed}
+    else:
+        # Legacy path — flip db.documents.state. Only reached when
+        # run_drafting's bridge fully failed for every requested format
+        # and dropped to its plain-text fallback writer.
+        for did in ids:
+            try:
+                res = await db.documents.update_one(
+                    {"id": did, "task_id": tid, "state": "draft"},
+                    {"$set": {"state": "committed", "committed_at": _now_iso()}},
+                )
+                if res.modified_count != 1:
+                    failed = did
+                    break
+                committed.append(did)
+            except Exception as e:  # noqa: BLE001
+                log.error("commit failed for %s: %s", did, e)
                 failed = did
                 break
-            committed.append(did)
-        except Exception as e:  # noqa: BLE001
-            log.error("commit failed for %s: %s", did, e)
-            failed = did
-            break
-    if failed is not None:
-        # Rollback the ones we already committed in this run.
-        for did in committed:
-            try:
-                await db.documents.update_one(  # tenancy:allow-no-account-id — rollback path; `did` was just committed by the same task-scoped commit loop above (L516, `task_id` alt-key gated); state restore is within-task.
-                    {"id": did}, {"$set": {"state": "draft"}, "$unset": {"committed_at": ""}},
-                )
-            except Exception as e:  # noqa: BLE001
-                log.error("rollback failed for %s: %s", did, e)
-        await _audit(db, task_id=tid, account_id=account_id,
-                     action="task.compile.commit.failed", ctx_id=ctx_id,
-                     metadata={"failed_doc": failed, "rolled_back": committed})
-        return {"ok": False, "reason": "partial_commit_failed", "failed": failed}
+        if failed is not None:
+            for did in committed:
+                try:
+                    await db.documents.update_one(  # tenancy:allow-no-account-id — rollback path; `did` was just committed by the same task-scoped commit loop above (L516, `task_id` alt-key gated); state restore is within-task.
+                        {"id": did}, {"$set": {"state": "draft"}, "$unset": {"committed_at": ""}},
+                    )
+                except Exception as e:  # noqa: BLE001
+                    log.error("rollback failed for %s: %s", did, e)
+            await _audit(db, task_id=tid, account_id=account_id,
+                         action="task.compile.commit.failed", ctx_id=ctx_id,
+                         metadata={"failed_doc": failed, "rolled_back": committed,
+                                   "artefact_kind": artefact_kind})
+            return {"ok": False, "reason": "partial_commit_failed", "failed": failed}
 
     # All committed — wrap up the session.
     session["committed_artefact_ids"] = committed
@@ -557,10 +786,16 @@ async def run_commit(db, *, task: Dict[str, Any], account_id: str) -> Dict[str, 
 
     # Decide whether to auto-close the task. We close only if EVERY
     # draft in the session committed AND the task has no other open
-    # drafts.
-    other_drafts = await db.documents.count_documents({
-        "task_id": tid, "state": "draft",
-    })
+    # drafts. The "open drafts" count uses the right collection for
+    # the artefact kind in play.
+    if artefact_kind == "work_studio_export":
+        other_drafts = await db.work_studio_exports.count_documents({
+            "source_task_id": tid, "lifecycle_state": "draft",
+        })
+    else:
+        other_drafts = await db.documents.count_documents({
+            "task_id": tid, "state": "draft",
+        })
     task_closed = False
     update_fields: Dict[str, Any] = {"compile_session": session, "updated_at": _now_iso()}
     if other_drafts == 0:
@@ -574,5 +809,7 @@ async def run_commit(db, *, task: Dict[str, Any], account_id: str) -> Dict[str, 
     await _audit(db, task_id=tid, account_id=account_id,
                  action="task.compile.commit.completed", ctx_id=ctx_id,
                  metadata={"committed_artefact_ids": committed,
-                           "task_closed":             task_closed})
-    return {"ok": True, "committed": committed, "task_closed": task_closed}
+                           "task_closed":             task_closed,
+                           "artefact_kind":           artefact_kind})
+    return {"ok": True, "committed": committed, "task_closed": task_closed,
+            "artefact_kind": artefact_kind}

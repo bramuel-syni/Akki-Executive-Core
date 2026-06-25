@@ -1,0 +1,141 @@
+{
+  "task_id": "task-4b4fc28b5646",
+  "rows": [
+    {
+      "label": "Task created in active state with team[2]",
+      "ok": true,
+      "detail": "state='active', team_size=2"
+    },
+    {
+      "label": "Contributor invite state captured (mode: magic_link)",
+      "ok": true,
+      "detail": "audit_rows\u22650  tokens_n\u22650 (file written)"
+    },
+    {
+      "label": "Contribution 1 \u2014 submit + approve path",
+      "ok": true,
+      "detail": "submit\u2192200, approve\u2192200"
+    },
+    {
+      "label": "AI-drafted revision request (Shield or deterministic fallback)",
+      "ok": true,
+      "detail": "source='shield', len=647"
+    },
+    {
+      "label": "Contribution 2 \u2014 needs_revision applied",
+      "ok": true,
+      "detail": "patch=200"
+    },
+    {
+      "label": "Contribution 2 \u2014 resubmit + approve",
+      "ok": true,
+      "detail": "resubmit\u2192200, approve\u2192200"
+    },
+    {
+      "label": "Readiness intelligence \u2014 REAL score + breakdown + at least one finding",
+      "ok": true,
+      "detail": "score=85, gaps=0, blockers=0, recs=1"
+    },
+    {
+      "label": "Compile draft pipeline produced at least one section",
+      "ok": true,
+      "detail": "draft_ids_n=2"
+    },
+    {
+      "label": "Commit locks the artefacts",
+      "ok": true,
+      "detail": "committed_n=2, all_committed=True"
+    },
+    {
+      "label": "Bridge \u2192 work_studio_export drafts (NOT legacy db.documents)",
+      "ok": true,
+      "detail": "artefact_kind='work_studio_export'"
+    },
+    {
+      "label": "Invariant (1) \u2014 commit lifecycle: lifecycle_state==committed",
+      "ok": true,
+      "detail": "states=['committed', 'committed']"
+    },
+    {
+      "label": "Invariant (2) \u2014 edit-lock: PATCH after commit \u2192 409",
+      "ok": true,
+      "detail": "probes=[409, 409] (expected all 409)"
+    },
+    {
+      "label": "Invariant (3) \u2014 confidence_pct: real numeric (not None)",
+      "ok": true,
+      "detail": "pcts=[40, 30]"
+    },
+    {
+      "label": "Bridge artefacts opened \u2014 DOCX/PDF/PPTX files on disk",
+      "ok": true,
+      "detail": "files=[('JC-TM-bridge-compiled.docx', 41237, '504b0304'), ('JC-TM-bridge-compiled-2.pdf', 27414, '25504446')]"
+    }
+  ],
+  "passed": 14,
+  "failed": 0,
+  "artefact_kind": "work_studio_export",
+  "bridge_export_rows": [
+    {
+      "export_id": "4f373bfb-1ef3-4fa3-897e-32547449c004",
+      "kind": "board_pack",
+      "output_format": "docx",
+      "lifecycle_state": "committed",
+      "status": "complete",
+      "source_task_id": "task-4b4fc28b5646",
+      "file_name": "mara-heritage-bank-board-pack-q3-2025.docx",
+      "byte_len": 41237,
+      "sha256": "adbfedeb484de6da29e8dd12cdd5e8d1b2d222eeafbc82a2c0c380ae95a87b23",
+      "confidence_pct": 40,
+      "sensitivity_band": "INTERNAL",
+      "committed_at": "2026-06-25T15:18:01.445686+00:00"
+    },
+    {
+      "export_id": "28911b7f-69b5-4ef1-abfe-198a42fb3bae",
+      "kind": "board_pack",
+      "output_format": "pdf",
+      "lifecycle_state": "committed",
+      "status": "complete",
+      "source_task_id": "task-4b4fc28b5646",
+      "file_name": "mara-heritage-bank-board-pack-q3-2025.pdf",
+      "byte_len": 27414,
+      "sha256": "f5553a9928dafca407e9586cd4307707c2cc974b8e1ed185d1d1c893d11af708",
+      "confidence_pct": 30,
+      "sensitivity_band": "INTERNAL",
+      "committed_at": "2026-06-25T15:18:01.446115+00:00"
+    }
+  ],
+  "edit_lock_probes": [
+    {
+      "export_id": "4f373bfb-1ef3-4fa3-897e-32547449c004",
+      "status_code": 409,
+      "expected": 409,
+      "ok": true,
+      "body_head": "{\"detail\":\"This document is committed and read-only. Create a new version to make changes.\"}"
+    },
+    {
+      "export_id": "28911b7f-69b5-4ef1-abfe-198a42fb3bae",
+      "status_code": 409,
+      "expected": 409,
+      "ok": true,
+      "body_head": "{\"detail\":\"This document is committed and read-only. Create a new version to make changes.\"}"
+    }
+  ],
+  "download_files": [
+    {
+      "export_id": "4f373bfb-1ef3-4fa3-897e-32547449c004",
+      "file": "JC-TM-bridge-compiled.docx",
+      "bytes": 41237,
+      "magic_4": "504b0304",
+      "format": "docx"
+    },
+    {
+      "export_id": "28911b7f-69b5-4ef1-abfe-198a42fb3bae",
+      "file": "JC-TM-bridge-compiled-2.pdf",
+      "bytes": 27414,
+      "magic_4": "25504446",
+      "format": "pdf"
+    }
+  ],
+  "generated_at": "2026-06-25T15:18:01.495997+00:00"
+}

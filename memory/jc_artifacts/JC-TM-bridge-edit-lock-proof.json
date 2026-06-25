@@ -1,0 +1,20 @@
+{
+  "task_id": "task-4b4fc28b5646",
+  "probes": [
+    {
+      "export_id": "4f373bfb-1ef3-4fa3-897e-32547449c004",
+      "status_code": 409,
+      "expected": 409,
+      "ok": true,
+      "body_head": "{\"detail\":\"This document is committed and read-only. Create a new version to make changes.\"}"
+    },
+    {
+      "export_id": "28911b7f-69b5-4ef1-abfe-198a42fb3bae",
+      "status_code": 409,
+      "expected": 409,
+      "ok": true,
+      "body_head": "{\"detail\":\"This document is committed and read-only. Create a new version to make changes.\"}"
+    }
+  ],
+  "all_returned_409": true
+}

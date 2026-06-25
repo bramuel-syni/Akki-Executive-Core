@@ -1,0 +1,30 @@
+[
+  {
+    "export_id": "4f373bfb-1ef3-4fa3-897e-32547449c004",
+    "kind": "board_pack",
+    "output_format": "docx",
+    "lifecycle_state": "committed",
+    "status": "complete",
+    "source_task_id": "task-4b4fc28b5646",
+    "file_name": "mara-heritage-bank-board-pack-q3-2025.docx",
+    "byte_len": 41237,
+    "sha256": "adbfedeb484de6da29e8dd12cdd5e8d1b2d222eeafbc82a2c0c380ae95a87b23",
+    "confidence_pct": 40,
+    "sensitivity_band": "INTERNAL",
+    "committed_at": "2026-06-25T15:18:01.445686+00:00"
+  },
+  {
+    "export_id": "28911b7f-69b5-4ef1-abfe-198a42fb3bae",
+    "kind": "board_pack",
+    "output_format": "pdf",
+    "lifecycle_state": "committed",
+    "status": "complete",
+    "source_task_id": "task-4b4fc28b5646",
+    "file_name": "mara-heritage-bank-board-pack-q3-2025.pdf",
+    "byte_len": 27414,
+    "sha256": "f5553a9928dafca407e9586cd4307707c2cc974b8e1ed185d1d1c893d11af708",
+    "confidence_pct": 30,
+    "sensitivity_band": "INTERNAL",
+    "committed_at": "2026-06-25T15:18:01.446115+00:00"
+  }
+]

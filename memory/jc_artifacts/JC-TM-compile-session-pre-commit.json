@@ -1,36 +1,63 @@
 {
-  "task_id": "task-60a408c73f1c",
+  "task_id": "task-4b4fc28b5646",
   "stage": "commit",
+  "draft_artefact_kind": "work_studio_export",
   "draft_artefacts": [
-    "doc-20a98b45b4",
-    "doc-c94762ea6f",
-    "doc-e352da34fb",
-    "doc-25626b8349",
-    "doc-372721b9e2"
+    "4f373bfb-1ef3-4fa3-897e-32547449c004",
+    "28911b7f-69b5-4ef1-abfe-198a42fb3bae"
   ],
   "final_artefacts": [
-    "doc-20a98b45b4",
-    "doc-c94762ea6f",
-    "doc-e352da34fb",
-    "doc-25626b8349",
-    "doc-372721b9e2"
+    "4f373bfb-1ef3-4fa3-897e-32547449c004",
+    "28911b7f-69b5-4ef1-abfe-198a42fb3bae"
+  ],
+  "bridge_errors": [],
+  "fallback_legacy_ids": [],
+  "exports_status": [
+    {
+      "export_id": "4f373bfb-1ef3-4fa3-897e-32547449c004",
+      "kind": "board_pack",
+      "output_format": "docx",
+      "status": "complete",
+      "created_at": "2026-06-25T15:12:54.191803+00:00",
+      "file_name": "mara-heritage-bank-board-pack-q3-2025.docx",
+      "sensitivity_band": "INTERNAL",
+      "error": null,
+      "refusal_text": null,
+      "completed_at": "2026-06-25T15:15:11.493885+00:00",
+      "download_token": "P3KcTZacUmSOqHa1R046Lpr7sIeIEAWDvka-GDOHq0Q",
+      "chat_audit_id": "50994344-e45d-460e-b334-48d947a4655e",
+      "continue_chat_id": "d741555e-72ca-4b7e-9bd0-f083db10c3ac",
+      "continue_doc_id": "fb3b4778-653b-4896-9275-62a3d9a2b2b7",
+      "source": "export"
+    },
+    {
+      "export_id": "28911b7f-69b5-4ef1-abfe-198a42fb3bae",
+      "kind": "board_pack",
+      "output_format": "pdf",
+      "status": "complete",
+      "created_at": "2026-06-25T15:15:17.213435+00:00",
+      "file_name": "mara-heritage-bank-board-pack-q3-2025.pdf",
+      "sensitivity_band": "INTERNAL",
+      "error": null,
+      "refusal_text": null,
+      "completed_at": "2026-06-25T15:17:55.445606+00:00",
+      "download_token": "bQxMrZnFgxz0w9Y2GRYGMVzgVWfiFJjYvM7zczv_xsA",
+      "chat_audit_id": "e3725cd3-9d7a-4dfb-943b-67fd5a9290d0",
+      "continue_chat_id": "2d2d63f2-e30a-457d-ad91-e7039309093d",
+      "continue_doc_id": "ef609b56-8ee9-4493-93aa-2f4e7d73c022",
+      "source": "export"
+    }
   ],
   "session": {
     "active": true,
     "current_stage": "commit",
     "draft_artefact_ids": [
-      "doc-20a98b45b4",
-      "doc-c94762ea6f",
-      "doc-e352da34fb",
-      "doc-25626b8349",
-      "doc-372721b9e2"
+      "4f373bfb-1ef3-4fa3-897e-32547449c004",
+      "28911b7f-69b5-4ef1-abfe-198a42fb3bae"
     ],
     "review_artefact_ids": [
-      "doc-20a98b45b4",
-      "doc-c94762ea6f",
-      "doc-e352da34fb",
-      "doc-25626b8349",
-      "doc-372721b9e2"
+      "4f373bfb-1ef3-4fa3-897e-32547449c004",
+      "28911b7f-69b5-4ef1-abfe-198a42fb3bae"
     ],
     "circulation": {
       "enabled": false,
@@ -40,14 +67,12 @@
       "closed_at": null
     },
     "final_artefact_ids": [
-      "doc-20a98b45b4",
-      "doc-c94762ea6f",
-      "doc-e352da34fb",
-      "doc-25626b8349",
-      "doc-372721b9e2"
+      "4f373bfb-1ef3-4fa3-897e-32547449c004",
+      "28911b7f-69b5-4ef1-abfe-198a42fb3bae"
     ],
     "committed_artefact_ids": [],
-    "started_at": "2026-06-25T12:08:25.827577+00:00",
-    "completed_at": null
+    "started_at": "2026-06-25T15:12:54.190760+00:00",
+    "completed_at": null,
+    "draft_artefact_kind": "work_studio_export"
   }
 }

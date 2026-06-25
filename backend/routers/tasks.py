@@ -889,22 +889,26 @@ async def start_compile_drafting(
     background_tasks: BackgroundTasks,
     current: Dict[str, Any] = Depends(get_current_account),
 ):
-    """Kicks off Stage 1 (Drafting). Synchronous if the output_spec is
-    single-section; runs in the background for multi-section packs."""
+    """Kicks off Stage 1 (Drafting). Synchronous when only one output
+    format is requested; runs in the background for multi-format
+    output specs (each format produces one work_studio_exports row via
+    the JC-TM Stage 1 bridge into _run_export)."""
     t = await db.tasks.find_one({"id": task_id, "account_id": current["id"]}, {"_id": 0})
     if not t:
         raise HTTPException(status_code=404, detail="Task not found")
-    from services.tasks.compile_service import run_drafting, _TEMPLATE_PACK_SHAPES
-    tpl_id = (t.get("output_spec") or {}).get("template_id")
-    sections = _TEMPLATE_PACK_SHAPES.get(tpl_id, [t.get("name")])
-    if len(sections) <= 1:
+    from services.tasks.compile_service import run_drafting
+    spec = t.get("output_spec") or {}
+    formats_in = spec.get("formats") or ["docx"]
+    valid_formats = {"docx", "pptx", "pdf"}
+    formats = [f for f in formats_in if f in valid_formats] or ["docx"]
+    if len(formats) <= 1:
         ids = await run_drafting(db, task=t, account_id=current["id"])
         return {"status": "completed", "draft_artefact_ids": ids}
 
     async def _bg() -> None:
         await run_drafting(db, task=t, account_id=current["id"])
     background_tasks.add_task(_bg)
-    return {"status": "queued", "n_sections": len(sections)}
+    return {"status": "queued", "n_formats": len(formats)}
 
 
 # ─────────────────────────────────────────────────────────────────────

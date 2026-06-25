@@ -1,5 +1,5 @@
 {
-  "task_id": "task-60a408c73f1c",
+  "task_id": "task-4b4fc28b5646",
   "rows": [
     {
       "label": "Task created in active state with team[2]",
@@ -19,7 +19,7 @@
     {
       "label": "AI-drafted revision request (Shield or deterministic fallback)",
       "ok": true,
-      "detail": "source='shield', len=764"
+      "detail": "source='shield', len=647"
     },
     {
       "label": "Contribution 2 \u2014 needs_revision applied",
@@ -39,15 +39,40 @@
     {
       "label": "Compile draft pipeline produced at least one section",
       "ok": true,
-      "detail": "draft_ids_n=5"
+      "detail": "draft_ids_n=2"
     },
     {
-      "label": "Commit locks the documents (state=committed)",
+      "label": "Commit locks the artefacts",
       "ok": true,
-      "detail": "committed_n=5, all_committed=True"
+      "detail": "committed_n=2, all_committed=True"
+    },
+    {
+      "label": "Bridge \u2192 work_studio_export drafts (NOT legacy db.documents)",
+      "ok": true,
+      "detail": "artefact_kind='work_studio_export'"
+    },
+    {
+      "label": "Invariant (1) \u2014 commit lifecycle: lifecycle_state==committed",
+      "ok": true,
+      "detail": "states=['committed', 'committed']"
+    },
+    {
+      "label": "Invariant (2) \u2014 edit-lock: PATCH after commit \u2192 409",
+      "ok": true,
+      "detail": "probes=[409, 409] (expected all 409)"
+    },
+    {
+      "label": "Invariant (3) \u2014 confidence_pct: real numeric (not None)",
+      "ok": true,
+      "detail": "pcts=[40, 30]"
+    },
+    {
+      "label": "Bridge artefacts opened \u2014 DOCX/PDF/PPTX files on disk",
+      "ok": true,
+      "detail": "files=[('JC-TM-bridge-compiled.docx', 41237, '504b0304'), ('JC-TM-bridge-compiled-2.pdf', 27414, '25504446')]"
     }
   ],
-  "passed": 9,
+  "passed": 14,
   "failed": 0,
-  "generated_at": "2026-06-25T12:09:10.237257+00:00"
+  "generated_at": "2026-06-25T15:18:01.495749+00:00"
 }

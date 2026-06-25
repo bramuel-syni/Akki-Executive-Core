@@ -276,17 +276,54 @@ async def main():
         write_artefact("JC-TM-readiness-real-findings.json", intel)
         print()
 
-        # ── STEP 7 — Compile the draft, then push the session forward.
-        # Per the JC-TM spec, this is the integration-point: compile
-        # MUST route through the Document Generation engines. Verify
-        # by execution; if the output is plain text in `db.documents`
-        # only (no DOCX/PDF/PPTX file produced), this is the
-        # architectural-fork escalation the spec calls out.
+        # ── STEP 7 — Compile the draft via the JC-TM Stage 1 Bridge.
+        # Compile now routes through work_studio_export's _run_export
+        # (1 work_studio_exports row per requested format). The slice
+        # below polls the exports' status=complete before moving on so
+        # we never race the BackgroundTasks runner.
         stamp_account_activity()
-        cd = await client.post(f"/api/tasks/{tid}/compile/draft", headers=headers, timeout=300.0)
+        cd = await client.post(f"/api/tasks/{tid}/compile/draft", headers=headers, timeout=600.0)
         print(f"STEP 7 — POST /compile/draft → {cd.status_code}")
         cd_payload = cd.json() if cd.status_code == 200 else {}
-        print(f"        status={cd_payload.get('status')!r}  draft_ids={cd_payload.get('draft_artefact_ids') or []}")
+        print(f"        status={cd_payload.get('status')!r}  draft_ids={cd_payload.get('draft_artefact_ids') or []}  n_formats={cd_payload.get('n_formats')}")
+
+        # Poll the task.compile_session.draft_artefact_ids until populated,
+        # then poll each work_studio_exports row until status=complete.
+        bridge_export_ids: List[str] = []
+        deadline = time.monotonic() + 360  # 6 min total budget
+        while time.monotonic() < deadline:
+            t_now = sync_db().tasks.find_one({"id": tid}, {"_id": 0, "compile_session": 1})
+            ids = ((t_now or {}).get("compile_session") or {}).get("draft_artefact_ids") or []
+            if ids:
+                bridge_export_ids = list(ids)
+                break
+            await asyncio.sleep(2.0)
+        print(f"        bridge draft_artefact_ids = {bridge_export_ids}")
+
+        # The compile_session also tells us which collection holds the
+        # drafts. The bridge writes to work_studio_exports.
+        comp_sess = ((sync_db().tasks.find_one({"id": tid}, {"_id": 0}) or {}).get("compile_session") or {})
+        draft_kind = comp_sess.get("draft_artefact_kind") or "legacy_document"
+        print(f"        draft_artefact_kind = {draft_kind!r}")
+
+        # Poll each export to status=complete.
+        export_status_polled: List[Dict[str, Any]] = []
+        if draft_kind == "work_studio_export":
+            for eid in bridge_export_ids:
+                eid_status = None
+                while time.monotonic() < deadline:
+                    rg = await client.get(
+                        f"/api/contexts/{CONTEXT_ID}/work-studio/exports/{eid}",
+                        headers=headers, timeout=30.0,
+                    )
+                    if rg.status_code == 200:
+                        s_payload = rg.json()
+                        eid_status = s_payload.get("status")
+                        if eid_status in ("complete", "failed"):
+                            export_status_polled.append({"export_id": eid, **s_payload})
+                            break
+                    await asyncio.sleep(3.0)
+                print(f"        export {eid}: status={eid_status!r}")
 
         # Stage 2 → 4 (skip circulation; advance straight to commit-stage).
         await client.post(
@@ -299,49 +336,154 @@ async def main():
         pre_commit_task = sync_db().tasks.find_one({"id": tid}, {"_id": 0})
         compile_session = (pre_commit_task or {}).get("compile_session") or {}
         write_artefact("JC-TM-compile-session-pre-commit.json", {
-            "task_id":         tid,
-            "stage":           compile_session.get("current_stage"),
-            "draft_artefacts": compile_session.get("draft_artefact_ids") or [],
-            "final_artefacts": compile_session.get("final_artefact_ids") or [],
-            "session":         compile_session,
+            "task_id":              tid,
+            "stage":                compile_session.get("current_stage"),
+            "draft_artefact_kind":  compile_session.get("draft_artefact_kind"),
+            "draft_artefacts":      compile_session.get("draft_artefact_ids") or [],
+            "final_artefacts":      compile_session.get("final_artefact_ids") or [],
+            "bridge_errors":        compile_session.get("bridge_errors") or [],
+            "fallback_legacy_ids":  compile_session.get("fallback_legacy_doc_ids") or [],
+            "exports_status":       export_status_polled,
+            "session":              compile_session,
         })
+        print()
 
         # ── STEP 8 — Commit (locks).
         stamp_account_activity()
-        cc = await client.post(f"/api/tasks/{tid}/compile/commit", headers=headers)
+        cc = await client.post(f"/api/tasks/{tid}/compile/commit", headers=headers, timeout=120.0)
         print(f"STEP 8 — POST /compile/commit → {cc.status_code}")
         commit = cc.json() if cc.status_code == 200 else {}
-        print(f"        committed={commit.get('committed') or []}  task_closed={commit.get('task_closed')}")
+        commit_artefact_kind = commit.get("artefact_kind") or "legacy_document"
+        print(f"        artefact_kind={commit_artefact_kind!r}  committed={commit.get('committed') or []}  task_closed={commit.get('task_closed')}")
         write_artefact("JC-TM-final-locked.json", {
             "task_id":   tid,
             "commit":    commit,
             "captured":  datetime.now(_tz.utc).isoformat(),
         })
+        print()
 
-        # ── STEP 9 — Pull the committed draft documents (the produced
-        # artefacts) so we can persist them as artefacts on disk.
+        # ── STEP 9 — Bridge invariant transfer evidence.
+        #
+        # Per the user dispatch's hard requirement, we MUST prove
+        # three JC-WS Phase 1 invariants transferred to compile through
+        # the bridge:
+        #   (1) Commit lifecycle — lifecycle_state == "committed".
+        #   (2) Edit-lock        — PATCH after commit → 409.
+        #   (3) Confidence pct   — real numeric pct (not None).
         committed_ids = commit.get("committed") or []
-        for i, did in enumerate(committed_ids, start=1):
-            doc = sync_db().documents.find_one({"id": did}, {"_id": 0})
-            if doc:
-                # The compile_service writes the LLM-generated body to
-                # `extracted_text`. Persist as .txt so the file is openable.
-                body = (doc.get("extracted_text") or "").strip()
-                write_artefact(f"JC-TM-compiled-draft-section-{i}.txt",
-                               f"# {doc.get('name', f'Section {i}')}\n\n{body}\n")
-                print(f"        section {i}: {len(body)} chars · state={doc.get('state')!r} · → JC-TM-compiled-draft-section-{i}.txt")
+        bridge_export_rows: List[Dict[str, Any]] = []
+        edit_lock_probes:   List[Dict[str, Any]] = []
+        download_files:     List[Dict[str, Any]] = []
+        if commit_artefact_kind == "work_studio_export":
+            for i, eid in enumerate(committed_ids, start=1):
+                row = sync_db().work_studio_exports.find_one({"id": eid}, {"_id": 0})
+                if not row:
+                    continue
+                # Pull confidence_pct from intelligence_report if present.
+                intel = (row.get("intelligence_report") or {})
+                confidence_pct = intel.get("confidence_pct") if isinstance(intel, dict) else None
+                lifecycle      = row.get("lifecycle_state")
+                bridge_export_rows.append({
+                    "export_id":        eid,
+                    "kind":             row.get("kind"),
+                    "output_format":    row.get("output_format"),
+                    "lifecycle_state":  lifecycle,
+                    "status":           row.get("status"),
+                    "source_task_id":   row.get("source_task_id"),
+                    "file_name":        row.get("file_name"),
+                    "byte_len":         row.get("byte_len"),
+                    "sha256":           row.get("sha256"),
+                    "confidence_pct":   confidence_pct,
+                    "sensitivity_band": row.get("sensitivity_band"),
+                    "committed_at":     row.get("committed_at"),
+                })
+                # Invariant (2) — PATCH after commit → 409.
+                pe = await client.patch(
+                    f"/api/contexts/{CONTEXT_ID}/work-studio/documents/{eid}",
+                    headers=headers,
+                    json={"title": "JC-TM bridge edit-lock probe"},
+                    timeout=30.0,
+                )
+                probe = {
+                    "export_id":   eid,
+                    "status_code": pe.status_code,
+                    "expected":    409,
+                    "ok":          pe.status_code == 409,
+                    "body_head":   (pe.text or "")[:300],
+                }
+                edit_lock_probes.append(probe)
+                print(f"        edit-lock probe export={eid}: PATCH → {pe.status_code} (expected 409)")
 
-        # ── STEP 10 — Verify lock by execution: try to PATCH the task
-        # back to draft. Documents.state should be `committed` — verify
-        # the lock holds.
-        committed_state_after = []
-        for did in committed_ids:
-            d = sync_db().documents.find_one({"id": did}, {"_id": 0, "state": 1, "committed_at": 1})
-            committed_state_after.append({"id": did, "state": d.get("state"),
-                                          "committed_at": d.get("committed_at")})
-        print("STEP 10 — Lock verify (documents state=committed):")
+                # Download the rendered file via the wizard handoff.
+                # Mint a fresh download_token by polling once more.
+                rg2 = await client.get(
+                    f"/api/contexts/{CONTEXT_ID}/work-studio/exports/{eid}",
+                    headers=headers, timeout=30.0,
+                )
+                tok = rg2.json().get("download_token") if rg2.status_code == 200 else None
+                if tok and row.get("status") == "complete":
+                    rd = await client.get(
+                        f"/api/contexts/{CONTEXT_ID}/work-studio/exports/{eid}/download",
+                        headers=headers, params={"token": tok}, timeout=60.0,
+                    )
+                    if rd.status_code == 200:
+                        fmt = row.get("output_format") or "bin"
+                        ext = fmt
+                        # ONE-per-format → ONE bridge file per format.
+                        # First one is the headline `JC-TM-bridge-compiled.<ext>`,
+                        # additional are suffixed.
+                        suffix = "" if i == 1 else f"-{i}"
+                        fname = f"JC-TM-bridge-compiled{suffix}.{ext}"
+                        write_artefact(fname, rd.content)
+                        download_files.append({
+                            "export_id": eid,
+                            "file":      fname,
+                            "bytes":     len(rd.content),
+                            "magic_4":   rd.content[:4].hex() if len(rd.content) >= 4 else "",
+                            "format":    fmt,
+                        })
+                        print(f"        downloaded {fname}: {len(rd.content)} bytes  (magic={rd.content[:4].hex() if len(rd.content) >= 4 else ''!r})")
+        else:
+            # Legacy fallback path — only reached when the bridge fully
+            # failed. Surface this loudly.
+            print("        WARNING: artefact_kind=legacy_document — bridge fell through to plain-text writer.")
+            for i, did in enumerate(committed_ids, start=1):
+                doc = sync_db().documents.find_one({"id": did}, {"_id": 0})
+                if doc:
+                    body = (doc.get("extracted_text") or "").strip()
+                    write_artefact(f"JC-TM-fallback-section-{i}.txt",
+                                   f"# {doc.get('name', f'Section {i}')}\n\n{body}\n")
+
+        write_artefact("JC-TM-bridge-export-row.json", bridge_export_rows)
+        write_artefact("JC-TM-bridge-edit-lock-proof.json", {
+            "task_id":         tid,
+            "probes":          edit_lock_probes,
+            "all_returned_409": all(p["ok"] for p in edit_lock_probes) if edit_lock_probes else False,
+        })
+        write_artefact("JC-TM-bridge-downloads.json", download_files)
+        print()
+
+        # ── STEP 10 — Final lock-state read (raw DB read, not API).
+        committed_state_after: List[Dict[str, Any]] = []
+        if commit_artefact_kind == "work_studio_export":
+            for eid in committed_ids:
+                r = sync_db().work_studio_exports.find_one(
+                    {"id": eid}, {"_id": 0, "lifecycle_state": 1, "committed_at": 1,
+                                   "status": 1, "file_name": 1, "byte_len": 1},
+                )
+                committed_state_after.append({"id": eid, "lifecycle_state": r.get("lifecycle_state"),
+                                              "committed_at": r.get("committed_at"),
+                                              "status": r.get("status"),
+                                              "file_name": r.get("file_name"),
+                                              "byte_len": r.get("byte_len")})
+        else:
+            for did in committed_ids:
+                d = sync_db().documents.find_one({"id": did}, {"_id": 0, "state": 1, "committed_at": 1})
+                committed_state_after.append({"id": did, "state": d.get("state"),
+                                              "committed_at": d.get("committed_at")})
+        print("STEP 10 — Lock verify:")
         for s in committed_state_after:
-            print(f"         {s['id']}: state={s['state']!r}  committed_at={s.get('committed_at')!r}")
+            print(f"         {s['id']}: lifecycle_state/state={(s.get('lifecycle_state') or s.get('state'))!r}  committed_at={s.get('committed_at')!r}")
 
     # ── Acceptance summary
     print()
@@ -374,9 +516,35 @@ async def main():
         ("Compile draft pipeline produced at least one section",
          len(cd_payload.get("draft_artefact_ids") or compile_session.get("draft_artefact_ids") or []) >= 1,
          f"draft_ids_n={len(compile_session.get('draft_artefact_ids') or [])}"),
-        ("Commit locks the documents (state=committed)",
-         bool(commit.get("committed")) and all(s["state"] == "committed" for s in committed_state_after),
-         f"committed_n={len(commit.get('committed') or [])}, all_committed={all(s['state'] == 'committed' for s in committed_state_after)}"),
+        ("Commit locks the artefacts",
+         bool(commit.get("committed")) and all(
+             ((s.get("lifecycle_state") or s.get("state")) == "committed")
+             for s in committed_state_after
+         ),
+         f"committed_n={len(commit.get('committed') or [])}, all_committed={all(((s.get('lifecycle_state') or s.get('state')) == 'committed') for s in committed_state_after)}"),
+        # ── JC-TM Stage 1 Bridge — invariant transfer rows
+        ("Bridge → work_studio_export drafts (NOT legacy db.documents)",
+         commit_artefact_kind == "work_studio_export",
+         f"artefact_kind={commit_artefact_kind!r}"),
+        ("Invariant (1) — commit lifecycle: lifecycle_state==committed",
+         (commit_artefact_kind == "work_studio_export") and bool(committed_state_after) and all(
+             s.get("lifecycle_state") == "committed" for s in committed_state_after
+         ),
+         f"states={[s.get('lifecycle_state') for s in committed_state_after]!r}"),
+        ("Invariant (2) — edit-lock: PATCH after commit → 409",
+         bool(edit_lock_probes) and all(p["ok"] for p in edit_lock_probes),
+         f"probes={[p['status_code'] for p in edit_lock_probes]!r} (expected all 409)"),
+        ("Invariant (3) — confidence_pct: real numeric (not None)",
+         bool(bridge_export_rows) and all(
+             isinstance(r.get("confidence_pct"), (int, float)) for r in bridge_export_rows
+         ),
+         f"pcts={[r.get('confidence_pct') for r in bridge_export_rows]!r}"),
+        ("Bridge artefacts opened — DOCX/PDF/PPTX files on disk",
+         bool(download_files) and all(
+             d["bytes"] > 1000 and d["magic_4"] in ("504b0304", "25504446")
+             for d in download_files
+         ),
+         f"files={[(d['file'], d['bytes'], d['magic_4']) for d in download_files]!r}"),
     ]
     passed = sum(1 for _, ok, _ in rows if ok)
     failed = len(rows) - passed
@@ -393,6 +561,17 @@ async def main():
         "rows":    [{"label": lbl, "ok": ok, "detail": d} for lbl, ok, d in rows],
         "passed":  passed,
         "failed":  failed,
+        "generated_at": datetime.now(_tz.utc).isoformat(),
+    })
+    write_artefact("JC-TM-bridge-acceptance.json", {
+        "task_id": tid,
+        "rows":    [{"label": lbl, "ok": ok, "detail": d} for lbl, ok, d in rows],
+        "passed":  passed,
+        "failed":  failed,
+        "artefact_kind": commit_artefact_kind,
+        "bridge_export_rows": bridge_export_rows,
+        "edit_lock_probes":   edit_lock_probes,
+        "download_files":     download_files,
         "generated_at": datetime.now(_tz.utc).isoformat(),
     })
 
