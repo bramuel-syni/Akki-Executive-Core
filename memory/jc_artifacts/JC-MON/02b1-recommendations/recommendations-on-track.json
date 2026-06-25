@@ -1,0 +1,43 @@
+{
+  "fixture_objective": {
+    "id": "obj-2b1-on-track-913c0e107d",
+    "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
+    "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
+    "kind": "objective",
+    "title": "Recover Q3 monthly active revenue to pre-Q1 baseline",
+    "description": "After a \u22125.5% MoM revenue contraction triggered by a checkout regression, recover monthly active digital revenue back to the pre-Q1 baseline within two quarters.",
+    "target_metric": "monthly_active_revenue_index",
+    "target_value": "Index \u2265 100 (Q1 baseline = 100) within 180 days",
+    "due_date": "2026-12-31",
+    "status": "active"
+  },
+  "assessment": {
+    "objective_id": "obj-2b1-on-track-913c0e107d",
+    "refused": false,
+    "refusal_reason": null,
+    "progress_pct": 96,
+    "progress_rationale": "Synthetic: objective already at index 96 per Week-16 tracking.",
+    "probability_pct": 90,
+    "probability_band": "High-conviction",
+    "probability_rationale": "Synthetic: high-conviction trajectory based on Phase-2 + Phase-3 indicators.",
+    "base_doc_ids": [
+      "doc-base-recovery-plan-8173c165fb",
+      "doc-base-kpi-contract-b12faee1fb"
+    ],
+    "tracking_doc_ids": [
+      "doc-track-week04-54972a5b13",
+      "doc-track-week09-e025e66545",
+      "doc-track-week14-3a42e0baa2"
+    ],
+    "audit_entry_ids": [],
+    "assessed_at": "2026-06-25T21:20:39.267978+00:00"
+  },
+  "recommendations": {
+    "objective_id": "obj-2b1-on-track-913c0e107d",
+    "refused": true,
+    "refusal_reason": "objective_on_track_no_intervention",
+    "recommendations": [],
+    "audit_entry_ids": [],
+    "assessed_at": "2026-06-25T21:20:39.267980+00:00"
+  }
+}

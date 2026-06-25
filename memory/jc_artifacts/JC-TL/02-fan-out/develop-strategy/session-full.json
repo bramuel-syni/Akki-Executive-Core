@@ -1,0 +1,199 @@
+{
+  "id": "sess-jctl-stage2-develop-strategy",
+  "schema_version": 2,
+  "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
+  "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
+  "intent": "Given Diagnosis's two-cause read of the Q3 contraction, what's the sequenced recovery pathway?",
+  "submodule": "develop_strategy",
+  "cluster_id": "cluster-q3-recovery",
+  "cluster_label": "Q3 recovery pathway",
+  "started_at": "2026-06-25T19:30:00Z",
+  "completed_at": "2026-06-25T20:42:00Z",
+  "layer": "reflection",
+  "status": "complete",
+  "prior_session_intent": {
+    "session_id": "sess-jctl-stage1-mydawa-diagnosis",
+    "submodule": "seek_clarity",
+    "intent_text": "Did we diagnose the Q3 revenue contraction correctly, or are we pattern-matching the checkout regression?",
+    "diagnostic_read": "Two independent causes \u2014 SDK regression on conversion + session-acquisition decline starting earlier. 62% Likely (corpus-tier)."
+  },
+  "user_turns": [
+    {
+      "id": "t1",
+      "layer": "framing",
+      "text": "We need a recovery plan that addresses both causes \u2014 not just the SDK fix."
+    },
+    {
+      "id": "t2",
+      "layer": "grounding",
+      "text": "Budget: 1 senior eng + 2 ops people for the next 12 weeks. Constraint: campaign budget capped at 80k."
+    },
+    {
+      "id": "t3",
+      "layer": "grounding",
+      "text": "Most-recent comparable: a peer recovered MoM index in ~8 weeks via parallel SDK + reactivation tracks."
+    },
+    {
+      "id": "t4",
+      "layer": "synthesis",
+      "text": "Sequence question: which lands first \u2014 checkout fix or reactivation campaign? Or both in parallel?"
+    },
+    {
+      "id": "t5",
+      "layer": "synthesis",
+      "text": "If we go parallel we burn team capacity on coordination; if sequential we lose 3-4 weeks. Trade-off."
+    },
+    {
+      "id": "t6",
+      "layer": "reflection",
+      "text": "Parallel works only if the checkout fix doesn't require reactivation-team review \u2014 they're independent enough."
+    }
+  ],
+  "attached_docs": [
+    {
+      "id": "doc-team-capacity",
+      "name": "Team capacity assessment \u2014 Q4"
+    },
+    {
+      "id": "doc-peer-comparable",
+      "name": "Peer recovery case \u2014 same SDK regression"
+    }
+  ],
+  "comparables": [
+    {
+      "id": "comp-1",
+      "name": "Peer A \u2014 parallel recovery in 8 weeks",
+      "diagnosis_summary": "SDK fix + reactivation ran in parallel; recovered MoM index in 8 weeks."
+    }
+  ],
+  "reasoning_audit_log": [
+    {
+      "id": "audit-1",
+      "engine": "frame_audit",
+      "layer": "framing",
+      "output": {
+        "frame_quality": "narrowed",
+        "framing_note": "Frame inherited from Diagnosis; Develop Strategy converges to recovery sequencing."
+      }
+    },
+    {
+      "id": "audit-2",
+      "engine": "candidate_generation",
+      "layer": "grounding",
+      "output": {
+        "hypotheses": [
+          "Parallel tracks (SDK + reactivation simultaneously).",
+          "Sequential \u2014 SDK first, reactivation week 5+.",
+          "Reactivation first to recover sessions, SDK after."
+        ]
+      }
+    },
+    {
+      "id": "audit-3",
+      "engine": "triangulation",
+      "layer": "grounding",
+      "output": {
+        "cluster_id": "cluster-q3-recovery",
+        "triangulation_note": "Peer comparable supports parallel; team capacity constraint makes parallel feasible only if scopes are clean."
+      }
+    },
+    {
+      "id": "audit-4",
+      "engine": "tension_detector",
+      "layer": "grounding",
+      "output": {
+        "tensions": [
+          {
+            "description": "Speed-to-recovery (parallel) vs team-capacity-strain (parallel adds coordination overhead).",
+            "contradiction_source": "user_vs_user",
+            "severity": "high",
+            "evidence": [
+              "Peer recovered in 8wk parallel.",
+              "Team capacity 1 eng + 2 ops constrains coordination overhead."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "audit-5",
+      "engine": "probability_weighting",
+      "layer": "synthesis",
+      "output": {
+        "claims": [
+          {
+            "text": "Parallel-tracks recovery sequenced Days 0-30 (SDK fix lands) \u2192 0-60 (reactivation campaign launches week 3 in parallel) \u2192 30-180 (stabilisation). 8-10 week recovery target.",
+            "tier": "comparable",
+            "confidence_pct": 64,
+            "confidence_band": "Likely",
+            "confidence_rationale": "Peer comparable supports parallel; team capacity feasibility OK."
+          },
+          {
+            "text": "Sequential \u2014 SDK first then reactivation. 11-13 week recovery target.",
+            "tier": "user_assertion",
+            "confidence_pct": 28,
+            "confidence_band": "Possible",
+            "confidence_rationale": "Lower coordination overhead but loses 3-4 weeks."
+          },
+          {
+            "text": "Reactivation-first inversion. 14-16 week recovery; not preferred.",
+            "tier": "user_assertion",
+            "confidence_pct": 8,
+            "confidence_band": "Speculative",
+            "confidence_rationale": "Reverses the natural diagnostic priority; comparable counter-signals."
+          }
+        ]
+      }
+    },
+    {
+      "id": "audit-6",
+      "engine": "reflection",
+      "layer": "reflection",
+      "output": {
+        "reflection_question": "What does this NOT cover that you wish it did?",
+        "reflection_question_index": 0,
+        "user_response": "It doesn't cover the third Q4 risk \u2014 what if a NEW regression lands during recovery?",
+        "interpretation": "User surfaces concurrent-risk gap."
+      }
+    },
+    {
+      "id": "audit-7",
+      "engine": "reflection",
+      "layer": "reflection",
+      "output": {
+        "reflection_question": "What would have to be true for this pathway to be wrong?",
+        "reflection_question_index": 1,
+        "user_response": "If the checkout fix requires reactivation-team review, parallel breaks. The independence assumption is load-bearing.",
+        "interpretation": "User defines a falsification test on the parallelism assumption."
+      }
+    },
+    {
+      "id": "audit-8",
+      "engine": "reflection",
+      "layer": "reflection",
+      "output": {
+        "reflection_question": "What's the question you weren't ready to ask?",
+        "reflection_question_index": 2,
+        "user_response": "Whether the 'session decline' Diagnosis surfaced is itself a multi-cause signal that needs separate diagnosis.",
+        "interpretation": "User opens a nested-Diagnosis path the recovery pathway doesn't address."
+      }
+    }
+  ],
+  "synthesis": {
+    "body": "## Recovery pathway\n\nParallel tracks land the 8-10 week recovery target with the narrowest team-capacity strain. SDK fix in weeks 0-3 (eng owner); reactivation campaign launches week 3 (ops owner). Stabilisation phase begins week 8.\n\n## Conditional logic\n\nIf checkout fix dependencies on reactivation-team review surface in week 1 standup, fall back to Sequential (SDK then reactivation) \u2014 adds 3-4 weeks but removes coordination risk.",
+    "recommendations": [
+      {
+        "heading": "Land checkout SDK fix in weeks 0-3 (eng owner)",
+        "body": "Could ship checkout SDK fix in weeks 0-3 with the senior eng as owner. Exit gate: weekly active sessions index \u2265 95."
+      },
+      {
+        "heading": "Launch reactivation campaign week 3 (ops owners) in parallel",
+        "body": "Would launch reactivation campaign in parallel from week 3. Exit gate: revenue index \u2265 95 by week 8."
+      },
+      {
+        "heading": "Phase 3 stabilisation begins week 8",
+        "body": "Would begin stabilisation phase week 8 if both phase exits land. Target: revenue index \u2265 100 by week 12."
+      }
+    ]
+  }
+}

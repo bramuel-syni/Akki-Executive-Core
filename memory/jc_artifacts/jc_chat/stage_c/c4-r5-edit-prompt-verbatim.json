@@ -1,0 +1,26 @@
+{
+  "lock": "R5 \u2014 edit-prompt intent is the user's call",
+  "status": "PRESENT_AS_POPULATE_COMPOSER",
+  "verbatim_comment": "// Z3 (2026-02) \u2014 populate composer with this\n// message's text + focus. User can re-send as a\n// new turn (no in-place mutation; original turn\n// stays in the history).",
+  "file_line": "frontend/src/pages/Chat.jsx:1402-1409 (onEdit handler)",
+  "surrounding_logic": "The onEdit prop is wired into the <Message> component via the rendering loop (Chat.jsx:1399-1419) and surfaces as a 'Claude-style bubble action' on user-role bubbles (Chat.jsx:1885-1898 in <MessageActions>). The handler populates `setInput(text || '')` and focuses the composer; no in-place mutation, no API call. The original user turn stays in the history; the re-edited text is sent as a NEW turn when the user submits.",
+  "implementation_intent": "Z3 (the prior decision in 2026-02) interpreted edit-prompt as **populate-composer** semantics (Claude-style), NOT as in-place mutation of the prior turn. The user must RE-DECIDE intent if a different semantics is desired.",
+  "decision_options_for_user": [
+    {
+      "id": "OPTION_A_KEEP_POPULATE_COMPOSER",
+      "summary": "Keep the current populate-composer Z3 semantics. No build needed; the affordance is already shipping.",
+      "consequence": "Stage C closes as VERIFIED on all four items."
+    },
+    {
+      "id": "OPTION_B_IN_PLACE_REVISION",
+      "summary": "Replace populate-composer with in-place revision: user can edit a submitted prompt and re-send THE SAME turn (mutates the existing message; new assistant reply replaces the prior). History preserves both versions via the audit log.",
+      "consequence": "Build required: new PATCH /chats/{cid}/messages/{mid} endpoint (or extend existing) + FE in-place editor + Shield re-screen of the edited text + new audit row type. Larger than Stage C scope."
+    },
+    {
+      "id": "OPTION_C_BRANCHING_REVISION",
+      "summary": "Branching pattern (ChatGPT-style): editing creates a sibling branch; user can navigate between branches. Major UX + data-model shift.",
+      "consequence": "Build required: branch-aware chat data model + FE branch navigator + Shield audit chain per branch. Substantially larger than Stage C scope."
+    }
+  ],
+  "agent_recommendation": "No-action close UNLESS the user wants OPTION_B or OPTION_C. The Z3 semantics are coherent with the rest of the surface (history immutability, audit chain, Shield re-screen on every new turn \u2014 all preserved). If the user finds the populate-composer semantics insufficient, the choice is OPTION_B (in-place) or OPTION_C (branching) \u2014 both are build-scoped phases beyond Stage C."
+}

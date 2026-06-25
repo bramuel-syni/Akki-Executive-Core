@@ -1,0 +1,8 @@
+{
+  "session_id": "sess-jctl-stage2-get-perspectives",
+  "submodule": "get_perspective",
+  "intent": "Get perspectives on the Q3 recovery pathway \u2014 auditor, customer-advocate, regulator views.",
+  "payload_signature": "5b024c6e1c63eb6f",
+  "summary_text": "Three persona views: auditor + regulator agree on process discipline; customer-advocate pushes on tone. Plan must thread both.",
+  "prior_session_intent": null
+}

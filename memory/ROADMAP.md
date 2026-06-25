@@ -3,42 +3,49 @@
 > Prioritised backlog of remaining product work.
 > See `/app/memory/SYSTEM_STATE.md` §7 for tech debt.
 
-## P0 — Active dispatch (THREE PARALLEL STREAMS · STOP-AND-SHOW pending user sign-off)
+## P0 — Active dispatch state (post-autonomous-run 2026-06-25)
 
-1. **JC-MON Stage 2a** — CLOSED 2026-06-25 (5/5 acceptance rows GREEN).
-   Awaits user STOP-show approval before Stage 2b widening.
-2. **JC-CHAT Stage A** — CLOSED 2026-06-25 (4 markers removed + 1
-   hidden + Privacy-report relocated + a11y migrated). Awaits user
-   STOP-show approval before Stage B parity measurement.
-3. **JC-TL Stage 0** — CLOSED 2026-06-25 (deck-gate verdict + probe
-   provenance verdict). Awaits user decision on Track-2 (Decks
-   upgrade) dispatch sequencing + Stage 1 (Diagnosis proving slice)
-   start.
+**7 stages cleared overnight; 1 HALT-AND-SURFACE.**
 
-## P0 — Next stages (queued, gated on user STOP-show approvals above)
+1. **JC-MON Stage 2a** — ✅ CLOSED 2026-06-25.
+2. **JC-MON Stage 2b.1 (recommendations)** — ✅ CLOSED 2026-06-25.
+3. **JC-MON Stage 2b.2 (explanation)** — ✅ CLOSED 2026-06-25.
+4. **JC-MON Stage 2b.3 (extended health)** — ✅ CLOSED 2026-06-25.
+5. **JC-MON Stage 3 (Two-section UX + Email loop + Origin-triggered
+   Briefs fold-in)** — 🟡 HALT-AND-SURFACE per HALT condition #7
+   (scope ambiguity). Three ambiguity points surfaced. Two clean
+   sub-slices (3.0 Reassess action + 3.1 task-drawer
+   `objective_id` discriminator) proposed if user wants progress
+   before full scope clarification.
+6. **JC-CHAT Stage A** — ✅ CLOSED 2026-06-25.
+7. **JC-CHAT Stage B (parity measurement)** — ✅ CLOSED 2026-06-25.
+8. **JC-CHAT Stage C (punch-list verify-then-close)** — ✅ CLOSED
+   2026-06-25.
+9. **JC-TL Stage 0 (gates)** — ✅ CLOSED 2026-06-25.
+10. **JC-TL Stage 1 (Diagnosis proving slice)** — ✅ CLOSED 2026-06-25.
+11. **JC-TL Stage 2 (fan-out 3 paths + Contributor-history fold-in)** —
+    ✅ CLOSED 2026-06-25.
 
-1. **JC-MON Stage 2b** — widen engine on the proven slice ONE-AT-A-TIME
-   per quality bar: (a) recommendations / interventions, (b)
-   explanation of performance, (c) extended health beyond RAG.
-2. **JC-MON Stage 3** — two-section experience (objectives + tasks)
-   + drawer-by-context + email-update loop additive on TM.
-3. **JC-CHAT Stage B** — LLM experience parity measurement: R1 trace
-   (frontend-fixable vs Shield-path), R2 streaming method, R3 latency
-   table. Produces `audit/JC_CHAT_parity_report.md`. NO Shield mods.
-4. **JC-CHAT Stage C** — completion punch-list (rename / restore /
-   permanent-delete; edit-prompt R5 verbatim-report).
-5. **JC-TL Stage 1** — Diagnosis proving slice (entry surface + 4-way
-   picker + material attach + guided conversation + session record +
-   deck-grade artefact measured against MYDAWA via Q2 rubric).
-6. **JC-TL Stage 2** — fan-out to Develop Strategy + Test Hypothesis
-   on Track 1; Get-Perspectives gated on Track 2.
+Full handoff note: `/app/memory/AUTONOMOUS_RUN_2026-06-25.md`.
+
+## P0 — Next actions awaiting user
+
+1. **JC-MON Stage 3 scope clarification OR clean sub-slices approval**
+   (3.0 + 3.1). See halt note for the three ambiguity points.
+2. **JC-TL Track 2 (Decks upgrade) sequencing decision** — agent
+   recommendation: dispatch AFTER JC-MON Stage 3, BEFORE
+   Get-Perspectives ship. See
+   `jc_artifacts/JC-TL/02-fan-out/track-2-decks-upgrade-sequencing.md`.
+3. **JC-CHAT C.4 (edit-prompt R5)** — three user options surfaced;
+   user picks keep-populate-composer / in-place / branching.
 
 ## P0 — Separate dispatches surfaced this stream
 
 1. **JC-TL Track 2 — Decks upgrade for divergent rendering**
    (surfaced 2026-06-25 by JC-TL S0-Q2 verdict). Minimum scope:
    `perspective_spread` schema slot + divergent pptx builder +
-   path-aware Pydantic validator. Does NOT block JC-TL Stage 1.
+   path-aware Pydantic validator. Does NOT block JC-TL — Stage 2
+   shipped Get Perspectives at Q6 provisional bar.
 
 ## P0 — Pre-existing blocking items
 

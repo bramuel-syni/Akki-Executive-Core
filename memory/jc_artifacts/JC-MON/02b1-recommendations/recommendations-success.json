@@ -1,0 +1,87 @@
+{
+  "fixture_objective": {
+    "id": "obj-2b1-slice-94b7bab33c",
+    "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
+    "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
+    "kind": "objective",
+    "title": "Recover Q3 monthly active revenue to pre-Q1 baseline",
+    "description": "After a \u22125.5% MoM revenue contraction triggered by a checkout regression, recover monthly active digital revenue back to the pre-Q1 baseline within two quarters.",
+    "target_metric": "monthly_active_revenue_index",
+    "target_value": "Index \u2265 100 (Q1 baseline = 100) within 180 days",
+    "due_date": "2026-12-31",
+    "status": "active"
+  },
+  "fixture_base_doc_names": [
+    "MYDAWA Recovery Programme \u2014 Strategic Plan (BASE)",
+    "KPI Contract \u2014 Eight Workstreams (BASE)"
+  ],
+  "fixture_tracking_names": [
+    "Recovery \u2014 Week 4 ops update (TRACKING)",
+    "Recovery \u2014 Week 9 ops update (TRACKING)",
+    "Recovery \u2014 Week 14 ops update (TRACKING)"
+  ],
+  "assessment": {
+    "objective_id": "obj-2b1-slice-94b7bab33c",
+    "refused": false,
+    "refusal_reason": null,
+    "progress_pct": 94,
+    "progress_rationale": "Per tracking doc 3 (Day-180 ops update), headline revenue index stands at 94 against a target of \u2265100, with Phase 2 exit gate passed but Phase 3 stabilisation only just beginning and the target still 6 points away.",
+    "probability_pct": 68,
+    "probability_band": "Likely",
+    "probability_rationale": "Corpus-tiered claim with strategic plan and tracking updates supporting trajectory, but future achievement remains moderately uncertain.",
+    "base_doc_ids": [
+      "doc-base-recovery-plan-247031d674",
+      "doc-base-kpi-contract-416149efdc"
+    ],
+    "tracking_doc_ids": [
+      "doc-track-week04-60cc2f27e7",
+      "doc-track-week09-f3b527959e",
+      "doc-track-week14-0ff6b52826"
+    ],
+    "audit_entry_ids": [
+      "582646fa-faa2-4d6e-9618-d5548d423e71",
+      "4b749e53-b4ad-4c61-aa27-3ab67c6a2c4a"
+    ],
+    "assessed_at": "2026-06-25T21:19:53.551360+00:00"
+  },
+  "recommendations": {
+    "objective_id": "obj-2b1-slice-94b7bab33c",
+    "refused": false,
+    "refusal_reason": null,
+    "recommendations": [
+      {
+        "sequence": 1,
+        "title": "Lock reactivation-email cadence at weekly frequency and assign dedicated owner",
+        "rationale": "The Day-180 ops update flags that reactivation campaign frequency is dropping below the weekly cadence and team capacity is stretched, risking the momentum that lifted revenue index from 92 to 94. Stabilising the cadence protects Phase 2 gains and prevents backsliding before Phase 3 growth levers activate.",
+        "evidence_citation": "Recovery \u2014 Day-180 ops update (TRACKING): 'Risk: reactivation campaign frequency dropping below weekly cadence; team capacity stretched.'",
+        "confidence_band": "Likely-helpful"
+      },
+      {
+        "sequence": 2,
+        "title": "Launch a targeted win-back offer for lapsed customers who opened but did not convert in Phase 2 reactivation",
+        "rationale": "Phase 2 reactivation achieved 14% response but revenue index still sits 6 points below target. A second-touch offer targeting engaged-but-not-converted users can harvest incremental revenue without waiting for organic growth in Phase 3.",
+        "evidence_citation": "Recovery \u2014 Day-180 ops update (TRACKING): 'Reactivation response pct 14% (target \u226512%). Headline revenue index 94. Headline still below 100 target by 6 points.'",
+        "confidence_band": "Possible-helpful"
+      },
+      {
+        "sequence": 3,
+        "title": "Instrument a daily revenue-index dashboard with Phase 3 milestones and share with the board weekly",
+        "rationale": "Phase 3 stabilisation has just begun and the 6-point gap to target requires close monitoring. A real-time dashboard with interim milestones (e.g. index \u226597 by Day 200, \u2265100 by Day 225) creates accountability and enables faster course-correction if trajectory slips.",
+        "evidence_citation": "Recovery \u2014 Day-180 ops update (TRACKING): 'Phase 3 stabilisation begins Day 181. Headline still below 100 target by 6 points.' KPI Contract: 'target \u2265100 by Day 180.'",
+        "confidence_band": "Likely-helpful"
+      },
+      {
+        "sequence": 4,
+        "title": "Test a checkout upsell or bundle prompt to lift average-order-value by 3\u20135% within Phase 3 window",
+        "rationale": "Checkout conversion has recovered to 102% of pre-regression baseline, creating headroom to introduce lightweight monetisation levers. A small AOV lift can close the remaining 6-point revenue gap without requiring proportional traffic growth.",
+        "evidence_citation": "Recovery \u2014 Day-90 ops update (TRACKING): 'Conversion 102% of pre-March.' Strategic Plan (BASE): 'Phase 3: grow revenue index above 100 and stabilise.'",
+        "confidence_band": "Worth-trying"
+      }
+    ],
+    "refusal_note": null,
+    "audit_entry_ids": [
+      "29c5e0b2-e69d-4092-b9b5-4db7108216f7"
+    ],
+    "assessed_at": "2026-06-25T21:20:15.338220+00:00"
+  }
+}

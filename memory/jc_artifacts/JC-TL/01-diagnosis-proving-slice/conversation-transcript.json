@@ -1,0 +1,69 @@
+{
+  "session_id": "sess-jctl-stage1-mydawa-diagnosis",
+  "probes_per_layer": 9,
+  "transcript": [
+    {
+      "layer": "framing",
+      "probe": "What's the actual question you're trying to answer \u2014 not the symptom that prompted you to open this?",
+      "user_turn_id": "t1",
+      "user_response": "Revenue is down 5.5% MoM. We think it's the checkout regression \u2014 but I'm not 100% sure.",
+      "engine_note": "User states the symptom (the 5.5% MoM drop); frame_audit detects this is one-step-too-shallow and emits a follow-up probe."
+    },
+    {
+      "layer": "framing",
+      "probe": "If you couldn't ask 'what's wrong with the funnel?', what would the question become?",
+      "user_turn_id": "t2",
+      "user_response": "The question I'm actually asking: is the regression THE cause, or just A cause?",
+      "engine_note": "Frame is now narrowed \u2014 frame_audit fires 'narrowed' and the session advances to grounding."
+    },
+    {
+      "layer": "grounding",
+      "probe": "What evidence do you have, vs what evidence are you assuming exists?",
+      "user_turn_id": "t3",
+      "user_response": "Checkout conversion dropped from 92% to 71% the week after the SDK upgrade. Other funnels look normal.",
+      "engine_note": "User cites real numbers; triangulation engine records the conversion delta."
+    },
+    {
+      "layer": "grounding",
+      "probe": "Which of those numbers is real and which is the version your ops team would defend in detail?",
+      "user_turn_id": "t4",
+      "user_response": "But session count is also down ~12% \u2014 and that started two weeks BEFORE the SDK upgrade.",
+      "engine_note": "Surface deepens \u2014 user surfaces a temporally-independent signal. tension_detector emits a high-severity tension."
+    },
+    {
+      "layer": "synthesis",
+      "probe": "State the question in one sentence now.",
+      "user_turn_id": "t5",
+      "user_response": "So we're conflating two things: a session-acquisition decline AND a conversion regression.",
+      "engine_note": "Synthesis voice probes the user to converge; user names the two-cause read."
+    },
+    {
+      "layer": "synthesis",
+      "probe": "Of the three tensions surfaced, which is the load-bearing one \u2014 the one where if it goes one way, the others follow?",
+      "user_turn_id": "t6",
+      "user_response": "If both signals are real, the recovery plan needs to address both \u2014 not just checkout.",
+      "engine_note": "probability_weighting rates the three claims; the two-cause hypothesis wins at 62% (Likely)."
+    },
+    {
+      "layer": "reflection",
+      "probe": "What does this NOT cover that you wish it did?",
+      "user_turn_id": "t7-a",
+      "user_response": "It doesn't tell us whether the session softness is sector-driven or AKKI-specific \u2014 we'd need an industry benchmark.",
+      "engine_note": "Layer 5 reflection probe 1 (locked); user identifies a remaining diagnostic gap."
+    },
+    {
+      "layer": "reflection",
+      "probe": "What would have to be true for this diagnosis to be wrong?",
+      "user_turn_id": "t7-b",
+      "user_response": "If sessions recover on their own as the SDK fix ships, the two-cause read was wrong \u2014 checkout was the only cause.",
+      "engine_note": "Layer 5 probe 2 (locked); user defines a falsification test."
+    },
+    {
+      "layer": "reflection",
+      "probe": "What's the question you weren't ready to ask?",
+      "user_turn_id": "t7-c",
+      "user_response": "Whether our customer base is shrinking \u2014 not just our session count.",
+      "engine_note": "Layer 5 probe 3 (locked); user surfaces the deeper diagnostic the session opens."
+    }
+  ]
+}

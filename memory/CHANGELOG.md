@@ -2,6 +2,64 @@
 
 > Append-only history of shipped work. Newest first.
 
+## 2026-06-25 — AUTONOMOUS OVERNIGHT RUN (7 stages closed, 1 halt-and-surface)
+
+The user moved to autonomous mode partway through 2026-06-25 with
+explicit chain-forward authority over the three live streams under
+strict guardrails. Outcome:
+
+### Stream 1 — JC-MON · Stage 2b complete; Stage 3 HALTED
+
+- **Stage 2b.1 (recommendations)** — 5/5 GREEN. Real Shield-routed
+  `recommend_interventions(...)` (4 sequenced recommendations with
+  evidence citations + confidence_band). 3 refusal short-circuits
+  (upstream-refused, on-track, parse-failed).
+- **Stage 2b.2 (explanation)** — 5/5 GREEN. Real Shield-routed
+  `explain_performance(...)` (headline + 3 evidence-cited causes +
+  multi-sentence narrative). Hardened JSON parser shared across 4
+  widens.
+- **Stage 2b.3 (extended health)** — 6/6 GREEN.
+  `extended_health(...)` composes rag_status + plan_compliance +
+  confidence_trend (deterministic) + risk_surface (Shield-routed,
+  1-3 named risks).
+- **Stage 3** — HALTED on scope ambiguity (HALT condition #7).
+  Three ambiguity points surfaced: candidate-list generative LLM
+  intent, brief affordance surfacing locations, email-loop
+  discriminator scope. Two clean sub-slices (3.0 Reassess action +
+  3.1 Task drawer `objective_id` discriminator) proposed if user
+  wants progress before full scope clarification.
+
+### Stream 2 — JC-CHAT · Stage B + Stage C complete
+
+- **Stage B (parity measurement)** — backend-only; Shield path
+  UNTOUCHED. R1 trace (16 wire-level steps · 9 FE-fixable · 5
+  Shield-path out-of-bounds); R2 streaming (HTTP/1.1 SSE via raw
+  fetch — PARITY); R3 latency (Δ-ratio ~3.0× upper bound).
+- **Stage C (punch-list verify-then-close)** — 6/6 GREEN. All 4
+  items already wired; verify-then-close pattern with live HTTP
+  round-trip. R5 lock honoured: edit-prompt verbatim Z3 pattern
+  captured + 3 user decision options surfaced.
+
+### Stream 3 — JC-TL · Stage 1 + Stage 2 complete + Track-2 surfaced
+
+- **Stage 1 (Diagnosis proving slice)** — 6/6 GREEN. Full
+  `seek_clarity` end-to-end on MYDAWA-shaped Q3 contraction. Five
+  spine engines fired. Deck rendered (14 slides, ~76 KB) at Q2
+  rubric verdict **FITS-WITH-LOSS** vs MYDAWA reference. SIDE
+  EFFECT: 3 latent attribute-reference bugs in
+  `solva_v2/pptx_exporter.py` fixed additively.
+- **Stage 2 (fan-out)** — 5/5 GREEN. Develop Strategy +
+  Test Hypothesis + Get Perspectives all rendered at FITS-WITH-LOSS
+  on the shared framework (Get Perspectives at Q6 provisional bar).
+  Contributor-history fold-in landed (Develop Strategy seeded as
+  revision of Diagnosis session with `prior_session_intent`
+  threading). Track-2 Decks-upgrade sequencing recommendation
+  surfaced as artifact (not executed).
+
+Full handoff note: `/app/memory/AUTONOMOUS_RUN_2026-06-25.md`.
+
+---
+
 ## 2026-06-25 — JC-MON Stage 2a + JC-CHAT Stage A + JC-TL Stage 0 (THREE PARALLEL STREAMS)
 
 Three independent parallel streams surfaced together at their first

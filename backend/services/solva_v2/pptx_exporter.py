@@ -342,8 +342,13 @@ def _build_tensions_overview(prs, p: ArtefactPayload, ctx: str, n: int, total: i
     for t in p.tensions:
         _add_text(slide, MARGIN_IN, y, CONTENT_W, 0.4,
                   t.title, size_pt=13, bold=True, color=INK)
+        # JC-TL Stage 1 (2026-06-25) — latent bug fix: TensionSlide
+        # schema has no `summary` field. Use subtitle when present;
+        # fall back to prevailing_framing (the user-brought framing
+        # is the natural one-line summary of the tension's setup).
+        summary_text = t.subtitle or t.prevailing_framing or ""
         _add_text(slide, MARGIN_IN, y + 0.4, CONTENT_W, 0.8,
-                  t.summary, size_pt=11, color=DEEP)
+                  summary_text, size_pt=11, color=DEEP)
         y += 1.2
     _add_footer(slide, n=n, total=total, context_name=ctx)
 
@@ -360,11 +365,16 @@ def _build_per_tension(prs, p: ArtefactPayload, ctx: str, n: int, total: int):
                   "No deep-dive evidence rows in this session.",
                   size_pt=11, italic=True, color=MUTED)
     for d in p.per_tension_deep_dive[:3]:
+        # JC-TL Stage 1 (2026-06-25) — latent bug fix: TensionDeepDive
+        # schema has tension_number + extended_detail_paragraphs +
+        # additional_citations (no `title`/`evidence`/`observation`
+        # fields). Use the tension_number as the heading; render the
+        # paragraphs as the evidence lines.
         _add_text(slide, MARGIN_IN, y, CONTENT_W, 0.4,
-                  d.title, size_pt=12, bold=True, color=INK)
-        for ev in (d.evidence or [])[:2]:
+                  f"Tension {d.tension_number}", size_pt=12, bold=True, color=INK)
+        for para in (d.extended_detail_paragraphs or [])[:2]:
             _add_text(slide, MARGIN_IN, y + 0.4, CONTENT_W, 0.6,
-                      f"→ {ev.observation}", size_pt=10, color=DEEP)
+                      f"→ {para[:300]}", size_pt=10, color=DEEP)
             y += 0.6
         y += 0.6
     _add_footer(slide, n=n, total=total, context_name=ctx)
@@ -599,10 +609,13 @@ def _build_risk_mitigation(prs, p: ArtefactPayload, ctx: str, n: int, total: int
                   "No standalone risks surfaced beyond what's covered "
                   "in the pre-mortem.", size_pt=11, italic=True, color=MUTED)
     for r in p.risk_mitigation[:5]:
+        # JC-TL Stage 1 (2026-06-25) — latent bug fix: RiskMitigation
+        # schema is {risk, mitigation}; the exporter used the old
+        # field names `risk_name` / `mitigation_strategy`. Aligned.
         _add_text(slide, MARGIN_IN, y, CONTENT_W, 0.4,
-                  r.risk_name, size_pt=11, bold=True, color=INK)
+                  r.risk, size_pt=11, bold=True, color=INK)
         _add_text(slide, MARGIN_IN, y + 0.4, CONTENT_W, 0.5,
-                  r.mitigation_strategy[:220], size_pt=10, color=DEEP)
+                  r.mitigation[:220], size_pt=10, color=DEEP)
         y += 1.1
     _add_footer(slide, n=n, total=total, context_name=ctx)
 

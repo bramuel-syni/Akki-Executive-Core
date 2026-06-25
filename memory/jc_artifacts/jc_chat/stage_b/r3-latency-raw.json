@@ -1,0 +1,221 @@
+{
+  "captured_at": "2026-06-25T21:22:31.628433+00:00",
+  "trials_per_shape": 3,
+  "measured": [
+    {
+      "model_label": "gemini-2.5-flash",
+      "per_prompt": {
+        "simple_question": {
+          "prompt": "What's a sensible first step when revenue dips 5% MoM?",
+          "direct_frontier": {
+            "trials": [
+              {
+                "ttft_ms": 3392,
+                "total_ms": 3400,
+                "response_chars": 94,
+                "response_preview": "A 5% MoM revenue dip is significant enough to warrant immediate attention, but not necessarily"
+              },
+              {
+                "ttft_ms": 3214,
+                "total_ms": 3215,
+                "response_chars": 94,
+                "response_preview": "A 5% MoM revenue dip is significant enough to warrant immediate attention but not panic. The *"
+              },
+              {
+                "ttft_ms": 2768,
+                "total_ms": 2769,
+                "response_chars": 90,
+                "response_preview": "A sensible first step when revenue dips 5% MoM is to **conduct a rapid diagnostic analysis"
+              }
+            ],
+            "agg": {
+              "n_ok": 3,
+              "n_total": 3,
+              "ttft_median_ms": 3214,
+              "total_median_ms": 3215,
+              "ttft_min_ms": 2768,
+              "ttft_max_ms": 3392,
+              "total_min_ms": 2769,
+              "total_max_ms": 3400
+            }
+          },
+          "shield_routed": {
+            "trials": [
+              {
+                "ttft_ms": 9916,
+                "total_ms": 9916,
+                "response_chars": 651,
+                "response_preview": "When revenue dips 5% month-over-month, a sensible first step is:\n\n**Segment the data to identify where the decline is occurring:**\n\n- Break down by product/serv",
+                "audit_id": "3e9b06c3-e24f-4cec-8347-6815faa40305"
+              },
+              {
+                "ttft_ms": 11245,
+                "total_ms": 11245,
+                "response_chars": 1219,
+                "response_preview": "# Sensible First Step for 5% MoM Revenue Dip\n\n## Immediate Action: **Root Cause Analysis**\n\n**1. Segment the Revenue Data**\n- Break down by product/service line",
+                "audit_id": "f3a9ce47-c2cb-475f-9b15-482a08c3f9d7"
+              },
+              {
+                "ttft_ms": 9686,
+                "total_ms": 9686,
+                "response_chars": 975,
+                "response_preview": "# Sensible First Step for 5% MoM Revenue Dip\n\n**Immediate Action: Diagnose the root cause**\n\n1. **Segment the data** - Break down revenue by:\n   - Product/servi",
+                "audit_id": "7dafd17d-d63f-4991-be56-7479f5ed5aaf"
+              }
+            ],
+            "agg": {
+              "n_ok": 3,
+              "n_total": 3,
+              "ttft_median_ms": 9916,
+              "total_median_ms": 9916,
+              "ttft_min_ms": 9686,
+              "ttft_max_ms": 11245,
+              "total_min_ms": 9686,
+              "total_max_ms": 11245
+            }
+          }
+        },
+        "structured_request": {
+          "prompt": "Give me three diagnostic questions to ask before recommending a fix for a checkout regression.",
+          "direct_frontier": {
+            "trials": [
+              {
+                "ttft_ms": 3127,
+                "total_ms": 3128,
+                "response_chars": 126,
+                "response_preview": "A checkout regression can be triggered by many things, from frontend display issues to backend payment processing failures. To"
+              },
+              {
+                "ttft_ms": 3180,
+                "total_ms": 3203,
+                "response_chars": 109,
+                "response_preview": "Okay, a checkout regression is critical! Before recommending a fix, you need to quickly narrow down the scope"
+              },
+              {
+                "ttft_ms": 2672,
+                "total_ms": 2673,
+                "response_chars": 109,
+                "response_preview": "Okay, a checkout regression is critical! Before recommending a fix, you need to quickly narrow down the scope"
+              }
+            ],
+            "agg": {
+              "n_ok": 3,
+              "n_total": 3,
+              "ttft_median_ms": 3127,
+              "total_median_ms": 3128,
+              "ttft_min_ms": 2672,
+              "ttft_max_ms": 3180,
+              "total_min_ms": 2673,
+              "total_max_ms": 3203
+            }
+          },
+          "shield_routed": {
+            "trials": [
+              {
+                "ttft_ms": 8909,
+                "total_ms": 8909,
+                "response_chars": 911,
+                "response_preview": "# Three Diagnostic Questions for Checkout Regression\n\n1. **When did the regression start occurring?**\n   - Helps identify the deployment, release, or configurat",
+                "audit_id": "1a31abdb-9892-48e5-8991-5ca7e99333c8"
+              },
+              {
+                "ttft_ms": 8664,
+                "total_ms": 8664,
+                "response_chars": 853,
+                "response_preview": "Here are three diagnostic questions to ask before recommending a fix for a checkout regression:\n\n1. **When did the regression first appear?**\n   - Identify the ",
+                "audit_id": "eb564100-b27c-49e8-ba02-cb69fca225d5"
+              },
+              {
+                "ttft_ms": 8251,
+                "total_ms": 8251,
+                "response_chars": 754,
+                "response_preview": "Here are three diagnostic questions to ask before recommending a fix for a checkout regression:\n\n1. **When did the regression start?**\n   - Was there a recent d",
+                "audit_id": "d9539849-ba8e-4e2e-a342-91f1c7c5b114"
+              }
+            ],
+            "agg": {
+              "n_ok": 3,
+              "n_total": 3,
+              "ttft_median_ms": 8664,
+              "total_median_ms": 8664,
+              "ttft_min_ms": 8251,
+              "ttft_max_ms": 8909,
+              "total_min_ms": 8251,
+              "total_max_ms": 8909
+            }
+          }
+        },
+        "longer_thought": {
+          "prompt": "When a recovery plan ships its first phase exit gate, what's the typical second-order risk to watch over the next two weeks?",
+          "direct_frontier": {
+            "trials": [
+              {
+                "ttft_ms": 3074,
+                "total_ms": 3075,
+                "response_chars": 112,
+                "response_preview": "When a recovery plan successfully ships its first phase exit gate, the immediate feeling is often one of relief,"
+              },
+              {
+                "ttft_ms": 3269,
+                "total_ms": 3291,
+                "response_chars": 106,
+                "response_preview": "When a recovery plan ships its first phase exit gate, it signifies an initial success \u2013 likely stabilizing"
+              },
+              {
+                "ttft_ms": 3025,
+                "total_ms": 3026,
+                "response_chars": 111,
+                "response_preview": "When a recovery plan ships its first phase exit gate, it typically means the immediate crisis is contained, the"
+              }
+            ],
+            "agg": {
+              "n_ok": 3,
+              "n_total": 3,
+              "ttft_median_ms": 3074,
+              "total_median_ms": 3075,
+              "ttft_min_ms": 3025,
+              "ttft_max_ms": 3269,
+              "total_min_ms": 3026,
+              "total_max_ms": 3291
+            }
+          },
+          "shield_routed": {
+            "trials": [
+              {
+                "ttft_ms": 10914,
+                "total_ms": 10914,
+                "response_chars": 1078,
+                "response_preview": "When a recovery plan ships its first phase exit gate, typical second-order risks to watch over [[DATE_1]] include:\n\n1. **Complacency & momentum loss** - Teams m",
+                "audit_id": "28838b92-2de8-4190-bb7f-d2d28c16f94a"
+              },
+              {
+                "ttft_ms": 10123,
+                "total_ms": 10123,
+                "response_chars": 1073,
+                "response_preview": "When a recovery plan ships its first phase exit gate, typical second-order risks to watch over [[DATE_1]] include:\n\n1. **Relapse/Regression** - Initial success ",
+                "audit_id": "9e926e65-6f17-487c-bbb6-77d85fda16b1"
+              },
+              {
+                "ttft_ms": 10265,
+                "total_ms": 10265,
+                "response_chars": 1104,
+                "response_preview": "When a recovery plan ships its first phase exit gate, typical second-order risks to watch over [[DATE_1]] include:\n\n1. **Complacency & Momentum Loss** - Teams m",
+                "audit_id": "7f21d91d-22e3-4b21-8e97-4b6dee657967"
+              }
+            ],
+            "agg": {
+              "n_ok": 3,
+              "n_total": 3,
+              "ttft_median_ms": 10265,
+              "total_median_ms": 10265,
+              "ttft_min_ms": 10123,
+              "ttft_max_ms": 10914,
+              "total_min_ms": 10123,
+              "total_max_ms": 10914
+            }
+          }
+        }
+      }
+    }
+  ]
+}

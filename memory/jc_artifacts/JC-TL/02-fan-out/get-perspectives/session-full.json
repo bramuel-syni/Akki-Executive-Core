@@ -1,0 +1,179 @@
+{
+  "id": "sess-jctl-stage2-get-perspectives",
+  "schema_version": 2,
+  "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
+  "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
+  "intent": "Get perspectives on the Q3 recovery pathway \u2014 auditor, customer-advocate, regulator views.",
+  "submodule": "get_perspective",
+  "persona": "auditor",
+  "cluster_id": "cluster-q3-recovery",
+  "started_at": "2026-06-25T22:00:00Z",
+  "completed_at": "2026-06-25T22:58:00Z",
+  "layer": "reflection",
+  "status": "complete",
+  "user_turns": [
+    {
+      "id": "t1",
+      "layer": "framing",
+      "text": "I want auditor + customer-advocate + regulator perspectives on the parallel recovery."
+    },
+    {
+      "id": "t2",
+      "layer": "grounding",
+      "text": "Auditor would focus on the audit trail integrity during parallel ops."
+    },
+    {
+      "id": "t3",
+      "layer": "grounding",
+      "text": "Customer would focus on the friction during the campaign weeks."
+    },
+    {
+      "id": "t4",
+      "layer": "synthesis",
+      "text": "Auditor says: parallel is fine if every change is logged + signed off. Concern: SDK fix + reactivation campaign creating overlapping change windows."
+    },
+    {
+      "id": "t5",
+      "layer": "synthesis",
+      "text": "Customer-advocate says: 8 weeks of fix-then-campaign feels like 'getting bombarded with notices then asks for money.' Concern: tone."
+    },
+    {
+      "id": "t6",
+      "layer": "synthesis",
+      "text": "Regulator says: SDK regression triggers reporting obligations. Concern: did we report on time?"
+    },
+    {
+      "id": "t7",
+      "layer": "reflection",
+      "text": "Auditor + regulator perspectives BOTH point to reporting/audit trail \u2014 agreement. Customer-advocate is the outlier \u2014 focused on tone, not process."
+    }
+  ],
+  "attached_docs": [],
+  "comparables": [],
+  "reasoning_audit_log": [
+    {
+      "id": "audit-1",
+      "engine": "frame_audit",
+      "layer": "framing",
+      "output": {
+        "frame_quality": "narrowed",
+        "framing_note": "Multi-persona span requested."
+      }
+    },
+    {
+      "id": "audit-2",
+      "engine": "candidate_generation",
+      "layer": "grounding",
+      "output": {
+        "hypotheses": [
+          "Auditor lens",
+          "Customer-advocate lens",
+          "Regulator lens"
+        ]
+      }
+    },
+    {
+      "id": "audit-3",
+      "engine": "triangulation",
+      "layer": "grounding",
+      "output": {
+        "cluster_id": "cluster-q3-recovery",
+        "triangulation_note": "Auditor + regulator triangulate on process; customer-advocate spans differently to tone."
+      }
+    },
+    {
+      "id": "audit-4",
+      "engine": "tension_detector",
+      "layer": "synthesis",
+      "output": {
+        "tensions": [
+          {
+            "description": "Process-side persons (auditor + regulator) tension against the customer-advocate's tone focus \u2014 the recovery plan has to satisfy BOTH but they pull different threads.",
+            "contradiction_source": "comparable_vs_comparable",
+            "severity": "medium",
+            "evidence": [
+              "Auditor: change-window logging.",
+              "Customer-advocate: cadence/tone."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "audit-5",
+      "engine": "probability_weighting",
+      "layer": "synthesis",
+      "output": {
+        "claims": [
+          {
+            "text": "Auditor-side view: parallel recovery is acceptable iff change-window logging is rigorous.",
+            "tier": "user_assertion",
+            "confidence_pct": 70,
+            "confidence_band": "Likely",
+            "confidence_rationale": "Standard audit posture; high-conviction within the persona."
+          },
+          {
+            "text": "Customer-advocate-side view: parallel recovery's tone-burden risks customer trust erosion if not paced.",
+            "tier": "user_assertion",
+            "confidence_pct": 55,
+            "confidence_band": "Possible",
+            "confidence_rationale": "Persona-internal read; depends on campaign-team's tone discipline."
+          },
+          {
+            "text": "Regulator-side view: SDK regression should trigger same-day report; recovery plan should include the regulator notice as workstream zero.",
+            "tier": "user_assertion",
+            "confidence_pct": 70,
+            "confidence_band": "Likely",
+            "confidence_rationale": "Compliance posture is high-conviction within persona."
+          }
+        ]
+      }
+    },
+    {
+      "id": "audit-6",
+      "engine": "reflection",
+      "layer": "reflection",
+      "output": {
+        "reflection_question": "Of the persona's challenges, which is the one you find HARDEST to dismiss?",
+        "reflection_question_index": 0,
+        "user_response": "Regulator's \u2014 same-day reporting obligation may have been missed already. Need to check.",
+        "interpretation": "User identifies a procedural gap surfaced by the regulator persona."
+      }
+    },
+    {
+      "id": "audit-7",
+      "engine": "reflection",
+      "layer": "reflection",
+      "output": {
+        "reflection_question": "What's the question you wish you'd asked the persona but didn't?",
+        "reflection_question_index": 1,
+        "user_response": "Would have asked the auditor whether the parallel change windows would have looked OK if BOTH change owners signed off together OR if they need independent signoffs.",
+        "interpretation": "User opens a process-detail follow-up."
+      }
+    },
+    {
+      "id": "audit-8",
+      "engine": "reflection",
+      "layer": "reflection",
+      "output": {
+        "reflection_question": "What other persona's view would change the picture again?",
+        "reflection_question_index": 2,
+        "user_response": "Engineering org chart \u2014 bringing in the on-call eng would surface what happens if a P0 fires during the parallel weeks.",
+        "interpretation": "User opens an on-call-resilience persona for future Get Perspectives runs."
+      }
+    }
+  ],
+  "synthesis": {
+    "body": "## Perspective spread\n\nThree persons, three views. Two agree on process discipline (auditor + regulator); one diverges on customer-side tone (customer-advocate). The plan needs to satisfy both threads \u2014 rigour AND cadence.\n\n## Where they tension\n\nProcess-side personas push the plan TOWARD more logging and earlier reporting. Customer-advocate pushes AWAY from overlapping touchpoints. The plan must thread both, not pick one.",
+    "recommendations": [
+      {
+        "heading": "Treat regulator notice as workstream zero",
+        "body": "Would issue the SDK regression regulator notice as workstream zero \u2014 the auditor + regulator persons both back this."
+      },
+      {
+        "heading": "Cap customer-facing campaign touch-points",
+        "body": "Could cap customer-facing campaign touchpoints to \u2264 2 per week \u2014 the customer-advocate persona's primary concern."
+      }
+    ]
+  }
+}

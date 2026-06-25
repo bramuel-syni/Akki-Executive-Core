@@ -1,0 +1,71 @@
+{
+  "fixture_objective": {
+    "id": "obj-2b3-first-21a900a2d3",
+    "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
+    "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
+    "kind": "objective",
+    "title": "Recover Q3 monthly active revenue to pre-Q1 baseline",
+    "description": "Recover MoM index after the \u22125.5% Q3 contraction.",
+    "target_metric": "monthly_active_revenue_index",
+    "target_value": "Index \u2265 100 within 180 days",
+    "due_date": "2026-12-31",
+    "status": "active"
+  },
+  "assessment": {
+    "objective_id": "obj-2b3-first-21a900a2d3",
+    "refused": false,
+    "refusal_reason": null,
+    "progress_pct": 94,
+    "progress_rationale": "Per tracking doc (DATE_4 ops update): revenue index currently stands at 94 against a target of 100, representing 94% progress toward the baseline recovery goal.",
+    "probability_pct": 72,
+    "probability_band": "Likely",
+    "probability_rationale": "Corpus-grounded trajectory claim with strategic and tracking evidence, but future achievement by specific date introduces execution risk.",
+    "base_doc_ids": [
+      "doc-base-032fb845"
+    ],
+    "tracking_doc_ids": [
+      "doc-track-w14-00c87734"
+    ],
+    "audit_entry_ids": [
+      "60cde700-1c20-4b56-a08c-4ed7f10230c8",
+      "06bdbc5a-3fd9-4b7f-a2c1-ee8bc74f3f7d"
+    ],
+    "assessed_at": "2026-06-25T21:38:29.882164+00:00"
+  },
+  "extended_health": {
+    "objective_id": "obj-2b3-first-21a900a2d3",
+    "refused": false,
+    "refusal_reason": null,
+    "rag_status": "green",
+    "plan_compliance": {
+      "status": "ahead-of-plan",
+      "rationale": "Progress 94% with probability 72% \u2014 ahead of a 50%-mid-period linear baseline and high-conviction trajectory."
+    },
+    "confidence_trend": {
+      "status": "first_assessment_baseline",
+      "delta_pp": null,
+      "rationale": "No prior assessment on record; this is the baseline."
+    },
+    "risk_surface": {
+      "risks": [
+        {
+          "name": "Reactivation Cadence Decline",
+          "narrative": "Reactivation response at 14% risks falling below the Day-50 cadence threshold, jeopardizing the Phase 2 timeline needed to reach index 100 by Day 180.",
+          "evidence_citation": "Recovery \u2014 [DATE_4] ops update: 'Risk: reactivation cadence dropping below [DATE_5]'",
+          "severity": "high"
+        },
+        {
+          "name": "Team Capacity Constraint",
+          "narrative": "Stretched team capacity may limit execution velocity across Phase 2 and Phase 3, delaying revenue stabilization efforts.",
+          "evidence_citation": "Recovery \u2014 [DATE_4] ops update: 'team capacity stretched'",
+          "severity": "medium"
+        }
+      ],
+      "refusal_note": ""
+    },
+    "audit_entry_ids": [
+      "2e0e0e25-5be4-4e81-bb03-1cbba15578d0"
+    ],
+    "assessed_at": "2026-06-25T21:38:45.324258+00:00"
+  }
+}

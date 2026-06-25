@@ -1,0 +1,218 @@
+{
+  "id": "sess-jctl-stage1-mydawa-diagnosis",
+  "schema_version": 2,
+  "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
+  "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
+  "intent": "Did we diagnose the Q3 revenue contraction correctly, or are we pattern-matching the checkout regression?",
+  "submodule": "seek_clarity",
+  "cluster_id": "cluster-q3-revenue",
+  "cluster_label": "Q3 revenue diagnosis",
+  "started_at": "2026-06-25T18:00:00Z",
+  "completed_at": "2026-06-25T19:24:00Z",
+  "layer": "reflection",
+  "status": "complete",
+  "user_turns": [
+    {
+      "id": "t1",
+      "layer": "framing",
+      "text": "Revenue is down 5.5% MoM. We think it's the checkout regression \u2014 but I'm not 100% sure."
+    },
+    {
+      "id": "t2",
+      "layer": "framing",
+      "text": "The question I'm actually asking: is the regression THE cause, or just A cause?"
+    },
+    {
+      "id": "t3",
+      "layer": "grounding",
+      "text": "Checkout conversion dropped from 92% to 71% the week after the SDK upgrade. Other funnels look normal."
+    },
+    {
+      "id": "t4",
+      "layer": "grounding",
+      "text": "But session count is also down ~12% \u2014 and that started two weeks BEFORE the SDK upgrade."
+    },
+    {
+      "id": "t5",
+      "layer": "synthesis",
+      "text": "So we're conflating two things: a session-acquisition decline AND a conversion regression."
+    },
+    {
+      "id": "t6",
+      "layer": "synthesis",
+      "text": "If both signals are real, the recovery plan needs to address both \u2014 not just checkout."
+    },
+    {
+      "id": "t7",
+      "layer": "reflection",
+      "text": "We assumed checkout because it was loud. The session decline was quiet but earlier."
+    }
+  ],
+  "attached_docs": [
+    {
+      "id": "doc-q3-ops",
+      "name": "Q3 Operational Metrics \u2014 Weekly KPI Pull"
+    },
+    {
+      "id": "doc-sdk-postmortem",
+      "name": "Payment SDK Upgrade Postmortem"
+    }
+  ],
+  "comparables": [
+    {
+      "id": "comp-1",
+      "name": "Comparable A \u2014 checkout SDK migration",
+      "diagnosis_summary": "Same SDK migration caused similar conversion drop; recovered in ~6 weeks once fix shipped."
+    },
+    {
+      "id": "comp-2",
+      "name": "Comparable B \u2014 acquisition softness in same quarter",
+      "diagnosis_summary": "Sector-wide session softness ~10-15% in same quarter due to ad-mix changes."
+    }
+  ],
+  "reasoning_audit_log": [
+    {
+      "id": "audit-1",
+      "engine": "frame_audit",
+      "layer": "framing",
+      "output": {
+        "frame_quality": "narrowed",
+        "user_question": "Is the checkout regression THE cause, or A cause?",
+        "framing_note": "User sharpened from 'fix the funnel' to a diagnostic question about causal weight."
+      }
+    },
+    {
+      "id": "audit-2",
+      "engine": "candidate_generation",
+      "layer": "grounding",
+      "output": {
+        "hypotheses": [
+          "Checkout regression is the dominant cause (conversion-side only).",
+          "Session-acquisition decline started earlier and is the dominant cause.",
+          "Two independent causes \u2014 both real, additive contraction."
+        ]
+      }
+    },
+    {
+      "id": "audit-3",
+      "engine": "triangulation",
+      "layer": "grounding",
+      "output": {
+        "cluster_id": "cluster-q3-revenue",
+        "triangulation_note": "Conversion delta cleanly maps to SDK upgrade week. Session count delta starts 2 weeks earlier \u2014 independent signal."
+      }
+    },
+    {
+      "id": "audit-4",
+      "engine": "tension_detector",
+      "layer": "grounding",
+      "output": {
+        "tensions": [
+          {
+            "description": "Initial framing ('checkout regression caused the drop') conflicts with the session-count timing evidence \u2014 sessions softened BEFORE the regression.",
+            "contradiction_source": "user_vs_corpus",
+            "severity": "high",
+            "evidence": [
+              "Checkout conversion: 92% \u2192 71% week of SDK upgrade.",
+              "Session count: \u221212% starting two weeks prior."
+            ]
+          },
+          {
+            "description": "Two comparables point in different directions \u2014 A says SDK is the cause, B says sector-wide acquisition softness.",
+            "contradiction_source": "comparable_vs_comparable",
+            "severity": "medium",
+            "evidence": [
+              "Comparable A \u2014 same SDK, same conversion drop.",
+              "Comparable B \u2014 sector-wide session softness same period."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "audit-5",
+      "engine": "probability_weighting",
+      "layer": "synthesis",
+      "output": {
+        "claims": [
+          {
+            "text": "Two independent causes drove Q3 contraction. The SDK regression resolves the conversion gap; the session softness resolves separately. If a single fix wouldn't restore index.",
+            "tier": "corpus",
+            "confidence_pct": 62,
+            "confidence_band": "Likely",
+            "confidence_rationale": "Triangulation supports the two-cause read; corpus evidence shows two distinct temporal signals."
+          },
+          {
+            "text": "Checkout regression is the dominant cause. Session softness is noise within typical sector variance \u2014 the index recovers once the SDK fix lands.",
+            "tier": "comparable",
+            "confidence_pct": 28,
+            "confidence_band": "Possible",
+            "confidence_rationale": "Comparable A supports this; Comparable B counter-signals."
+          },
+          {
+            "text": "Session-acquisition decline is the dominant cause. Without addressing acquisition the index would not recover even after the SDK fix.",
+            "tier": "user_assertion",
+            "confidence_pct": 10,
+            "confidence_band": "Speculative",
+            "confidence_rationale": "Inverts the corpus-tier read; only user assertion supports this."
+          }
+        ]
+      }
+    },
+    {
+      "id": "audit-6",
+      "engine": "reflection",
+      "layer": "reflection",
+      "output": {
+        "reflection_question": "What does this NOT cover that you wish it did?",
+        "reflection_question_index": 0,
+        "user_response": "It doesn't tell us whether the session softness is sector-driven or AKKI-specific \u2014 we'd need an industry benchmark.",
+        "interpretation": "User names a remaining diagnostic gap; sector benchmarking is the next data acquisition."
+      }
+    },
+    {
+      "id": "audit-7",
+      "engine": "reflection",
+      "layer": "reflection",
+      "output": {
+        "reflection_question": "What would have to be true for this diagnosis to be wrong?",
+        "reflection_question_index": 1,
+        "user_response": "If sessions recover on their own as the SDK fix ships, the two-cause read was wrong \u2014 checkout was the only cause.",
+        "interpretation": "User defines a falsification test: does session count recover independently of the SDK fix's conversion effect?"
+      }
+    },
+    {
+      "id": "audit-8",
+      "engine": "reflection",
+      "layer": "reflection",
+      "output": {
+        "reflection_question": "What's the question you weren't ready to ask?",
+        "reflection_question_index": 2,
+        "user_response": "Whether our customer base is shrinking \u2014 not just our session count.",
+        "interpretation": "User surfaces the harder underlying question; customer-base softness vs session-engagement softness is the next diagnostic level."
+      }
+    },
+    {
+      "id": "audit-9",
+      "engine": "refusal",
+      "layer": "synthesis",
+      "output": {
+        "refusal_kind": "diagnostic_stop",
+        "refusal_note": "seek_clarity stops at the sharpened question + weighted diagnostic read. It does not recommend a recovery plan; that is develop_strategy's job."
+      }
+    }
+  ],
+  "synthesis": {
+    "body": "## Diagnosis\n\nTwo independent causes underlie the Q3 contraction. The checkout regression cleanly maps to a conversion drop the week of the SDK upgrade. The session-acquisition decline started two weeks earlier and is independent of the SDK story.\n\nThe original framing ('the funnel is broken') would have shipped a single-cause recovery plan. The sharpened framing ('which of these two signals is dominant?') changes the question the recovery plan must answer.\n\n## Stop-at-diagnosis\n\nSeek Clarity stops here. Develop Strategy would answer 'what's the sequenced recovery pathway given two causes?' \u2014 that is a separate call against a separate path.",
+    "recommendations": [
+      {
+        "heading": "Pressure-test sector benchmark before committing the recovery plan",
+        "body": "Whether session softness is sector-driven could be tested by pulling comparable-cohort weekly index data over the same period."
+      },
+      {
+        "heading": "Watch session recovery independence",
+        "body": "If sessions recover on their own as the SDK fix ships, the two-cause read would be falsified \u2014 checkout was the only cause."
+      }
+    ]
+  }
+}

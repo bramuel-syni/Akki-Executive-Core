@@ -1,0 +1,8 @@
+{
+  "chat_id": "5c21e364-a94b-4758-9b6f-01f515ea4710",
+  "archive_status": 200,
+  "archived_status": "archived",
+  "restore_status_code": 200,
+  "restored_status": "active",
+  "restore_round_trip": true
+}

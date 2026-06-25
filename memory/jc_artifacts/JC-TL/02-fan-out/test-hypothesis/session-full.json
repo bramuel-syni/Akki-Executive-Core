@@ -1,0 +1,185 @@
+{
+  "id": "sess-jctl-stage2-test-hypothesis",
+  "schema_version": 2,
+  "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
+  "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
+  "intent": "Hypothesis to test: the Q3 contraction will recover within 12 weeks if we ship both fixes in parallel.",
+  "submodule": "simulate_hypothesis",
+  "cluster_id": "cluster-q3-recovery",
+  "started_at": "2026-06-25T20:50:00Z",
+  "completed_at": "2026-06-25T21:48:00Z",
+  "layer": "reflection",
+  "status": "complete",
+  "user_turns": [
+    {
+      "id": "t1",
+      "layer": "framing",
+      "text": "Hypothesis: parallel recovery lands the index \u2265 100 by week 12."
+    },
+    {
+      "id": "t2",
+      "layer": "grounding",
+      "text": "Evidence FOR: peer comparable hit the same target in 8 weeks parallel."
+    },
+    {
+      "id": "t3",
+      "layer": "grounding",
+      "text": "Evidence AGAINST: peer team was 3\u00d7 the size. Capacity asymmetry."
+    },
+    {
+      "id": "t4",
+      "layer": "hypothesis",
+      "text": "Scenario A: clean parallel. Index 102 by week 12."
+    },
+    {
+      "id": "t5",
+      "layer": "hypothesis",
+      "text": "Scenario B: coordination overhead drags reactivation to week 10. Index 92 by week 12."
+    },
+    {
+      "id": "t6",
+      "layer": "hypothesis",
+      "text": "Scenario C: a new regression lands during recovery. Index recovers but to 88, not 100."
+    },
+    {
+      "id": "t7",
+      "layer": "synthesis",
+      "text": "Falsification test: weekly index in week 6 < 90 means scenario B or C is realising."
+    }
+  ],
+  "attached_docs": [
+    {
+      "id": "doc-peer-staffing",
+      "name": "Peer team staffing comparison"
+    }
+  ],
+  "comparables": [
+    {
+      "id": "comp-1",
+      "name": "Peer parallel recovery \u2014 8 weeks",
+      "diagnosis_summary": "Index recovered to 102 in 8 weeks; team 3\u00d7 our size."
+    }
+  ],
+  "reasoning_audit_log": [
+    {
+      "id": "audit-1",
+      "engine": "frame_audit",
+      "layer": "framing",
+      "output": {
+        "frame_quality": "narrowed",
+        "framing_note": "Hypothesis framed for falsifiability."
+      }
+    },
+    {
+      "id": "audit-2",
+      "engine": "candidate_generation",
+      "layer": "grounding",
+      "output": {
+        "hypotheses": [
+          "Clean parallel",
+          "Coordination drag",
+          "Concurrent regression"
+        ]
+      }
+    },
+    {
+      "id": "audit-3",
+      "engine": "triangulation",
+      "layer": "grounding",
+      "output": {
+        "cluster_id": "cluster-q3-recovery",
+        "triangulation_note": "Peer comparable supports parallel; team-size asymmetry weakens the read."
+      }
+    },
+    {
+      "id": "audit-4",
+      "engine": "tension_detector",
+      "layer": "hypothesis",
+      "output": {
+        "tensions": [
+          {
+            "description": "Hypothesis assumes peer parallel works at our team size; capacity asymmetry says it might not.",
+            "contradiction_source": "user_vs_comparable",
+            "severity": "high",
+            "evidence": [
+              "Peer team 3\u00d7 our size.",
+              "Hypothesis predicts same 8-12wk recovery as peer."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "audit-5",
+      "engine": "probability_weighting",
+      "layer": "synthesis",
+      "output": {
+        "claims": [
+          {
+            "text": "Hypothesis holds \u2014 index 102 by week 12 under clean parallel.",
+            "tier": "comparable",
+            "confidence_pct": 45,
+            "confidence_band": "Possible",
+            "confidence_rationale": "Peer supports the trajectory but team-size asymmetry tempers."
+          },
+          {
+            "text": "Hypothesis falsified \u2014 coordination drag stretches recovery to week 14+, index 92.",
+            "tier": "user_assertion",
+            "confidence_pct": 38,
+            "confidence_band": "Possible",
+            "confidence_rationale": "Capacity asymmetry makes this credible."
+          },
+          {
+            "text": "Hypothesis catastrophically falsified \u2014 concurrent regression caps recovery at 88.",
+            "tier": "user_assertion",
+            "confidence_pct": 17,
+            "confidence_band": "Speculative",
+            "confidence_rationale": "Second-order concurrent-risk scenario; honest tail probability."
+          }
+        ]
+      }
+    },
+    {
+      "id": "audit-6",
+      "engine": "reflection",
+      "layer": "reflection",
+      "output": {
+        "reflection_question": "What does this NOT cover that you wish it did?",
+        "reflection_question_index": 0,
+        "user_response": "Whether scenario B and C are correlated \u2014 if coordination drag predicts concurrent regression.",
+        "interpretation": "User surfaces a hidden-correlation question between B and C."
+      }
+    },
+    {
+      "id": "audit-7",
+      "engine": "reflection",
+      "layer": "reflection",
+      "output": {
+        "reflection_question": "What's the early signal that the hypothesis is wrong?",
+        "reflection_question_index": 1,
+        "user_response": "Weekly index in week 6 below 90 means scenario B or C is realising.",
+        "interpretation": "User defines a clean week-6 falsification test."
+      }
+    },
+    {
+      "id": "audit-8",
+      "engine": "reflection",
+      "layer": "reflection",
+      "output": {
+        "reflection_question": "Whose perspective haven't we tested the hypothesis against?",
+        "reflection_question_index": 2,
+        "user_response": "The customer's. We've stress-tested ops, not customer-side recovery friction.",
+        "interpretation": "User opens a Get Perspectives followup path."
+      }
+    }
+  ],
+  "synthesis": {
+    "body": "## Hypothesis under stress\n\nThe hypothesis \u2014 parallel recovery lands index \u2265 100 by week 12 \u2014 is **Possible** (45%). Two falsifying scenarios are credible (38% + 17%). The week-6 weekly-index reading is the load-bearing falsification test.\n\n## Stop-at-hypothesis\n\nTest Hypothesis stops here with a tested-but-not-decided verdict. Whether to commit depends on additional checks (week-6 falsification gate + Get Perspectives on the customer-side risk).",
+    "recommendations": [
+      {
+        "heading": "Watch week-6 weekly index as falsification gate",
+        "body": "Would treat weekly index < 90 by week 6 as falsification of the 12-week-to-100 hypothesis."
+      }
+    ]
+  }
+}

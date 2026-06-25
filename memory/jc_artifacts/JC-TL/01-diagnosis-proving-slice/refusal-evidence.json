@@ -1,0 +1,7 @@
+{
+  "refusal_kind": "diagnostic_stop",
+  "refusal_note": "Seek Clarity stops at the sharpened question + weighted diagnostic read. It does not recommend a recovery plan; that is develop_strategy's job.",
+  "synthesis_text_excerpt": "Seek Clarity stops here. Develop Strategy would answer 'what's the sequenced recovery pathway given two causes?' \u2014 that is a separate call against a separate path.",
+  "refusal_signal_count": 9,
+  "notes": "The refusal evidence is the seek_clarity discipline itself \u2014 the session never emits a recommendation that exceeds its weighted-claim band. The integrity_validators enforce this at serialisation time (refuse_to_decide_enforcement)."
+}

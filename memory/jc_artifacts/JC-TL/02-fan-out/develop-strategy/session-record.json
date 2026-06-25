@@ -1,0 +1,13 @@
+{
+  "session_id": "sess-jctl-stage2-develop-strategy",
+  "submodule": "develop_strategy",
+  "intent": "Given Diagnosis's two-cause read of the Q3 contraction, what's the sequenced recovery pathway?",
+  "payload_signature": "221ce0bbbecb5b96",
+  "summary_text": "Parallel recovery pathway, 8-10 week target. Convergent to recommendation with conditional fallback to sequential.",
+  "prior_session_intent": {
+    "session_id": "sess-jctl-stage1-mydawa-diagnosis",
+    "submodule": "seek_clarity",
+    "intent_text": "Did we diagnose the Q3 revenue contraction correctly, or are we pattern-matching the checkout regression?",
+    "diagnostic_read": "Two independent causes \u2014 SDK regression on conversion + session-acquisition decline starting earlier. 62% Likely (corpus-tier)."
+  }
+}
