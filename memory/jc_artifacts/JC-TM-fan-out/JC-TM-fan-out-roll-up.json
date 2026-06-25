@@ -1,0 +1,231 @@
+{
+  "rolling": {
+    "journeys": {
+      "01-create": {
+        "active_task_id": "task-e43614f633f1",
+        "draft_task_id": "task-ac87c472fde2",
+        "active_created": true,
+        "draft_created": true,
+        "team_size": 2
+      },
+      "02-coordinate": {
+        "invite_tokens_minted": 2,
+        "portal_upload_succeeded": true,
+        "contrib_doc_id": "doc-30b7068b11",
+        "portal_submit_status": {
+          "ok": true,
+          "message": null,
+          "readiness_score": 12
+        },
+        "reinvite_token_count_delta": 1
+      },
+      "03-manage": {
+        "contrib1_approved": true,
+        "ai_draft_source": "shield",
+        "ai_draft_len": 593,
+        "contrib2_v2_approved": true,
+        "task_linked_docs_count": 2,
+        "contrib2_doc_id": "doc-8bab4c9145"
+      },
+      "04-readiness": {
+        "score": 85,
+        "gaps": 0,
+        "blockers": 0,
+        "recs": 1,
+        "thin_probe": true
+      },
+      "05-generate": {
+        "draft_export_ids": [
+          "ebc3121b-10a2-4094-968f-561f978e36df",
+          "50939b9c-da27-440e-b78c-3f76c822daf9"
+        ],
+        "all_complete": true,
+        "all_committed": true,
+        "all_edit_locked": true,
+        "confidence_pcts": [
+          85,
+          51
+        ],
+        "source_document_ids_wired": [
+          [
+            "doc-30b7068b11",
+            "doc-8bab4c9145"
+          ],
+          [
+            "doc-30b7068b11",
+            "doc-8bab4c9145"
+          ]
+        ],
+        "download_files": [
+          {
+            "export_id": "ebc3121b-10a2-4094-968f-561f978e36df",
+            "file": "05-generate/JC-TM-fanout-bridge-compiled.docx",
+            "bytes": 41801,
+            "magic_4": "504b0304",
+            "format": "docx"
+          },
+          {
+            "export_id": "50939b9c-da27-440e-b78c-3f76c822daf9",
+            "file": "05-generate/JC-TM-fanout-bridge-compiled-2.pdf",
+            "bytes": 28238,
+            "magic_4": "25504446",
+            "format": "pdf"
+          }
+        ]
+      },
+      "06-monitor": {
+        "counts": {
+          "all": 6,
+          "draft": 1,
+          "active": 0,
+          "closed": 5
+        },
+        "search_found": true,
+        "draft_delete_status": 200,
+        "post_delete_404": true,
+        "active_delete_400": true
+      },
+      "07-complete": {
+        "task_state": "closed",
+        "drafts_accessible_n": 2,
+        "exports_accessible_n": 2
+      }
+    },
+    "deeplink": {
+      "count": 2,
+      "all_resolved": true
+    }
+  },
+  "rows": [
+    {
+      "label": "J1.a \u2014 Create active task (board_pack, team[2])",
+      "ok": true,
+      "detail": "team=2"
+    },
+    {
+      "label": "J1.b \u2014 Create draft task probe",
+      "ok": true,
+      "detail": "id=task-ac87c472fde2"
+    },
+    {
+      "label": "J2.a \u2014 Invite tokens minted",
+      "ok": true,
+      "detail": "tokens_n=2"
+    },
+    {
+      "label": "J2.b \u2014 Portal upload (contributor 1) \u2014 REAL doc on disk",
+      "ok": true,
+      "detail": "contrib_doc_id='doc-30b7068b11'"
+    },
+    {
+      "label": "J2.c \u2014 Reinvite minted a new token (delta \u2265 1)",
+      "ok": true,
+      "detail": "delta=1"
+    },
+    {
+      "label": "J3.a \u2014 Contributor 1 approved",
+      "ok": true,
+      "detail": "via portal /submit"
+    },
+    {
+      "label": "J3.b \u2014 AI-drafted revision request returned a draft",
+      "ok": true,
+      "detail": "source='shield' len=593"
+    },
+    {
+      "label": "J3.c \u2014 Contributor 2 v2 approved",
+      "ok": true,
+      "detail": "contrib2_doc_id=doc-8bab4c9145"
+    },
+    {
+      "label": "J4.a \u2014 Real readiness score returned",
+      "ok": true,
+      "detail": "score=85"
+    },
+    {
+      "label": "J4.b \u2014 At least one finding surfaced",
+      "ok": true,
+      "detail": "gaps=0 blockers=0 recs=1"
+    },
+    {
+      "label": "J5.a \u2014 Bridge produced \u2265 1 work_studio_exports row",
+      "ok": true,
+      "detail": "ids_n=2"
+    },
+    {
+      "label": "J5.b \u2014 All bridge exports completed",
+      "ok": true,
+      "detail": "complete=True"
+    },
+    {
+      "label": "J5.c \u2014 All bridge exports committed",
+      "ok": true,
+      "detail": "committed=True"
+    },
+    {
+      "label": "J5.d \u2014 Edit-lock holds (PATCH\u2192409)",
+      "ok": true,
+      "detail": "locked=True"
+    },
+    {
+      "label": "J5.e \u2014 source_document_ids WIRED THROUGH (non-empty)",
+      "ok": true,
+      "detail": "ids=[['doc-30b7068b11', 'doc-8bab4c9145'], ['doc-30b7068b11', 'doc-8bab4c9145']]"
+    },
+    {
+      "label": "J5.f \u2014 confidence_pct grounding-backed (\u22651 above 60 AND all above Stage-1 baseline)",
+      "ok": true,
+      "detail": "pcts=[85, 51]  vs Stage-1 baseline=[40,30]"
+    },
+    {
+      "label": "J5.g \u2014 Real DOCX/PDF files on disk (valid magic bytes)",
+      "ok": true,
+      "detail": "files=[('05-generate/JC-TM-fanout-bridge-compiled.docx', 41801, '504b0304'), ('05-generate/JC-TM-fanout-bridge-compiled-2.pdf', 28238, '25504446')]"
+    },
+    {
+      "label": "Deep-link \u2014 Open in Work Studio resolves end-to-end",
+      "ok": true,
+      "detail": "resolved=2"
+    },
+    {
+      "label": "J6.a \u2014 Tasks counts endpoint returns shape",
+      "ok": true,
+      "detail": "counts={'all': 6, 'draft': 1, 'active': 0, 'closed': 5}"
+    },
+    {
+      "label": "J6.b \u2014 Search/filter found the active task",
+      "ok": true,
+      "detail": "found=True"
+    },
+    {
+      "label": "J6.c \u2014 Delete draft \u2192 200; subsequent GET \u2192 404",
+      "ok": true,
+      "detail": "delete=200  gone=True"
+    },
+    {
+      "label": "J6.d \u2014 Delete on active task rejected with 400",
+      "ok": true,
+      "detail": "got_400=True"
+    },
+    {
+      "label": "J7.a \u2014 Task closed (or auto-closed via commit)",
+      "ok": true,
+      "detail": "state=closed"
+    },
+    {
+      "label": "J7.b \u2014 Post-close: contributor uploads still accessible",
+      "ok": true,
+      "detail": "docs_n=2"
+    },
+    {
+      "label": "J7.c \u2014 Post-close: committed exports still accessible",
+      "ok": true,
+      "detail": "exports_n=2"
+    }
+  ],
+  "passed": 25,
+  "failed": 0,
+  "total": 25,
+  "generated_at": "2026-06-25T16:12:25.299011+00:00",
+  "regenerated_with_corrected_gate": true
+}

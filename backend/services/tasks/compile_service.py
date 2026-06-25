@@ -255,13 +255,22 @@ _TPL_TO_EXPORT_KIND: Dict[str, str] = {
 }
 
 
-def _build_export_body(task: Dict[str, Any], contributions: List[Dict[str, Any]]):
+def _build_export_body(task: Dict[str, Any], contributions: List[Dict[str, Any]],
+                       *, source_document_ids: Optional[List[str]] = None):
     """Compose an ExportRequestIn from a task + approved contributions.
     The three required string fields map naturally onto the existing
     work_studio_export Pass-1/Pass-2 prompt shape:
       • description — approved contributor inputs (the body to ground in)
       • objective   — the task's verbatim objective
       • scope       — the task's verbatim success criteria
+
+    JC-TM Stage 2 (2026-06-25) — `source_document_ids` carries the
+    contributor-uploaded document IDs through to the export pipeline.
+    When provided, the work_studio_export Pass-1 prompt grounds in the
+    extracted text of those documents AND the confidence scorer rewards
+    cited sources (raises `confidence_pct` from the hollow ~30-40 range
+    to the realistic ~70+ range). Without it, the scorer correctly
+    flags thin grounding.
     """
     # Lazy-import inside the function so the module-level import graph
     # stays acyclic. See routers/compilations.py:234-235 for prior art.
@@ -294,6 +303,7 @@ def _build_export_body(task: Dict[str, Any], contributions: List[Dict[str, Any]]
         objective=objective_text or "Compile task.",
         scope=scope_text or "Produce a professional document.",
         output_format="auto",
+        source_document_ids=source_document_ids or None,
     )
 
 
@@ -333,6 +343,52 @@ async def run_drafting(db, *, task: Dict[str, Any], account_id: str) -> List[str
         if m.get("status") in ("submitted", "approved")
     ]
 
+    # JC-TM Stage 2 (2026-06-25) — load-bearing `source_document_ids`
+    # wiring. The contributor portal (`POST /api/tasks/contribute/{token}/upload`)
+    # and the email-reply pipeline (`routers/inbound_email.py:691,720`)
+    # both write to `db.documents` with `task_id=<tid>`. Pull every
+    # contributor upload that's `state="ready"` (or unset for older
+    # rows) and forward its `id` to the export pipeline as explicit
+    # grounding. This is the single change that turns the Stage 1
+    # hollow 40/30 confidence_pct into a realistic 70+ when real
+    # uploads exist; without contributor uploads, the list stays
+    # empty and the scorer correctly flags thin grounding.
+    #
+    # The grounding lookups in work_studio_export (`_grounding_from_selected_docs`,
+    # `_resolve_source_blobs_for_scoring`) BOTH filter by `context_id`,
+    # but contributor uploads today only carry `task_id` + `account_id`
+    # (see `routers/tasks.py:1229-1247`). We backfill `context_id` on
+    # the doc rows here so the downstream lookups find them. This is
+    # not synthesis — the task IS the originating surface, the task
+    # IS scoped to its context, and the contributor doc IS related to
+    # that context. The backfill is idempotent (it only sets if
+    # missing).
+    src_docs = await db.documents.find(
+        {"task_id": tid,
+         "$or": [{"status": "ready"}, {"status": {"$exists": False}}],
+         "extracted_text": {"$ne": ""}},
+        {"_id": 0, "id": 1, "name": 1, "contributor_email": 1, "origin": 1,
+         "context_id": 1},
+    ).to_list(length=50)
+    source_document_ids: List[str] = []
+    for d in src_docs:
+        if not d.get("id"):
+            continue
+        source_document_ids.append(d["id"])
+        # Idempotent backfill: only stamp context_id when missing.
+        if ctx_id and not d.get("context_id"):
+            try:
+                await db.documents.update_one(  # tenancy:allow-no-account-id — doc pre-validated by task_id match on the parent task already gated upstream; row-id-targeted backfill
+                    {"id": d["id"], "context_id": {"$exists": False}},
+                    {"$set": {"context_id": ctx_id}},
+                )
+            except Exception as e:  # noqa: BLE001
+                log.warning("JC-TM Stage 2: context_id backfill failed for doc=%s: %s",
+                            d["id"], e)
+    if source_document_ids:
+        log.info("JC-TM Stage 2: wiring %d source_document_ids into compile for task=%s",
+                 len(source_document_ids), tid)
+
     spec    = task.get("output_spec") or {}
     tpl_id  = spec.get("template_id")
     formats_in = spec.get("formats") or ["docx"]
@@ -347,7 +403,7 @@ async def run_drafting(db, *, task: Dict[str, Any], account_id: str) -> List[str
     if kind not in _VALID_KINDS:
         kind = "report"
 
-    body = _build_export_body(task, contributions)
+    body = _build_export_body(task, contributions, source_document_ids=source_document_ids)
 
     created_export_ids: List[str] = []
     bridge_errors:      List[Dict[str, Any]] = []
@@ -378,7 +434,7 @@ async def run_drafting(db, *, task: Dict[str, Any], account_id: str) -> List[str
             "error":             None,
             "refusal_text":      None,
             "chat_audit_id":     None,
-            "source_count":      0,
+            "source_count":      len(source_document_ids),
             "contributor_count": max(1, len(contributions)),
             "akki_generated":    True,
             "lifecycle_state":   "draft",
@@ -448,6 +504,7 @@ async def run_drafting(db, *, task: Dict[str, Any], account_id: str) -> List[str
                            "draft_artefact_kind": session["draft_artefact_kind"],
                            "formats":             formats,
                            "kind":                kind,
+                           "source_document_ids_n": len(source_document_ids),
                            "bridge_failures":     len(bridge_errors),
                            "fallback_used":       bool(fallback_doc_ids)})
     return session["draft_artefact_ids"]

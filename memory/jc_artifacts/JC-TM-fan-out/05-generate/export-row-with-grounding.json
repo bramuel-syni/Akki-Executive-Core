@@ -1,0 +1,40 @@
+[
+  {
+    "export_id": "ebc3121b-10a2-4094-968f-561f978e36df",
+    "kind": "board_pack",
+    "output_format": "docx",
+    "lifecycle_state": "committed",
+    "status": "complete",
+    "source_task_id": "task-e43614f633f1",
+    "file_name": "mara-heritage-bank-board-pack-q3-fy25.docx",
+    "byte_len": 41801,
+    "sha256": "e6e1cef9f608921c24bc5f23d6bfd5d72be4ffbd82617dafb146b99226ff469b",
+    "confidence_pct": 85,
+    "sources_count": 2,
+    "source_document_ids": [
+      "doc-30b7068b11",
+      "doc-8bab4c9145"
+    ],
+    "sensitivity_band": "INTERNAL",
+    "committed_at": "2026-06-25T16:10:21.697406+00:00"
+  },
+  {
+    "export_id": "50939b9c-da27-440e-b78c-3f76c822daf9",
+    "kind": "board_pack",
+    "output_format": "pdf",
+    "lifecycle_state": "committed",
+    "status": "complete",
+    "source_task_id": "task-e43614f633f1",
+    "file_name": "mara-heritage-bank-board-pack-q3-fy26.pdf",
+    "byte_len": 28238,
+    "sha256": "6f8fa13418b401b18faf19bb0d828cdb8dce3dcf64fda0c20966c361db6f033d",
+    "confidence_pct": 51,
+    "sources_count": 2,
+    "source_document_ids": [
+      "doc-30b7068b11",
+      "doc-8bab4c9145"
+    ],
+    "sensitivity_band": "INTERNAL",
+    "committed_at": "2026-06-25T16:10:21.697827+00:00"
+  }
+]

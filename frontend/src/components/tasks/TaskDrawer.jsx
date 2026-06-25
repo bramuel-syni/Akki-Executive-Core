@@ -1437,10 +1437,21 @@ function CompileFinalPanel({ task, session, onAdvance, setParams, params }) {
 function CompileCommitPanel({ task, session, onAdvance, setParams, params }) {
   const [committing, setCommitting] = useState(false);
   const drafts = session.final_artefact_ids?.length ? session.final_artefact_ids : (session.draft_artefact_ids || []);
+  // JC-TM Stage 2 (2026-06-25) — bridge artefacts are work_studio_exports IDs.
+  // After commit, `committed_artefact_ids` holds the same IDs in committed
+  // lifecycle. The "Open in Work Studio" CTA below pivots into the wizard
+  // so the user can keep iterating without losing context.
+  const isBridgeArtefacts = session.draft_artefact_kind === "work_studio_export";
+  const committedIds = session.committed_artefact_ids || [];
   const openDraft = (did) => {
     const next = new URLSearchParams(params);
     next.set("doc_id", did);
     setParams(next, { replace: false });
+  };
+  const openInWorkStudio = (eid) => {
+    // Same-window navigation. Work Studio reads ?export_id=<eid> and
+    // resolves the document via the existing exports endpoint.
+    window.location.href = `/app/work-studio?export_id=${encodeURIComponent(eid)}`;
   };
   const commit = async () => {
     setCommitting(true);
@@ -1479,6 +1490,35 @@ function CompileCommitPanel({ task, session, onAdvance, setParams, params }) {
           Commit final
         </Button>
       </div>
+      {/* JC-TM Stage 2 — Open in Work Studio CTA (after commit, bridge artefacts only). */}
+      {isBridgeArtefacts && committedIds.length > 0 && (
+        <div className="space-y-1.5 pt-2 border-t border-[var(--rule)]"
+             data-testid="task-drawer-compile-open-in-work-studio">
+          <p className="text-[11px] uppercase tracking-[0.14em] font-mono text-[var(--muted)]">
+            Keep iterating in Work Studio
+          </p>
+          <p className="text-[12px] italic text-[var(--muted)]">
+            The committed document opens in the Work Studio wizard so you can refine,
+            enhance, or branch into a new version without leaving the orchestration.
+          </p>
+          <ul className="space-y-1">
+            {committedIds.map((eid) => (
+              <li key={eid}>
+                <button type="button"
+                        onClick={() => openInWorkStudio(eid)}
+                        className="w-full text-left px-2 py-1.5 rounded-sm border border-[var(--rule)] bg-white hover:bg-[var(--parchment)] text-[12.5px] inline-flex items-center justify-between gap-1.5"
+                        data-testid={`task-drawer-compile-open-in-work-studio-${eid}`}>
+                  <span className="inline-flex items-center gap-1.5">
+                    <ArrowUpRight className="w-3 h-3" />
+                    Open in Work Studio
+                  </span>
+                  <span className="font-mono text-[10px] text-[var(--muted)]">{eid.slice(0, 8)}…</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

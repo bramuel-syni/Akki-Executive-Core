@@ -412,6 +412,64 @@ async def close_task(
 
 
 # ═════════════════════════════════════════════════════════════════════
+# JC-TM Stage 2 (2026-06-25) — Monitor Journey 6 surface.
+#
+# DELETE /api/tasks/{tid} — delete a DRAFT task. Active and Closed
+# tasks are immutable per the lifecycle invariant (close_task →
+# auto-closed via compile.commit are both terminal). The user can
+# delete a draft they never commissioned to keep the list clean.
+#
+# Returns 200 + `{ok: True, deleted_at: <iso>}` on success.
+# Returns 400 with `cannot_delete_active_task` / `cannot_delete_closed_task`
+# on state-machine violation (mirrors commission/close error shape).
+# ═════════════════════════════════════════════════════════════════════
+@router.delete("/tasks/{tid}", response_model=Optional[OkResponse])
+async def delete_draft_task(
+    tid: str, current: Dict[str, Any] = Depends(get_current_account),
+):
+    """Delete a draft task. Active/closed tasks return 400 to preserve
+    the lifecycle audit chain — once commissioned, a task is part of
+    the record. Cascades: removes the task row + its contributor
+    tokens + its contributor-uploaded documents (which were uploaded
+    against a task that never went live)."""
+    row = await db.tasks.find_one(
+        {"id": tid, "account_id": current["id"]}, {"_id": 0},
+    )
+    if not row:
+        raise HTTPException(404, "task_not_found")
+    state = row.get("state", "draft")
+    if state == "active":
+        raise HTTPException(400, "cannot_delete_active_task")
+    if state == "closed":
+        raise HTTPException(400, "cannot_delete_closed_task")
+    now_iso = datetime.now(timezone.utc).isoformat()
+    # Cascade: contributor tokens + task-scoped contributor docs.
+    try:
+        await db.task_contributor_tokens.delete_many({"task_id": tid})
+    except Exception as e:  # noqa: BLE001
+        log.warning("delete_draft_task: token cascade failed: %s", e)
+    try:
+        await db.documents.delete_many({"task_id": tid})
+    except Exception as e:  # noqa: BLE001
+        log.warning("delete_draft_task: documents cascade failed: %s", e)
+    await db.tasks.delete_one({"id": tid, "account_id": current["id"]})
+    try:
+        await db.audit_log.insert_one({
+            "id":            str(uuid.uuid4()),
+            "context_id":    row.get("context_id"),
+            "account_id":    current["id"],
+            "action":        "task.deleted",
+            "resource_type": "task",
+            "resource_id":   tid,
+            "metadata":      {"prev_state": state, "deleted_at": now_iso},
+            "created_at":    now_iso,
+        })
+    except Exception as e:  # noqa: BLE001
+        log.warning("task.deleted audit failed: %s", e)
+    return {"ok": True, "deleted_at": now_iso}
+
+
+# ═════════════════════════════════════════════════════════════════════
 # Track B Phase B2 (2026-06-04) — Filter-tab live counts.
 #
 # Returns the live count of tasks in each state for the current

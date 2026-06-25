@@ -1,0 +1,33 @@
+{
+  "task_id": "task-e43614f633f1",
+  "drafts_after": [
+    {
+      "id": "doc-8bab4c9145",
+      "name": "cro-q3-contribution.txt",
+      "original_filename": "cro-q3-contribution.txt",
+      "state": "draft",
+      "origin": "magic_link",
+      "created_at": "2026-06-25T16:05:22.294724+00:00"
+    },
+    {
+      "id": "doc-30b7068b11",
+      "name": "chro-q3-contribution.txt",
+      "original_filename": "chro-q3-contribution.txt",
+      "state": "draft",
+      "origin": "magic_link",
+      "created_at": "2026-06-25T16:05:17.018032+00:00"
+    }
+  ],
+  "exports_after": [
+    {
+      "export_id": "ebc3121b-10a2-4094-968f-561f978e36df",
+      "status": "complete",
+      "endpoint_status": 200
+    },
+    {
+      "export_id": "50939b9c-da27-440e-b78c-3f76c822daf9",
+      "status": "complete",
+      "endpoint_status": 200
+    }
+  ]
+}

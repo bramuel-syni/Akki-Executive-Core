@@ -2,6 +2,110 @@
 
 > Append-only history of shipped work. Newest first.
 
+## 2026-06-25 — JC-TM Stage 2 — Fan-out CLOSED
+
+User dispatched Stage 2 with three locked decisions: (1) approve Stage 1 +
+dispatch fan-out across the 7 journeys, (2) include the compile → Work
+Studio deep-link IN this sprint, (3) wire `source_document_ids` through
+to compile WITHIN Stage 2 (HARD requirement — "don't ship the fan-out with
+a knowingly-hollow score"). All three closed cleanly. **25/25 acceptance
+rows GREEN.**
+
+### Load-bearing item — `source_document_ids` through-wiring (decision #3)
+
+3 small changes, no parallel stack:
+1. `compile_service.run_drafting` now pulls every `db.documents` row with
+   `task_id=<tid>` + non-empty `extracted_text` and forwards their IDs to
+   `_build_export_body(source_document_ids=…)`. The IDs pass straight
+   through into `ExportRequestIn.source_document_ids` — the existing
+   JC-WS Phase 1 grounding surface, ridden unchanged.
+2. Schema gap closed: contributor uploads from the portal flow were
+   written to `db.documents` with `task_id` + `account_id` but no
+   `context_id`. The grounding lookups in `work_studio_export`
+   (`_grounding_from_selected_docs`, `_resolve_source_blobs_for_scoring`)
+   BOTH filter by `context_id`. `run_drafting` now does an **idempotent
+   backfill** of `context_id` on contributor doc rows at compile time
+   (sets only when missing; the task IS the originating surface).
+3. `_build_export_body` signature now accepts `source_document_ids`;
+   `source_count` on the `work_studio_exports` row reflects the real
+   grounding count.
+
+**Confidence_pct uplift evidence** (Stage 1 hollow → Stage 2 grounded):
+
+|  | Stage 1 | Stage 2 | Delta |
+|---|---:|---:|---:|
+| DOCX confidence_pct | 40 | **85** | +45 pp |
+| PDF confidence_pct  | 30 | **51** | +21 pp |
+| `source_document_ids` count | 0 | 2 | +2 |
+
+### Compile → Work Studio deep-link (decision #2)
+
+Single `<button>` block in `TaskDrawer.jsx:CompileCommitPanel` rendered
+ONLY when `session.draft_artefact_kind === "work_studio_export"` AND
+`session.committed_artefact_ids.length > 0`. Click → navigates to
+`/app/work-studio?export_id=<eid>`. Zero new endpoints; Work Studio
+reads the param via its existing wizard surface. Round-trip linkback
+validated by `source_task_id` on the `work_studio_exports` row.
+data-testid `task-drawer-compile-open-in-work-studio-{eid}` per CTA.
+
+### Seven journeys — per-journey verdict
+
+1. **Create/setup** ✅ — `POST /api/tasks` for active + draft probe.
+2. **Coordinate contributors** ✅ — 2 invite tokens minted; portal
+   upload returned a real `doc_id`; reinvite via
+   `POST /api/tasks/{tid}/contributors/{cid}/reinvite` minted a fresh
+   token (delta=+1) and revoked the prior one.
+3. **Manage contributions** ✅ — approve trail, AI-drafted revision
+   request (Shield, 593 chars), v2 submit with evidentiary upload,
+   approval.
+4. **Assess readiness** ✅ — real score=85, recommendation surfaced.
+5. **Generate the document** ✅ — bridge produced 2 work_studio_exports
+   rows (docx+pdf), both committed, both PATCH→409, real bytes on disk
+   (DOCX 41 801 b · PK; PDF 28 238 b · `%PDF`), source_document_ids
+   wired with grounding-backed confidence_pcts.
+6. **Monitor** ✅ — counts endpoint, state-aware search, new
+   `DELETE /api/tasks/{tid}` (draft-only; 400 on active/closed;
+   cascades to tokens + task-scoped documents).
+7. **Complete** ✅ — task auto-closed on commit, 2 contributor uploads
+   + 2 committed exports still accessible post-close.
+
+### Files touched
+
+- `backend/services/tasks/compile_service.py` — `_build_export_body`
+  signature widened with `source_document_ids`; `run_drafting` pulls
+  contributor docs + idempotent `context_id` backfill + forwards IDs.
+- `backend/routers/tasks.py` — new `DELETE /api/tasks/{tid}` (draft-only)
+  with token + document cascade + audit row.
+- `frontend/src/components/tasks/TaskDrawer.jsx` — new "Open in Work
+  Studio" CTA in `CompileCommitPanel`.
+- `backend/scripts/jc_tm_fan_out_proving_slice.py` (new) — walks all 7
+  journeys, captures per-journey evidence, exercises deep-link
+  round-trip, writes the grounding diff.
+
+### Real artefacts produced
+
+In `/app/memory/jc_artifacts/JC-TM-fan-out/`:
+
+- `01-create/` — task definition + draft-probe JSON
+- `02-coordinate/` — invite-state + portal-upload + reinvite evidence
+- `03-manage/` — approve trail + AI revision draft + version history
+- `04-readiness/` — real findings + refusal-on-thin-input
+- `05-generate/JC-TM-fanout-bridge-compiled.docx` (41 801 b · PK)
+- `05-generate/JC-TM-fanout-bridge-compiled-2.pdf` (28 238 b · %PDF)
+- `05-generate/export-row-with-grounding.json` (rows show
+  `source_document_ids` non-empty + confidence_pcts grounding-backed)
+- `05-generate/edit-lock-proof.json` (PATCH→409 both)
+- `05-generate/grounding-evidence.json` (decision-3 close-out)
+- `06-monitor/list-filter-evidence.json` + `delete-draft-evidence.json`
+- `07-complete/task-closed.json` + `versions-preserved.json`
+- `JC-TM-fan-out-deeplink-evidence.json` (deep-link round-trip proof)
+- `JC-TM-fan-out-roll-up.json` (25-row ledger)
+- `JC-TM-fan-out-proving-slice-rerun.json` (Stage 1 vs Stage 2 grounding diff)
+
+Sprint memo: `sprints/JC_TM_FAN_OUT.md`.
+
+---
+
 ## 2026-06-25 — JC-TM Stage 1 — Compile Bridge CLOSED
 
 The 2026-06-25 JC-TM proving slice surfaced an architectural fork:

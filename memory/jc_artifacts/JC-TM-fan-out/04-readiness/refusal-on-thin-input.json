@@ -1,0 +1,60 @@
+{
+  "probe_task_id": "task-bdec317283a3",
+  "thin_intel": {
+    "task_id": "task-bdec317283a3",
+    "task_hash": "0ae95299180b68c65d499e6f1a164289",
+    "generated_at": "2026-06-25T16:05:28.342377+00:00",
+    "readiness": {
+      "score": 0,
+      "components": [
+        {
+          "key": "approved",
+          "weight": 60,
+          "value": 0,
+          "label": "0/1 contributors approved"
+        },
+        {
+          "key": "submitted",
+          "weight": 25,
+          "value": 0,
+          "label": "0/1 contributors submitted"
+        },
+        {
+          "key": "adherence",
+          "weight": 15,
+          "value": 0,
+          "label": "Avg objective-adherence score: 0"
+        }
+      ]
+    },
+    "blockers": [],
+    "gaps": [
+      {
+        "kind": "output_spec_missing",
+        "message": "Output specification is missing. Set a template or free-text description in Step 2 of the wizard."
+      },
+      {
+        "kind": "no_contributors",
+        "message": "No contributors are assigned yet. Add at least one team member to begin tracking progress."
+      }
+    ],
+    "roadmap": [],
+    "recommendations": [
+      {
+        "id": "rec-output_spec_missing",
+        "kind": "rule_based",
+        "title": "Output specification is missing. Set a template or free-text description in Step 2 of the wizard.",
+        "action": "Open the Plan tab to update the spec.",
+        "source": "rule"
+      },
+      {
+        "id": "rec-no_contributors",
+        "kind": "rule_based",
+        "title": "No contributors are assigned yet. Add at least one team member to begin tracking progress.",
+        "action": "Open the Plan tab to update the spec.",
+        "source": "rule"
+      }
+    ]
+  },
+  "expected_behaviour": "Readiness should surface gaps/blockers proportional to absent contributions and objective specificity."
+}

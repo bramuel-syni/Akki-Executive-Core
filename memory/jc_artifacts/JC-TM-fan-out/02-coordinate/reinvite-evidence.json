@@ -1,0 +1,29 @@
+{
+  "tokens_before": 1,
+  "tokens_after": 2,
+  "patch_status": 200,
+  "tokens_minted": [
+    {
+      "id": "b1167235-5af2-4ffa-aa83-54d117d1578a",
+      "task_id": "task-e43614f633f1",
+      "task_account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
+      "contributor_email": "cro.fanout-ce374f@mara-heritage.demo",
+      "contributor_id": "cro.fanout-ce374f@mara-heritage.demo",
+      "expires_at": "2026-07-25T16:05:16.863911+00:00",
+      "used": true,
+      "created_at": "2026-06-25T16:05:16.863931+00:00",
+      "revoked_at": "2026-06-25T16:05:17.033898+00:00",
+      "revoked_reason": "rotated_on_reinvite"
+    },
+    {
+      "id": "ea29a5eb-41aa-4427-a921-74f9bb87bfad",
+      "task_id": "task-e43614f633f1",
+      "task_account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
+      "contributor_email": "cro.fanout-ce374f@mara-heritage.demo",
+      "contributor_id": "cro.fanout-ce374f@mara-heritage.demo",
+      "expires_at": "2026-07-25T16:05:17.034268+00:00",
+      "used": false,
+      "created_at": "2026-06-25T16:05:17.034287+00:00"
+    }
+  ]
+}

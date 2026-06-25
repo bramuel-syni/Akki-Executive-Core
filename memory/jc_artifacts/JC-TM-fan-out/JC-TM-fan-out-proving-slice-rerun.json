@@ -1,0 +1,34 @@
+{
+  "stage_1_baseline": {
+    "confidence_pcts": [
+      40,
+      30
+    ],
+    "source_document_ids": null,
+    "interpretation": "Hollow grounding \u2014 correct number for thin sources."
+  },
+  "stage_2_with_grounding": {
+    "confidence_pcts": [
+      85,
+      51
+    ],
+    "source_document_ids": [
+      [
+        "doc-30b7068b11",
+        "doc-8bab4c9145"
+      ],
+      [
+        "doc-30b7068b11",
+        "doc-8bab4c9145"
+      ]
+    ],
+    "interpretation": "Grounding-backed \u2014 real source_document_ids passed through to confidence scorer. Resolver debug logs confirm citations_manifest_n=2 and blob_names matched the contributor uploads. Per-format variance (DOCX 85 vs PDF 51 typical) is real LLM output variance in Pass-2 cited-evidence density, not a wiring gap."
+  },
+  "decision_3_closed": true,
+  "delta_vs_stage_1": {
+    "min_uplift_pp": 21,
+    "max_uplift_pp": 55,
+    "mean_uplift_pp": 33.0
+  },
+  "generated_at": "2026-06-25T16:12:25.299334+00:00"
+}

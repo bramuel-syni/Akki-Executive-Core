@@ -1,0 +1,26 @@
+{
+  "task_id": "task-e43614f633f1",
+  "deeplinks": [
+    {
+      "export_id": "ebc3121b-10a2-4094-968f-561f978e36df",
+      "deep_link_url": "/work-studio?export_id=ebc3121b-10a2-4094-968f-561f978e36df",
+      "linkback_resolved": true,
+      "source_task_id": "task-e43614f633f1",
+      "file_name": "mara-heritage-bank-board-pack-q3-fy25.docx",
+      "linkback_status": 200
+    },
+    {
+      "export_id": "50939b9c-da27-440e-b78c-3f76c822daf9",
+      "deep_link_url": "/work-studio?export_id=50939b9c-da27-440e-b78c-3f76c822daf9",
+      "linkback_resolved": true,
+      "source_task_id": "task-e43614f633f1",
+      "file_name": "mara-heritage-bank-board-pack-q3-fy26.pdf",
+      "linkback_status": 200
+    }
+  ],
+  "ui_affordance": {
+    "where": "TaskDrawer Compile tab \u2014 CompileCommitPanel post-commit",
+    "label": "Open in Work Studio",
+    "target": "/work-studio?export_id=<eid>"
+  }
+}

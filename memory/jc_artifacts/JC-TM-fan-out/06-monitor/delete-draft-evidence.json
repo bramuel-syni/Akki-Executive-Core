@@ -1,0 +1,13 @@
+{
+  "draft_task_id": "task-ac87c472fde2",
+  "delete_response": {
+    "status_code": 200,
+    "body": {
+      "ok": true,
+      "message": null,
+      "deleted_at": "2026-06-25T16:10:21.785644+00:00"
+    }
+  },
+  "post_delete_get": 404,
+  "active_delete_400": true
+}

@@ -1,0 +1,13 @@
+{
+  "counts": {
+    "all": 6,
+    "draft": 1,
+    "active": 0,
+    "closed": 5
+  },
+  "active_n": 73,
+  "draft_n": 124,
+  "closed_n": 133,
+  "search_found": true,
+  "found_in_state": "closed"
+}
