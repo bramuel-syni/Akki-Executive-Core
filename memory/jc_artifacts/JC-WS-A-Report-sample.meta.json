@@ -1,0 +1,17 @@
+{
+  "kind": "report",
+  "label": "Report",
+  "description": "Write an executive report for Mara Heritage Bank's leadership team on the bank's strategic and operational position at the close of Q3 2025. Draw on the strategic, capital, and performance material on the platform. The report should set context, present analysis with citations, surface risks, and close with a clear set of recommendations.",
+  "objective": "Give the CEO and direct reports a written, board-ready read on performance, risks, and the decisions the executive committee needs to take before the next board cycle.",
+  "scope": "Mara Heritage Bank \u2014 Executive Committee. Period: Q3 2025. Confidentiality: Internal. Length: 8-12 pages.",
+  "source_document_ids_count": 19,
+  "formats": {
+    "docx": {
+      "ok": true,
+      "bytes": 43852,
+      "path": "/app/memory/jc_artifacts/JC-WS-A-Report-sample.docx",
+      "export_id": "52673233-da34-4bf0-85d5-407ad44c5961"
+    }
+  },
+  "generated_at": "2026-06-25T11:58:28.754571+00:00"
+}

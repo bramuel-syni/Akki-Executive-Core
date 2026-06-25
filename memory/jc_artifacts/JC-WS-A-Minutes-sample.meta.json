@@ -1,0 +1,23 @@
+{
+  "kind": "minutes",
+  "label": "Minutes",
+  "description": "Draft the formal minutes of the Mara Heritage Bank Q3 Board meeting. The materials on the platform record the agenda, the attendees, the substantive discussion on capital allocation, and the decisions queued. The minutes should capture attendees, agenda items, substantive discussion, decisions taken, dissent if any, and the action list with owners.",
+  "objective": "Produce a faithful, structured record of the Q3 board meeting fit for the company secretary's books and for circulation to directors who could not attend.",
+  "scope": "Mara Heritage Bank \u2014 Board of Directors. Meeting: Q3 2025. Confidentiality: Confidential. Length: 4-6 pages.",
+  "source_document_ids_count": 19,
+  "formats": {
+    "docx": {
+      "ok": true,
+      "bytes": 41871,
+      "path": "/app/memory/jc_artifacts/JC-WS-A-Minutes-sample.docx",
+      "export_id": "dee7928b-a6d0-4eba-98e4-6a2c962d4a0f"
+    },
+    "pdf": {
+      "ok": true,
+      "bytes": 30911,
+      "path": "/app/memory/jc_artifacts/JC-WS-A-Minutes-sample.pdf",
+      "export_id": "b03d53b1-d3dd-4c2e-a2e1-d749a39ad574"
+    }
+  },
+  "generated_at": "2026-06-25T11:54:55.454930+00:00"
+}

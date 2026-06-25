@@ -1,0 +1,40 @@
+{
+  "task_id": "task-60a408c73f1c",
+  "task_hash": "7aa43fbe1cfc55b1cce86c647791f80f",
+  "generated_at": "2026-06-25T12:08:25.817693+00:00",
+  "readiness": {
+    "score": 85,
+    "components": [
+      {
+        "key": "approved",
+        "weight": 60,
+        "value": 100,
+        "label": "2/2 contributors approved"
+      },
+      {
+        "key": "submitted",
+        "weight": 25,
+        "value": 100,
+        "label": "2/2 contributors submitted"
+      },
+      {
+        "key": "adherence",
+        "weight": 15,
+        "value": 0,
+        "label": "Avg objective-adherence score: 0"
+      }
+    ]
+  },
+  "blockers": [],
+  "gaps": [],
+  "roadmap": [],
+  "recommendations": [
+    {
+      "id": "rec-on-track",
+      "kind": "rule_based",
+      "title": "No active blockers detected. Task is on track.",
+      "action": "Keep momentum \u2014 check in with contributors via the Contributions tab.",
+      "source": "rule"
+    }
+  ]
+}

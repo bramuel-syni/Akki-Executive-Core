@@ -1,0 +1,13 @@
+# Mara Heritage Bank — Q3 2025 Board Pack — Risk
+
+RISK OVERVIEW
+
+Q3 2025 provides a critical juncture for assessing the bank's strategic risk posture. The overall risk trajectory for NPL remains stable, with key indicators largely within established thresholds. However, emerging macro-economic pressures and evolving market dynamics necessitate a focused review of our current risk appetite and its alignment with strategic objectives. This section offers an evidence-based perspective designed to inform critical decisions regarding Q4 capital allocation, the digital-transformation refresh, and the impending risk-tolerance recalibration at the Q3 meeting.
+
+SINGLE-NAME CONCENTRATION
+
+Analysis of single-name concentration in Q3 2025 indicates continued vigilance is warranted. While overall exposure levels remain manageable, specific concentrations show slight upward trends, particularly within the NPL portfolio. Our monitoring framework confirms that these remain within regulatory guidelines, but potential tail-risk scenarios require ongoing assessment. The implications for capital adequacy and potential future provisioning are being actively modelled to ensure resilience and strategic flexibility. This data is critical for informing discussions on capital deployment and risk diversification strategies.
+
+OPERATIONAL RISK
+
+Operational risk performance in Q3 2025 reflects ongoing robustness in our controls framework. Key performance indicators demonstrate stability, with no significant escalations in major incident frequency or severity. Focused initiatives around enhancing our cyber resilience and data privacy protocols continue to yield positive results. While the integration of new digital capabilities presents inherent operational challenges, our proactive risk mitigation strategies are effectively addressing these. Our operational risk profile supports the proposed digital-transformation refresh, underscoring the importance of embedding robust controls into all new initiatives. The findings here will also contribute to the broader risk-tolerance recalibration, particularly in areas intersecting with technological adoption.

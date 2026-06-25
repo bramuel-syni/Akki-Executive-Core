@@ -1,0 +1,30 @@
+{
+  "phase": "JC-WS Phase 3 Step 3 — Analyze deep-link enhancement",
+  "captured_at": "2026-06-25T12:21:00Z",
+  "evidence_lines": [
+    "Per the dispatch: 'when a highlight card's `intent` is `forecast` / `simulate` / `extract` / `anomaly` / `validate`, the card carries a \"view raw\" affordance that deep-links to the deterministic analyzer run behind the narration.'",
+    "Per the dispatch: 'natural to the user, not a developer's debug panel.'",
+    "Implemented in /app/frontend/src/components/analyze/HighlightsWorkspace.jsx HighlightCard.",
+    "Surface shape: a subtle 'View underlying read' / 'Hide underlying read' text link in the card footer, next to the confidence badge.",
+    "On click, an inline panel below the card body shows the structured analyzer parameters the workspace dispatched (intent, target, horizon, scenario, rationale).",
+    "Refusal cards do not get the affordance — there's nothing underlying to deep-link to. The check is: !isRefusal && (ap.target || ap.scenario || ap.horizon).",
+    "Persistence: the affordance reads from highlight.analyzer_payload which already persists to db.analyses.highlights[]. No new persistence path is needed — same lifecycle as the highlight itself, as the dispatch demanded.",
+    "Reuse: builds on the existing analyzer_payload field that Phase 2's /v2/analyses/{aid}/ask endpoint already populates. No new endpoints added."
+  ],
+  "sample_card_with_underlying_read": {
+    "id": "hl-4d5077593072",
+    "title": "East flat at $3.45M in Q4 lowers total by region's typical growth",
+    "topic": "simulate",
+    "intent": "simulate",
+    "asked_question": "Simulate East staying flat at $3.45M for Q4 — what happens to the total?",
+    "analyzer_payload": {
+      "intent": "simulate",
+      "target": "Revenue",
+      "horizon": "Q4",
+      "scenario": "East region revenue held flat at $3.45M",
+      "rationale": "User explicitly requests a what-if scenario holding East region constant and observing impact on total revenue."
+    }
+  },
+  "screenshot_evidence": "/app/memory/jc_artifacts/JC-WS-B-Analyze-drawer-screenshots/02-deeplink-underlying-read-expanded.jpg",
+  "next_step_for_full_payload": "Currently `analyzer_payload` carries the intent classification (target/horizon/scenario/rationale). To fully realize the canonical-spec promise ('user sees the raw numbers / chart / table'), the next step is to wire `/v2/analyses/{aid}/ask` so it ALSO calls the matching deterministic endpoint (/forecast / /simulate / /anomalies / /signals/extract) when sources permit and stashes the raw payload alongside the narration. The FE then renders forecast-as-sparkline / simulate-as-scenario-recap / etc per intent. The current implementation surfaces the parameters; the next iteration surfaces the numbers from the same endpoints with no FE shape change."
+}

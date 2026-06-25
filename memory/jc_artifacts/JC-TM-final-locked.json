@@ -1,0 +1,15 @@
+{
+  "task_id": "task-60a408c73f1c",
+  "commit": {
+    "ok": true,
+    "committed": [
+      "doc-20a98b45b4",
+      "doc-c94762ea6f",
+      "doc-e352da34fb",
+      "doc-25626b8349",
+      "doc-372721b9e2"
+    ],
+    "task_closed": true
+  },
+  "captured": "2026-06-25T12:09:10.213639+00:00"
+}

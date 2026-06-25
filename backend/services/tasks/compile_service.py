@@ -45,7 +45,16 @@ from typing import Any, Dict, List, Optional, Tuple
 log = logging.getLogger("akki.tasks.compile")
 
 
-SHIELD_LLM_TIMEOUT_SECONDS = 3.0   # F.4 dispatch — 3-second LLM timeout.
+SHIELD_LLM_TIMEOUT_SECONDS = 120.0  # JC-TM (2026-06-25) — bumped from
+# F.4's original 3.0s default. The 3s budget guaranteed every compile
+# LLM call timed out into the deterministic TODO-skeleton fallback,
+# yielding "best-shape" docs that were just objective + success
+# criteria + a "[TODO …]" placeholder. Board-pack section bodies
+# routinely need 30-90s end-to-end through Shield (de-id → provider
+# → re-id → audit → receipt). Mirrors the JC-WS Phase 1 per-method
+# timeout fix in `_HTTPAdapterBase` (5s default kept for fast hops,
+# 120s for LLM-bound hops). Compile-time LLM IS an LLM-bound hop;
+# the budget needs to reflect that.
 
 STAGES = (
     "drafting",

@@ -1,0 +1,53 @@
+{
+  "task_id": "task-60a408c73f1c",
+  "rows": [
+    {
+      "label": "Task created in active state with team[2]",
+      "ok": true,
+      "detail": "state='active', team_size=2"
+    },
+    {
+      "label": "Contributor invite state captured (mode: magic_link)",
+      "ok": true,
+      "detail": "audit_rows\u22650  tokens_n\u22650 (file written)"
+    },
+    {
+      "label": "Contribution 1 \u2014 submit + approve path",
+      "ok": true,
+      "detail": "submit\u2192200, approve\u2192200"
+    },
+    {
+      "label": "AI-drafted revision request (Shield or deterministic fallback)",
+      "ok": true,
+      "detail": "source='shield', len=764"
+    },
+    {
+      "label": "Contribution 2 \u2014 needs_revision applied",
+      "ok": true,
+      "detail": "patch=200"
+    },
+    {
+      "label": "Contribution 2 \u2014 resubmit + approve",
+      "ok": true,
+      "detail": "resubmit\u2192200, approve\u2192200"
+    },
+    {
+      "label": "Readiness intelligence \u2014 REAL score + breakdown + at least one finding",
+      "ok": true,
+      "detail": "score=85, gaps=0, blockers=0, recs=1"
+    },
+    {
+      "label": "Compile draft pipeline produced at least one section",
+      "ok": true,
+      "detail": "draft_ids_n=5"
+    },
+    {
+      "label": "Commit locks the documents (state=committed)",
+      "ok": true,
+      "detail": "committed_n=5, all_committed=True"
+    }
+  ],
+  "passed": 9,
+  "failed": 0,
+  "generated_at": "2026-06-25T12:09:10.237257+00:00"
+}

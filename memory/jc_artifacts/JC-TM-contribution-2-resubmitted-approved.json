@@ -1,0 +1,73 @@
+{
+  "contributor": "cro.q3-d23418@mara-heritage.demo",
+  "resubmit_response": {
+    "task_id": "task-60a408c73f1c",
+    "task_hash": null,
+    "status": null,
+    "contributor_id": "cro.q3-d23418@mara-heritage.demo",
+    "readiness_score": 55.0,
+    "team": [
+      {
+        "name": "Sara Achieng",
+        "role": "CHRO",
+        "email": "chro.q3-8b5bb0@mara-heritage.demo",
+        "contribution": "People & culture section \u2014 Q3 attrition + key-talent retention",
+        "due_date": null,
+        "contribution_mode": "magic_link",
+        "contributor_id": null,
+        "status": "approved",
+        "adherence_score": null,
+        "allow_email_reply": false,
+        "status_note": "Numbers line up with HR system."
+      },
+      {
+        "name": "James Otieno",
+        "role": "Chief Risk Officer",
+        "email": "cro.q3-d23418@mara-heritage.demo",
+        "contribution": "Risk section \u2014 NPL trajectory, single-name concentration, op-risk",
+        "due_date": null,
+        "contribution_mode": "magic_link",
+        "contributor_id": null,
+        "status": "submitted",
+        "adherence_score": null,
+        "allow_email_reply": false,
+        "status_note": "v2 with NPL ratio, concentration buckets, and 3 op-risk events."
+      }
+    ]
+  },
+  "approve_response": {
+    "task_id": "task-60a408c73f1c",
+    "task_hash": null,
+    "status": null,
+    "contributor_id": "cro.q3-d23418@mara-heritage.demo",
+    "readiness_score": 85.0,
+    "team": [
+      {
+        "name": "Sara Achieng",
+        "role": "CHRO",
+        "email": "chro.q3-8b5bb0@mara-heritage.demo",
+        "contribution": "People & culture section \u2014 Q3 attrition + key-talent retention",
+        "due_date": null,
+        "contribution_mode": "magic_link",
+        "contributor_id": null,
+        "status": "approved",
+        "adherence_score": null,
+        "allow_email_reply": false,
+        "status_note": "Numbers line up with HR system."
+      },
+      {
+        "name": "James Otieno",
+        "role": "Chief Risk Officer",
+        "email": "cro.q3-d23418@mara-heritage.demo",
+        "contribution": "Risk section \u2014 NPL trajectory, single-name concentration, op-risk",
+        "due_date": null,
+        "contribution_mode": "magic_link",
+        "contributor_id": null,
+        "status": "approved",
+        "adherence_score": null,
+        "allow_email_reply": false,
+        "status_note": "Risk section v2 lands. Approved."
+      }
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "kind": "brief",
+  "label": "Brief-uploads",
+  "description": "Prepare a one-page brief for the Mara Heritage Bank chair on the single most material strategic decision queued at the Q3 board meeting: how to allocate the projected Q4 capital headroom \u2014 between accelerating digital transformation, repurposing into SME lending, or holding for capital strength. The brief should frame the trade-off, summarise the evidence on each option, and name the recommended path.",
+  "objective": "Give the chair a clear, decision-ready read on the capital allocation choice in time to set the board's discussion frame.",
+  "scope": "Mara Heritage Bank \u2014 Chair (single reader). Decision window: Q3 2025 board meeting. Confidentiality: Confidential. Length: 1-2 pages.",
+  "source_document_ids_count": 19,
+  "formats": {
+    "pdf": {
+      "ok": true,
+      "bytes": 25908,
+      "path": "/app/memory/jc_artifacts/JC-WS-A-Brief-uploads-sample.pdf",
+      "export_id": "3f054a04-059a-4a58-a1b1-372d9c5e979f"
+    },
+    "docx": {
+      "ok": true,
+      "bytes": 40336,
+      "path": "/app/memory/jc_artifacts/JC-WS-A-Brief-uploads-sample.docx",
+      "export_id": "ee6c6752-784e-40e4-8ec6-6fbdf1f3c124"
+    }
+  },
+  "generated_at": "2026-06-25T12:07:19.349192+00:00"
+}

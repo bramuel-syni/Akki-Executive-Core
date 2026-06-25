@@ -1,0 +1,13 @@
+{
+  "contributor": "cro.q3-d23418@mara-heritage.demo",
+  "gap_hint_passed": null,
+  "ai_draft": {
+    "draft_text": "Thanks for sending over the first draft of the risk section for the Q3 2025 Board Pack. It\u2019s a good foundation, and getting it concise and evidence-based for the board\u2019s decisions at the Q3 meeting is key. To help board members quickly grasp the material and vote on Q4 capital allocation, the digital transformation refresh, and risk tolerance, we need to add a few concrete data points:\n\n*   Please update the NPL trajectory from a qualitative description to include the current quarter\u2019s specific number.\n*   For single-name concentration, break this out by exposure band, and for operational risk, outline the key events of the quarter.\n\nIf you hit any snags or need a second pair of eyes on data sources, please connect with \u2022 Offer.\n\nThanks,\n[Executive Name]",
+    "source": "shield",
+    "reason": null
+  },
+  "user_action": {
+    "status": "needs_revision",
+    "patch_status": 200
+  }
+}

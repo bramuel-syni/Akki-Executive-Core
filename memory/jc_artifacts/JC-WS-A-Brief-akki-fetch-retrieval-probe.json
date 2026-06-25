@@ -1,0 +1,73 @@
+{
+  "test_cases": [
+    "the Q3 board discussion",
+    "last week's risk review",
+    "Maria's competitive analysis from October"
+  ],
+  "results": [
+    {
+      "q": "the Q3 board discussion",
+      "total": 5,
+      "top3": [
+        {
+          "doc_name": "board-minutes-25-june-2025.docx",
+          "score": 3.967,
+          "snippet": "CLASSIFICATION  \u00b7  CONFIDENTIAL   Board Minutes \u2014 25 June 2025 Board Chair, Chief Executive Officer, Chief Risk Of\u2026"
+        },
+        {
+          "doc_name": "Digital Transformation Strategy \u2014 Strategic Refresh",
+          "score": 2.858,
+          "snippet": "\u2026ing unsecured book size and run-off profile are unstated, relevant to the final board question on transition risk.  **Points warranting fol"
+        },
+        {
+          "doc_name": "Strategic Capital Allocation Framework",
+          "score": 2.155,
+          "snippet": "\u2026xperience\u2014only an option to \"slow or accelerate\" based on LTV trajectory. For a board deciding whether to re-weight the balance sheet, the "
+        }
+      ]
+    },
+    {
+      "q": "last week's risk review",
+      "total": 5,
+      "top3": [
+        {
+          "doc_name": "Five-Year Strategic Plan 2024-2028 \u2014 Executive Summary",
+          "score": 3.397,
+          "snippet": "\u2026t headroom for opportunistic acquisitions. The plan acknowledges three material risks: real estate concentration drift, unproven credit dyn"
+        },
+        {
+          "doc_name": "strategic-update-q3-2025.pptx",
+          "score": 2.983,
+          "snippet": "\u2026ry modelled at plan approval. Digital channel uptime has held at 99.6% over the last twelve months. Customer satisfaction scores on digital"
+        },
+        {
+          "doc_name": "Digital Transformation Strategy \u2014 Strategic Refresh",
+          "score": 2.947,
+          "snippet": "\u2026un-off profile are unstated, relevant to the final board question on transition risk.  **Points warranting follow-up**  First, the robustne"
+        }
+      ]
+    },
+    {
+      "q": "Maria's competitive analysis from October",
+      "total": 5,
+      "top3": [
+        {
+          "doc_name": "Mara Heritage Bank \u2014 Q3 2025 Board Pack \u2014 Governance",
+          "score": 3.856,
+          "snippet": "\u2026o sustainable growth while actively managing evolving macroeconomic factors and competitive pressures. We are proactively aligning our inte"
+        },
+        {
+          "doc_name": "Mara Heritage Bank \u2014 Q3 2025 Board Pack \u2014 Performance",
+          "score": 3.214,
+          "snippet": "\u2026strategic position, enabling informed decisions on critical Q4 initiatives. Our analysis underscores a stable operational environment while"
+        },
+        {
+          "doc_name": "mara-heritage-bank-board-pack-q3-2025.docx",
+          "score": 2.479,
+          "snippet": "\u2026om 18% to 16% by FY28, pivoting capital toward SME lending while regulatory and competitive conditions tighten. This represents a mid-cycle"
+        }
+      ]
+    }
+  ],
+  "captured_at": "2026-06-25T12:16:56.021702+00:00"
+}

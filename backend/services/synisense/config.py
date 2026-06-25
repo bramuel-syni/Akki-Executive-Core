@@ -160,6 +160,23 @@ ALLOWED_PURPOSES: Set[str] = {
     "pulse.signal.commentary",
     "pulse.*",
 
+    # JC-TM (2026-06-25) — Task Manager orchestration purposes. The
+    # task_manager.* prefix covers the existing `compile.drafting.*`,
+    # `compile.apply_comment`, `intelligence.recommendations` calls
+    # (which previously fell through to `akki.gateway.standard`) and
+    # the new `contributions.revision_request_draft` Shield-routed
+    # draft endpoint that backs the "AI drafts suggested revision
+    # requests" promise from the JC-TM canonical spec Part 0.
+    "task_manager.compile.drafting.board_pack",
+    "task_manager.compile.drafting.committee_pack",
+    "task_manager.compile.drafting.strategy_deck",
+    "task_manager.compile.drafting.fundraising",
+    "task_manager.compile.drafting.free",
+    "task_manager.compile.apply_comment",
+    "task_manager.intelligence.recommendations",
+    "task_manager.contributions.revision_request_draft",
+    "task_manager.*",
+
     # Generic gateway (legacy `call_llm` paths whose module string
     # doesn't fit a named purpose. Phase C will tighten by mapping
     # every gateway caller to a specific consumer prefix.)

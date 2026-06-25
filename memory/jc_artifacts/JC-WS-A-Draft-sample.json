@@ -1,0 +1,19 @@
+{
+  "export_id": "3d2a1fd5-840f-4416-b104-4b7bcb039ec7",
+  "lifecycle_state": "draft",
+  "kind": "report",
+  "draft_session_id": "draft-jc-ws-phase3-88493354fe7b",
+  "title": "Q3 2025 strategic update \u2014 co-authored draft",
+  "structured_content": {
+    "sections": [
+      {
+        "heading": "Q3 strategic update \u2014 draft",
+        "paragraphs": [
+          "This is an in-progress draft. Akki and I are co-authoring the strategic update for the EC in the editor. Once final, we will commit to lock and export.",
+          "The capital allocation question is the single most material item queued for Q3. The bank has projected $42M of CET1 headroom by year-end; allocating that headroom to SME lending versus accelerating digital transformation versus holding for capital strength is the choice the board will need to take."
+        ]
+      }
+    ]
+  },
+  "saved_at": "2026-06-25T12:07:19.359489+00:00"
+}

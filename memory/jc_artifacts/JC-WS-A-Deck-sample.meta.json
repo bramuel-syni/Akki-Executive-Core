@@ -1,0 +1,17 @@
+{
+  "kind": "deck",
+  "label": "Deck",
+  "description": "Build a strategic update deck for Mara Heritage Bank's Q3 board session. Translate the strategic, capital, and risk material on the platform into a presentable deck: one section per strategic theme, one slide per substantive point, recommendations and decisions queued at the end.",
+  "objective": "Allow the chair to walk the board through the substantive strategic update in a clear, evidence-backed sequence \u2014 decision-ready, not data-dumping.",
+  "scope": "Mara Heritage Bank \u2014 full board. Meeting: Q3 2025. Confidentiality: Internal. Length: 12-18 slides.",
+  "source_document_ids_count": 19,
+  "formats": {
+    "pptx": {
+      "ok": true,
+      "bytes": 42071,
+      "path": "/app/memory/jc_artifacts/JC-WS-A-Deck-sample.pptx",
+      "export_id": "440fc0d6-08e3-482f-a9cf-feda58ad4ee5"
+    }
+  },
+  "generated_at": "2026-06-25T12:01:17.734481+00:00"
+}

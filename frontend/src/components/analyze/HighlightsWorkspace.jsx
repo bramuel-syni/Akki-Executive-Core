@@ -296,6 +296,12 @@ function TopicGroup({ topic, meta, cards }) {
 function HighlightCard({ card, topic }) {
   const confidence = card.confidence || "medium";
   const isRefusal = topic === "refusal" || card.refused;
+  const ap = card.analyzer_payload || {};
+  // Cards with a real analyzer payload behind them get a natural
+  // "View underlying read" affordance — JC-WS Phase 3 deep-link.
+  // Refusals don't get it (there's nothing underneath to deep-link to).
+  const hasUnderlyingRead = !isRefusal && (ap.target || ap.scenario || ap.horizon);
+  const [expanded, setExpanded] = React.useState(false);
   return (
     <div
       className={`rounded-md border bg-card p-3 transition-shadow hover:shadow-sm ${isRefusal ? "border-rose-200/70" : ""}`}
@@ -312,12 +318,60 @@ function HighlightCard({ card, topic }) {
           <div className="flex items-center gap-2 truncate">
             {card.citation && <span className="font-mono">{card.citation}</span>}
             {card.asked_question && (
-              <span className="italic truncate">“{card.asked_question}”</span>
+              <span className="italic truncate">&ldquo;{card.asked_question}&rdquo;</span>
             )}
           </div>
-          {!isRefusal && (
-            <Badge variant="outline" className="text-[9px] py-0 px-1.5 uppercase">{confidence}</Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {hasUnderlyingRead && (
+              <button
+                type="button"
+                onClick={() => setExpanded((v) => !v)}
+                className="text-[10px] text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
+                data-testid={`analyze-workspace-card-${card.id || ""}-view-raw`}
+              >
+                {expanded ? "Hide underlying read" : "View underlying read"}
+              </button>
+            )}
+            {!isRefusal && (
+              <Badge variant="outline" className="text-[9px] py-0 px-1.5 uppercase">{confidence}</Badge>
+            )}
+          </div>
+        </div>
+      )}
+      {expanded && hasUnderlyingRead && (
+        <div className="mt-2.5 pt-2.5 border-t bg-muted/30 -mx-3 -mb-3 px-3 py-2.5 rounded-b-md" data-testid={`analyze-workspace-card-${card.id || ""}-raw-panel`}>
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 font-semibold">
+            Underlying read · {ap.intent || card.intent || "—"}
+          </div>
+          <dl className="grid grid-cols-[80px_1fr] gap-x-3 gap-y-1 text-xs">
+            {ap.target && (
+              <>
+                <dt className="text-muted-foreground">Target</dt>
+                <dd className="font-mono">{ap.target}</dd>
+              </>
+            )}
+            {ap.horizon && (
+              <>
+                <dt className="text-muted-foreground">Horizon</dt>
+                <dd className="font-mono">{ap.horizon}</dd>
+              </>
+            )}
+            {ap.scenario && (
+              <>
+                <dt className="text-muted-foreground">Scenario</dt>
+                <dd className="italic">{ap.scenario}</dd>
+              </>
+            )}
+            {ap.rationale && (
+              <>
+                <dt className="text-muted-foreground">Rationale</dt>
+                <dd>{ap.rationale}</dd>
+              </>
+            )}
+          </dl>
+          <div className="mt-2 text-[10px] text-muted-foreground">
+            Workspace dispatched this to the {ap.intent || "matching"} analyzer. The narration above is the read; the parameters are what the run was anchored on.
+          </div>
         </div>
       )}
     </div>

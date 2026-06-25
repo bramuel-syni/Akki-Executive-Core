@@ -1,0 +1,72 @@
+{
+  "rows": [
+    {
+      "label": "CommitteePack/docx",
+      "ok": true,
+      "detail": "42722 bytes"
+    },
+    {
+      "label": "CommitteePack/pptx",
+      "ok": true,
+      "detail": "42968 bytes"
+    },
+    {
+      "label": "CommitteePack/pdf",
+      "ok": true,
+      "detail": "38918 bytes"
+    },
+    {
+      "label": "Minutes/docx",
+      "ok": true,
+      "detail": "41871 bytes"
+    },
+    {
+      "label": "Minutes/pdf",
+      "ok": true,
+      "detail": "30911 bytes"
+    },
+    {
+      "label": "Report/docx",
+      "ok": true,
+      "detail": "43852 bytes"
+    },
+    {
+      "label": "Deck/pptx",
+      "ok": true,
+      "detail": "42071 bytes"
+    },
+    {
+      "label": "Brief-uploads/pdf",
+      "ok": true,
+      "detail": "25908 bytes"
+    },
+    {
+      "label": "Brief-uploads/docx",
+      "ok": true,
+      "detail": "40336 bytes"
+    },
+    {
+      "label": "Draft",
+      "ok": true,
+      "detail": "3d2a1fd5-840f-4416-b104-4b7bcb039ec7"
+    },
+    {
+      "label": "Enhance-Minutes",
+      "ok": true,
+      "detail": "after=39788B"
+    },
+    {
+      "label": "Enhance-Report",
+      "ok": true,
+      "detail": "after=40861B"
+    },
+    {
+      "label": "Enhance-Deck",
+      "ok": true,
+      "detail": "after=41360B"
+    }
+  ],
+  "passed": 13,
+  "failed": 0,
+  "generated_at": "2026-06-25T12:14:00.160198+00:00"
+}

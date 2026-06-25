@@ -38,6 +38,7 @@ from contracts.responses import (
     TaskCountsResponse,
     TaskHashResponse,
     TaskResponse,
+    TaskRevisionRequestDraftResponse,
 )
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
@@ -1327,6 +1328,50 @@ async def contributor_submit(token: str, body: _ContributorSubmitIn):
     except Exception as e:  # noqa: BLE001
         log.warning("contribution.submitted audit failed: %s", e)
     return {"ok": True, "readiness_score": rb["score"]}
+
+
+# ─────────────────────────────────────────────────────────────────────
+# POST /api/tasks/{task_id}/contributors/{contributor_id}/reinvite
+# ─────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────
+# POST /api/tasks/{task_id}/contributions/{contributor_id}/draft-revision-request
+# JC-TM (2026-06-25) — backs the canonical-spec promise: "the AI
+# drafts suggested revision requests". Shield-routed via
+# `task_manager.contributions.revision_request_draft`; falls back to
+# a deterministic template when Shield is unreachable so the user
+# is never blocked. Returns the draft text — the FE shows it for the
+# user to edit, then the user PATCHes status="needs_revision" with
+# `note=<final edited text>`.
+# ─────────────────────────────────────────────────────────────────────
+class _RevisionDraftIn(BaseModel):
+    gap_hint: Optional[str] = Field(default=None, max_length=600)
+
+
+@router.post(
+    "/tasks/{task_id}/contributions/{contributor_id}/draft-revision-request",
+    response_model=Optional[TaskRevisionRequestDraftResponse],
+)
+async def draft_revision_request_endpoint(
+    task_id: str, contributor_id: str,
+    body: _RevisionDraftIn,
+    current: Dict[str, Any] = Depends(get_current_account),
+):
+    """Draft an AI revision-request note for one contributor. The
+    user reviews/edits the draft, then PATCHes the contribution with
+    status='needs_revision' + note=<edited draft>."""
+    t = await db.tasks.find_one({"id": task_id, "account_id": current["id"]}, {"_id": 0})
+    if not t:
+        raise HTTPException(status_code=404, detail="Task not found")
+    team = t.get("team") or []
+    idx = _find_contributor(team, contributor_id)
+    if idx is None:
+        raise HTTPException(status_code=404, detail="Contributor not on this task")
+    from services.tasks.revision_request_service import draft_revision_request
+    result = await draft_revision_request(
+        task=t, contributor=team[idx],
+        account_id=current["id"], gap_hint=body.gap_hint,
+    )
+    return result
 
 
 # ─────────────────────────────────────────────────────────────────────

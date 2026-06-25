@@ -1,0 +1,61 @@
+{
+  "task_id": "task-60a408c73f1c",
+  "selected_mode": "magic_link",
+  "audit_log_rows": [
+    {
+      "id": "8021d583-090b-4298-925a-322cbf069f27",
+      "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
+      "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
+      "action": "task.contributor.invited",
+      "resource_type": "task",
+      "resource_id": "task-60a408c73f1c",
+      "metadata": {
+        "contributor_email": "cro.q3-d23418@mara-heritage.demo",
+        "mode": "magic_link",
+        "allow_email_reply": false,
+        "channels": [
+          "magic_link"
+        ],
+        "delivery_status": [
+          "sent"
+        ]
+      },
+      "created_at": "2026-06-25T12:08:14.348905+00:00"
+    },
+    {
+      "id": "b52e4b3a-8d00-4282-bc0c-3f9844f37fe0",
+      "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
+      "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
+      "action": "task.contributor.invited",
+      "resource_type": "task",
+      "resource_id": "task-60a408c73f1c",
+      "metadata": {
+        "contributor_email": "chro.q3-8b5bb0@mara-heritage.demo",
+        "mode": "magic_link",
+        "allow_email_reply": false,
+        "channels": [
+          "magic_link"
+        ],
+        "delivery_status": [
+          "sent"
+        ]
+      },
+      "created_at": "2026-06-25T12:08:14.156614+00:00"
+    },
+    {
+      "id": "f611a110-2bfe-4a7c-9ed6-b9af3567adee",
+      "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
+      "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
+      "action": "task.created",
+      "resource_type": "task",
+      "resource_id": "task-60a408c73f1c",
+      "metadata": {
+        "state": "active",
+        "name": "Mara Heritage Bank \u2014 Q3 2025 Board Pack"
+      },
+      "created_at": "2026-06-25T12:08:13.676244+00:00"
+    }
+  ],
+  "magic_link_tokens": [],
+  "captured_at": "2026-06-25T12:08:14.379487+00:00"
+}

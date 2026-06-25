@@ -739,3 +739,19 @@ class AnalyzeWorkspaceFinishResponse(BaseModel):
     title: Optional[str] = None
     highlights_count: Optional[int] = None
     refused_count: Optional[int] = None
+
+
+# ─────────────────────────────────────────────────────────────────────
+# JC-TM (2026-06-25) — AI-drafted revision request response
+# Backs `POST /api/tasks/{task_id}/contributions/{contributor_id}/draft-revision-request`.
+# Surfaces the orchestration value the JC-TM canonical spec calls
+# out: "the AI drafts suggested revision requests".
+# ─────────────────────────────────────────────────────────────────────
+class TaskRevisionRequestDraftResponse(BaseModel):
+    """Shape of the revision-request-draft endpoint. `source` is
+    `'shield'` when the LLM produced the draft, `'fallback'` when the
+    deterministic template was used (Shield unreachable or empty)."""
+    model_config = ConfigDict(extra="allow")
+    draft_text: Optional[str] = None
+    source:     Optional[str] = None  # "shield" | "fallback"
+    reason:     Optional[str] = None  # surfaced only on fallback path
