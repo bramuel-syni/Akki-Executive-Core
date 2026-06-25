@@ -2,6 +2,112 @@
 
 > Append-only history of shipped work. Newest first.
 
+## 2026-06-25 — JC-MON Stage 2a + JC-CHAT Stage A + JC-TL Stage 0 (THREE PARALLEL STREAMS)
+
+Three independent parallel streams surfaced together at their first
+STOP gates per the user's zero-handoff-loss dispatch:
+
+### Stream 1 — JC-MON Stage 2a (Achievement engine THIN SLICE) CLOSED
+
+**5/5 acceptance rows GREEN** via
+`python backend/scripts/jc_mon_stage_2a_engine_thin_slice.py`. Real
+on-demand assessment of one objective against real BASE + TRACKING
+evidence. Two distinct Shield-routed signals:
+- **PROGRESS** via Gemini extractor at surface `solve_v2.monitor_progress`
+  → `progress_pct=98` + 228-char rationale citing tracking docs.
+- **PROBABILITY** via Solva `probability_weighting.run()` with the
+  single-claim adapter per Q4 thin-adapter verdict
+  → `probability_pct=65, band="Likely"` + 136-char rationale + 1
+  Shield audit id.
+- **HONEST REFUSAL** short-circuit on empty tracking docs
+  → `refused=true, reason="no_tracking_evidence_yet"`, zero LLM calls.
+
+New code (zero changes to existing files, zero JC-TM regression):
+- `backend/services/monitor/__init__.py` NEW.
+- `backend/services/monitor/assessment_service.py` NEW (310 LOC).
+- `backend/scripts/jc_mon_stage_2a_engine_thin_slice.py` NEW (280 LOC).
+
+Artefacts: `/app/memory/jc_artifacts/JC-MON/02-assess-thin/` ×4
+JSONs. Sprint memo: `sprints/JC_MON_STAGE_2A_ENGINE_THIN.md`.
+Stage 2b (recommendations + explanation + extended health) is the
+next stage but EXPLICITLY NOT bundled per the "VERTICAL SLICE IS
+LAW" rule.
+
+### Stream 2 — JC-CHAT Stage A (The One Synisense Marker) CLOSED
+
+Pure surfacing pass; **ZERO backend changes; Shield path UNTOUCHED.**
+- **4 chat-only markers REMOVED**: title `redacted` pill
+  (`SynisenseInlineBadge`), per-message "Content screened · N" class
+  chip, header AUDIT button + `AuditDialog` mount + function +
+  state hook, `AggregateStrip` floating banner (component file
+  deleted).
+- **1 shared marker HIDDEN-ON-CHAT-SURFACE per R4 lock**:
+  `AuditPanel` import + auto-mount removed from `pages/Chat.jsx`;
+  component file UNTOUCHED — `SolvaSession.jsx` +
+  `SolvaPhaseDSession.jsx` continue to mount it.
+- **Privacy-report RELOCATED (S0-F1 CLEAN MOVE)**: PDF download
+  moves from the deleted `AggregateStrip` into the surviving
+  `PerMessageSynisenseBadge` expansion. Same per-conversation
+  endpoint, byte-identical PDF.
+- **A11Y MIGRATED (S0-F2)**: `title="View audit log"` becomes
+  `title="Open this turn's audit log"` + new `aria-label` on the
+  badge's expand affordance.
+
+`PerMessageSynisenseBadge` rewritten 81 → 280 LOC: keeps ZZ.1
+collapsed kicker + tooltip; gains click-to-expand panel with
+per-turn audit data + Privacy-report PDF download. Net diff
+across the surfacing pass: **−103 LOC**.
+
+Files touched:
+- `frontend/src/pages/Chat.jsx` — −207 LOC.
+- `frontend/src/components/chat/PerMessageSynisenseBadge.jsx` — +199 LOC.
+- `frontend/src/components/chat/AggregateStrip.jsx` — DELETED (−95 LOC).
+
+FE preview compiles cleanly; eslint GREEN on rewritten badge.
+Visual evidence at
+`/app/memory/jc_artifacts/JC-CHAT/A-marker/visual-evidence.md`.
+Sprint memo: `sprints/JC_CHAT_A_MARKER.md`.
+
+### Stream 3 — JC-TL Stage 0 (Deck gate + probe provenance) CLOSED
+
+New build dispatch. Persistence done:
+- Canonical spec at `/app/memory/JC_TL_CANONICAL_SPEC.md`.
+- MYDAWA reference deck at
+  `/app/memory/reference_assets/MYDAWA_Reference_Deck.pptx` (13
+  slides — Recovery Programme storyboard).
+- `DEV_PIPELINE.md` §1 / §2 / §4 / §9 updated.
+
+**S0-Q2 deck-grade verdict:** FITS for convergent renders (7/8 YES,
+1 PARTIAL on copy treatment); DOES-NOT-FIT for divergent renders
+(structural gap on per-persona spread + agreement/conflict/
+blind-spot map). **TWO-TRACK BUILD triggered** — Track 1 (JC-TL)
+ships on existing convergent `solva_v2.pptx_exporter` unmodified;
+Track 2 (Decks upgrade — separate dispatch, NOT in JC-TL scope)
+needs `perspective_spread` schema slot + divergent pptx builder +
+path-aware validator. Diagnosis Stage 1 CLEARED unblocked.
+
+**S0-Q4 probe-provenance verdict:** Diagnosis probes EXIST as
+emergent reference (produced MYDAWA); other 3 paths NEED AUTHORING.
+Authored probe content per path published verbatim
+(`audit/JC_TL_S0_probe_provenance.md`):
+- Diagnosis / `seek_clarity`: 11 emergent probes documented.
+- Develop Strategy: 12 authored.
+- Test Hypothesis: 14 authored (includes hypothesis-layer probes).
+- Get Perspectives: 12 authored (provisional per Q6).
+
+User-watchpoint discipline honoured: probe content shown in writing
+BEFORE any path is claimed built. Stage 2 wiring will commit to
+`services/solva_v2/probes.py` as path-distinct constants.
+
+Folds the prior **ThinkLab Gate A / TL0** backlog items from §6 / §9.
+
+Audit docs:
+- `/app/memory/audit/JC_TL_S0_deck_gate_verdict.md`
+- `/app/memory/audit/JC_TL_S0_probe_provenance.md`
+Sprint memo: `sprints/JC_TL_STAGE_0_GATES.md`.
+
+---
+
 ## 2026-06-25 — JC-TM Stage 2 — Fan-out CLOSED
 
 User dispatched Stage 2 with three locked decisions: (1) approve Stage 1 +

@@ -1,0 +1,20 @@
+{
+  "objective_id": "obj-thin-slice-c36bc123c4",
+  "probability_pct": 65,
+  "band": "Likely",
+  "rationale": "Corpus-tiered claim with strategic plans and tracking updates as evidence, but future target achievement depends on sustained execution.",
+  "base_doc_ids": [
+    "doc-base-recovery-plan-bd74efdfb1",
+    "doc-base-kpi-contract-27c577d906"
+  ],
+  "tracking_doc_ids": [
+    "doc-track-week04-e0b65ac31e",
+    "doc-track-week09-08747f45b7",
+    "doc-track-week16-47115d7eb0"
+  ],
+  "audit_entry_ids": [
+    "cfac14c8-623d-4356-bba2-6ef575acc70c",
+    "b0e4f454-6a9d-48b9-b54e-d271d8f5ab26"
+  ],
+  "assessed_at": "2026-06-25T20:19:06.820134+00:00"
+}

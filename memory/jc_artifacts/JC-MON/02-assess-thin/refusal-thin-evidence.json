@@ -1,0 +1,33 @@
+{
+  "objective_id": "obj-refusal-a39e428a24",
+  "refused": true,
+  "refusal_reason": "no_tracking_evidence_yet",
+  "progress_pct": null,
+  "progress_rationale": null,
+  "probability_pct": null,
+  "probability_band": null,
+  "probability_rationale": null,
+  "base_doc_ids": [
+    "doc-base-recovery-plan-6fb7806448",
+    "doc-base-kpi-contract-23c7491373"
+  ],
+  "tracking_doc_ids": [],
+  "audit_entry_ids": [],
+  "assessed_at": "2026-06-25T20:19:29.176995+00:00",
+  "_fixture_objective": {
+    "id": "obj-refusal-a39e428a24",
+    "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
+    "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
+    "kind": "objective",
+    "title": "Recover Q3 monthly active revenue to pre-Q1 baseline",
+    "description": "After a \u22125.5% MoM revenue contraction triggered by a checkout regression, recover monthly active digital revenue back to the pre-Q1 baseline within two quarters.",
+    "target_metric": "monthly_active_revenue_index",
+    "target_value": "Index \u2265 100 (Q1 baseline = 100) within 180 days",
+    "due_date": "2026-12-31",
+    "status": "active"
+  },
+  "_fixture_base_doc_names": [
+    "MYDAWA Recovery Programme \u2014 Strategic Plan (BASE)",
+    "KPI Contract \u2014 Eight Workstreams (BASE)"
+  ]
+}

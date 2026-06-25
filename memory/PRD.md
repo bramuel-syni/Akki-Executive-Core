@@ -1,6 +1,18 @@
 # AKKI Sandbox — Product Requirements Document (PRD)
 
 
+> **2026-06-25 update — THREE PARALLEL STREAMS CLOSED.** JC-MON
+> Stage 2a + JC-CHAT Stage A + JC-TL Stage 0 (NEW build dispatch).
+> JC-MON Stage 2a: real progress + real Solva probability + honest
+> refusal — 5/5 acceptance rows GREEN. JC-CHAT Stage A: 4 chat-only
+> markers REMOVED + 1 shared component HIDDEN-on-chat-surface +
+> Privacy-report RELOCATED + a11y MIGRATED; net −103 LOC; Shield
+> path UNTOUCHED. JC-TL Stage 0: deck-gate verdict TWO-TRACK BUILD
+> (FITS convergent / DOES-NOT-FIT divergent); probe provenance
+> NEED-AUTHORING for 3 paths with content authored verbatim. Full
+> closure log + artefact paths in `memory/CHANGELOG.md` first entry.
+
+
 > **2026-06-24 update — Full Runway dispatch CLOSED.** Five stages of
 > the AKKI Full Runway dispatch landed today (Stages 1 + 2 + 3 + 4 +
 > 5). Stage 1: security ratchet — IDOR fix on `strategic_goal_evolution`

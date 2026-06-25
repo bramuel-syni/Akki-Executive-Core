@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Plus, Send, Loader2, Shield, ShieldOff, Trash2, MessageCircle,
-  ChevronDown, FileLock2, Eye, AlertTriangle, Download,
+  ChevronDown, FileLock2, AlertTriangle,
   Search, Paperclip, X, FileText, StopCircle,
   Brain, ChevronRight, Info, ArchiveRestore, Trash,
   // Phase C fix bundle (2026-05-13) — ArrowLeft used by the
@@ -38,12 +38,13 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-// Phase C (2026-05-13) — Synisense audit panel + protective layer
-// intervention rendering. Components live under components/chat/ so
-// other consumer surfaces (Solva, Work Studio) can reuse them in
-// later phases.
-import AuditPanel from "@/components/chat/AuditPanel";
-import AggregateStrip from "@/components/chat/AggregateStrip";
+// JC-CHAT Stage A (2026-06-25) — AuditPanel + AggregateStrip imports
+// removed from Chat.jsx. AuditPanel component file UNTOUCHED (still
+// imported by SolvaSession + SolvaPhaseDSession per R4 lock —
+// shared-until-proven-chat-only). AggregateStrip was chat-only and
+// is deleted in the same pass. The sole surviving Synisense marker
+// is the per-message badge (which now carries Privacy-report +
+// per-turn audit access in its own UI).
 import ProtectiveInterventionCard from "@/components/chat/ProtectiveInterventionCard";
 import { useMessagesSynisense } from "@/hooks/useMessagesSynisense";
 import PerMessageSynisenseBadge from "@/components/chat/PerMessageSynisenseBadge";
@@ -175,7 +176,9 @@ export default function Chat() {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [bypassDlg, setBypassDlg] = useState(null); // {detected}
-  const [auditOpen, setAuditOpen] = useState(false);
+  // JC-CHAT Stage A (2026-06-25) — auditOpen + setAuditOpen removed
+  // along with the header AUDIT button + AuditDialog. The per-message
+  // badge now opens that turn's audit on click.
   // Phase B1.1 (2026-06-24) — manual Work Studio affordance modal.
   // Opened from a button on the Composer toolbar; carries the live
   // conversation messages + the active chat's context for mechanical
@@ -1363,7 +1366,6 @@ export default function Chat() {
                 activeContext={activeContext}
                 onPatch={onPatch}
                 onArchive={() => onArchive(activeChat.id)}
-                onAudit={() => setAuditOpen(true)}
               />
 
               <div
@@ -1382,15 +1384,14 @@ export default function Chat() {
                     loads). The outer scroll container's size doesn't
                     change; only the inner does. */}
                 <div ref={messagesInnerRef} className="space-y-5">
-                {/* Phase C (2026-05-13) — per-conversation Synisense
-                    aggregate KPI strip. Re-fetches after every assistant
-                    turn (refresh nonce keyed on message count). */}
-                {activeChat?.id && (
-                  <AggregateStrip
-                    chatId={activeChat.id}
-                    refreshNonce={(activeChat.messages || []).length}
-                  />
-                )}
+                {/* JC-CHAT Stage A (2026-06-25) — AggregateStrip
+                    removed. The Privacy-report PDF download is now
+                    reached from the per-message Synisense badge's
+                    expansion (clean move per S0-F1 verdict — the
+                    endpoint is per-conversation today, no scope
+                    narrowing). The aggregate KPI banner restated the
+                    same data as the per-message badge tooltip; one
+                    marker survives, four are removed. */}
                 {(activeChat.messages || []).length === 0 ? (
                   <p className="text-center text-[13px] text-[var(--muted)] italic mt-10">
                     Type your first message below.
@@ -1470,11 +1471,12 @@ export default function Chat() {
           sendMessage(text, true);
         }}
       />
-      <AuditDialog
-        open={auditOpen}
-        onClose={() => setAuditOpen(false)}
-        chatId={activeChat?.id}
-      />
+      {/* JC-CHAT Stage A (2026-06-25) — AuditDialog removed.
+          The header AUDIT button was its only invocation; with the
+          button gone the dialog is dead code. The per-message badge's
+          new expansion provides per-turn audit access in its own UI
+          (per-turn is the right scope; the previous chat-wide dialog
+          re-fetched the same per-message data anyway). */}
       <WorkStudioAffordanceModal
         open={wsModalOpen}
         onClose={() => setWsModalOpen(false)}
@@ -1488,7 +1490,7 @@ export default function Chat() {
   );
 }
 
-function ChatHeader({ chat, models, activeModel, activeContext, onPatch, onArchive, onAudit }) {
+function ChatHeader({ chat, models, activeModel, activeContext, onPatch, onArchive }) {
   const [titleEdit, setTitleEdit] = useState(false);
   const [title, setTitle] = useState(chat.title);
   useEffect(() => { setTitle(chat.title); }, [chat.id, chat.title]);
@@ -1531,7 +1533,13 @@ function ChatHeader({ chat, models, activeModel, activeContext, onPatch, onArchi
             </>
           )}
           {" · "}{POLICY_LABEL[chat.shielding_policy]}
-          <SynisenseInlineBadge chatId={chat.id} />
+          {/* JC-CHAT Stage A (2026-06-25) — SynisenseInlineBadge
+              removed (one of four redundant Synisense markers retired
+              in the surfacing pass). The per-message badge carries
+              identifier-protection signalling at the turn it
+              describes; the title-pill restated the same number.
+              The /api/chats/{cid}/synisense-metrics endpoint is
+              untouched — no other consumers were affected. */}
         </p>
       </div>
       <ModelPicker
@@ -1563,14 +1571,11 @@ function ChatHeader({ chat, models, activeModel, activeContext, onPatch, onArchi
           <span className="block"><b>Off</b> — send raw (use sparingly).</span>
         </span>
       </span>
-      <button
-        onClick={onAudit}
-        className="text-[var(--muted)] hover:text-[var(--ink)] text-[11.5px] uppercase tracking-wider inline-flex items-center gap-1 px-2 py-1 rounded-sm hover:bg-[var(--cream-deep)]/40"
-        data-testid="chat-audit-btn"
-        title="View audit log"
-      >
-        <Eye className="w-3 h-3" /> Audit
-      </button>
+      {/* JC-CHAT Stage A (2026-06-25) — header AUDIT button removed.
+          The per-message badge now opens that turn's audit on click;
+          chat-wide audit was redundant with per-turn audit access.
+          A11y (the previous `title="View audit log"`) migrates onto
+          the surviving badge's expand affordance. */}
       <button
         onClick={onArchive}
         className="text-[var(--muted)] hover:text-red-600 p-1.5 rounded-sm"
@@ -1749,7 +1754,7 @@ function Message({ m, activeModel, models, synisense, chatId, onEdit, onRegenera
             {/* CHAT sprint (2026-05-12) — per-message Synisense badge.
                 Always renders; "—" when count is zero. Hover tooltip
                 shows the three-layer breakdown. */}
-            <PerMessageSynisenseBadge runs={synisense} testId={`chat-msg-synisense-${m.id}`} />
+            <PerMessageSynisenseBadge runs={synisense} testId={`chat-msg-synisense-${m.id}`} chatId={chatId} messageId={m.id} />
             {/* CHAT sprint — provider transparency line. Italic when
                 fallback_triggered=true. Tooltip resolves the chain. */}
             <ProviderLine
@@ -1849,34 +1854,16 @@ function Message({ m, activeModel, models, synisense, chatId, onEdit, onRegenera
             ))}
           </ul>
         )}
-        {/* Phase 12.2 ITEM A — Synisense screening icon. Renders only on
-            assistant messages whose synisense_stats reports > 0
-            redacted spans. Tooltip shows entity-type breakdown. NEVER
-            shows original text or replacement tokens. Keyboard
-            accessible: button with aria-label + title.  */}
-        {!isUser && m.synisense_stats?.spans_redacted > 0 && (
-          <div
-            className="mt-2 inline-flex items-center gap-1 text-[10.5px] text-[var(--muted)]"
-            data-testid="chat-synisense-icon"
-          >
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm border border-[var(--rule)] bg-[var(--cream-deep)]/40 hover:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] cursor-help"
-              aria-label={`Content screened. ${m.synisense_stats.spans_redacted} ${m.synisense_stats.spans_redacted === 1 ? "span" : "spans"} redacted. ${formatSyniBreakdown(m.synisense_stats.by_type)}`}
-              title={`Content screened. ${m.synisense_stats.spans_redacted} ${m.synisense_stats.spans_redacted === 1 ? "span" : "spans"} redacted.\n\n${formatSyniBreakdown(m.synisense_stats.by_type)}`}
-            >
-              <FileLock2 className="w-3 h-3 text-[var(--accent)]" aria-hidden="true" />
-              <span>Content screened · {m.synisense_stats.spans_redacted}</span>
-            </button>
-          </div>
-        )}
-        {/* Phase C (2026-05-13) — per-message Synisense audit panel.
-            Collapsed by default; expanding fetches the natural-
-            language audit data from /api/chats/{cid}/audit-panel
-            and renders the executive-readable sections. */}
-        {!isUser && m.id && !m.streaming && (
-          <AuditPanel chatId={chatId} messageId={m.id} />
-        )}
+        {/* JC-CHAT Stage A (2026-06-25) — inline "Content screened"
+            class chip removed. The per-message badge already shows
+            "N IDENTIFIERS PROTECTED · RESTORED ON YOUR VIEW" with a
+            hover tooltip for the layer breakdown — the chip restated
+            the same signal one row down. One marker survives. */}
+        {/* JC-CHAT Stage A (2026-06-25) — AuditPanel auto-mount
+            removed from the chat surface. The component itself is
+            UNTOUCHED (Solva voice audit + Solva Phase D still mount
+            it per R4 lock). Per-turn audit access lives on the
+            surviving per-message badge expansion. */}
         {/* Phase C — protective layer intervention card (Mode A
             hypothesis-test framing or Mode C Solva handoff offer).
             Mode B annotations are inline footnotes; rendered above
@@ -1915,8 +1902,10 @@ function Message({ m, activeModel, models, synisense, chatId, onEdit, onRegenera
 }
 
 /**
- * Render the Synisense entity-type breakdown for a tooltip. Counts only —
- * the original text and replacement tokens never reach the client.
+ * JC-CHAT Stage A (2026-06-25) — formatSyniBreakdown helper retained
+ * for potential reuse by the per-message badge's expansion. The
+ * removed inline "Content screened" chip was its only caller; the
+ * surviving badge can format the by-type breakdown the same way.
  */
 function formatSyniBreakdown(byType) {
   if (!byType || typeof byType !== "object") return "";
@@ -2278,172 +2267,5 @@ function BypassDialog({ info, onClose, onConfirm }) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function AuditDialog({ open, onClose, chatId }) {
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(false);
-  // Phase J — Synisense audit metrics strip + storyline (everyday-people numbers).
-  const [metrics, setMetrics] = useState(null);
-  useEffect(() => {
-    if (!open || !chatId) return;
-    setLoading(true);
-    api.get(`/chats/${chatId}/audit`)
-      .then(({ data }) => setRows(data?.rows || []))
-      .catch(() => setRows([]))
-      .finally(() => setLoading(false));
-    // Fetch the human-readable Synisense metrics in parallel — never blocks render.
-    api.get(`/chats/${chatId}/synisense-metrics`)
-      .then(({ data }) => setMetrics(data))
-      .catch(() => setMetrics(null));
-  }, [open, chatId]);
-
-  const onDownload = async () => {
-    if (!chatId) return;
-    try {
-      const res = await api.get(`/chats/${chatId}/audit/export.zip`, {
-        responseType: "blob",
-      });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const a = window.document.createElement("a");
-      a.href = url;
-      a.download = `akki-chat-audit-${chatId.slice(0, 8)}.zip`;
-      window.document.body.appendChild(a);
-      a.click();
-      window.document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      toast.success("Audit pack downloaded.");
-    } catch (e) { toast.error(apiErrorMessage(e)); }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="bg-[var(--cream)] border-[var(--rule)] max-w-3xl max-h-[80vh] overflow-y-auto" data-testid="chat-audit-dialog">
-        <DialogHeader>
-          <div className="flex items-center justify-between gap-3">
-            <DialogTitle className="akki-serif font-normal">Audit trail</DialogTitle>
-            <Button
-              size="sm"
-              onClick={onDownload}
-              disabled={loading || rows.length === 0}
-              className="bg-[var(--ink)] hover:bg-[var(--ink)]/90 text-white text-[11.5px] h-8"
-              data-testid="chat-audit-export-btn"
-            >
-              <Download className="w-3 h-3 mr-1.5" /> Export audit pack
-            </Button>
-          </div>
-          <DialogDescription className="text-[12.5px] text-[var(--muted)]">
-            Append-only, hash-chained. Auditors can verify the chain by recomputing each
-            row's SHA256 against the canonical JSON of (prev_hash, id, at, account_id,
-            chat_id, action, payload, ip, ua_sha). The export bundles a stdlib-only
-            <code className="font-mono text-[11px] px-1">verify.py</code> for one-shot validation.
-          </DialogDescription>
-        </DialogHeader>
-        {/* Phase J — Synisense audit metrics strip + editorial storyline. */}
-        {metrics && (
-          <div className="border border-[var(--rule)] bg-[var(--cream)]/40 rounded-sm p-3 mb-3" data-testid="chat-audit-synisense-metrics">
-            <div className="flex flex-wrap gap-x-6 gap-y-2 items-baseline">
-              <div>
-                <span className="block text-[10px] uppercase tracking-[0.18em] text-[var(--muted)]">Identifiers redacted</span>
-                <span className="akki-serif text-[24px] text-[var(--accent)]" data-testid="metric-identifiers">{metrics.identifiers_redacted}</span>
-                <span className="text-[11px] text-[var(--muted)] ml-1">in this conversation</span>
-              </div>
-              <div>
-                <span className="block text-[10px] uppercase tracking-[0.18em] text-[var(--muted)]">Model calls</span>
-                <span className="akki-serif text-[24px] text-[var(--accent)]" data-testid="metric-modelcalls">{metrics.model_calls}</span>
-                <span className="text-[11px] text-[var(--muted)] ml-1">through Synisense Shield</span>
-              </div>
-              {/* Phase C Chat cleanup (2026-05-26): removed the
-                  "Layers won" column entirely per brief item #4. The
-                  metrics.layer_breakdown payload is still emitted by
-                  the backend (no schema change) — it's just not
-                  surfaced in this modal. Identifiers Redacted +
-                  Model Calls re-flow side-by-side naturally via
-                  the existing flex-wrap parent. */}
-            </div>
-            <p className="akki-serif text-[14px] text-[var(--ink)] italic mt-3 leading-relaxed" data-testid="metric-storyline">
-              {metrics.storyline}
-            </p>
-            {/* CHAT sprint (2026-05-12) — Trust Panel cross-link.
-                Tertiary v7 button: no border, graphite text, oxblood
-                arrow on hover. Right-aligned. Opens the global Trust
-                Panel mounted in AppShell via the
-                `akki:open-trust-panel` event bus. */}
-            <div className="flex justify-end mt-3">
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  window.dispatchEvent(new Event("akki:open-trust-panel"));
-                }}
-                className="group inline-flex items-center gap-2 text-[13px] font-medium text-[var(--graphite)] hover:text-[var(--ink)] transition-colors"
-                data-testid="chat-audit-trust-panel-link"
-              >
-                View full Trust Panel
-                <span className="inline-flex items-center transition-all text-[var(--graphite)] group-hover:text-[var(--oxblood)] group-hover:ml-1">→</span>
-              </button>
-            </div>
-          </div>
-        )}
-        {loading ? (
-          <p className="text-[12px] text-[var(--muted)] italic text-center py-8">Loading…</p>
-        ) : rows.length === 0 ? (
-          <p className="text-[12px] text-[var(--muted)] italic text-center py-8">No audit rows yet.</p>
-        ) : (
-          <div className="font-mono text-[11px] space-y-2" data-testid="chat-audit-rows">
-            {rows.map((r) => (
-              <div key={r.id} className="bg-white border border-[var(--rule)] rounded-sm p-2.5">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-[var(--accent)] uppercase">{r.action}</span>
-                  <span className="text-[var(--muted)] text-[10px]">{r.at}</span>
-                </div>
-                <p className="text-[10px] text-[var(--muted)] mt-1 break-all">
-                  hash <span className="text-[var(--ink)]">{r.row_hash.slice(0, 16)}…</span>{" "}
-                  · prev <span className="text-[var(--muted)]">{r.prev_hash.slice(0, 16)}…</span>{" "}
-                  · ip {r.ip || "—"}
-                </p>
-                {Object.keys(r.payload || {}).length > 0 && (
-                  <pre className="text-[10.5px] text-[var(--deep)] bg-[var(--cream)]/60 p-2 mt-1.5 rounded-sm whitespace-pre-wrap break-all">
-                    {JSON.stringify(r.payload, null, 2)}
-                  </pre>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function SynisenseInlineBadge({ chatId }) {
-  // Phase J — lightweight live counter shown beside the chat title.
-  // Polls every 30s so the number ticks up as redactions accumulate.
-  // Tooltip surfaces the per-layer breakdown.
-  const [m, setM] = useState(null);
-  useEffect(() => {
-    if (!chatId) return;
-    let alive = true;
-    const fetchOnce = () => {
-      api.get(`/chats/${chatId}/synisense-metrics`)
-        .then(({ data }) => { if (alive) setM(data); })
-        .catch(() => {});
-    };
-    fetchOnce();
-    const id = setInterval(fetchOnce, 30000);
-    return () => { alive = false; clearInterval(id); };
-  }, [chatId]);
-  if (!m || (m.identifiers_redacted || 0) === 0) return null;
-  const lb = m.layer_breakdown || {};
-  const layersUsed = ["regex", "presidio", "llm"].filter((k) => (lb[k] || 0) > 0).length;
-  return (
-    <span
-      className="ml-2 inline-block px-1.5 py-[1px] border border-[var(--rule)] rounded-sm text-[10px] text-[var(--accent)] align-baseline"
-      title={`Layer breakdown — regex: ${lb.regex || 0} · Presidio: ${lb.presidio || 0} · LLM-fallback: ${lb.llm || 0}`}
-      data-testid="chat-synisense-inline-badge"
-    >
-      {m.identifiers_redacted} redacted · {layersUsed}-layer Shield
-    </span>
   );
 }

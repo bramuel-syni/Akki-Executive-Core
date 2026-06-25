@@ -1,0 +1,45 @@
+{
+  "objective_id": "obj-thin-slice-c36bc123c4",
+  "refused": false,
+  "refusal_reason": null,
+  "progress_pct": 98,
+  "progress_rationale": "Per tracking doc 3 ([[DATE_18] ops update), the monthly active revenue index reached 98 (target \u2265100), with Phases 1 and 2 exit gates passed and trajectory projecting target achievement by Day 150, ahead of the Day-180 deadline.",
+  "probability_pct": 65,
+  "probability_band": "Likely",
+  "probability_rationale": "Corpus-tiered claim with strategic plans and tracking updates as evidence, but future target achievement depends on sustained execution.",
+  "base_doc_ids": [
+    "doc-base-recovery-plan-bd74efdfb1",
+    "doc-base-kpi-contract-27c577d906"
+  ],
+  "tracking_doc_ids": [
+    "doc-track-week04-e0b65ac31e",
+    "doc-track-week09-08747f45b7",
+    "doc-track-week16-47115d7eb0"
+  ],
+  "audit_entry_ids": [
+    "cfac14c8-623d-4356-bba2-6ef575acc70c",
+    "b0e4f454-6a9d-48b9-b54e-d271d8f5ab26"
+  ],
+  "assessed_at": "2026-06-25T20:19:06.820134+00:00",
+  "_fixture_objective": {
+    "id": "obj-thin-slice-c36bc123c4",
+    "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
+    "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
+    "kind": "objective",
+    "title": "Recover Q3 monthly active revenue to pre-Q1 baseline",
+    "description": "After a \u22125.5% MoM revenue contraction triggered by a checkout regression, recover monthly active digital revenue back to the pre-Q1 baseline within two quarters.",
+    "target_metric": "monthly_active_revenue_index",
+    "target_value": "Index \u2265 100 (Q1 baseline = 100) within 180 days",
+    "due_date": "2026-12-31",
+    "status": "active"
+  },
+  "_fixture_base_doc_names": [
+    "MYDAWA Recovery Programme \u2014 Strategic Plan (BASE)",
+    "KPI Contract \u2014 Eight Workstreams (BASE)"
+  ],
+  "_fixture_tracking_doc_names": [
+    "Recovery \u2014 Week 4 ops update (TRACKING)",
+    "Recovery \u2014 Week 9 ops update (TRACKING)",
+    "Recovery \u2014 Week 16 ops update (TRACKING)"
+  ]
+}
