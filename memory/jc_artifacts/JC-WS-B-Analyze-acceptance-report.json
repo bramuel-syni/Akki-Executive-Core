@@ -1,0 +1,43 @@
+{
+  "rows": [
+    {
+      "label": "Auto-run highlights seeded (Path A: Validate + Analyze + Forecast)",
+      "passed": true,
+      "detail": "initial_count=3, topics=['forecast', 'trend', 'validate']"
+    },
+    {
+      "label": "Data-aware tips returned from /tips",
+      "passed": true,
+      "detail": "tips_count=5; first_intent=simulate"
+    },
+    {
+      "label": "POST /ask (simulate) accretes a non-refusal highlight",
+      "passed": true,
+      "detail": "intent=simulate, refused=False"
+    },
+    {
+      "label": "POST /ask (out-of-scope) surfaces a REFUSAL highlight (not a fabricated answer)",
+      "passed": true,
+      "detail": "refused=True, topic=refusal, reason=The question references something outside the loaded sources"
+    },
+    {
+      "label": "Close + reopen \u2014 thread intact (initial + 2 follow-ups)",
+      "passed": true,
+      "detail": "reopened=5, expected=5"
+    },
+    {
+      "label": "Continued accretion \u2014 one more highlight added",
+      "passed": "hl-fe7e37ead6d8",
+      "detail": "id=hl-fe7e37ead6d8, intent=forecast"
+    },
+    {
+      "label": "Finish & export composes brief from highlights (no fabrication)",
+      "passed": true,
+      "detail": "ok=True, hl_count=5, desc_len=1122"
+    }
+  ],
+  "passed": 7,
+  "failed": 0,
+  "aid": "ana-b41b13d4f26b",
+  "generated_at": "2026-06-25T09:30:00.863236+00:00"
+}

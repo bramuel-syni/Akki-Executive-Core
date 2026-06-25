@@ -169,12 +169,28 @@ def fetch_doc(doc_id: str) -> dict:
     return sync_db().documents.find_one({"id": doc_id}, {"_id": 0}) or {}
 
 
+def fetch_export_lifecycle(export_id: str) -> dict:
+    """Read lifecycle / commit fields from `work_studio_exports` —
+    the canonical store the DocumentOverlay reads from (per
+    routers/work_studio_overlay.py:97). The legacy `documents`
+    collection mirror is best-effort and does NOT carry the
+    Work-Studio commit fields, so reading there returned None and
+    failed the post-commit acceptance row. Aligning the script to
+    the same store the UI overlay uses is the honest fix."""
+    return sync_db().work_studio_exports.find_one(
+        {"id": export_id},
+        {"_id": 0, "lifecycle_state": 1, "committed_at": 1,
+         "committed_by": 1, "intelligence_report": 1,
+         "structured_content": 1},
+    ) or {}
+
+
 async def main():
     print("=" * 78)
     print("JC-WS-A Board Pack proving slice — full journey, real artefacts")
     print("=" * 78)
     print(f"Account:   {ADMIN_EMAIL}")
-    print(f"Context:   Mara Heritage Bank · Demo")
+    print("Context:   Mara Heritage Bank · Demo")
     print(f"Artefact:  {ARTIFACT_DIR}")
     print()
 
@@ -235,7 +251,6 @@ async def main():
         # Read the full row from Mongo (the polling endpoint filters some fields).
         full_row = fetch_row(export_id)
         intel = full_row.get("intelligence_report") or {}
-        cont_doc_id = full_row.get("continue_doc_id")
         print("  Full intelligence_report after generation:")
         for k in ("confidence_pct", "confidence_rationale", "confidence_scored_at",
                   "confidence_score_skipped_no_sources", "confidence_score_failed",
@@ -251,16 +266,22 @@ async def main():
 
         # ── Step 3 — open detail view (simulate by calling overlay GET).
         print("STEP 3 — Open detail view (GET /work-studio/documents/{aid})")
-        d_row = fetch_doc(cont_doc_id)
-        print(f"  documents.lifecycle_state: {d_row.get('lifecycle_state')!r}")
-        print(f"  documents.intelligence_report present: {bool(d_row.get('intelligence_report'))}")
+        # JC-WS Phase 1 fix #2 — canonical store is work_studio_exports
+        # (the DocumentOverlay UI reads from this collection). The
+        # legacy `documents` collection is a partial mirror without
+        # lifecycle_state, which is why the previous run reported
+        # lifecycle_state=None on commit. Read from the canonical store.
+        ws_lifecycle = fetch_export_lifecycle(export_id)
+        print(f"  work_studio_exports.lifecycle_state: {ws_lifecycle.get('lifecycle_state')!r}")
+        structured_now = ws_lifecycle.get("structured_content") or {}
+        print(f"  work_studio_exports.structured_content sections: {len(structured_now.get('sections') or [])}")
         # Capture pre-accept detail-view state.
         detail_state_pre = {
             "phase": "pre-accept",
-            "lifecycle_state": d_row.get("lifecycle_state"),
-            "intelligence_report": d_row.get("intelligence_report"),
-            "structured_content_keys": list((d_row.get("structured_content") or {}).keys()),
-            "section_count": len((d_row.get("structured_content") or {}).get("sections") or []),
+            "lifecycle_state": ws_lifecycle.get("lifecycle_state"),
+            "intelligence_report": ws_lifecycle.get("intelligence_report"),
+            "structured_content_keys": list(structured_now.keys()),
+            "section_count": len(structured_now.get("sections") or []),
         }
         print()
 
@@ -297,11 +318,11 @@ async def main():
             print()
 
         # Capture post-accept detail view state.
-        d_row_post = fetch_doc(cont_doc_id)
+        ws_post = fetch_export_lifecycle(export_id)
         detail_state_post = {
             "phase": "post-accept",
-            "lifecycle_state": d_row_post.get("lifecycle_state"),
-            "intelligence_report": d_row_post.get("intelligence_report"),
+            "lifecycle_state": ws_post.get("lifecycle_state"),
+            "intelligence_report": ws_post.get("intelligence_report"),
         }
 
         # ── Step 6 — commit (locks).
@@ -318,15 +339,31 @@ async def main():
         else:
             print(f"  body: {cr.text[:240]}")
         print()
-        d_row_committed = fetch_doc(cont_doc_id)
+        ws_committed = fetch_export_lifecycle(export_id)
 
         detail_state_committed = {
             "phase": "post-commit",
-            "lifecycle_state": d_row_committed.get("lifecycle_state"),
-            "committed_at": d_row_committed.get("committed_at"),
-            "committed_by": d_row_committed.get("committed_by"),
-            "intelligence_report": d_row_committed.get("intelligence_report"),
+            "lifecycle_state": ws_committed.get("lifecycle_state"),
+            "committed_at": ws_committed.get("committed_at"),
+            "committed_by": ws_committed.get("committed_by"),
+            "intelligence_report": ws_committed.get("intelligence_report"),
         }
+
+        # ── Step 6b — verify the committed doc is write-locked.
+        # Canonical spec promise: "Committed — explicit, final; LOCKS
+        # the document from further edits." Try a PATCH; expect 409.
+        stamp_account_activity()
+        lock_probe = await client.patch(
+            f"/api/contexts/{CONTEXT_ID}/work-studio/documents/{export_id}",
+            headers=headers,
+            json={"title": "should-not-stick-because-locked"},
+        )
+        print(f"STEP 6b — Edit-after-commit probe: PATCH → {lock_probe.status_code}")
+        edit_locked = lock_probe.status_code == 409
+        detail_state_committed["edit_locked_after_commit"] = edit_locked
+        detail_state_committed["edit_locked_probe_status"] = lock_probe.status_code
+        print(f"  edit_locked_after_commit: {edit_locked}")
+        print()
 
         # ── Step 7 — export via wizard (PDF + PPTX additional formats).
         # The shared Export Wizard is `ExportModal.jsx` which calls the
@@ -392,7 +429,7 @@ async def main():
     (ARTIFACT_DIR / "JC-WS-A-BoardPack-detail-view-state.json").write_text(
         json.dumps(state_artefact, default=str, indent=2)
     )
-    print(f"  ✓ JSON state → JC-WS-A-BoardPack-detail-view-state.json")
+    print("  ✓ JSON state → JC-WS-A-BoardPack-detail-view-state.json")
 
     # ── Acceptance report (honest verdict).
     print()
@@ -424,16 +461,19 @@ async def main():
         ("Commit-lock works",
             state_artefact["detail_view_states"][2]["lifecycle_state"] == "committed",
             f"lifecycle_state={state_artefact['detail_view_states'][2]['lifecycle_state']!r}"),
+        ("Committed document is write-locked (PATCH→409)",
+            bool(state_artefact["detail_view_states"][2].get("edit_locked_after_commit")),
+            f"edit_locked_probe_status={state_artefact['detail_view_states'][2].get('edit_locked_probe_status')!r}"),
         ("DOCX export shipped (>20 KB)",
             len(docx_bytes) > 20000,
             f"{len(docx_bytes)} bytes"),
         ("PDF export shipped via wizard",
             "_download_bytes" in pdf_result,
-            f"{pdf_result.get('byte_len', 0)} bytes" if "_download_bytes" in pdf_result
+            f"{len(pdf_result['_download_bytes'])} bytes" if "_download_bytes" in pdf_result
             else f"failed: {pdf_result.get('error') or pdf_result.get('refusal_text')}"),
         ("PPTX export shipped via wizard",
             "_download_bytes" in pptx_result,
-            f"{pptx_result.get('byte_len', 0)} bytes" if "_download_bytes" in pptx_result
+            f"{len(pptx_result['_download_bytes'])} bytes" if "_download_bytes" in pptx_result
             else f"failed: {pptx_result.get('error') or pptx_result.get('refusal_text')}"),
     ]
     for label, passed, detail in rows:
@@ -441,7 +481,7 @@ async def main():
         print(f"  [{mark}] {label:48s}  {detail}")
 
     acceptance = {
-        "rows": [{"label": l, "passed": p, "detail": d} for l, p, d in rows],
+        "rows": [{"label": lbl, "passed": p, "detail": d} for lbl, p, d in rows],
         "summary": {
             "passed": sum(1 for _, p, _ in rows if p),
             "failed": sum(1 for _, p, _ in rows if not p),

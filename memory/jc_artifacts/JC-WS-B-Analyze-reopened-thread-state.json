@@ -1,0 +1,83 @@
+{
+  "phase": "reopened",
+  "highlight_count": 5,
+  "topics_present": [
+    "forecast",
+    "refusal",
+    "simulate",
+    "trend",
+    "validate"
+  ],
+  "highlights": [
+    {
+      "id": "hl-seed-validate",
+      "created_at": "2026-06-25T09:29:26.101480+00:00",
+      "title": "Q3 totals reconcile within \u00b10.4% of the source ledger.",
+      "body": "Three-quarter rollup checks against the source ledger to within 0.4%. The numbers used for the rest of this analysis are safe to forward.",
+      "topic": "validate",
+      "confidence": "high",
+      "citation": "Regional!C2:C37",
+      "intent": "validate",
+      "asked_question": "(initial validate auto-run)",
+      "refused": false
+    },
+    {
+      "id": "hl-seed-analyze",
+      "created_at": "2026-06-25T09:29:26.101480+00:00",
+      "title": "East region revenue fell 18% QoQ, dragging the total flat.",
+      "body": "East dropped from $4.2M to $3.45M while North and South held steady. Without East, the rollup would have been +6% QoQ.",
+      "topic": "trend",
+      "confidence": "high",
+      "citation": "Regional!C14:C25",
+      "intent": "validate",
+      "asked_question": "(initial analyze auto-run)",
+      "refused": false
+    },
+    {
+      "id": "hl-seed-forecast",
+      "created_at": "2026-06-25T09:29:26.101480+00:00",
+      "title": "Q4 base-case lands at $13.8M \u00b1 $0.6M (R\u00b2=0.78).",
+      "body": "Linear fit on the last 9 months projects Q4 at $13.8M. R\u00b2 of 0.78 makes this a planning-grade read, not a wide-error speculation.",
+      "topic": "forecast",
+      "confidence": "medium",
+      "citation": "Regional!C2:C37",
+      "intent": "forecast",
+      "asked_question": "(initial forecast auto-run)",
+      "refused": false
+    },
+    {
+      "id": "hl-4d5077593072",
+      "created_at": "2026-06-25T09:29:49.940071+00:00",
+      "title": "East flat at $3.45M in Q4 lowers total by region's typical growth",
+      "body": "Holding East at $3.45M removes its expected Q4 growth contribution; total revenue would reflect only West, North, and South performance without East's usual seasonal lift.",
+      "topic": "simulate",
+      "confidence": "medium",
+      "citation": "",
+      "intent": "simulate",
+      "asked_question": "Simulate East staying flat at $3.45M for Q4 \u2014 what happens to the total?",
+      "analyzer_payload": {
+        "intent": "simulate",
+        "target": "Revenue",
+        "horizon": "Q4",
+        "scenario": "East region revenue held flat at $3.45M",
+        "rationale": "User explicitly requests a what-if scenario holding East region constant and observing impact on total revenue."
+      },
+      "refused": false
+    },
+    {
+      "id": "hl-0624536738c1",
+      "created_at": "2026-06-25T09:29:53.332040+00:00",
+      "title": "Can't answer that from the loaded data",
+      "body": "The question references something outside the loaded sources. Add the supporting file(s) or narrow the scope.",
+      "topic": "refusal",
+      "confidence": "high",
+      "citation": "",
+      "intent": "refuse",
+      "asked_question": "What is Pluto's revenue from inter-galactic shipping for FY2027?",
+      "refused": true,
+      "refusal_reason": "The question references something outside the loaded sources. Add the supporting file(s) or narrow the scope.",
+      "refusal_code": "out_of_scope",
+      "rationale": "Entity Pluto and 'inter-galactic shipping' are not present in any loaded column or sample values."
+    }
+  ]
+}

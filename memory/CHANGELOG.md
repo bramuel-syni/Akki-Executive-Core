@@ -2,6 +2,113 @@
 
 > Append-only history of shipped work. Newest first.
 
+## 2026-06-25 — JC-WS dispatch — Phase 1 (Board Pack) + Phase 2 (Analyze) CLOSED
+
+Two proving-slice journeys landed today as REAL artefacts in
+`/app/memory/jc_artifacts/` per the canonical spec at
+`/app/memory/JC_WS_CANONICAL_SPEC.md`.
+
+### Phase 1 — Board Pack proving slice (Part A) — **10/10 acceptance rows green**
+
+Closed three real blockers, surfaced via the proving-slice script:
+
+1. **Shield timeout on confidence scoring** — `contracts/_adapters/_http_client.py`
+   gained a per-method timeout override map. `shield_invoke` now carries
+   `120s` (was global `5s`) to accommodate LLM-bound hops. Other internal
+   hops keep the fast-fail 5s discipline. The 3-retry ReadTimeout loop
+   that previously surfaced `confidence_pct=None` is resolved.
+
+2. **Commit-time tenancy widening** — `routers/work_studio_overlay.py`
+   commit-path was reading `db.documents` with a strict `account_id`
+   filter, excluding context-shared seed docs (account_id=None) that
+   the export-time `_resolve_source_blobs_for_scoring` widened for.
+   Brought commit in line with export; `confidence_score_skipped_no_sources`
+   stops firing on legitimate runs. Canonical store is
+   `work_studio_exports` (the DocumentOverlay reads from this collection);
+   the proving-slice script was migrated to read lifecycle/intel from
+   there too instead of the partial `documents` mirror.
+
+3. **PPTX renderer for board_pack** — `services/work_studio_export.py`
+   gained `render_pack_pptx` (consumes report-shaped sections, converts
+   first-sentence-per-paragraph into slide bullets), `validate_content`
+   accepts `board_pack` / `committee_pack`, and `routers/work_studio_export.py`
+   dispatches `pptx + kind ∈ (board_pack|committee_pack)` to the new
+   renderer. Cover → contents → exec summary → one slide per section
+   → recommendations → sources. No new engine; reuses existing pptx
+   primitives (`_pptx_add_text`, `_pptx_set_slide_bg`, `PPalette`).
+
+4. **JSON-parse hardening on Pass-2 LLM emissions** — `_strip_json_fence`
+   now also handles leading-only fenced output (Sonnet drops trailing
+   fences at ~16 K char emissions). Added `json_repair` library
+   (`requirements.txt`) as a deterministic syntax-repair pass for
+   trailing-comma / missing-delimiter Sonnet flakiness on large pack
+   prompts. Repair NEVER fabricates content — only fixes syntax.
+
+5. **Edit-lock invariant on committed documents** — proving-slice
+   probes a `PATCH` after commit and asserts `409`. Surfaces the
+   write-lock promise from the canonical spec as a tested acceptance row.
+
+Acceptance: REAL confidence pct=60 · REAL period Q3 2025 · REAL source
+list (16 docs) · REAL recommendations (8) · accept-one applies ·
+lifecycle_state=committed · PATCH-after-commit→409 · DOCX 42 KB ·
+PDF 31 KB · PPTX 39 KB. Script: `scripts/jc_ws_a_board_pack_proving_slice.py`.
+Artefacts: `JC-WS-A-BoardPack-{proving-slice.docx,proving-slice.pptx,proving-slice.pdf,acceptance-report.json,detail-view-state.json}`.
+
+### Phase 2 — Analyze proving slice (Part B) — **7/7 acceptance rows green**
+
+Built the FOUR missing canonical-spec elements on the Analyze drawer
+(`/app/frontend/src/components/analyze/HighlightsWorkspace.jsx`):
+- **(d)** Highlights-as-tweet-cards grouped under topics (trend /
+  anomaly / forecast / simulate / target / validate / refusal).
+- **(e)** Docked free-text prompt with `⌘↵` send, "plain language works"
+  subtle cue, and a `Sparkles`-iconified Workspace tab now defaults
+  the AnalyzeDrawer.
+- **(f)** Data-aware question tips strip (5 chips by default) rendered
+  both as the empty state guidance AND as a strip above the dock when
+  highlights exist.
+- **(g)** "Finish & export" button → composes a `description` from
+  the accreted (non-refused) highlights and hands off to the shared
+  Work Studio export wizard.
+
+Backend (3 new endpoints, all Shield-routed, tenant-scoped):
+- `GET  /api/workbook/v2/analyses/{aid}/tips` — Shield call to
+  `analyze_workspace.tips` (Sonnet) with deterministic column-derived
+  fallback when Shield is unreachable.
+- `POST /api/workbook/v2/analyses/{aid}/ask` — Shield call to
+  `analyze_workspace.intent_router` for classification → Shield call
+  to `analyze_workspace.narrate` for tweet-card body → persists to
+  `analyses.highlights[]`. Surfaces refusals as `topic=refusal` with
+  one of five short reason codes (no_time_series / missing_target /
+  out_of_scope / ambiguous_intent / insufficient_data).
+- `POST /api/workbook/v2/analyses/{aid}/finish` — composes the
+  highlights into an export-ready brief description for the wizard.
+
+Shield purpose allow-list (`services/synisense/config.py`) now carries
+`analyze_workspace.*` so the Phase 2 calls clear validation.
+
+Response models (`contracts/responses.py`) added:
+`AnalyzeWorkspaceHighlight`, `AnalyzeWorkspaceAskResponse`,
+`AnalyzeWorkspaceTip`, `AnalyzeWorkspaceTipsResponse`,
+`AnalyzeWorkspaceFinishResponse`. The polymorphic-response-route
+ratchet baseline stays clean (45 routes, all typed).
+
+Acceptance: initial Path-A highlights seeded (trend/forecast/validate) ·
+5 data-aware tips · simulate question accreted with `topic=simulate` ·
+out-of-scope question refused with reason · close+reopen thread intact
+(5 highlights) · continued accretion · finish-export composes a
+1122-char brief from 5 highlights. Script:
+`scripts/jc_ws_b_analyze_proving_slice.py`. Artefacts:
+`JC-WS-B-Analyze-{initial-run-highlights,followup-simulate-highlight,refusal-guard-evidence,reopened-thread-state,finish-export-payload,acceptance-report}.json`
++ drawer screenshot at `JC-WS-B-Analyze-drawer-screenshots/`.
+
+### Carry-over to next sprint
+- Phase 3 — Generate Document fan-out: replicate the proven Board
+  Pack pattern across Committee Pack, Minutes, Brief, Deck, Report,
+  Draft + 3 enhance flows. ONE artefact per kind.
+- `LLM_MODELS_REFRESH` (P2) — still pinned per user directive.
+
+
+
 ## 2026-06-24 — Full Runway dispatch CLOSED (Stages 1-5)
 
 Five-stage runway dispatch landed today. Combined regression: **170

@@ -1,0 +1,18 @@
+{
+  "asked": "What is Pluto's revenue from inter-galactic shipping for FY2027?",
+  "highlight": {
+    "id": "hl-0624536738c1",
+    "created_at": "2026-06-25T09:29:53.332040+00:00",
+    "title": "Can't answer that from the loaded data",
+    "body": "The question references something outside the loaded sources. Add the supporting file(s) or narrow the scope.",
+    "topic": "refusal",
+    "confidence": "high",
+    "citation": "",
+    "intent": "refuse",
+    "asked_question": "What is Pluto's revenue from inter-galactic shipping for FY2027?",
+    "refused": true,
+    "refusal_reason": "The question references something outside the loaded sources. Add the supporting file(s) or narrow the scope.",
+    "refusal_code": "out_of_scope",
+    "rationale": "Entity Pluto and 'inter-galactic shipping' are not present in any loaded column or sample values."
+  }
+}

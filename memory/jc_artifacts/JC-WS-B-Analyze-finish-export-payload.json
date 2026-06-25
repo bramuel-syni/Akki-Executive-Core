@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "export_kind": "report",
+  "description": "Check before forwarding to the EC \u2014 and forecast Q4.\n\nHighlights from the workspace thread:\n- Q3 totals reconcile within \u00b10.4% of the source ledger.\n  Three-quarter rollup checks against the source ledger to within 0.4%. The numbers used for the rest of this analysis are safe to forward.\n- East region revenue fell 18% QoQ, dragging the total flat.\n  East dropped from $4.2M to $3.45M while North and South held steady. Without East, the rollup would have been +6% QoQ.\n- Q4 base-case lands at $13.8M \u00b1 $0.6M (R\u00b2=0.78).\n  Linear fit on the last 9 months projects Q4 at $13.8M. R\u00b2 of 0.78 makes this a planning-grade read, not a wide-error speculation.\n- East flat at $3.45M in Q4 lowers total by region's typical growth\n  Holding East at $3.45M removes its expected Q4 growth contribution; total revenue would reflect only West, North, and South performance without East's usual seasonal lift.\n- Forecast Q1 2026 revenue forecast requested; EC check needed\n  User wants Forecast Q1 2026 revenue projected under current trend, but also asks to verify with EC and forecast Q4 separately\u2014clarify scope before running models.",
+  "title": "Q3 2025 sales \u2014 regional + SKU read",
+  "highlights_count": 5,
+  "refused_count": 1
+}

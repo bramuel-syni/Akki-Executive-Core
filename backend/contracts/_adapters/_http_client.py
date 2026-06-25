@@ -61,6 +61,23 @@ DEFAULT_TIMEOUT_S = float(os.environ.get("INTERNAL_TRANSPORT_TIMEOUT_S", "5.0"))
 DEFAULT_RETRIES = int(os.environ.get("INTERNAL_TRANSPORT_RETRIES", "3"))
 DEFAULT_BACKOFF_BASE_S = 0.1
 
+# JC-WS Phase 1 (2026-06-25) — per-method timeout overrides.
+# The default 5s timeout is correct for fast in-process hops (signal
+# reads, audit lookups, tenant cache refreshes) and enforces fast-fail
+# discipline. But `shield_invoke` carries an LLM call end-to-end (de-id
+# → provider → re-id → audit → receipt) and that can routinely take
+# 30-90s on board-pack-sized prompts. Without this override, the
+# Work Studio confidence scorer (and any future Shield-routed hop)
+# exhausts 3 retries × 5s and returns None — surfacing as
+# `confidence_pct=None` on committed documents.
+#
+# Keep this map small and per-method. Don't raise the global default —
+# fast-fail on the rest of the surface is the discipline that catches
+# real network failures before they pile up.
+_PER_METHOD_TIMEOUT_S: Dict[str, float] = {
+    "shield_invoke": 120.0,
+}
+
 
 def _per_context_base_url(context_name: str) -> str:
     """Resolve the per-context base URL.
@@ -213,6 +230,9 @@ class _HTTPAdapterBase:
     async def _call(self, method_name: str, **kwargs: Any) -> Any:
         url = f"{self._base_url}/api/internal/v1/{self.context_name}/method/{method_name}"
         headers = {"X-Internal-Auth": _internal_secret(), "Content-Type": "application/json"}
+        # JC-WS Phase 1 (2026-06-25) — per-method timeout. Slow LLM-bound
+        # hops (shield_invoke) need ≥120s; the rest keep the 5s default.
+        method_timeout = _PER_METHOD_TIMEOUT_S.get(method_name, self._timeout_s)
         # Phase 5.5.2 — sanitize Pydantic / dataclass kwargs into JSON-
         # safe dicts before the httpx.post(json=...) call. Plain dicts
         # / primitives / lists pass through unchanged. See the
@@ -222,7 +242,7 @@ class _HTTPAdapterBase:
         attempts = max(1, self._retries)
         for attempt in range(1, attempts + 1):
             try:
-                async with httpx.AsyncClient(timeout=self._timeout_s) as client:
+                async with httpx.AsyncClient(timeout=method_timeout) as client:
                     resp = await client.post(url, json=json_kwargs, headers=headers)
                 if resp.status_code == 200:
                     payload = resp.json()

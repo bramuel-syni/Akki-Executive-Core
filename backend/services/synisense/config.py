@@ -117,6 +117,17 @@ ALLOWED_PURPOSES: Set[str] = {
     "work_studio.sandbox.generate",
     "work_studio.*",
 
+    # JC-WS Phase 2 (2026-06-25) — Analyze workspace (canonical
+    # spec Part B). The docked-prompt + tips strip + finish-export
+    # journey routes free-text questions to a Shield-routed
+    # classifier and narrates the resulting analyzer payload as
+    # tweet-style highlights. Tenant-scoped, account-scoped, audit-
+    # logged via the standard Shield boundary.
+    "analyze_workspace.intent_router",
+    "analyze_workspace.narrate",
+    "analyze_workspace.tips",
+    "analyze_workspace.*",
+
     # Document Journal
     "document_journal.commentary.generate",
     "document_journal.meta.generate",

@@ -2,13 +2,13 @@
   "rows": [
     {
       "label": "REAL confidence score computed",
-      "passed": false,
-      "detail": "pct=None"
+      "passed": true,
+      "detail": "pct=60"
     },
     {
       "label": "REAL source list (sources_count > 0)",
       "passed": true,
-      "detail": "sources_count=7, audit.source_document_ids=['1cb3bbf4-8c30-435e-950e-c94ceaef1160', '6b73b52b-189f-485e-9c18-05f7d3bbfce4', 'c5dd2d91-d5ed-4aed-a2cd-cade5b98833a', '03450baa-4046-4019-9c5d-b96283cedab3', 'cb497013-4ac4-4bc6-b41b-03632afed4c7', '550ae771-f7f6-4efa-9cb2-c15599464e55', '0fed8723-3928-4603-afed-4eb84f2a9693']"
+      "detail": "sources_count=16, audit.source_document_ids=['60e077a1-7b6f-4916-afe1-09324835089e', 'a601c7d3-91b7-474c-b5bb-e4e9e334f3a1', '199d036f-5045-49ad-b2df-fe5148d0148f', '8db617b2-e9bf-401b-9747-5abfedd6c0d5', 'fce92ae0-cfbf-44c5-bce7-80f69bbcf739', 'c80ac324-04e4-4bee-aac0-1135fec133ce', '2e148bb6-4ac4-44b0-8dfb-c78147814851', '4f45d661-d9be-416f-b6da-3999da38ee1c', '792d2264-0ee2-4ae7-922e-e1956a39cf61', '1cb3bbf4-8c30-435e-950e-c94ceaef1160', '6b73b52b-189f-485e-9c18-05f7d3bbfce4', 'c5dd2d91-d5ed-4aed-a2cd-cade5b98833a', '03450baa-4046-4019-9c5d-b96283cedab3', 'cb497013-4ac4-4bc6-b41b-03632afed4c7', '550ae771-f7f6-4efa-9cb2-c15599464e55', '0fed8723-3928-4603-afed-4eb84f2a9693']"
     },
     {
       "label": "REAL period",
@@ -18,36 +18,41 @@
     {
       "label": "REAL recommendations (count > 0)",
       "passed": true,
-      "detail": "count=7"
+      "detail": "count=8"
     },
     {
       "label": "Accept-one-recommendation flow works",
       "passed": true,
-      "detail": "accepted_rec_id='rec-f8e976880247', applied_count=1"
+      "detail": "accepted_rec_id='rec-cf728329f66c', applied_count=1"
     },
     {
       "label": "Commit-lock works",
-      "passed": false,
-      "detail": "lifecycle_state=None"
+      "passed": true,
+      "detail": "lifecycle_state='committed'"
+    },
+    {
+      "label": "Committed document is write-locked (PATCH\u2192409)",
+      "passed": true,
+      "detail": "edit_locked_probe_status=409"
     },
     {
       "label": "DOCX export shipped (>20 KB)",
       "passed": true,
-      "detail": "41246 bytes"
+      "detail": "42491 bytes"
     },
     {
       "label": "PDF export shipped via wizard",
       "passed": true,
-      "detail": "0 bytes"
+      "detail": "31277 bytes"
     },
     {
       "label": "PPTX export shipped via wizard",
-      "passed": false,
-      "detail": "failed: validation:No renderer for kind=board_pack format=pptx."
+      "passed": true,
+      "detail": "39916 bytes"
     }
   ],
   "summary": {
-    "passed": 6,
-    "failed": 3
+    "passed": 10,
+    "failed": 0
   }
 }

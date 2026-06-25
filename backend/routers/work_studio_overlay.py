@@ -367,11 +367,23 @@ async def commit_document(
         # Resolve source docs from the explicit allowlist (Phase 5).
         source_doc_ids = row.get("source_document_ids") or []
         if source_doc_ids:
+            # JC-WS-A Phase 1 (2026-06-25) — tenancy-safe widening to
+            # match the export-time resolver `_resolve_source_blobs_for_scoring`.
+            # The legacy strict `{account_id: ctx["account"]["id"]}` filter
+            # excluded context-shared seed docs (account_id=None / missing)
+            # that the export path DID see, so commit-time scoring returned
+            # zero blobs and surfaced `confidence_score_skipped_no_sources=True`
+            # even when the compile-time score was real. Context membership
+            # is already gated by the route decorator; widening here is safe.
             blob_rows = await db.documents.find(
                 {
                     "id": {"$in": source_doc_ids[:20]},
-                    "account_id": ctx["account"]["id"],
                     "context_id": context_id,
+                    "$or": [
+                        {"account_id": ctx["account"]["id"]},
+                        {"account_id": None},
+                        {"account_id": {"$exists": False}},
+                    ],
                 },
                 {"_id": 0, "id": 1, "name": 1, "extracted_text": 1, "file_name": 1},
             ).to_list(length=20)

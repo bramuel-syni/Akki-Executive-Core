@@ -664,3 +664,78 @@ class ChatResponse(BaseModel):
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
     messages: Optional[List[Any]] = None
+
+
+
+# ─────────────────────────────────────────────────────────────────────
+# JC-WS Phase 2 (2026-06-25) — Analyze workspace (canonical spec Part B)
+# Three endpoints back the docked-prompt + tips + finish-export
+# journey. Each gets a typed response shape to satisfy the
+# Phase 5.2 polymorphic-response-route ratchet.
+# ─────────────────────────────────────────────────────────────────────
+
+
+class AnalyzeWorkspaceHighlight(BaseModel):
+    """One accreted highlight card on the Analyze workspace thread.
+
+    Persisted to `analyses.highlights[]`; returned verbatim from
+    `POST /workbook/v2/analyses/{aid}/ask` and surfaced in the FE
+    HighlightsWorkspace tweet-card grid.
+    """
+    model_config = ConfigDict(extra="allow")
+    id: Optional[str] = None
+    created_at: Optional[str] = None
+    title: Optional[str] = None
+    body: Optional[str] = None
+    topic: Optional[str] = None
+    confidence: Optional[str] = None
+    citation: Optional[str] = None
+    intent: Optional[str] = None
+    asked_question: Optional[str] = None
+    refused: Optional[bool] = None
+    refusal_reason: Optional[str] = None
+    refusal_code: Optional[str] = None
+    rationale: Optional[str] = None
+    analyzer_payload: Optional[Dict[str, Any]] = None
+
+
+class AnalyzeWorkspaceAskResponse(BaseModel):
+    """Shape of `POST /workbook/v2/analyses/{aid}/ask`.
+
+    The route persists the highlight then returns it under
+    `highlight`. The dock can render it immediately without a
+    re-fetch of the whole analysis row.
+    """
+    model_config = ConfigDict(extra="allow")
+    highlight: Optional[AnalyzeWorkspaceHighlight] = None
+
+
+class AnalyzeWorkspaceTip(BaseModel):
+    """A single data-aware question tip surfaced under the docked
+    prompt. `intent` maps to the closed analyzer vocabulary so the
+    FE can decorate chips per intent."""
+    model_config = ConfigDict(extra="allow")
+    text: Optional[str] = None
+    intent: Optional[str] = None
+
+
+class AnalyzeWorkspaceTipsResponse(BaseModel):
+    """Shape of `GET /workbook/v2/analyses/{aid}/tips`."""
+    model_config = ConfigDict(extra="allow")
+    tips: Optional[List[AnalyzeWorkspaceTip]] = None
+
+
+class AnalyzeWorkspaceFinishResponse(BaseModel):
+    """Shape of `POST /workbook/v2/analyses/{aid}/finish`. The
+    finish-export handoff returns the composed brief (description)
+    + counts the FE can show as a 'ready to export' preview before
+    the user fires the actual work_studio export wizard."""
+    model_config = ConfigDict(extra="allow")
+    ok: Optional[bool] = None
+    reason: Optional[str] = None
+    hint: Optional[str] = None
+    export_kind: Optional[str] = None
+    description: Optional[str] = None
+    title: Optional[str] = None
+    highlights_count: Optional[int] = None
+    refused_count: Optional[int] = None

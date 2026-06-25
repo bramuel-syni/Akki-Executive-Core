@@ -1,0 +1,22 @@
+{
+  "asked": "Simulate East staying flat at $3.45M for Q4 \u2014 what happens to the total?",
+  "highlight": {
+    "id": "hl-4d5077593072",
+    "created_at": "2026-06-25T09:29:49.940071+00:00",
+    "title": "East flat at $3.45M in Q4 lowers total by region's typical growth",
+    "body": "Holding East at $3.45M removes its expected Q4 growth contribution; total revenue would reflect only West, North, and South performance without East's usual seasonal lift.",
+    "topic": "simulate",
+    "confidence": "medium",
+    "citation": "",
+    "intent": "simulate",
+    "asked_question": "Simulate East staying flat at $3.45M for Q4 \u2014 what happens to the total?",
+    "analyzer_payload": {
+      "intent": "simulate",
+      "target": "Revenue",
+      "horizon": "Q4",
+      "scenario": "East region revenue held flat at $3.45M",
+      "rationale": "User explicitly requests a what-if scenario holding East region constant and observing impact on total revenue."
+    },
+    "refused": false
+  }
+}

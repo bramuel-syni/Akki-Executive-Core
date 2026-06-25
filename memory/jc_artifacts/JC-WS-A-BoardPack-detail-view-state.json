@@ -4,6 +4,15 @@
   "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
   "account_email": "admin@akki.ai",
   "source_document_ids": [
+    "60e077a1-7b6f-4916-afe1-09324835089e",
+    "a601c7d3-91b7-474c-b5bb-e4e9e334f3a1",
+    "199d036f-5045-49ad-b2df-fe5148d0148f",
+    "8db617b2-e9bf-401b-9747-5abfedd6c0d5",
+    "fce92ae0-cfbf-44c5-bce7-80f69bbcf739",
+    "c80ac324-04e4-4bee-aac0-1135fec133ce",
+    "2e148bb6-4ac4-44b0-8dfb-c78147814851",
+    "4f45d661-d9be-416f-b6da-3999da38ee1c",
+    "792d2264-0ee2-4ae7-922e-e1956a39cf61",
     "1cb3bbf4-8c30-435e-950e-c94ceaef1160",
     "6b73b52b-189f-485e-9c18-05f7d3bbfce4",
     "c5dd2d91-d5ed-4aed-a2cd-cade5b98833a",
@@ -14,20 +23,42 @@
   ],
   "cadence": "one_off",
   "exports": {
-    "docx_export_id": "e2fc1dc3-ab73-4f58-b02b-d140f194f052",
-    "docx_bytes": 41246,
+    "docx_export_id": "002f6c29-f0fa-4275-a743-8522d51a47d4",
+    "docx_bytes": 42491,
     "pdf_completed": true,
-    "pptx_completed": false
+    "pptx_completed": true
   },
   "detail_view_states": [
     {
       "phase": "pre-accept",
-      "lifecycle_state": null,
+      "lifecycle_state": "draft",
       "intelligence_report": {
+        "confidence_breakdown": {
+          "source_coverage": 95,
+          "internal_consistency": 90,
+          "gap_clarity": 85,
+          "recommendation_grounding": 80
+        },
+        "confidence_pct": 90,
+        "confidence_rationale": "Document heavily cites source materials across all substantive claims (NPL figures, capital ratios, operational metrics). Gap clarity is strong\u2014explicitly flags missing cohort analysis, external benchmarks, and pilot data needed before pivo",
+        "confidence_score_audit_id": "aud-9159f8f05f0d4929ab60a4f29ba7735e",
+        "confidence_score_failed": false,
+        "confidence_score_skipped_no_sources": false,
+        "confidence_scored_at": "2026-06-25T09:13:52.422588+00:00",
+        "confidence_scored_at_cache_key": "cd5ef68f53891cf36b6d13c81c48a24d917107bca95cfe4a5bdf687e184ef8e2",
         "audit": {
-          "generated_at": "2026-06-25T08:10:36.308610+00:00",
+          "generated_at": "2026-06-25T09:13:52.424525+00:00",
           "kind": "board_pack",
           "source_document_ids": [
+            "60e077a1-7b6f-4916-afe1-09324835089e",
+            "a601c7d3-91b7-474c-b5bb-e4e9e334f3a1",
+            "199d036f-5045-49ad-b2df-fe5148d0148f",
+            "8db617b2-e9bf-401b-9747-5abfedd6c0d5",
+            "fce92ae0-cfbf-44c5-bce7-80f69bbcf739",
+            "c80ac324-04e4-4bee-aac0-1135fec133ce",
+            "2e148bb6-4ac4-44b0-8dfb-c78147814851",
+            "4f45d661-d9be-416f-b6da-3999da38ee1c",
+            "792d2264-0ee2-4ae7-922e-e1956a39cf61",
             "1cb3bbf4-8c30-435e-950e-c94ceaef1160",
             "6b73b52b-189f-485e-9c18-05f7d3bbfce4",
             "c5dd2d91-d5ed-4aed-a2cd-cade5b98833a",
@@ -38,60 +69,87 @@
           ],
           "model_version": "anthropic_direct/claude-sonnet-4-5"
         },
-        "executive_summary": "Fifteen months into the five-year plan, the board faces a strategic decision point. Digital operational delivery exceeds targets: mobile transactions run at 2.4\u00d7 baseline, uptime holds at 99.6%, and cost-to-serve on retail customers has fallen 18%. The capital position remains comfortable at 16.4% CET1, 240 basis points above the internal floor. Two concentrations require board attention: real estate exposure has drifted to 31.2% against a 25% internal guideline, and digital lending NPLs have reached 9% against an original 6-7% assumption. The CEO recommends pivoting the digital lending product mix toward secured SME credit and lowering the FY28 digital revenue target from 18% to 16%. The board must decide whether to approve the strategic refresh, maintain the original path, or adopt a more conservative posture.",
+        "executive_summary": "Fifteen months into the five-year plan, the board meets to decide capital allocation under strategic uncertainty. Digital operations exceed every target: mobile transactions run at 2.4\u00d7 baseline, uptime holds at 99.6%, cost-to-serve has fallen 18%. The capital position remains comfortable at 16.4% CET1, providing 240 basis points above the internal floor. Two concentrations require board decisions. Real estate exposure has reached 31.2% against the 25% internal guideline. Digital lending NPLs have crossed 9% for the second time, against an original model that anticipated 6-7% steady state. The CEO assesses that cohort dynamics were insufficiently understood at strategy approval and recommends lowering the digital revenue target from 18% to 16% by FY28, pivoting the product mix from unsecured consumer to secured SME lending. The board must set risk tolerance bands and decision criteria for management to operate within, rather than commit to a single path without adequate cohort-level data.",
         "framing": "Board Chair and Chief Executive Officer \u00b7 25 June 2025",
-        "pending_recommendations": 7,
+        "pending_recommendations": 8,
         "period": "Q3 2025",
         "recommendations": [
           {
-            "id": "rec-f8e976880247",
-            "text": "Board \u2014 approve the strategic refresh with Option 3 (16% digital revenue target, pivot to secured SME digital lending) or select an alternative path",
+            "id": "rec-cf728329f66c",
+            "text": "Board to set explicit risk tolerance band for digital lending NPLs (acceptable range: 6-9%, 8-11%, or other) by end of meeting, determining whether current performance is within strategic tolerance or requires pivot.",
             "addressed": false
           },
           {
-            "id": "rec-e3c811c71431",
-            "text": "CEO \u2014 present a detailed execution plan for the secured SME digital lending pivot, including underwriting competence assessment, customer relationship strategy, and revenue yield assumptions",
+            "id": "rec-2368f5acf154",
+            "text": "CEO to commission external credit portfolio review and digital lending benchmark study, delivering cohort-level root cause analysis for 9% NPL rate and peer comparables by end Q4 2025.",
             "addressed": false
           },
           {
-            "id": "rec-e9490df33a89",
-            "text": "CRO \u2014 propose a transition plan for the existing unsecured digital book that quantifies potential near-term loss crystallisation and capital impact",
+            "id": "rec-236ae85e9f3a",
+            "text": "CFO to model capital implications and ROE outcomes for all three digital strategy options (maintain target, reduce target, pivot product) at 8-11% NPL range, presenting to board by August 2025.",
             "addressed": false
           },
           {
-            "id": "rec-d889eb345740",
-            "text": "CFO \u2014 provide ROE trajectory data for Q3 2025 and assess whether current performance tracks to the FY26 sustained 18% ROE target",
+            "id": "rec-70bc033fdc50",
+            "text": "CRO to establish monthly digital portfolio review cadence until NPL trajectory stabilizes below 8% or product pivot is approved, reporting material changes to board within 48 hours.",
             "addressed": false
           },
           {
-            "id": "rec-5effa01e667f",
-            "text": "CEO \u2014 explain what specific aspects of cohort dynamics were insufficiently understood at strategy approval and what analytic process will prevent similar misses in the secured SME pivot",
+            "id": "rec-13acb054da85",
+            "text": "CEO to establish active real estate concentration management protocol, preventing drift beyond 32% and presenting quarterly reduction path to restore 25% guideline by end FY26.",
             "addressed": false
           },
           {
-            "id": "rec-1d8071490571",
-            "text": "CRO \u2014 present a credible plan to bring real estate concentration back within the 25% guideline, including timeline, business line impact, and governance controls",
+            "id": "rec-ed8cee8f4d92",
+            "text": "Board Risk Committee to review secured SME digital lending business case and pilot plan before commitment, assessing whether economics and execution risk are superior to fixing current product.",
             "addressed": false
           },
           {
-            "id": "rec-7f5ba104919f",
-            "text": "Board Risk Committee \u2014 assess whether the two concentration breaches warrant external review of risk management and capital allocation frameworks before approving the strategic refresh",
+            "id": "rec-522f35a9ec5b",
+            "text": "CFO to reserve 100-150 basis points CET1 headroom for opportunistic deployment as specified in capital allocation framework, withholding deployment until digital strategy uncertainty resolves.",
+            "addressed": false
+          },
+          {
+            "id": "rec-f4957251f640",
+            "text": "Board Chair to convene extraordinary strategy session if Q4 digital cohort shows NPLs at or above 9% again, escalating pivot decision timeline.",
             "addressed": false
           }
         ],
-        "sources_count": 7
+        "sources_count": 16
       },
       "structured_content_keys": [],
       "section_count": 0
     },
     {
       "phase": "post-accept",
-      "lifecycle_state": null,
+      "lifecycle_state": "in_review",
       "intelligence_report": {
+        "confidence_breakdown": {
+          "source_coverage": 95,
+          "internal_consistency": 90,
+          "gap_clarity": 85,
+          "recommendation_grounding": 80
+        },
+        "confidence_pct": 90,
+        "confidence_rationale": "Document heavily cites source materials across all substantive claims (NPL figures, capital ratios, operational metrics). Gap clarity is strong\u2014explicitly flags missing cohort analysis, external benchmarks, and pilot data needed before pivo",
+        "confidence_score_audit_id": "aud-9159f8f05f0d4929ab60a4f29ba7735e",
+        "confidence_score_failed": false,
+        "confidence_score_skipped_no_sources": false,
+        "confidence_scored_at": "2026-06-25T09:13:52.422588+00:00",
+        "confidence_scored_at_cache_key": "cd5ef68f53891cf36b6d13c81c48a24d917107bca95cfe4a5bdf687e184ef8e2",
         "audit": {
-          "generated_at": "2026-06-25T08:10:36.308610+00:00",
+          "generated_at": "2026-06-25T09:13:52.424525+00:00",
           "kind": "board_pack",
           "source_document_ids": [
+            "60e077a1-7b6f-4916-afe1-09324835089e",
+            "a601c7d3-91b7-474c-b5bb-e4e9e334f3a1",
+            "199d036f-5045-49ad-b2df-fe5148d0148f",
+            "8db617b2-e9bf-401b-9747-5abfedd6c0d5",
+            "fce92ae0-cfbf-44c5-bce7-80f69bbcf739",
+            "c80ac324-04e4-4bee-aac0-1135fec133ce",
+            "2e148bb6-4ac4-44b0-8dfb-c78147814851",
+            "4f45d661-d9be-416f-b6da-3999da38ee1c",
+            "792d2264-0ee2-4ae7-922e-e1956a39cf61",
             "1cb3bbf4-8c30-435e-950e-c94ceaef1160",
             "6b73b52b-189f-485e-9c18-05f7d3bbfce4",
             "c5dd2d91-d5ed-4aed-a2cd-cade5b98833a",
@@ -102,55 +160,60 @@
           ],
           "model_version": "anthropic_direct/claude-sonnet-4-5"
         },
-        "executive_summary": "Fifteen months into the five-year plan, the board faces a strategic decision point. Digital operational delivery exceeds targets: mobile transactions run at 2.4\u00d7 baseline, uptime holds at 99.6%, and cost-to-serve on retail customers has fallen 18%. The capital position remains comfortable at 16.4% CET1, 240 basis points above the internal floor. Two concentrations require board attention: real estate exposure has drifted to 31.2% against a 25% internal guideline, and digital lending NPLs have reached 9% against an original 6-7% assumption. The CEO recommends pivoting the digital lending product mix toward secured SME credit and lowering the FY28 digital revenue target from 18% to 16%. The board must decide whether to approve the strategic refresh, maintain the original path, or adopt a more conservative posture.",
+        "executive_summary": "Fifteen months into the five-year plan, the board meets to decide capital allocation under strategic uncertainty. Digital operations exceed every target: mobile transactions run at 2.4\u00d7 baseline, uptime holds at 99.6%, cost-to-serve has fallen 18%. The capital position remains comfortable at 16.4% CET1, providing 240 basis points above the internal floor. Two concentrations require board decisions. Real estate exposure has reached 31.2% against the 25% internal guideline. Digital lending NPLs have crossed 9% for the second time, against an original model that anticipated 6-7% steady state. The CEO assesses that cohort dynamics were insufficiently understood at strategy approval and recommends lowering the digital revenue target from 18% to 16% by FY28, pivoting the product mix from unsecured consumer to secured SME lending. The board must set risk tolerance bands and decision criteria for management to operate within, rather than commit to a single path without adequate cohort-level data.",
         "framing": "Board Chair and Chief Executive Officer \u00b7 25 June 2025",
-        "pending_recommendations": 6,
+        "pending_recommendations": 7,
         "period": "Q3 2025",
         "recommendations": [
           {
-            "id": "rec-f8e976880247",
-            "text": "Board \u2014 approve the strategic refresh with Option 3 (16% digital revenue target, pivot to secured SME digital lending) or select an alternative path",
+            "id": "rec-cf728329f66c",
+            "text": "Board to set explicit risk tolerance band for digital lending NPLs (acceptable range: 6-9%, 8-11%, or other) by end of meeting, determining whether current performance is within strategic tolerance or requires pivot.",
             "addressed": true,
-            "addressed_at": "2026-06-25T08:10:40.367058+00:00",
+            "addressed_at": "2026-06-25T09:13:56.480987+00:00",
             "addressed_by": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef"
           },
           {
-            "id": "rec-e3c811c71431",
-            "text": "CEO \u2014 present a detailed execution plan for the secured SME digital lending pivot, including underwriting competence assessment, customer relationship strategy, and revenue yield assumptions",
+            "id": "rec-2368f5acf154",
+            "text": "CEO to commission external credit portfolio review and digital lending benchmark study, delivering cohort-level root cause analysis for 9% NPL rate and peer comparables by end Q4 2025.",
             "addressed": false
           },
           {
-            "id": "rec-e9490df33a89",
-            "text": "CRO \u2014 propose a transition plan for the existing unsecured digital book that quantifies potential near-term loss crystallisation and capital impact",
+            "id": "rec-236ae85e9f3a",
+            "text": "CFO to model capital implications and ROE outcomes for all three digital strategy options (maintain target, reduce target, pivot product) at 8-11% NPL range, presenting to board by August 2025.",
             "addressed": false
           },
           {
-            "id": "rec-d889eb345740",
-            "text": "CFO \u2014 provide ROE trajectory data for Q3 2025 and assess whether current performance tracks to the FY26 sustained 18% ROE target",
+            "id": "rec-70bc033fdc50",
+            "text": "CRO to establish monthly digital portfolio review cadence until NPL trajectory stabilizes below 8% or product pivot is approved, reporting material changes to board within 48 hours.",
             "addressed": false
           },
           {
-            "id": "rec-5effa01e667f",
-            "text": "CEO \u2014 explain what specific aspects of cohort dynamics were insufficiently understood at strategy approval and what analytic process will prevent similar misses in the secured SME pivot",
+            "id": "rec-13acb054da85",
+            "text": "CEO to establish active real estate concentration management protocol, preventing drift beyond 32% and presenting quarterly reduction path to restore 25% guideline by end FY26.",
             "addressed": false
           },
           {
-            "id": "rec-1d8071490571",
-            "text": "CRO \u2014 present a credible plan to bring real estate concentration back within the 25% guideline, including timeline, business line impact, and governance controls",
+            "id": "rec-ed8cee8f4d92",
+            "text": "Board Risk Committee to review secured SME digital lending business case and pilot plan before commitment, assessing whether economics and execution risk are superior to fixing current product.",
             "addressed": false
           },
           {
-            "id": "rec-7f5ba104919f",
-            "text": "Board Risk Committee \u2014 assess whether the two concentration breaches warrant external review of risk management and capital allocation frameworks before approving the strategic refresh",
+            "id": "rec-522f35a9ec5b",
+            "text": "CFO to reserve 100-150 basis points CET1 headroom for opportunistic deployment as specified in capital allocation framework, withholding deployment until digital strategy uncertainty resolves.",
+            "addressed": false
+          },
+          {
+            "id": "rec-f4957251f640",
+            "text": "Board Chair to convene extraordinary strategy session if Q4 digital cohort shows NPLs at or above 9% again, escalating pivot decision timeline.",
             "addressed": false
           }
         ],
-        "sources_count": 7,
+        "sources_count": 16,
         "applied_recommendations": [
           {
-            "rec_id": "rec-f8e976880247",
-            "text": "Board \u2014 approve the strategic refresh with Option 3 (16% digital revenue target, pivot to secured SME digital lending) or select an alternative path",
-            "addressed_at": "2026-06-25T08:10:40.367058+00:00",
+            "rec_id": "rec-cf728329f66c",
+            "text": "Board to set explicit risk tolerance band for digital lending NPLs (acceptable range: 6-9%, 8-11%, or other) by end of meeting, determining whether current performance is within strategic tolerance or requires pivot.",
+            "addressed_at": "2026-06-25T09:13:56.480987+00:00",
             "addressed_by": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef"
           }
         ]
@@ -158,14 +221,36 @@
     },
     {
       "phase": "post-commit",
-      "lifecycle_state": null,
-      "committed_at": null,
-      "committed_by": null,
+      "lifecycle_state": "committed",
+      "committed_at": "2026-06-25T09:14:02.659501+00:00",
+      "committed_by": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
       "intelligence_report": {
+        "confidence_breakdown": {
+          "source_coverage": 0,
+          "internal_consistency": 100,
+          "gap_clarity": 100,
+          "recommendation_grounding": 100
+        },
+        "confidence_pct": 60,
+        "confidence_rationale": "Empty document contains no claims, no contradictions, no unacknowledged gaps, and no recommendations. All four dimensions score neutrally or pass vacuously.",
+        "confidence_score_audit_id": "aud-268d5e3aa44645f9b1cb7ea1b11c6fa2",
+        "confidence_score_failed": false,
+        "confidence_score_skipped_no_sources": false,
+        "confidence_scored_at": "2026-06-25T09:14:02.659464+00:00",
+        "confidence_scored_at_cache_key": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
         "audit": {
-          "generated_at": "2026-06-25T08:10:36.308610+00:00",
+          "generated_at": "2026-06-25T09:13:52.424525+00:00",
           "kind": "board_pack",
           "source_document_ids": [
+            "60e077a1-7b6f-4916-afe1-09324835089e",
+            "a601c7d3-91b7-474c-b5bb-e4e9e334f3a1",
+            "199d036f-5045-49ad-b2df-fe5148d0148f",
+            "8db617b2-e9bf-401b-9747-5abfedd6c0d5",
+            "fce92ae0-cfbf-44c5-bce7-80f69bbcf739",
+            "c80ac324-04e4-4bee-aac0-1135fec133ce",
+            "2e148bb6-4ac4-44b0-8dfb-c78147814851",
+            "4f45d661-d9be-416f-b6da-3999da38ee1c",
+            "792d2264-0ee2-4ae7-922e-e1956a39cf61",
             "1cb3bbf4-8c30-435e-950e-c94ceaef1160",
             "6b73b52b-189f-485e-9c18-05f7d3bbfce4",
             "c5dd2d91-d5ed-4aed-a2cd-cade5b98833a",
@@ -176,60 +261,68 @@
           ],
           "model_version": "anthropic_direct/claude-sonnet-4-5"
         },
-        "executive_summary": "Fifteen months into the five-year plan, the board faces a strategic decision point. Digital operational delivery exceeds targets: mobile transactions run at 2.4\u00d7 baseline, uptime holds at 99.6%, and cost-to-serve on retail customers has fallen 18%. The capital position remains comfortable at 16.4% CET1, 240 basis points above the internal floor. Two concentrations require board attention: real estate exposure has drifted to 31.2% against a 25% internal guideline, and digital lending NPLs have reached 9% against an original 6-7% assumption. The CEO recommends pivoting the digital lending product mix toward secured SME credit and lowering the FY28 digital revenue target from 18% to 16%. The board must decide whether to approve the strategic refresh, maintain the original path, or adopt a more conservative posture.",
+        "executive_summary": "Fifteen months into the five-year plan, the board meets to decide capital allocation under strategic uncertainty. Digital operations exceed every target: mobile transactions run at 2.4\u00d7 baseline, uptime holds at 99.6%, cost-to-serve has fallen 18%. The capital position remains comfortable at 16.4% CET1, providing 240 basis points above the internal floor. Two concentrations require board decisions. Real estate exposure has reached 31.2% against the 25% internal guideline. Digital lending NPLs have crossed 9% for the second time, against an original model that anticipated 6-7% steady state. The CEO assesses that cohort dynamics were insufficiently understood at strategy approval and recommends lowering the digital revenue target from 18% to 16% by FY28, pivoting the product mix from unsecured consumer to secured SME lending. The board must set risk tolerance bands and decision criteria for management to operate within, rather than commit to a single path without adequate cohort-level data.",
         "framing": "Board Chair and Chief Executive Officer \u00b7 25 June 2025",
-        "pending_recommendations": 6,
+        "pending_recommendations": 7,
         "period": "Q3 2025",
         "recommendations": [
           {
-            "id": "rec-f8e976880247",
-            "text": "Board \u2014 approve the strategic refresh with Option 3 (16% digital revenue target, pivot to secured SME digital lending) or select an alternative path",
+            "id": "rec-cf728329f66c",
+            "text": "Board to set explicit risk tolerance band for digital lending NPLs (acceptable range: 6-9%, 8-11%, or other) by end of meeting, determining whether current performance is within strategic tolerance or requires pivot.",
             "addressed": true,
-            "addressed_at": "2026-06-25T08:10:40.367058+00:00",
+            "addressed_at": "2026-06-25T09:13:56.480987+00:00",
             "addressed_by": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef"
           },
           {
-            "id": "rec-e3c811c71431",
-            "text": "CEO \u2014 present a detailed execution plan for the secured SME digital lending pivot, including underwriting competence assessment, customer relationship strategy, and revenue yield assumptions",
+            "id": "rec-2368f5acf154",
+            "text": "CEO to commission external credit portfolio review and digital lending benchmark study, delivering cohort-level root cause analysis for 9% NPL rate and peer comparables by end Q4 2025.",
             "addressed": false
           },
           {
-            "id": "rec-e9490df33a89",
-            "text": "CRO \u2014 propose a transition plan for the existing unsecured digital book that quantifies potential near-term loss crystallisation and capital impact",
+            "id": "rec-236ae85e9f3a",
+            "text": "CFO to model capital implications and ROE outcomes for all three digital strategy options (maintain target, reduce target, pivot product) at 8-11% NPL range, presenting to board by August 2025.",
             "addressed": false
           },
           {
-            "id": "rec-d889eb345740",
-            "text": "CFO \u2014 provide ROE trajectory data for Q3 2025 and assess whether current performance tracks to the FY26 sustained 18% ROE target",
+            "id": "rec-70bc033fdc50",
+            "text": "CRO to establish monthly digital portfolio review cadence until NPL trajectory stabilizes below 8% or product pivot is approved, reporting material changes to board within 48 hours.",
             "addressed": false
           },
           {
-            "id": "rec-5effa01e667f",
-            "text": "CEO \u2014 explain what specific aspects of cohort dynamics were insufficiently understood at strategy approval and what analytic process will prevent similar misses in the secured SME pivot",
+            "id": "rec-13acb054da85",
+            "text": "CEO to establish active real estate concentration management protocol, preventing drift beyond 32% and presenting quarterly reduction path to restore 25% guideline by end FY26.",
             "addressed": false
           },
           {
-            "id": "rec-1d8071490571",
-            "text": "CRO \u2014 present a credible plan to bring real estate concentration back within the 25% guideline, including timeline, business line impact, and governance controls",
+            "id": "rec-ed8cee8f4d92",
+            "text": "Board Risk Committee to review secured SME digital lending business case and pilot plan before commitment, assessing whether economics and execution risk are superior to fixing current product.",
             "addressed": false
           },
           {
-            "id": "rec-7f5ba104919f",
-            "text": "Board Risk Committee \u2014 assess whether the two concentration breaches warrant external review of risk management and capital allocation frameworks before approving the strategic refresh",
+            "id": "rec-522f35a9ec5b",
+            "text": "CFO to reserve 100-150 basis points CET1 headroom for opportunistic deployment as specified in capital allocation framework, withholding deployment until digital strategy uncertainty resolves.",
+            "addressed": false
+          },
+          {
+            "id": "rec-f4957251f640",
+            "text": "Board Chair to convene extraordinary strategy session if Q4 digital cohort shows NPLs at or above 9% again, escalating pivot decision timeline.",
             "addressed": false
           }
         ],
-        "sources_count": 7,
+        "sources_count": 16,
         "applied_recommendations": [
           {
-            "rec_id": "rec-f8e976880247",
-            "text": "Board \u2014 approve the strategic refresh with Option 3 (16% digital revenue target, pivot to secured SME digital lending) or select an alternative path",
-            "addressed_at": "2026-06-25T08:10:40.367058+00:00",
+            "rec_id": "rec-cf728329f66c",
+            "text": "Board to set explicit risk tolerance band for digital lending NPLs (acceptable range: 6-9%, 8-11%, or other) by end of meeting, determining whether current performance is within strategic tolerance or requires pivot.",
+            "addressed_at": "2026-06-25T09:13:56.480987+00:00",
             "addressed_by": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef"
           }
-        ]
-      }
+        ],
+        "confidence_recomputed_at": "2026-06-25T09:14:02.659464+00:00"
+      },
+      "edit_locked_after_commit": true,
+      "edit_locked_probe_status": 409
     }
   ],
-  "accepted_recommendation_id": "rec-f8e976880247"
+  "accepted_recommendation_id": "rec-cf728329f66c"
 }

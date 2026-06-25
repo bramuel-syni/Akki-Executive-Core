@@ -107,7 +107,7 @@ def validate_content(content: Dict[str, Any], kind: str) -> Dict[str, Any]:
     introducing a new template file. Other kinds (e.g. minutes-PPTX)
     remain unsupported as the user has not requested them.
     """
-    if kind not in ("brief", "deck", "report", "minutes"):
+    if kind not in ("brief", "deck", "report", "minutes", "board_pack", "committee_pack"):
         raise ContentValidationError(f"Unknown kind: {kind}")
 
     title = (content.get("title") or "").strip()
@@ -189,7 +189,7 @@ def validate_content(content: Dict[str, Any], kind: str) -> Dict[str, Any]:
                 "callout": (s.get("callout") or "").strip() or None,
                 "cites": norm_cites,
             })
-        else:  # brief / report
+        else:  # brief / report / minutes / board_pack / committee_pack
             paras = [p for p in (s.get("paragraphs") or []) if isinstance(p, str) and p.strip()]
             sections.append({
                 "heading": heading,
@@ -212,7 +212,7 @@ def validate_content(content: Dict[str, Any], kind: str) -> Dict[str, Any]:
         "sections": sections,
         "citations": citations,
     }
-    if kind in ("report", "minutes"):
+    if kind in ("report", "minutes", "board_pack", "committee_pack"):
         # Chunk 3 (2026-05-13, WS-R06) — `minutes` shares the Report
         # renderer and therefore the recommendations surface. We also
         # coerce dict-shaped LLM outputs (some models return
@@ -665,6 +665,150 @@ def render_deck_pptx(content: Dict[str, Any], ctx_meta: Dict[str, Any]) -> Tuple
                        body.rstrip(), font="Calibri", size=14, color=PPalette.INK)
     else:
         _pptx_add_text(sS, PInches(0.6), PInches(1.7), PInches(12), PInches(5.0),
+                       "No sources cited.", font="Calibri", size=14, color=PPalette.MUTED)
+
+    buf = io.BytesIO()
+    prs.save(buf)
+    data, sha = _bytes_and_hash(buf)
+    return data, sha, _safe_filename(c["title"], "pptx")
+
+
+# =============================================================================
+# Board Pack / Committee Pack — PPTX
+# JC-WS Phase 1 (2026-06-25). Canonical spec says: "Board / Committee Pack:
+# cover, contents/agenda, sectioned content SYNTHESISED from ALL sources,
+# executive-grade prose; DOCX / PPTX / PDF."
+#
+# Pack content is report-shaped (paragraphs, not bullets). We render each
+# section onto a slide, splitting paragraphs into compact bullet-form
+# lines for slide readability. This produces a presentable deck without
+# rebuilding the LLM stage to emit deck-shaped content for packs.
+# =============================================================================
+def _pack_paragraph_to_bullets(paragraphs: List[str]) -> List[str]:
+    """Convert report paragraphs into 5-6 slide-ready bullets.
+
+    A board pack section typically has 2-4 dense paragraphs. We want
+    one slide to surface the substance, not all of it. Take the first
+    sentence of each paragraph (max 200 chars) so the deck reads as
+    a takeaways slide, not a wall-of-text dump.
+    """
+    bullets: List[str] = []
+    for p in paragraphs[:5]:
+        # First sentence (up to first . ! ?) — cap at 220 chars.
+        m = re.match(r"^(.+?[.!?])(?:\s|$)", p)
+        line = (m.group(1).strip() if m else p.strip())[:220]
+        if line:
+            bullets.append(line)
+    return bullets[:6]
+
+
+def render_pack_pptx(content: Dict[str, Any], ctx_meta: Dict[str, Any], kind: str = "board_pack") -> Tuple[bytes, str, str]:
+    """Render a board_pack or committee_pack PPTX from report-shaped content.
+
+    Slide order:
+      1.  Title (classification chip + title + prepared-for + period)
+      2.  Contents / Agenda (one numbered row per section)
+      3.  Executive summary
+      4..N.  Section slides (heading + bullets distilled from paragraphs)
+      N+1. Recommendations slide (numbered)
+      N+2. Sources slide (numbered citations)
+    """
+    if kind not in ("board_pack", "committee_pack"):
+        raise ContentValidationError(f"render_pack_pptx: unsupported kind={kind!r}")
+    c = validate_content(content, kind)
+    prs = Presentation()
+    prs.slide_width = PInches(13.333)   # widescreen 16:9
+    prs.slide_height = PInches(7.5)
+    blank = prs.slide_layouts[6]
+
+    chip_color = PPalette.OXBLOOD if c["classification"] in ("Confidential", "Restricted") else PPalette.NAVY
+
+    # ── Slide 1 — Cover
+    s1 = prs.slides.add_slide(blank)
+    _pptx_set_slide_bg(s1, PPalette.CREAM)
+    _pptx_add_text(s1, PInches(0.6), PInches(0.4), PInches(12), PInches(0.4),
+                   f"CLASSIFICATION  ·  {c['classification'].upper()}",
+                   font="Calibri", size=10, bold=True, color=chip_color)
+    pack_label = "BOARD PACK" if kind == "board_pack" else "COMMITTEE PACK"
+    _pptx_add_text(s1, PInches(0.6), PInches(1.4), PInches(12), PInches(0.5),
+                   pack_label, font="Calibri", size=14, bold=True, color=PPalette.MUTED)
+    _pptx_add_text(s1, PInches(0.6), PInches(2.2), PInches(12), PInches(2.5),
+                   c["title"], font="Georgia", size=40, bold=True, color=PPalette.NAVY)
+    if c["subtitle"]:
+        _pptx_add_text(s1, PInches(0.6), PInches(4.0), PInches(12), PInches(1.0),
+                       c["subtitle"], font="Georgia", size=20, color=PPalette.MUTED)
+    _pptx_add_text(s1, PInches(0.6), PInches(6.6), PInches(12), PInches(0.4),
+                   f"Prepared for {c['generated_for']}  ·  {c['period']}  ·  {ctx_meta.get('generated_at_human','')}",
+                   font="Calibri", size=11, color=PPalette.MUTED)
+
+    # ── Slide 2 — Contents / Agenda
+    s2 = prs.slides.add_slide(blank)
+    _pptx_set_slide_bg(s2, PPalette.CREAM)
+    _pptx_add_text(s2, PInches(0.6), PInches(0.5), PInches(12), PInches(0.7),
+                   "Contents", font="Calibri", size=24, bold=True, color=PPalette.NAVY)
+    agenda_lines = []
+    for i, s in enumerate(c["sections"], start=1):
+        agenda_lines.append(f"{i:02d}.   {s['heading']}")
+    if agenda_lines:
+        _pptx_add_text(s2, PInches(0.6), PInches(1.6), PInches(12), PInches(5.4),
+                       "\n".join(agenda_lines), font="Georgia", size=18, color=PPalette.INK)
+
+    # ── Slide 3 — Executive summary
+    s3 = prs.slides.add_slide(blank)
+    _pptx_set_slide_bg(s3, PPalette.CREAM)
+    _pptx_add_text(s3, PInches(0.6), PInches(0.5), PInches(12), PInches(0.7),
+                   "Executive summary", font="Calibri", size=24, bold=True, color=PPalette.NAVY)
+    _pptx_add_text(s3, PInches(0.6), PInches(1.6), PInches(12), PInches(5.4),
+                   c["executive_summary"], font="Georgia", size=18, color=PPalette.INK)
+
+    # ── Slides 4..N — One slide per section
+    for s in c["sections"]:
+        sl = prs.slides.add_slide(blank)
+        _pptx_set_slide_bg(sl, PPalette.CREAM)
+        _pptx_add_text(sl, PInches(0.6), PInches(0.5), PInches(12), PInches(0.7),
+                       s["heading"], font="Calibri", size=24, bold=True, color=PPalette.NAVY)
+        if s.get("subheading"):
+            _pptx_add_text(sl, PInches(0.6), PInches(1.25), PInches(12), PInches(0.4),
+                           s["subheading"], font="Georgia", size=14, color=PPalette.MUTED)
+        bullets = _pack_paragraph_to_bullets(s.get("paragraphs") or [])
+        body = ""
+        for b in bullets:
+            body += f"\u2022  {b}\n"
+        if s.get("cites"):
+            body += f"\n{', '.join(f'[{i}]' for i in s['cites'])}"
+        if body:
+            _pptx_add_text(sl, PInches(0.6), PInches(1.8), PInches(12), PInches(4.5),
+                           body.strip(), font="Georgia", size=16, color=PPalette.INK)
+        if s.get("pullquote"):
+            _pptx_add_text(sl, PInches(0.6), PInches(6.4), PInches(12), PInches(0.7),
+                           "\u201C" + s["pullquote"] + "\u201D",
+                           font="Georgia", size=13, color=PPalette.OXBLOOD)
+
+    # ── Slide N+1 — Recommendations (only if present)
+    if c.get("recommendations"):
+        sR = prs.slides.add_slide(blank)
+        _pptx_set_slide_bg(sR, PPalette.NAVY)
+        _pptx_add_text(sR, PInches(0.6), PInches(0.5), PInches(12), PInches(0.7),
+                       "Recommendations", font="Calibri", size=24, bold=True, color=PPalette.CREAM)
+        rec_body = ""
+        for i, r in enumerate(c["recommendations"], start=1):
+            rec_body += f"{i}.   {r}\n\n"
+        _pptx_add_text(sR, PInches(0.6), PInches(1.6), PInches(12), PInches(5.4),
+                       rec_body.rstrip(), font="Georgia", size=16, color=PPalette.CREAM)
+
+    # ── Slide N+2 — Sources
+    sS = prs.slides.add_slide(blank)
+    _pptx_set_slide_bg(sS, PPalette.CREAM)
+    _pptx_add_text(sS, PInches(0.6), PInches(0.5), PInches(12), PInches(0.7),
+                   "Sources", font="Calibri", size=24, bold=True, color=PPalette.NAVY)
+    if c["citations"]:
+        body = ""
+        for i, cit in enumerate(c["citations"], start=1):
+            body += f"[{i}]  {cit['doc_name']}\n"
+        _pptx_add_text(sS, PInches(0.6), PInches(1.6), PInches(12), PInches(5.4),
+                       body.rstrip(), font="Calibri", size=14, color=PPalette.INK)
+    else:
+        _pptx_add_text(sS, PInches(0.6), PInches(1.6), PInches(12), PInches(5.4),
                        "No sources cited.", font="Calibri", size=14, color=PPalette.MUTED)
 
     buf = io.BytesIO()

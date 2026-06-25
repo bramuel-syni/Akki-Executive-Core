@@ -21,8 +21,9 @@ import { Textarea } from "@/components/ui/textarea";
 import api from "@/lib/api/apiV2";
 import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
+import HighlightsWorkspace from "./HighlightsWorkspace";
 import {
-  FileSpreadsheet, FileText, FileDown, Layers, Loader2, MessageSquare, X,
+  FileSpreadsheet, FileText, FileDown, Layers, Loader2, MessageSquare, X, Sparkles,
 } from "lucide-react";
 
 const AUTOSAVE_DEBOUNCE_MS = 800;
@@ -41,7 +42,7 @@ function fmtRel(iso) {
 export default function AnalyzeDrawer({ aid, onClose }) {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState("bottom-line");
+  const [tab, setTab] = useState("workspace");
   const [synthesizing, setSynthesizing] = useState(false);
 
   // Objective + notes scratchpads (controlled inputs; debounced save).
@@ -233,6 +234,13 @@ export default function AnalyzeDrawer({ aid, onClose }) {
                   data-testid="analyze-drawer-tabs"
                 >
                   <TabsTrigger
+                    value="workspace"
+                    className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-[var(--ink)]"
+                    data-testid="analyze-drawer-tab-workspace"
+                  >
+                    <Sparkles className="w-3 h-3 mr-1.5" /> Workspace
+                  </TabsTrigger>
+                  <TabsTrigger
                     value="bottom-line"
                     className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-[var(--ink)]"
                     data-testid="analyze-drawer-tab-bottom-line"
@@ -275,6 +283,23 @@ export default function AnalyzeDrawer({ aid, onClose }) {
                     <FileDown className="w-3 h-3 mr-1.5" /> Export
                   </TabsTrigger>
                 </TabsList>
+
+                {/* Workspace — JC-WS Phase 2 (2026-06-25) canonical
+                    spec Part B: highlights-as-tweet-cards grouped by
+                    topic, docked free-text prompt, data-aware tips,
+                    Finish & export handoff to the shared Work Studio
+                    export wizard. */}
+                <TabsContent
+                  value="workspace"
+                  className="flex-1 overflow-hidden flex flex-col mt-0 px-0 py-0"
+                  data-testid="analyze-drawer-workspace"
+                >
+                  <HighlightsWorkspace
+                    aid={aid}
+                    analysis={analysis}
+                    onAnalysisUpdate={setAnalysis}
+                  />
+                </TabsContent>
 
                 {/* Bottom Line — Solva headline + first observations */}
                 <TabsContent

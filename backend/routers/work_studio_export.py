@@ -419,8 +419,14 @@ def _flat_user_input(body: ExportRequestIn) -> str:
 # =============================================================================
 def _strip_json_fence(s: str) -> str:
     s = (s or "").strip()
-    # Strip ```json ... ``` fences if present.
+    # Strip ```json ... ``` fences if present (both opening + closing).
     m = re.search(r"```(?:json)?\s*(.*?)```", s, re.DOTALL | re.IGNORECASE)
+    if m:
+        return m.group(1).strip()
+    # Belt-and-braces (2026-06-25): some LLM emissions include only the
+    # leading ```json marker (closing fence dropped). Strip the leading
+    # fence so the parser can still find the JSON object.
+    m = re.match(r"^```(?:json)?\s*\n?(.*)$", s, re.DOTALL | re.IGNORECASE)
     if m:
         return m.group(1).strip()
     return s
@@ -439,8 +445,23 @@ def _try_parse_json(raw: str) -> Optional[Dict[str, Any]]:
         s = s[: last_brace + 1]
     try:
         return json.loads(s)
-    except Exception:
-        return None
+    except Exception as exc:
+        # JC-WS Phase 1 (2026-06-25) — Sonnet at 16k+ chars occasionally
+        # emits malformed JSON (trailing comma, missing delimiter, etc).
+        # Rather than fail the export, try a repair pass first. The
+        # json_repair lib is deterministic — it doesn't hallucinate
+        # content, just fixes syntax. If repair also fails, log and
+        # return None so the caller can surface a real error.
+        try:
+            from json_repair import repair_json as _repair
+            repaired = _repair(s)
+            return json.loads(repaired) if isinstance(repaired, str) else repaired
+        except Exception as repair_exc:
+            logger.warning(
+                "json_parse_failed_in_work_studio_export: %s; repair_failed=%s; head=%r; tail=%r",
+                exc, repair_exc, s[:240], s[-240:],
+            )
+            return None
 
 
 async def _set_export_phase(export_id: str, phase_index: int, phase_label: str) -> None:
@@ -888,6 +909,17 @@ async def _run_export(
             data, sha, fname = _ex.render_report_docx(content_dict, ctx_meta_full)
         elif output_format == "pptx" and kind == "deck":
             data, sha, fname = _ex.render_deck_pptx(content_dict, ctx_meta_full)
+        elif output_format == "pptx" and kind in ("board_pack", "committee_pack"):
+            # JC-WS Phase 1 (2026-06-25) — Board / Committee Pack PPTX.
+            # Per the canonical spec: "Board / Committee Pack: cover,
+            # contents/agenda, sectioned content SYNTHESISED from ALL
+            # sources, executive-grade prose; DOCX / PPTX / PDF." This
+            # path takes the same report-shaped content_dict the DOCX/
+            # PDF renderers consume and produces a presentable deck
+            # (cover → contents → exec summary → one slide per section
+            # → recommendations → sources). Reuses the existing pptx
+            # primitives; no new engine.
+            data, sha, fname = _ex.render_pack_pptx(content_dict, ctx_meta_full, kind=kind)
         elif output_format == "pdf" and kind == "brief":
             data, sha, fname = _ex.render_brief_pdf(content_dict, ctx_meta_full)
         elif output_format == "pdf" and kind in ("report", "minutes", "committee_pack", "board_pack"):

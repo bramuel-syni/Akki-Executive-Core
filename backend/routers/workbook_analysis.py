@@ -70,6 +70,18 @@ from services.workbook_analyzer import (
 )
 from contracts import get_solva  # Phase 4.0 — was direct narrate_analysis import
 
+# JC-WS Phase 2 (2026-06-25) — Analyze workspace (Part B) — docked
+# prompt + data-aware tips + topic-grouped highlights.
+from services.analyze_workspace import (
+    route_question as _route_analyze_question,
+    generate_tips as _generate_analyze_tips,
+)
+from contracts.responses import (
+    AnalyzeWorkspaceAskResponse as _AnalyzeAskResponse,
+    AnalyzeWorkspaceTipsResponse as _AnalyzeTipsResponse,
+    AnalyzeWorkspaceFinishResponse as _AnalyzeFinishResponse,
+)
+
 # Track A Phase 1 (2026-06-03) — new sibling Analysis entity + service.
 from models.analysis import Analysis  # noqa: F401  re-export available for callers
 from services.analysis_lifecycle import (
@@ -1358,3 +1370,145 @@ async def post_analysis_note(
 
 
 __all__ = ["router"]
+
+
+# =============================================================================
+# JC-WS Phase 2 (2026-06-25) — Analyze workspace (Part B)
+# =============================================================================
+# Three endpoints back the canonical-spec "Analyze drawer as
+# workspace" journey:
+#
+#   GET   /v2/analyses/{aid}/tips    — data-aware question chip strip
+#   POST  /v2/analyses/{aid}/ask     — docked-prompt routing → highlight
+#   POST  /v2/analyses/{aid}/finish  — handoff to Document Generation
+#
+# All endpoints reuse the existing Shield-routed Claude Sonnet path
+# (no new LLM SDKs). Highlights persist to `analyses.highlights[]`
+# alongside the existing `runs[]`, `observations[]`, `notes_history[]`
+# arrays. Tenant-scoped via `account_id` (same boundary as the v2
+# get/synthesize routes above).
+# =============================================================================
+
+
+class _AnalyzeAskIn(BaseModel):
+    question: str = Field(..., max_length=2000)
+
+
+class _AnalyzeFinishIn(BaseModel):
+    # Hand the highlights off to the shared Work Studio export wizard.
+    # `kind` matches the canonical-spec catalog; default to `report`
+    # because most analyze threads land as a written deliverable.
+    kind: str = Field(default="report")
+    objective: Optional[str] = Field(default=None, max_length=600)
+
+
+@router.get("/v2/analyses/{aid}/tips", response_model=Optional[_AnalyzeTipsResponse])  # phase-5.2:typed
+async def analyze_tips_endpoint(
+    aid: str, current: Dict[str, Any] = Depends(get_current_account),
+):
+    """Return up to 5 data-aware follow-up question tips for the
+    docked-prompt chip strip. Tips are derived from the actual
+    sheet columns + the recent highlights on the thread, so the
+    FE chip strip always reflects the loaded data."""
+    row = await db.analyses.find_one(
+        {"id": aid, "account_id": current["id"]}, {"_id": 0},
+    )
+    if not row:
+        raise HTTPException(404, "analysis_not_found")
+    tips = await _generate_analyze_tips(
+        account_id=current["id"], analysis_row=row, cap=5,
+    )
+    return {"tips": tips}
+
+
+@router.post("/v2/analyses/{aid}/ask", response_model=Optional[_AnalyzeAskResponse])  # phase-5.2:typed
+async def analyze_ask_endpoint(
+    aid: str,
+    body: _AnalyzeAskIn,
+    current: Dict[str, Any] = Depends(get_current_account),
+):
+    """Docked-prompt entry point — classify the free-text question,
+    execute the matching analyzer (forecast / simulate / extract /
+    validate / anomaly) OR surface a refusal, then narrate as a
+    tweet-style highlight card persisted to `analyses.highlights[]`.
+
+    Per canonical spec Part B: capabilities run UNDER the surface;
+    the user sees only the accreted highlight card on the thread.
+    """
+    q = (body.question or "").strip()
+    if not q:
+        raise HTTPException(422, "question_empty")
+    row = await db.analyses.find_one(
+        {"id": aid, "account_id": current["id"]}, {"_id": 0},
+    )
+    if not row:
+        raise HTTPException(404, "analysis_not_found")
+    highlight = await _route_analyze_question(
+        db=db, aid=aid, account_id=current["id"],
+        question=q, analysis_row=row,
+    )
+    return {"highlight": highlight}
+
+
+@router.post("/v2/analyses/{aid}/finish", response_model=Optional[_AnalyzeFinishResponse])  # phase-5.2:typed
+async def analyze_finish_endpoint(
+    aid: str,
+    body: _AnalyzeFinishIn,
+    current: Dict[str, Any] = Depends(get_current_account),
+):
+    """Finish & export — the canonical spec's "Finish & export"
+    button hands the accreted highlights to the SHARED Work Studio
+    export wizard so the user gets the same DOCX / PDF / PPTX
+    deliverable contract as the Document Generation flow.
+
+    For Phase 2 proving slice we don't pre-mint the export row —
+    we return a payload the FE feeds into the existing
+    `/api/contexts/{cid}/work-studio/exports` POST, populated with
+    a brief drawn from the highlights + objective. Server-side
+    minting can be added later if the FE wants a one-call flow.
+    """
+    row = await db.analyses.find_one(
+        {"id": aid, "account_id": current["id"]}, {"_id": 0},
+    )
+    if not row:
+        raise HTTPException(404, "analysis_not_found")
+    highlights = row.get("highlights") or []
+    if not highlights:
+        # The spec says no fabrication. If there's nothing accreted,
+        # tell the user explicitly rather than letting the export
+        # pipeline produce a hollow doc.
+        return {
+            "ok":     False,
+            "reason": "no_highlights",
+            "hint":   "Ask at least one question on the thread before exporting; the export composes the highlights into the deliverable.",
+        }
+
+    # Compose the export brief from the highlights. The Work Studio
+    # generator takes this as `body.description` on the POST and
+    # synthesises a real DOCX (Part A pipeline).
+    bullets = []
+    for h in highlights:
+        if not isinstance(h, dict):
+            continue
+        if h.get("refused"):
+            continue
+        title = (h.get("title") or "").strip()
+        body_text = (h.get("body") or "").strip()
+        if title and body_text:
+            bullets.append(f"- {title}\n  {body_text}")
+        elif title:
+            bullets.append(f"- {title}")
+    description = (
+        (body.objective or row.get("objective") or "Analysis findings").strip()
+        + "\n\nHighlights from the workspace thread:\n"
+        + "\n".join(bullets)
+    )[:4000]
+
+    return {
+        "ok":           True,
+        "export_kind":  body.kind or "report",
+        "description":  description,
+        "title":        (row.get("title") or "Analysis Findings")[:200],
+        "highlights_count": sum(1 for h in highlights if isinstance(h, dict) and not h.get("refused")),
+        "refused_count":    sum(1 for h in highlights if isinstance(h, dict) and h.get("refused")),
+    }
