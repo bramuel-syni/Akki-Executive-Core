@@ -1,0 +1,58 @@
+{
+  "rolling": {
+    "base": {
+      "doc_id": "23f38df4-dbaa-465f-9349-c28264306371",
+      "use_for_tracking": true,
+      "is_base_document": true
+    },
+    "tracking": {
+      "doc_id": "c859fe17-71b5-46f0-b619-ae860a3dfde9",
+      "use_for_tracking": true,
+      "is_base_document": false
+    },
+    "emailed_pending": {
+      "doc_id": "doc-42d65f4e2a",
+      "state": "pending",
+      "source_channel": "email",
+      "found_in_pending": true
+    },
+    "emailed_accepted": {
+      "doc_id": "doc-42d65f4e2a",
+      "accept_status": 200,
+      "post_state": "active",
+      "use_for_tracking": true,
+      "context_id_backfilled": true
+    }
+  },
+  "rows": [
+    {
+      "label": "S1.a \u2014 BASE doc landed with both flags set",
+      "ok": true,
+      "detail": "flags={'doc_id': '23f38df4-dbaa-465f-9349-c28264306371', 'use_for_tracking': True, 'is_base_document': True}"
+    },
+    {
+      "label": "S1.b \u2014 TRACKING doc landed with use_for_tracking only",
+      "ok": true,
+      "detail": "flags={'doc_id': 'c859fe17-71b5-46f0-b619-ae860a3dfde9', 'use_for_tracking': True, 'is_base_document': False}"
+    },
+    {
+      "label": "S1.c \u2014 EMAILED doc landed in pending state + listed",
+      "ok": true,
+      "detail": "pending={'doc_id': 'doc-42d65f4e2a', 'state': 'pending', 'source_channel': 'email', 'found_in_pending': True}"
+    },
+    {
+      "label": "S1.d \u2014 EMAILED doc accepted \u2192 state=active + tracking on + context_id backfilled",
+      "ok": true,
+      "detail": "accept={'doc_id': 'doc-42d65f4e2a', 'accept_status': 200, 'post_state': 'active', 'use_for_tracking': True, 'context_id_backfilled': True}"
+    },
+    {
+      "label": "S1.e \u2014 Two consecutive tracking uploads honour the flag (BE side)",
+      "ok": true,
+      "detail": "both BE requests landed with use_for_tracking=true (sessionStorage hook tested via FE)"
+    }
+  ],
+  "passed": 5,
+  "failed": 0,
+  "total": 5,
+  "generated_at": "2026-06-25T19:21:07.779923+00:00"
+}

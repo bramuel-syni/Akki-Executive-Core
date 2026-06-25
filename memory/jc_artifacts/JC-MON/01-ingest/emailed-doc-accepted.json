@@ -1,0 +1,15 @@
+{
+  "accept_response": {
+    "ok": true,
+    "doc_id": "doc-42d65f4e2a",
+    "state": "active",
+    "use_for_tracking": true
+  },
+  "post_accept_row": {
+    "state": "active",
+    "source_channel": "email",
+    "use_for_tracking": true,
+    "accepted_at": "2026-06-25T19:21:07.760457+00:00",
+    "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a"
+  }
+}

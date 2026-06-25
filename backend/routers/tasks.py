@@ -1275,6 +1275,12 @@ async def contributor_upload(
     token: str,
     file: UploadFile = File(...),
     note: Optional[str] = Form(default=None),
+    # JC-MON Stage 1 (2026-06-25) — contributor-portal tracking flag.
+    # Additive on a public route; both default False (callers prior to
+    # this change still send valid requests). `is_base_document` is
+    # NOT exposed on the public portal — base-doc designation is an
+    # owner-side affordance on the Monitor page.
+    use_for_tracking: Optional[bool] = Form(default=False),
 ):
     """Accepts a file upload from a magic-link contributor. Creates a
     document row with `task_id` + `contributor_token` set + `origin=
@@ -1301,6 +1307,9 @@ async def contributor_upload(
         "extracted_text":        payload.decode("utf-8", errors="replace") if (file.content_type or "").startswith("text/") else "",
         "contributor_note":      note,
         "created_at":            datetime.now(timezone.utc).isoformat(),
+        # JC-MON Stage 1 (2026-06-25) — contributor portal tracking flag.
+        "use_for_tracking":     bool(use_for_tracking),
+        "is_base_document":      False,
     }
     await db.documents.insert_one(dict(doc))
     try:

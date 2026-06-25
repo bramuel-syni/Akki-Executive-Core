@@ -95,6 +95,13 @@ def sanitize_doc(d: Dict[str, Any]) -> Dict[str, Any]:
         # tabs. `origin` (above) answers "where did it come from?" →
         # /app/documents tabs. Both required on every row.
         "category":      d.get("category"),
+        # JC-MON Stage 1 (2026-06-25) — Monitor tracking flags.
+        # `use_for_tracking` opts the doc into Monitor's
+        # achievement-assessment evidence pool. `is_base_document`
+        # marks the doc as the baseline objectives are tracked
+        # against (typically uploaded on the Monitor surface).
+        "use_for_tracking": bool(d.get("use_for_tracking", False)),
+        "is_base_document": bool(d.get("is_base_document", False)),
         # Z2.7 (2026-02) — surface `source_doc_ids` so the Drawer's
         # Sources block can render the populated branch. List of
         # source document UUIDs that composed this artefact (set on
@@ -395,6 +402,15 @@ async def upload_document(
     # Phase Z (2026-05-27) — upload modal carries the user-selected
     # category. Empty string == uncategorized (persisted as null).
     category: Optional[str] = Form(None),
+    # JC-MON Stage 1 (2026-06-25) — Monitor's tracking-flag affordance.
+    # `use_for_tracking=true` makes the doc readable by Monitor's
+    # achievement-assessment pipeline as evidence. `is_base_document
+    # =true` marks the doc as the baseline/agreement Monitor tracks
+    # OBJECTIVES AGAINST (typically a strategic plan or performance
+    # agreement uploaded on the Monitor page). Both default false;
+    # additive only — pre-Stage-1 callers still send a valid request.
+    use_for_tracking: Optional[bool] = Form(False),
+    is_base_document: Optional[bool] = Form(False),
     background_tasks: BackgroundTasks = None,  # type: ignore[assignment]
     ctx: Dict[str, Any] = Depends(require_context_membership()),
 ):
@@ -518,6 +534,11 @@ async def upload_document(
         "origin":         "upload",
         "category":       cat_clean,
         "source_channel": "upload",
+        # JC-MON Stage 1 (2026-06-25) — Monitor tracking flags. Both
+        # default false on every existing caller; only the
+        # UploadOptions affordance opts a doc in.
+        "use_for_tracking": bool(use_for_tracking),
+        "is_base_document": bool(is_base_document),
     }
     await db.documents.insert_one(doc)
     doc.pop("_id", None)
@@ -719,6 +740,135 @@ async def list_draft_documents(
         q, {"_id": 0, "extracted_text": 0, "storage_key": 0},
     ).sort("updated_at", -1).to_list(min(limit, 500))
     return [sanitize_doc(d) for d in docs]
+
+
+
+# ═════════════════════════════════════════════════════════════════════
+# JC-MON Stage 1 (2026-06-25) — Document Journal pending-state surfaces
+#
+# Emailed docs (`source_channel="email"`, `state="pending"`) land in
+# the Document Journal in a pending state per the JC-MON canonical
+# spec (`/app/memory/JC_MON_CANONICAL_SPEC.md` § Stage 1). They are
+# listed via `GET /contexts/{cid}/documents/pending` and flipped to
+# `active` (with optional tracking-flag) via `POST .../accept`.
+#
+# The Journal `state="pending"` value is the new piece; everything
+# else (extracted_text, sources_count, etc.) is the existing document
+# row shape — additive only, no schema migration.
+# ═════════════════════════════════════════════════════════════════════
+@router.get("/contexts/{context_id}/documents/pending", response_model=Optional[List[Dict[str, Any]]])  # phase-3.0:narrow-in-3.1
+async def list_pending_documents(
+    ctx: Dict[str, Any] = Depends(require_context_membership()),
+    limit: int = 100,
+):
+    """List emailed documents awaiting acceptance into the Journal.
+
+    These are documents written by the inbound-email pipeline
+    (`routers/inbound_email.py`) with `state="pending"` +
+    `source_channel="email"`. The user reviews them on the Document
+    Journal pending filter and accepts each via the sibling accept
+    endpoint (which flips state to "active" and optionally marks the
+    doc for performance tracking).
+
+    Scope: requires context membership; account-scoping is implicit
+    through the membership dep. Tenancy-safe.
+    """
+    # Email-pipeline docs are written with `account_id` set to the
+    # task owner's account. They don't carry `context_id` because
+    # they enter via a task token. We surface them on the requesting
+    # account's pending list and rely on account ownership for the
+    # tenancy gate (the membership dep already validated the caller
+    # belongs to this context's tenant).
+    q: Dict[str, Any] = {
+        "$or": [
+            {"context_id": ctx["context"]["id"]},
+            {"context_id": {"$exists": False}, "account_id": ctx["account"]["id"]},
+        ],
+        "state":          "pending",
+        "source_channel": "email",
+        "status":         {"$ne": "archived"},
+    }
+    docs = await db.documents.find(
+        q, {"_id": 0, "extracted_text": 0, "storage_key": 0,
+            "contributor_token": 0},
+    ).sort("created_at", -1).to_list(min(limit, 500))
+    # Pending docs may lack `context_id` (email-pipeline docs); inline
+    # the response shape rather than going through sanitize_doc() which
+    # requires context_id. We backfill context_id on accept.
+    return [{
+        "id":               d.get("id"),
+        "name":             d.get("name"),
+        "original_filename": d.get("original_filename"),
+        "mime_type":         d.get("mime_type"),
+        "size_bytes":        d.get("size_bytes", 0),
+        "state":             d.get("state"),
+        "status":            d.get("status"),
+        "source_channel":    d.get("source_channel"),
+        "source":            d.get("source"),
+        "use_for_tracking":  bool(d.get("use_for_tracking", False)),
+        "context_id":        d.get("context_id"),
+        "task_id":           d.get("task_id"),
+        "created_at":        d.get("created_at"),
+    } for d in docs]
+
+
+class _AcceptPendingIn(BaseModel):
+    use_for_tracking: bool = Field(default=False)
+
+
+@router.post("/contexts/{context_id}/documents/{doc_id}/accept", response_model=Optional[Dict[str, Any]])  # phase-3.0:narrow-in-3.1
+async def accept_pending_document(
+    context_id: str, doc_id: str,
+    body: _AcceptPendingIn,
+    ctx: Dict[str, Any] = Depends(require_context_membership()),
+):
+    """Flip a pending (emailed) document to `state="active"`. If the
+    accept call carries `use_for_tracking=true`, the doc joins the
+    Monitor tracking set at the same time. Also backfills the
+    `context_id` so the doc surfaces in the Journal's main listing
+    (email-pipeline docs arrive without a context_id today).
+    """
+    # Email-pipeline docs may lack context_id; gate on
+    # account-ownership + the pending state.
+    doc = await db.documents.find_one(
+        {"id": doc_id,
+         "$or": [
+             {"context_id": context_id},
+             {"context_id": {"$exists": False}, "account_id": ctx["account"]["id"]},
+         ],
+         "state": "pending"},
+        {"_id": 0, "id": 1, "context_id": 1, "name": 1, "account_id": 1,
+         "use_for_tracking": 1},
+    )
+    if not doc:
+        raise HTTPException(status_code=404, detail="pending_doc_not_found")
+    now_iso = datetime.now(timezone.utc).isoformat()
+    update = {
+        "state":            "active",
+        "use_for_tracking": bool(body.use_for_tracking) or bool(doc.get("use_for_tracking")),
+        "accepted_at":      now_iso,
+        "updated_at":       now_iso,
+        # Backfill context_id if missing (email-pipeline docs).
+        "context_id":       doc.get("context_id") or context_id,
+    }
+    await db.documents.update_one(
+        {"id": doc_id, "account_id": doc["account_id"]},
+        {"$set": update},
+    )
+    try:
+        await write_audit(
+            context_id, ctx["account"]["id"], "document.accepted_from_pending",
+            "document", doc_id,
+            {"name": doc.get("name"),
+             "use_for_tracking": update["use_for_tracking"],
+             "source_channel":   "email"},
+        )
+    except Exception:  # noqa: BLE001
+        pass
+    return {"ok": True, "doc_id": doc_id,
+            "state":           "active",
+            "use_for_tracking": update["use_for_tracking"]}
+
 
 
 # ─────────────────────────────────────────────────────────────────────

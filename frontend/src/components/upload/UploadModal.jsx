@@ -13,6 +13,7 @@ import {
   Shield, Check, FolderOpen,
 } from "lucide-react";
 import { UPLOAD_CATEGORY_OPTIONS } from "@/lib/origins";
+import UploadOptions from "@/components/upload/UploadOptions";
 
 /** File types mirror the backend ACCEPT_EXT. Kept in-sync by convention.
  *  Phase H1 (2026-05-11) — added .pptx (presentations) and .doc/.ppt
@@ -95,6 +96,13 @@ export default function UploadModal({ open, onClose, onUploaded }) {
   const [extractGoals, setExtractGoals] = useState(false);
   const [extractTasks, setExtractTasks] = useState(false);
   const [extractionTouched, setExtractionTouched] = useState(false);
+  // JC-MON Stage 1 (2026-06-25) — Monitor tracking-flag affordance.
+  // Initial value is overridden by UploadOptions's sessionStorage
+  // memory on first mount (per-surface, scoped by testIdPrefix).
+  const [uploadOptions, setUploadOptions] = useState({
+    useForTracking: false,
+    isBaseDocument: false,
+  });
 
   const [members, setMembers] = useState([]);
   const [documents, setDocuments] = useState([]);
@@ -127,6 +135,7 @@ export default function UploadModal({ open, onClose, onUploaded }) {
     setCategory("");
     setExtractGoals(false); setExtractTasks(false);
     setExtractionTouched(false);
+    setUploadOptions({ useForTracking: false, isBaseDocument: false });
     setGenerating(false); setUploading(false);
   }, [open]);
 
@@ -240,6 +249,9 @@ export default function UploadModal({ open, onClose, onUploaded }) {
         // Always send the category field — empty string means
         // "Uncategorized", which the backend normalizes to None.
         form.append("category", category || "");
+        // JC-MON Stage 1 (2026-06-25) — tracking-flag form fields.
+        form.append("use_for_tracking", uploadOptions.useForTracking ? "true" : "false");
+        form.append("is_base_document", uploadOptions.isBaseDocument ? "true" : "false");
         if (mentionId) form.append("mentioned_account_ids", mentionId);
         if (relatedDocId && i === 0) {
           // Relation only attaches to the FIRST file; chained doc
@@ -477,6 +489,17 @@ export default function UploadModal({ open, onClose, onUploaded }) {
               ))}
             </select>
           </div>
+
+          {/* JC-MON Stage 1 (2026-06-25) — shared Monitor tracking
+              affordance. `allowBase=false` here because the Document
+              Journal isn't the Monitor surface; the base-document
+              checkbox only appears on ObjectivesProjectsPanel. */}
+          <UploadOptions
+            value={uploadOptions}
+            onChange={setUploadOptions}
+            allowBase={false}
+            testIdPrefix="upload-modal-options"
+          />
 
           {/* AA-slice-3 (2026-05-27) — Extraction prompt. Two
               checkboxes the user can opt in/out of. Defaults flip

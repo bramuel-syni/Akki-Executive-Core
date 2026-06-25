@@ -1,0 +1,7 @@
+{
+  "first_upload_doc_id": "c859fe17-71b5-46f0-b619-ae860a3dfde9",
+  "second_upload_doc_id": "deec94f9-004f-44a2-a420-4403bf51532f",
+  "both_use_for_tracking": true,
+  "fe_memory_scope": "akki:upload-options:upload-modal-options:lastTracked",
+  "note": "BE accepts the same flag twice without divergence. FE-side memory (`UploadOptions.jsx` sessionStorage hook) keeps the checkbox ticked across consecutive uploads from the same `testIdPrefix` scope, so the user doesn't re-tick. FE visual evidence captured via Playwright snapshot on user inspection at /app/documents (open modal, tick the checkbox, upload, re-open the modal \u2014 the checkbox is still ticked)."
+}

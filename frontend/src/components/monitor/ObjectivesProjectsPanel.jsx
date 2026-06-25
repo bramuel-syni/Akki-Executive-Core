@@ -17,6 +17,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import api from "@/lib/api/apiV2";
 import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
+import UploadOptions from "@/components/upload/UploadOptions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -153,12 +154,21 @@ function ItemDrawer({ row, onClose, onAssessed }) {
   };
 
   // T2.3 (2026-05-25) — X5 step 3: upload-and-reassess.
+  // JC-MON Stage 1 (2026-06-25) — Monitor drawer's upload gets the
+  // shared affordance with `allowBase=true` (this is the only surface
+  // that surfaces the "Mark as base document" checkbox).
+  const [uploadOptions, setUploadOptions] = useState({
+    useForTracking: false,
+    isBaseDocument: false,
+  });
   const onUploadAndReassess = async (file) => {
     if (!file || !row?.context_id) return;
     setUploading(true); setError(null);
     try {
       const fd = new FormData();
       fd.append("file", file);
+      fd.append("use_for_tracking", uploadOptions.useForTracking ? "true" : "false");
+      fd.append("is_base_document", uploadOptions.isBaseDocument ? "true" : "false");
       await api.post(`/contexts/${row.context_id}/documents`, fd);
       // Document journal now has at least one new doc — re-run the
       // assessment so the agent picks it up.
@@ -321,6 +331,16 @@ function ItemDrawer({ row, onClose, onAssessed }) {
                 <p className="text-[12.5px] text-[var(--muted)]">
                   No supporting documents yet. Upload one so the agent can ground its next assessment.
                 </p>
+                {/* JC-MON Stage 1 (2026-06-25) — Monitor surface →
+                    allowBase=true. Lets the user mark the strategic
+                    plan / performance agreement as the baseline
+                    objectives are tracked against. */}
+                <UploadOptions
+                  value={uploadOptions}
+                  onChange={setUploadOptions}
+                  allowBase={true}
+                  testIdPrefix="obj-drawer-upload-options"
+                />
                 <input
                   ref={fileInputRef}
                   type="file"

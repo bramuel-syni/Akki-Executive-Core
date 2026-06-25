@@ -17,6 +17,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast, Toaster } from "sonner";
 import { Loader2, Upload, Send, FileText, Check, MessageCircle } from "lucide-react";
+import UploadOptions from "@/components/upload/UploadOptions";
 
 
 import { resolveBackendOrigin } from "@/lib/api";
@@ -33,6 +34,14 @@ export default function ContributorPortal() {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [comment, setComment] = useState("");
+  // JC-MON Stage 1 (2026-06-25) — Monitor tracking-flag affordance for
+  // contributor uploads. `allowBase=false` here (base-doc designation
+  // is owner-side only). sessionStorage memory scoped per-portal-token
+  // via `testIdPrefix` so two open portals don't bleed preferences.
+  const [uploadOptions, setUploadOptions] = useState({
+    useForTracking: false,
+    isBaseDocument: false,
+  });
   const [postingComment, setPostingComment] = useState(false);
   const fileRef = useRef(null);
 
@@ -73,6 +82,8 @@ export default function ContributorPortal() {
     try {
       const fd = new FormData();
       fd.append("file", f);
+      // JC-MON Stage 1 (2026-06-25) — public-portal tracking flag.
+      fd.append("use_for_tracking", uploadOptions.useForTracking ? "true" : "false");
       const r = await api(`/api/tasks/contribute/${encodeURIComponent(token)}/upload`, {
         method: "POST", body: fd,
       });
@@ -256,6 +267,18 @@ export default function ContributorPortal() {
             <input ref={fileRef} type="file" className="hidden" onChange={onUpload}
                    accept={(data.task.output_formats || []).map((f) => "." + f).join(",") || undefined}
                    data-testid="contributor-portal-upload-input" />
+          </div>
+          {/* JC-MON Stage 1 (2026-06-25) — contributor-portal tracking
+              affordance. `allowBase=false` (base-doc is owner-side
+              only). Friendlier copy variant for non-employees. */}
+          <div className="mb-3" data-testid="contributor-portal-upload-options">
+            <UploadOptions
+              value={uploadOptions}
+              onChange={setUploadOptions}
+              allowBase={false}
+              testIdPrefix="contributor-portal-options"
+              labelOverride="Mark this as performance evidence"
+            />
           </div>
           {(data.docs || []).length === 0 ? (
             <p className="text-[12px] italic text-[var(--muted)]" data-testid="contributor-portal-uploads-empty">

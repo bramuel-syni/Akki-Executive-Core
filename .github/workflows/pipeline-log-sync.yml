@@ -242,6 +242,10 @@ jobs:
                   "JC_MON_STAGE_2A_ENGINE_THIN": "JC-MON-S2A",
                   "JC_MON_STAGE_2B_ENGINE_FULL": "JC-MON-S2B",
                   "JC_MON_STAGE_3_EXPERIENCE": "JC-MON-S3",
+                  "JC_CHAT_STAGE_0_CLASSIFY": "JC-CHAT-S0",
+                  "JC_CHAT_A_MARKER": "JC-CHAT-A",
+                  "JC_CHAT_B_PARITY": "JC-CHAT-B",
+                  "JC_CHAT_C_PUNCHLIST": "JC-CHAT-C",
               }
               for prefix, identifier in KNOWN_MAPPINGS.items():
                   if stem.startswith(prefix):

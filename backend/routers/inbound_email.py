@@ -726,8 +726,16 @@ async def _handle_task_contributor_reply(
                 "original_filename": name,
                 "mime_type":         content_type,
                 "size_bytes":        len(raw_bytes),
-                "state":             "draft",
+                # JC-MON Stage 1 (2026-06-25) — emailed docs land in
+                # the Document Journal in a `pending` state. The
+                # "Accept into Journal" action on the Journal pending
+                # filter flips them to `active` (and into the tracking
+                # set if the accept call carries `use_for_tracking=true`).
+                "state":             "pending",
                 "origin":            "email_receipt",
+                # `source_channel="email"` is the canonical filter key
+                # used by the Journal pending-filter listing endpoint.
+                "source_channel":    "email",
                 "status":            "ready",
                 "source": {
                     "sender":       from_email,
@@ -737,6 +745,8 @@ async def _handle_task_contributor_reply(
                 },
                 "extracted_text":    raw_bytes.decode("utf-8", errors="replace") if (content_type or "").startswith("text/") else "",
                 "created_at":        datetime.now(timezone.utc).isoformat(),
+                "use_for_tracking":  False,
+                "is_base_document":  False,
             })
             created_doc_ids.append(did)
         except Exception as e:  # noqa: BLE001

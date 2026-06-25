@@ -1,0 +1,68 @@
+{
+  "doc": {
+    "id": "doc-42d65f4e2a",
+    "task_id": null,
+    "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
+    "name": "owner-update-q3-attrition.txt",
+    "original_filename": "owner-update-q3-attrition.txt",
+    "mime_type": "text/plain",
+    "size_bytes": 512,
+    "state": "pending",
+    "origin": "email_receipt",
+    "source_channel": "email",
+    "status": "ready",
+    "source": {
+      "sender": "chro@mara-heritage.demo",
+      "subject": "Q3 attrition update",
+      "received_at": "2026-06-25T19:21:07.735152+00:00",
+      "message_id": "<msg-6454af903076455b9d97fe0896c3e4fa@mail.example>"
+    },
+    "extracted_text": "Update on Q3 attrition. Digital banking unit attrition fell to 9.8% (from 11.4%). Retention bonus pool exhausted; 8 retentions confirmed. Recommend doubling the pool for Q4.",
+    "created_at": "2026-06-25T19:21:07.735163+00:00",
+    "use_for_tracking": false,
+    "is_base_document": false
+  },
+  "pending_list": [
+    {
+      "id": "doc-42d65f4e2a",
+      "name": "owner-update-q3-attrition.txt",
+      "original_filename": "owner-update-q3-attrition.txt",
+      "mime_type": "text/plain",
+      "size_bytes": 512,
+      "state": "pending",
+      "status": "ready",
+      "source_channel": "email",
+      "source": {
+        "sender": "chro@mara-heritage.demo",
+        "subject": "Q3 attrition update",
+        "received_at": "2026-06-25T19:21:07.735152+00:00",
+        "message_id": "<msg-6454af903076455b9d97fe0896c3e4fa@mail.example>"
+      },
+      "use_for_tracking": false,
+      "context_id": null,
+      "task_id": null,
+      "created_at": "2026-06-25T19:21:07.735163+00:00"
+    },
+    {
+      "id": "doc-40b44f8147",
+      "name": "owner-update-q3-attrition.txt",
+      "original_filename": "owner-update-q3-attrition.txt",
+      "mime_type": "text/plain",
+      "size_bytes": 512,
+      "state": "pending",
+      "status": "ready",
+      "source_channel": "email",
+      "source": {
+        "sender": "chro@mara-heritage.demo",
+        "subject": "Q3 attrition update",
+        "received_at": "2026-06-25T19:19:09.769660+00:00",
+        "message_id": "<msg-76dbf6adfdf54af8b3a0185c89b51401@mail.example>"
+      },
+      "use_for_tracking": false,
+      "context_id": null,
+      "task_id": null,
+      "created_at": "2026-06-25T19:19:09.769673+00:00"
+    }
+  ],
+  "found_in_pending": true
+}
