@@ -143,6 +143,11 @@ class ExportStatusOut(BaseModel):
     continue_chat_id: Optional[str] = None
     continue_doc_id: Optional[str] = None
     source: Optional[str] = None
+    # JC-TM Stage 1 Bridge (2026-06-25) — link-back to the originating
+    # task when this export was produced by `compile_service.run_drafting`.
+    # FE consumers (e.g. WorkStudio.jsx "Created from task" breadcrumb)
+    # use this to render the round-trip back to TaskDrawer.
+    source_task_id: Optional[str] = None
 
 
 # C.3 — Enhance accepts file_upload OR source_artefact_id (existing
@@ -2368,6 +2373,7 @@ async def get_export_status(
         "continue_chat_id": row.get("continue_chat_id"),
         "continue_doc_id": row.get("continue_doc_id"),
         "source": row.get("source") or "export",
+        "source_task_id": row.get("source_task_id"),
     }
 
 

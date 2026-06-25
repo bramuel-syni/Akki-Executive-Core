@@ -175,3 +175,57 @@ for the JC-WS Generate Document submodule.
 - **Out of scope (per the dispatch)**: Brief Akki-fetch retrieval upgrade,
   Analyze deep-link real-workbook iteration, contributor-history revision
   tuning, `LLM_MODELS_REFRESH`. All parked.
+
+---
+
+## Post-fan-out breadcrumb close-out (2026-06-25, JC-MON Item 1)
+
+The deep-link CTA (TaskDrawer → Work Studio) shipped in Stage 2 above; the
+**reverse breadcrumb** (Work Studio → back to TaskDrawer when opened via
+the CTA) was approved but did not bundle in that sprint. Closed as a tiny
+additive commit under JC-MON Item 1 to close the round-trip legibility
+story before JC-MON Stage 0 starts.
+
+### What shipped
+
+A single `<Link>` block in `pages/WorkStudio.jsx` renders ONLY when the
+URL carries `?export_id=<eid>` AND the export row carries `source_task_id`:
+
+```
+← Created from task: <task-name>
+```
+
+clicking → `/app/tasks?task_id=<source_task_id>`. data-testid
+`work-studio-from-task-breadcrumb`.
+
+### Schema gap closed in the same commit
+
+`GET /api/contexts/{cid}/work-studio/exports/{eid}` was returning the
+`ExportLifecycleResponse` shape which did NOT surface `source_task_id`
+(the field was on the DB row but filtered from the response). One-line
+addition to the response model + the GET handler's return dict surfaces
+the field cleanly. `ExportStartResponse` has `extra="allow"` so no model
+discipline broken.
+
+### Files touched
+
+| Layer | File | Change |
+|---|---|---|
+| BE | `routers/work_studio_export.py` | `ExportStatusOut.source_task_id: Optional[str]` added; GET handler now includes `"source_task_id": row.get("source_task_id")` in the response dict. |
+| FE | `pages/WorkStudio.jsx` | New `useEffect` reads `export_id` query param, fetches the export row + then the task name, sets `fromTaskBreadcrumb` state; new `<Link>` block renders the breadcrumb at the top of the listing column when state is set. `ArrowLeft` imported from `lucide-react`. |
+
+### Evidence
+
+- Screenshot at `/app/memory/jc_artifacts/JC-TM-roundtrip-breadcrumb.jpg`
+  shows the breadcrumb above the H1 with the full task name
+  ("JC-TM Fan-out — Mara Heritage Q3 Board Pack") and the correct
+  href (`/app/tasks?task_id=task-e43614f633f1`).
+- Direct API probe confirms `source_task_id` flows through the response:
+  ```
+  GET /api/contexts/{cid}/work-studio/exports/{eid}
+  → {"source_task_id": "task-e43614f633f1", ...}
+  ```
+
+### Commit message
+
+`feat(JC-TM): created-from-task breadcrumb closes the round-trip`

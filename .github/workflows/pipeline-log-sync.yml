@@ -226,6 +226,22 @@ jobs:
                   "STAGE_5_SHELL_FRONTENDS": "STAGE_5",
                   # Orchestration phases (non-numeric).
                   "SPRINT_PLAN_INIT": "SPRINT_PLAN_INIT",
+                  # JC track — JC-WS (Work Studio canonical build) /
+                  # JC-TM (Task Manager canonical build) /
+                  # JC-MON (Monitor canonical build, 2026-06-25).
+                  # Sprint memos are filed at sprints/JC_<TRACK>_<STAGE>.md
+                  # — the identifier surfaces the stage suffix verbatim.
+                  "JC_WS_PHASE_1_BOARD_PACK": "JC-WS-P1",
+                  "JC_WS_PHASE_2_ANALYZE": "JC-WS-P2",
+                  "JC_WS_PHASE_3_FAN_OUT": "JC-WS-P3",
+                  "JC_TM_KEYSTONE_AND_PROVING_SLICE": "JC-TM-PROVE",
+                  "JC_TM_COMPILE_BRIDGE": "JC-TM-S1",
+                  "JC_TM_FAN_OUT": "JC-TM-S2",
+                  "JC_MON_STAGE_0_PREREQS": "JC-MON-S0",
+                  "JC_MON_STAGE_1_INGESTION": "JC-MON-S1",
+                  "JC_MON_STAGE_2A_ENGINE_THIN": "JC-MON-S2A",
+                  "JC_MON_STAGE_2B_ENGINE_FULL": "JC-MON-S2B",
+                  "JC_MON_STAGE_3_EXPERIENCE": "JC-MON-S3",
               }
               for prefix, identifier in KNOWN_MAPPINGS.items():
                   if stem.startswith(prefix):

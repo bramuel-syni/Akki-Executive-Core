@@ -60,7 +60,7 @@ import WorkStudioSidebar from "@/components/work_studio/WorkStudioSidebar";
 import {
   FileText, Presentation, ScrollText, Loader2, ArrowRight, AlertCircle,
   Layers, FolderOpen, FileDown, Wand2, Calendar, Users, Files,
-  Sparkles, X as XIcon, Plus, BookOpen,
+  Sparkles, X as XIcon, Plus, BookOpen, ArrowLeft,
 } from "lucide-react";
 import WorkspaceEntryGate from "@/components/transitions/WorkspaceEntryGate";
 import ListingShell from "@/components/common/ListingShell";
@@ -687,6 +687,41 @@ export default function WorkStudio() {
     }
   }, [searchParams, cid, switchContext]);
 
+  // ── JC-TM round-trip breadcrumb (2026-06-25) ────────────────────────
+  // When Work Studio opens via the TaskDrawer "Open in Work Studio" CTA
+  // (`/app/work-studio?export_id=<eid>`) and the export row carries
+  // `source_task_id`, surface a one-line breadcrumb at the top of the
+  // wizard so the user can pivot back to the originating task without
+  // losing context. Closes the round-trip legibility story shipped in
+  // JC-TM Stage 2 fan-out.
+  // Zero new endpoints — reads the existing exports endpoint + tasks
+  // endpoint; both already account/context-scoped.
+  const fromExportId = searchParams.get("export_id");
+  const [fromTaskBreadcrumb, setFromTaskBreadcrumb] = useState(null);
+  useEffect(() => {
+    if (!cid || !fromExportId) { setFromTaskBreadcrumb(null); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: exportRow } = await api.get(
+          `/contexts/${cid}/work-studio/exports/${fromExportId}`
+        );
+        const sourceTaskId = exportRow?.source_task_id;
+        if (!sourceTaskId || cancelled) return;
+        const { data: task } = await api.get(`/tasks/${sourceTaskId}`);
+        if (cancelled) return;
+        setFromTaskBreadcrumb({
+          taskId: sourceTaskId,
+          taskName: task?.name || `Task ${sourceTaskId.slice(0, 8)}`,
+        });
+      } catch {
+        /* Silent: a missing export or a task the user can't see should
+           not block the wizard from rendering. */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [cid, fromExportId]);
+
   // Tab state — URL-backed. Phase E.1 (2026-05-26) — default tab is
   // now the merged `cycle_main_and_committee_pack`.
   const initialKind = (() => {
@@ -1049,6 +1084,21 @@ export default function WorkStudio() {
           <p className="akki-overline mb-2 flex items-center gap-2">
             <Sparkles className="w-3 h-3 text-[var(--accent)]" /> Work Studio · {activeContext.name}
           </p>
+          {/* JC-TM round-trip breadcrumb (2026-06-25) — renders only when
+              the wizard was opened from a TaskDrawer compile commit (via
+              the "Open in Work Studio" CTA shipped in JC-TM Stage 2).
+              Click → back to the originating task. */}
+          {fromTaskBreadcrumb && (
+            <Link
+              to={`/app/tasks?task_id=${encodeURIComponent(fromTaskBreadcrumb.taskId)}`}
+              className="inline-flex items-center gap-1.5 mb-3 px-2.5 py-1 rounded-sm border border-[var(--rule)] bg-[var(--parchment)] hover:bg-white text-[11.5px] text-[var(--ink)] transition-colors"
+              data-testid="work-studio-from-task-breadcrumb"
+            >
+              <ArrowLeft className="w-3 h-3 text-[var(--muted)]" strokeWidth={1.7} />
+              <span className="text-[var(--muted)]">Created from task:</span>
+              <span className="font-medium" data-testid="work-studio-from-task-name">{fromTaskBreadcrumb.taskName}</span>
+            </Link>
+          )}
           <h1
             className="akki-greeting mb-2"
             data-testid="page-h1"
