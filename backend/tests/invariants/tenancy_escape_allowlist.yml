@@ -501,16 +501,19 @@ tenancy_allow_no_account_id_markers:
     line: 126
     justification: "walkin-question helper; `context_id` came from the body validated against the caller's accessible-context list above"
   - file: backend/routers/work_studio_export.py
-    line: 385
+    line: 455
     justification: "phase-marker write from `_set_export_phase()` helper; `export_id` is a UUID stamped at export creation under the caller's context+account; this helper has no context_id arg by design (called from many phase boundaries, each carrying their own scope)"
   - file: backend/routers/work_studio_export.py
-    line: 661
+    line: 731
     justification: "`_run_export` worker closure; `context_id` is a closure capture from `start_export` which was gated by require_context_membership"
   - file: backend/routers/work_studio_export.py
-    line: 1145
+    line: 1159
+    justification: "JC-WS-A explicit source-document resolver — widened to permit `account_id=None` (context-shared seed docs); context_id filter remains, route gated by require_context_membership"
+  - file: backend/routers/work_studio_export.py
+    line: 1262
     justification: "`documents_row_id` resolved upstream from the export's tenant-scoped artefact; this is a mirror write of confidence_pct"
   - file: backend/routers/work_studio_export.py
-    line: 1383
+    line: 1500
     justification: "`_run_enhance` worker closure; `context_id` is a closure capture from `enhance_export` which was gated by require_context_membership"
   - file: backend/routers/work_studio_overlay.py
     line: 436

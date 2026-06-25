@@ -105,6 +105,27 @@ class ExportRequestIn(BaseModel):
     scope:       str = Field(min_length=1, max_length=2000)
     output_format: Literal["docx", "pptx", "pdf", "auto"] = "auto"
 
+    # JC-WS-A (2026-06-25) — Source-material packs journey.
+    # When the user has explicitly selected source documents on the
+    # platform (Board Pack / Committee Pack / Minutes / Report flows),
+    # they ride here and bypass the BM25 grounding rail. BM25's
+    # lexical match degrades to zero against Synisense-redacted
+    # paragraph text (the `[ORG_1]`, `[DATE_1]` redactions) when the
+    # query is plain language. Explicit selection IS the journey per
+    # the JC-WS dispatch: "User selects documents already on the
+    # platform OR uploads new ones; MULTIPLE sources combine into ONE
+    # output (synthesise across all sources)." When omitted/empty, the
+    # legacy BM25 rail still fires so single-shot prose-only requests
+    # remain backward-compatible.
+    source_document_ids: Optional[List[str]] = None
+
+    # JC-WS-A — cadence drives card persistence semantics. One-off
+    # produces a single card; recurring/scheduled produce a NEW card
+    # each cycle (history preserved). The cadence is persisted on the
+    # export row for the FE to render history grouping; the per-cycle
+    # scheduler is a separate worker not in scope for this slice.
+    cadence: Literal["one_off", "recurring", "scheduled"] = "one_off"
+
 
 class ExportStatusOut(BaseModel):
     export_id: str
@@ -320,6 +341,55 @@ async def _grounding_for_context(context_id: str, query: str, top_k: int = 8) ->
     # doc_id / doc_name / anchor we pass through to _format_grounding.
     ranked = score_bm25(query, corpus, k=top_k)
     return [c for s, c in ranked if s > 0]
+
+
+async def _grounding_from_selected_docs(
+    context_id: str,
+    document_ids: List[str],
+    paragraphs_per_doc: int = 6,
+) -> List[Dict[str, Any]]:
+    """JC-WS-A (2026-06-25) — Source-material packs grounding.
+
+    When the user has explicitly selected documents (the JC-WS
+    canonical journey), bypass BM25 and pull paragraphs from those
+    docs directly. Paragraphs already carry Synisense's redacted form,
+    so the LLM receives the same de-identified text it always has;
+    we just stop pretending BM25 will rank-match the user's plain-
+    language query against `[ORG_1] · Risk and Strategy · [DATE_1]`.
+
+    Returns a list of grounding chunks in the same shape
+    `_grounding_for_context` returns so the rest of the export
+    pipeline doesn't need to branch."""
+    if not document_ids:
+        return []
+    cursor = db.documents.find(
+        {"id": {"$in": list(document_ids)[:20]},
+         "context_id": context_id,
+         "status": {"$ne": "deleted"}},
+        {"_id": 0, "id": 1, "name": 1, "extracted_text": 1, "paragraphs": 1},
+    )
+    docs = await cursor.to_list(20)
+    out: List[Dict[str, Any]] = []
+    for d in docs:
+        name = d.get("name") or "Document"
+        paras = d.get("paragraphs") or []
+        if paras:
+            for p in paras[:paragraphs_per_doc]:
+                txt = (p.get("text") or "").strip()
+                if not txt:
+                    continue
+                out.append({
+                    "text": txt, "doc_id": d["id"], "doc_name": name,
+                    "anchor": p.get("anchor_id"),
+                })
+        elif (d.get("extracted_text") or "").strip():
+            # Fallback: docs without a paragraphs[] still ship their
+            # extracted_text (capped at 3 KB to keep prompt size sane).
+            out.append({
+                "text": (d.get("extracted_text") or "")[:3000],
+                "doc_id": d["id"], "doc_name": name, "anchor": None,
+            })
+    return out
 
 
 def _format_grounding(paragraphs: List[Dict[str, Any]]) -> str:
@@ -692,9 +762,22 @@ async def _run_export(
     # ── Synisense-shielded grounding context for the LLM stage. We
     # rely on the existing chat path's grounding paragraphs so the
     # documents are already de-identified at upload-time.
+    #
+    # JC-WS-A (2026-06-25) — Source-material packs journey wires the
+    # explicit doc selection here. When `body.source_document_ids` is
+    # provided, bypass BM25 (which lexically misses redacted text) and
+    # pull paragraphs from the selected docs directly. Empty/omitted
+    # selection falls back to BM25 so single-shot prose-only requests
+    # remain backward-compatible.
     await _set_export_phase(export_id, 1, "Checking the grounding contract.")
     user_input = _flat_user_input(body)
-    grounding = await _grounding_for_context(context_id, user_input, top_k=8)
+    explicit_doc_ids = list(getattr(body, "source_document_ids", None) or [])
+    if explicit_doc_ids:
+        grounding = await _grounding_from_selected_docs(
+            context_id, explicit_doc_ids, paragraphs_per_doc=6,
+        )
+    else:
+        grounding = await _grounding_for_context(context_id, user_input, top_k=8)
     grounding_block = _format_grounding(grounding)
 
     # Citation manifest = unique docs in grounding (id + name).
@@ -951,6 +1034,14 @@ async def _run_export(
             "voice_violation": post_hit,
             "continue_chat_id": cont_chat_id,
             "continue_doc_id": cont_doc_id,
+            # JC-WS-A — persist the source-material selection + cadence
+            # so the detail view can render REAL source list + real
+            # cadence label (the basis-to-trust signals the user must
+            # see). source_count also comes from explicit selection
+            # when present so the FE shows the right number.
+            "source_document_ids": explicit_doc_ids or None,
+            "source_count": len(explicit_doc_ids) if explicit_doc_ids else len(citations_manifest),
+            "cadence": getattr(body, "cadence", "one_off"),
         }},
     )
 
@@ -960,6 +1051,12 @@ async def _run_export(
     # writes onto `intelligence_report` sub-fields independently.
     # See `services/work_studio/confidence_scorer.py` for the rubric +
     # failure-mode contract (Pre-Read §6).
+    #
+    # JC-WS-A (2026-06-25) — when the request carried an explicit
+    # `source_document_ids` selection (Source-material packs journey),
+    # thread it through so the scorer can resolve full blobs even if
+    # the citations manifest came back empty (e.g. BM25 fallback
+    # missed). Explicit selection wins over citation-derived ids.
     try:
         doc_title_for_scoring = (
             (content_dict.get("title") if isinstance(content_dict, dict) else None)
@@ -973,7 +1070,7 @@ async def _run_export(
             document_kind=kind,
             structured_content=content_dict if isinstance(content_dict, dict) else {},
             citations_manifest=citations_manifest,
-            source_document_ids=None,  # compile path = citations-derived
+            source_document_ids=explicit_doc_ids or None,
             documents_row_id=cont_doc_id,
         )
     except Exception:  # noqa: BLE001
@@ -1034,7 +1131,22 @@ async def _resolve_source_blobs_for_scoring(
     """Resolve source documents to {id, name, extracted_text} blobs
     for the scorer. Prefers explicit source_document_ids (Phase 5
     allowlist), falls back to the citations_manifest's doc_ids
-    (Phase 1-4 compile flow). Caps at 20 docs."""
+    (Phase 1-4 compile flow). Caps at 20 docs.
+
+    JC-WS-A (2026-06-25) — tenancy-safe widening for context-shared
+    docs. The legacy filter `{account_id: account_id}` strictly
+    required the doc to be owned by the caller. Seeded / shared
+    demo docs that live in the context but have `account_id=None`
+    (e.g. Mara Heritage Bank · Demo) were filtered out, even though
+    the caller IS a member of the context (route already gated by
+    `require_context_membership`). We widen to:
+       {"context_id": context_id,
+        "$or": [{"account_id": account_id},
+                {"account_id": None},
+                {"account_id": {"$exists": False}}]}
+    so context-shared docs reach the scorer. Per-account docs still
+    require ownership; context-scoped tenancy remains the boundary.
+    """
     doc_ids: List[str] = []
     if source_document_ids:
         doc_ids = list(source_document_ids)
@@ -1044,7 +1156,12 @@ async def _resolve_source_blobs_for_scoring(
         return []
     doc_ids = doc_ids[:20]
     rows = await db.documents.find(
-        {"id": {"$in": doc_ids}, "account_id": account_id, "context_id": context_id},
+        {"id": {"$in": doc_ids}, "context_id": context_id,  # tenancy:allow-no-account-id
+         "$or": [
+             {"account_id": account_id},
+             {"account_id": None},
+             {"account_id": {"$exists": False}},
+         ]},
         {"_id": 0, "id": 1, "name": 1, "extracted_text": 1, "file_name": 1},
     ).to_list(length=20)
     blobs: List[Dict[str, Any]] = []

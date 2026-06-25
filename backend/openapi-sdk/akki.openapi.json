@@ -4504,6 +4504,16 @@
       },
       "ExportRequestIn": {
         "properties": {
+          "cadence": {
+            "default": "one_off",
+            "enum": [
+              "one_off",
+              "recurring",
+              "scheduled"
+            ],
+            "title": "Cadence",
+            "type": "string"
+          },
           "description": {
             "maxLength": 2000,
             "minLength": 1,
@@ -4532,6 +4542,20 @@
             "minLength": 1,
             "title": "Scope",
             "type": "string"
+          },
+          "source_document_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Document Ids"
           }
         },
         "required": [
