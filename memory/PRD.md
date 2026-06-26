@@ -1,6 +1,18 @@
 # AKKI Sandbox — Product Requirements Document (PRD)
 
 
+> **2026-06-26 19:10 UTC — P5.7-PER-FILE-CAPTURE shipped · pollution scope cut 24 → 18 / 7 files.**
+> User explicitly rejected path (d) (back-circle anti-pattern). New READ-ONLY slice runs every test file in a fresh subprocess with a 60 s wall timeout: **433 files completed in 54.8 min** (in-process attempt-1 hung at 16%). Buckets: 350 PASS / 14 PASS_NO_TESTS / 59 FAIL_DETERMINISTIC / 10 TIMEOUT / 0 ERROR. **Tracker scope CORRECTED**: only **18 FTT IDs / 7 files** are TRUE cross-test pollution (PASS alone, FAIL in-suite). 6 reclassified: FTT-002/003 integration-lane-only, FTT-013 deterministic-slow, FTT-014 deterministic regression. All halt thresholds clear; 0 LOC mutated. Three bisect strategies surfaced for user pick — agent recommendation: **(b) then (a) on holdouts**.
+
+
+> **2026-06-26 18:05 UTC — P5.7-CAPTURE-B-ATTEMPT-1 · HALT-and-surface fired (superseded).**
+> User picked path (b) over (a)/(c) for cross-test pollution cleanup. Attempted full broad-suite (`pytest tests/` against 4,412 tests, 90-min budget). **Broad-suite HUNG at ~16% completion** after 8m 21s (24 live threads at 0% CPU, no progress 5+ min). ~50 failures in partial slice. Signature matches the pre-authorised halt clause ("> 2 hours / harness state accumulation") — fired earlier on diagnostic-implication grounds. **0 LOC mutated.** Four refined paths surfaced for user pick: (a) `pytest-forked` bisect, (b) file-by-file subprocess capture, (c) Docker isolation, (d) ship P5.7-DIAG path-(a) static guards FIRST then re-measure delta. Agent recommendation: (d) THEN (b).
+
+
+> **2026-06-26 17:50 UTC — INVARIANT-NO-THIN-ASSERTIONS shipped (1 invariant, 3 proving rails GREEN).**
+> Build-breaking AST guard `tests/invariants/test_no_thin_assertions.py` rejects any test function body matching one of 5 thin-assertion patterns (T1 `try: pass`, T2 body==`pass`, T3 `assert <constant>`, T4 only `pytest.skip(...)`, T5 docstring-only). Two-tier exemption: file-based grandfather YAML (9 legacy entries → FTT-027..035) + in-source `@pytest.mark.acceptable_thin_assertion` + `# reason:` marker. Drift detector companion ensures the YAML stays honest. Live-tree baseline 9/9 ≤ 10 halt threshold; negative-rail probe confirmed end-to-end catch+restore. Structural enforcement of the 5.6.1 audit standard. Tracker: 24 → 33 active (24 pollution + 9 thin-assertion).
+
+
 > **2026-06-26 17:42 UTC — AUTONOMOUS BACKLOG RUN Round 3 closed (2 sprints, 5 proving slices GREEN cumulative).**
 > Continuation of the autonomous backlog run under the HARD-GATE reinforcements.
 > Two ships executed strictly per HALT-and-surface contract:

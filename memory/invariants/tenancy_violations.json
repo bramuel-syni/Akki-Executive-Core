@@ -1,10 +1,10 @@
 {
-  "scan_timestamp": "2026-06-26T15:17:02.172906+00:00",
+  "scan_timestamp": "2026-06-26T17:56:18.563899+00:00",
   "scan_roots": [
     "/app/backend/services",
     "/app/backend/routers"
   ],
-  "files_scanned": 324,
+  "files_scanned": 328,
   "tenant_scoped_collections": [
     "analyses",
     "analysis_blobs",
@@ -329,6 +329,13 @@
       "kind": "non_literal"
     },
     {
+      "file": "/app/backend/routers/monitor_background_tracker.py",
+      "line": 70,
+      "collection": "contexts",
+      "method": "find_one",
+      "kind": "filter"
+    },
+    {
       "file": "/app/backend/services/tasks/compile_service.py",
       "line": 849,
       "collection": "work_studio_exports",
@@ -336,8 +343,8 @@
       "kind": "filter"
     }
   ],
-  "violation_count": 3,
-  "definite_violation_count": 2,
+  "violation_count": 4,
+  "definite_violation_count": 3,
   "phase": "2.1_per_collection_enforce",
   "phase_2_enforce_target": "definite_violation_count == 0 for enforce_mode_collections"
 }

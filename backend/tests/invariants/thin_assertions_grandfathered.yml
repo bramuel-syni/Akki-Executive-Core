@@ -1,0 +1,88 @@
+# thin_assertions_grandfathered.yml
+#
+# Canonical Spec: /app/memory/audit/PHASE_5_6_1_CSRF_RIG_AUDIT.md
+#                 (structural enforcement: tests that assert nothing
+#                 hide gaps)
+# Sprint memo:    /app/memory/sprints/INVARIANT_NO_THIN_ASSERTIONS.md
+# Seeded by:      backend/scripts/jc_invariant_thin_assertions_slice.py
+#                 baseline scan 2026-06-26 17:48 UTC (9 active findings,
+#                 below the 10-finding halt threshold)
+#
+# This file grandfathers the 9 thin-assertion test functions that
+# existed BEFORE the invariant shipped. Each entry MUST list:
+#
+#   - file:    repo-relative path
+#   - func:    test function name
+#   - lineno:  line number at ship time (line drift is tolerated; the
+#              invariant matches on (file, func) — lineno is for the
+#              audit trail)
+#   - pattern: one of T1..T5 from the slice catalog
+#   - reason:  free-text explanation OR a FAILING_TEST_TRACKER FTT-ID
+#              the entry rolls up to
+#
+# Per the user direction in the autonomous-backlog-run dispatch,
+# these are NOT auto-fixed in the invariant-ship sprint; each goes
+# into FAILING_TEST_TRACKER for individual rewrite or removal.
+#
+# Removing an entry from this file is a deliberate close-out (the
+# test was rewritten with a real assertion, or removed entirely).
+# Adding a NEW entry is an audit-level change — only acceptable when
+# a follow-up sprint memo explains why the test can't carry a real
+# assertion (and the test should then ALSO carry the in-source
+# `@pytest.mark.acceptable_thin_assertion` + `# reason:` marker so
+# the invariant double-confirms the exemption).
+
+entries:
+  - file: backend/tests/test_iter12_shares_home.py
+    func: test_comment_on_share_via_comments_router
+    lineno: 190
+    pattern: T2
+    reason: FTT-027 (queue follow-up; legacy share-home test stub)
+
+  - file: backend/tests/test_j2_stage_3.py
+    func: test_no_guardrail_files_modified_in_j2
+    lineno: 438
+    pattern: T3
+    reason: FTT-028 (queue follow-up; J2 stage-3 guardrail-files marker assertion)
+
+  - file: backend/tests/test_j3_stage_4_5_frontend.py
+    func: test_j3_f6_retired_at_j4_ship
+    lineno: 210
+    pattern: T3
+    reason: FTT-029 (queue follow-up; retired-at-ship marker)
+
+  - file: backend/tests/test_j3_stage_4_5_frontend.py
+    func: test_j3_f8_no_guardrail_files_modified
+    lineno: 231
+    pattern: T3
+    reason: FTT-030 (queue follow-up; guardrail-files marker)
+
+  - file: backend/tests/test_patch_21_news.py
+    func: test_news_endpoint_requires_auth
+    lineno: 141
+    pattern: T4
+    reason: FTT-031 (queue follow-up; pytest.skip-only news endpoint test)
+
+  - file: backend/tests/test_patch_23_upload_p0.py
+    func: test_upload_endpoint_rejects_without_auth_header
+    lineno: 61
+    pattern: T4
+    reason: FTT-032 (queue follow-up; pytest.skip-only upload-auth test)
+
+  - file: backend/tests/test_patch_25_news_geo.py
+    func: test_profile_country_get_patch_round_trip
+    lineno: 206
+    pattern: T4
+    reason: FTT-033 (queue follow-up; pytest.skip-only profile/country round-trip)
+
+  - file: backend/tests/test_track_b_phase1_signin_begin.py
+    func: test_fig20_unauth_root_lands_on_signin
+    lineno: 200
+    pattern: T2
+    reason: FTT-034 (queue follow-up; Track-B Phase 1 sign-in unauth-root)
+
+  - file: backend/tests/test_track_b_phase1_signin_begin.py
+    func: test_fig22_post_redirect_no_error_state
+    lineno: 211
+    pattern: T2
+    reason: FTT-035 (queue follow-up; Track-B Phase 1 post-redirect no-error)

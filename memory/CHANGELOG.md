@@ -2,6 +2,22 @@
 
 > Append-only history of shipped work. Newest first.
 
+## 2026-06-26 — P5.7-PER-FILE-CAPTURE · pollution scope cut 24 → 18 / 7 files
+
+**P5.7-PER-FILE-CAPTURE — Per-file subprocess capture (path b done right)** (SHIPPED · HARD STOP at FAIL_IN_CONTEXT surface · AWAITING USER PICK on bisect strategy). User explicitly rejected (d) — "(d) is the anti-pattern we already rejected". New READ-ONLY slice `backend/scripts/jc_test_pollution_per_file_capture_slice.py` runs every test file in a fresh subprocess with a 60 s wall timeout. **433 files completed in 54.8 min** (in-process attempt-1 hung at 16%). Buckets: 350 PASS / 14 PASS_NO_TESTS / 59 FAIL_DETERMINISTIC / 10 TIMEOUT / 0 ERROR. **Tracker scope CORRECTED**: of the 24 active FTT-002..026 entries, only **18 FTT IDs / 7 files** are TRUE cross-test pollution (PASS alone, FAIL in-suite). 6 reclassified: FTT-002/003 integration-lane-only, FTT-013 deterministic-slow (TIMEOUT in isolation), FTT-014 deterministic regression (FAIL alone too). All halt thresholds clear (under 100-file systemic-rot ceiling; no locked-area polluter at this surface). 0 production / 0 test / 0 fixture mutations. Added dependency: `pytest-forked` (additive). Three bisect strategies surfaced for user pick: (a) binary-search per file (~3.5-7 h), (b) statically-narrowed per file (~1-2 h), (c) two-file blanket sweep (~1.5-3.5 h). Agent recommendation: **(b) then (a) on holdouts**.
+- `sprints/P5_7_PER_FILE_CAPTURE.md` · slice `backend/scripts/jc_test_pollution_per_file_capture_slice.py` · index `memory/jc_artifacts/test_pollution/per_file_capture_20260626T181453Z.md`
+
+## 2026-06-26 — Pollution Path (b) attempt 1 · HALT-and-surface fired (broad-suite hung at 16%)
+
+**P5.7-CAPTURE-B-ATTEMPT-1 — Broad-suite pollution capture (b) attempt 1** (HALT-and-surface FIRED · AWAITING USER PATH PICK). User picked path (b) over (a)/(c) — "static patterns are signals, not confirmed polluters". Attempted full `pytest tests/` (4,412 tests, 90-min budget). **Broad-suite hung at ~16% completion** after 8m 21s (24 live threads at 0% CPU, no progress for 5+ min). ~50 failures captured in the partial 16% slice. Hang signature matches the pre-authorised halt clause ("> 2 hours / harness state accumulation"). 0 LOC mutated. Four refined paths surfaced for user pick: (a) `pytest-forked` bisect, (b) file-by-file subprocess capture with per-file timeouts, (c) Docker container isolation, (d) ship P5.7-DIAG path (a) static guards FIRST then re-measure. Agent recommendation: (d) THEN (b).
+- `sprints/P5_7_CAPTURE_B_ATTEMPT_1.md` · capture report `memory/jc_artifacts/test_pollution/broadsuite/broadsuite_attempt_1_20260626T175559Z.md`
+
+## 2026-06-26 — INVARIANT-NO-THIN-ASSERTIONS (1 ship · 3 proving rails GREEN · invariant ladder + 1)
+
+**INVARIANT-NO-THIN-ASSERTIONS — build-breaking AST guard** (10/10 classifier + 2/2 invariant + 1/1 negative-rail probe GREEN).
+New hard ratchet `tests/invariants/test_no_thin_assertions.py` rejects any test function body matching one of 5 thin-assertion patterns: T1 `try: pass`, T2 body==`pass`, T3 `assert <constant>`, T4 only `pytest.skip(...)`, T5 docstring-only. Two-tier exemption: file-based grandfather YAML (`thin_assertions_grandfathered.yml`, seeded with 9 legacy entries FTT-027..035) + in-source `@pytest.mark.acceptable_thin_assertion` + `# reason:` marker. Companion drift detector ensures the YAML stays honest. Live-tree baseline 9/9 ≤ 10 halt threshold (safe to ship). Negative-rail end-to-end probe confirmed the invariant catches new violations + restores when probe removed. Structural enforcement of the 5.6.1 audit standard. FAILING_TEST_TRACKER counter: 24 → 33 active (24 pollution + 9 NEW THIN-ASSERTION).
+- `sprints/INVARIANT_NO_THIN_ASSERTIONS.md` · slice `backend/scripts/jc_invariant_thin_assertions_slice.py`
+
 ## 2026-06-26 — AUTONOMOUS BACKLOG RUN · Round 3 (Phase 5.6.2 + P5.7-DIAG, 2 ships, 5 proving slices GREEN total)
 
 Continuation of the autonomous-backlog-run banner. Two ships executed strictly per HALT-and-surface contract; testing-subagent rule reinforced (pure Python proving slices only).

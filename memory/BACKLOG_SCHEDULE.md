@@ -48,18 +48,24 @@
    conflict). Trigger criterion (on-demand has proved trustworthy)
    is met. Defer until user steers.
 
-11. **Cross-test pollution cleanup sprint (FTT-002..026 / 24 active).**
-    Diagnosis sprint P5.7-DIAG shipped 2026-06-26 with:
-    - 9-cluster classification (`memory/jc_artifacts/test_pollution/`)
-    - 337 static polluter-pattern hits surfaced
-    - 0 dynamic reproductions under 2-file/4-file targeted re-runs
-    - 3 paths-forward surfaced for user pick:
-      (a) ship static guards proactively + re-measure;
-      (b) upgrade to full broad-suite capture with deterministic
-          ordering (45-90 min);
-      (c) defer until CI lane forces the issue.
-    *Unblock condition:* user picks path (a)/(b)/(c). Sprint memo:
-    `sprints/P5_7_DIAG_test_pollution.md`.
+11. **Cross-test pollution cleanup sprint (FTT-002..026 / scoped down to 18 IDs in 7 files).**
+    Diagnosis sprints shipped 2026-06-26 (newest first):
+    - **P5.7-PER-FILE-CAPTURE** — per-file subprocess capture (path b done right;
+      user explicitly rejected (d)). 433 files in 54.8 min. **18 FTT IDs / 7 files
+      confirmed as TRUE cross-test pollution** (FAIL_IN_CONTEXT); 6 reclassified
+      (FTT-002/003 integration-only, FTT-013 deterministic-slow, FTT-014
+      deterministic regression). All halt thresholds clear. Three bisect
+      strategies surfaced: (a) binary-search per file (~3.5-7 h),
+      (b) statically-narrowed per file (~1-2 h), (c) two-file blanket sweep
+      (~1.5-3.5 h). Agent recommendation: **(b) then (a) on holdouts.**
+    - P5.7-CAPTURE-B-ATTEMPT-1 — superseded; in-process broad-suite hung at 16%.
+    - P5.7-DIAG — initial 9-cluster classification + 337 static polluter-pattern
+      hits + 0 dynamic reproductions.
+
+    *Unblock condition:* user picks (a)/(b)/(c) for the bisect step.
+    Sprint memos: `sprints/P5_7_DIAG_test_pollution.md`,
+    `sprints/P5_7_CAPTURE_B_ATTEMPT_1.md`,
+    `sprints/P5_7_PER_FILE_CAPTURE.md`.
 
 ### P2 (logged proactively)
 
