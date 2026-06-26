@@ -6,7 +6,13 @@
 
 ## 1. Current State
 
-**AUTONOMOUS RUN — 2026-06-25/26 — EIGHT STAGES CLEARED across three streams + Track-2 Decks upgrade CLOSED at minimum scope.**
+**AUTONOMOUS RUN — 2026-06-25/26 — EIGHT STAGES CLEARED across three streams + Track-2 Decks upgrade CLOSED at minimum scope + P0 bug "Analyze upload failing" patched + deployment startup-race fix.**
+
+**P0 bug · Analyze file upload failing (production) · CLOSED 2026-06-26.** Root cause locked at 85% confidence: Mongo wire protocol caps a single BSON document at 16,793,598 bytes; the Analyze upload path inlines raw file bytes as base64 in `analysis_blobs.data_b64` (multi-file) and `workbook_blobs.data_b64` (single-file); base64 inflates 4/3 so any raw file > ~12 MB exceeds the cap → `pymongo.errors.DocumentTooLarge` → 500. Hard-reproduced in preview at 12.5 MB raw (BSON doc 17,476,687 bytes); 11 MB raw passes. **Minimum-scope fix (locked 11 MB ceiling)** lands in `routers/workbook_analysis.py` + `services/analysis_lifecycle.py`: pre-insert size guard returning clean 413 (`workbook_too_large_for_inline_storage: '{fname}' is {size_mb:.1f} MB; current inline storage limit is 11 MB. Split the workbook or compress sheets to reduce size. (GridFS support is on the roadmap for larger files.)`) on BOTH upload paths, plus defensive `DocumentTooLarge` catch around the `insert_one` / `insert_many` calls. Proving slice 4/4 GREEN. Convergent regression-FREE. GridFS migration design memo queued at `/app/memory/sprints/GRIDFS_MIGRATION_DESIGN.md` (DESIGN-ONLY) + added to `BACKLOG_SCHEDULE.md` as P1 (after Track-2 + GP). Sprint memo: `sprints/BUG_ANALYZE_UPLOAD.md`. Diagnosis trail at `/app/memory/jc_artifacts/bugs/analyze_upload_20260626.md`.
+
+**Deployment startup-race fix 2026-06-26.** Synisense Engine derivation backfill task was firing via `asyncio.create_task(...)` BEFORE uvicorn finished binding 0.0.0.0:8001, producing 3× `httpx.ConnectError` × ~15s on every cold start. Fix: env-overridable `ENGINE_BACKFILL_BOOT_GRACE_S` (default 20.0s) `await asyncio.sleep(...)` inside the task body. App start clean, backfill fires AFTER listener is up. Surface ratchet unchanged. Deployment agent: PASS · 0 findings.
+
+**AUTONOMOUS RUN — earlier 2026-06-25/26:**
 
 **Stream 1 — JC-MON · Stage 2b complete + Stage 3.0/3.1 CLOSED + Gate A verdict produced.**
 
