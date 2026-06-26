@@ -211,12 +211,65 @@ def _parse_csv(blob: bytes, max_rows: int = 50_000) -> Tuple[List[WorkbookSheet]
     return [sheet], {"Sheet1": matrix}
 
 
+def _parse_xlsx_from_path(file_path: str, max_rows_per_sheet: int = 20_000) -> Tuple[List[WorkbookSheet], Dict[str, List[List[Any]]]]:
+    """JC-WS · BUG-ANL-UPLOAD-GRIDFS (2026-06-26) — disk-path parse.
+
+    Identical row-iteration shape to `_parse_xlsx`, but openpyxl
+    opens the file directly from disk so we never materialise the
+    full bytes in memory. Used by the GridFS read path (the file
+    arrives as a tempfile on disk after streaming from the bucket)."""
+    wb = openpyxl.load_workbook(filename=file_path, read_only=True, data_only=True)
+    sheets: List[WorkbookSheet] = []
+    matrices: Dict[str, List[List[Any]]] = {}
+    try:
+        for ws in wb.worksheets:
+            rows: List[List[Any]] = []
+            for r in ws.iter_rows(values_only=True):
+                rows.append(list(r))
+                if len(rows) >= max_rows_per_sheet:
+                    break
+            sheet, matrix = _build_sheet(ws.title, rows)
+            sheets.append(sheet)
+            matrices[ws.title] = matrix
+    finally:
+        wb.close()
+    return sheets, matrices
+
+
+def _parse_csv_from_path(file_path: str, max_rows: int = 50_000) -> Tuple[List[WorkbookSheet], Dict[str, List[List[Any]]]]:
+    """Open a CSV directly from disk path. csv.reader operates as a
+    row-iterator over an open file handle — peak memory is one
+    decoded line at a time, not the full text in StringIO."""
+    rows: List[List[Any]] = []
+    with open(file_path, "r", encoding="utf-8-sig", errors="replace", newline="") as fh:
+        reader = csv.reader(fh)
+        for r in reader:
+            rows.append(list(r))
+            if len(rows) >= max_rows:
+                break
+    sheet, matrix = _build_sheet("Sheet1", rows)
+    return [sheet], {"Sheet1": matrix}
+
+
 def parse_workbook(
     *,
-    blob: bytes,
+    blob: Optional[bytes] = None,
+    file_path: Optional[str] = None,
     file_format: str,
 ) -> Tuple[List[WorkbookSheet], Dict[str, List[List[Any]]]]:
-    """Parse a workbook blob.
+    """Parse a workbook from bytes OR a disk path.
+
+    EXACTLY ONE of `blob=` / `file_path=` must be set.
+
+    `blob=` — LEGACY path, used when the caller already holds the
+    full bytes (e.g. fresh upload before GridFS streaming, OR a
+    legacy inline-base64 row decoded via `read_workbook_bytes`).
+
+    `file_path=` — JC-WS · BUG-ANL-UPLOAD-GRIDFS (2026-06-26). The
+    GridFS read path streams chunks into a tempfile on disk and
+    hands the path here so openpyxl can row-iterate without loading
+    the file into RAM. Use this for large files (≥ 50 MB) and
+    GridFS-backed reads in general.
 
     Returns: `(sheet_metadata, sheet_name -> raw_matrix)`. The
     raw matrix is the full 2D row x col list including the header
@@ -224,11 +277,15 @@ def parse_workbook(
     cell-range citations (the row index in the matrix is 0-based;
     the corresponding 1-based sheet row is `matrix_index + 1`).
     """
+    if (blob is None) == (file_path is None):
+        raise ValueError(
+            "parse_workbook: exactly one of blob= / file_path= must be set"
+        )
     fmt = (file_format or "").lower()
     if fmt == "xlsx":
-        return _parse_xlsx(blob)
+        return _parse_xlsx_from_path(file_path) if file_path else _parse_xlsx(blob)
     if fmt == "csv":
-        return _parse_csv(blob)
+        return _parse_csv_from_path(file_path) if file_path else _parse_csv(blob)
     raise ValueError(f"workbook_parser: unsupported file_format={file_format!r}")
 
 

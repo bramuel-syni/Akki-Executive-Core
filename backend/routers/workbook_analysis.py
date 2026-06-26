@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import base64
 import logging
+import os
 import re
 import uuid
 from datetime import datetime, timezone
@@ -70,6 +71,15 @@ from services.workbook_analyzer import (
 )
 from contracts import get_solva  # Phase 4.0 — was direct narrate_analysis import
 
+# JC-WS · BUG-ANL-UPLOAD-GRIDFS (2026-06-26) — GridFS migration helpers.
+from services.analysis_lifecycle import (
+    build_analysis_from_uploads,
+    build_analysis_metadata,
+    read_workbook_bytes,
+    session_close as analysis_session_close,
+    upload_to_gridfs,
+)
+
 # JC-WS Phase 2 (2026-06-25) — Analyze workspace (Part B) — docked
 # prompt + data-aware tips + topic-grouped highlights.
 from services.analyze_workspace import (
@@ -84,10 +94,6 @@ from contracts.responses import (
 
 # Track A Phase 1 (2026-06-03) — new sibling Analysis entity + service.
 from models.analysis import Analysis  # noqa: F401  re-export available for callers
-from services.analysis_lifecycle import (
-    build_analysis_from_uploads,
-    session_close as analysis_session_close,
-)
 
 
 router = APIRouter(prefix="/api/workbook", tags=["workbook-analyze"])
@@ -95,12 +101,28 @@ logger = logging.getLogger("akki.workbook_analysis")
 
 
 # Track A Phase 1 (2026-06-03) — file-size cap raised from 25MB →
-# 250MB per file per the approved Pre-Read. The Analyze pipeline now
-# routinely sees workbooks in the 100MB+ range from real exec-side
-# users; 25MB was a P5.14-era conservative ceiling. The 250MB
-# boundary still bounds the per-tenant Mongo footprint.
-MAX_BYTES = 250 * 1024 * 1024
+# 250MB per file per the approved Pre-Read. JC-WS · BUG-ANL-UPLOAD-
+# GRIDFS (2026-06-26) raised it again 250MB → 500MB once the storage
+# backend switched from Mongo-inline-base64 (which hit the 16MB BSON
+# wire-protocol cap at ~12MB raw) to GridFS streaming (which chunks
+# at 255KB and has no document-cap limit). The 500MB ceiling now
+# bounds upload latency + pod-RAM peak (~100MB for streaming reads),
+# not BSON wire constraints.
+MAX_BYTES = 500 * 1024 * 1024
 ACCEPT_EXT = {".xlsx", ".csv"}
+
+
+# JC-WS · BUG-ANL-UPLOAD-GRIDFS (2026-06-26) — user-facing 413 message
+# for the over-ceiling rejection. Names the file + the size + the
+# ceiling so the user sees exactly what to do.
+def _over_ceiling_message(fname: str, size_bytes: int) -> str:
+    size_mb = size_bytes / 1024 / 1024
+    limit_mb = MAX_BYTES // 1024 // 1024
+    return (
+        f"workbook_over_{limit_mb}mb_ceiling: '{fname}' is "
+        f"{size_mb:.1f} MB; max is {limit_mb} MB. Split the "
+        f"workbook or compress sheets to reduce size."
+    )
 
 
 def _now_iso() -> str:
@@ -141,10 +163,26 @@ async def _load_matrices(analysis_id: str) -> Dict[str, List[List[Any]]]:
     blob_row = await db.workbook_blobs.find_one({"analysis_id": analysis_id}, {"_id": 0})  # tenancy:allow-no-account-id — blob fetched by analysis_id; parent workbook_analyses row validated with account_id upstream (L88-95)
     if not blob_row:
         raise HTTPException(404, "workbook_blob_missing")
-    blob = base64.b64decode(blob_row["data_b64"])
-    _sheets, matrices = parse_workbook(
-        blob=blob, file_format=blob_row["file_format"],
-    )
+    # JC-WS · BUG-ANL-UPLOAD-GRIDFS (2026-06-26) — dual-read: returns
+    # (bytes, None) for legacy `data_b64` rows, (None, tempfile_path)
+    # for GridFS-backed rows. Caller MUST `os.unlink(tempfile_path)`
+    # when done so the disk-spool doesn't leak.
+    inline_bytes, tmp_path = await read_workbook_bytes(db, blob_row)
+    try:
+        if tmp_path:
+            _sheets, matrices = parse_workbook(
+                file_path=tmp_path, file_format=blob_row["file_format"],
+            )
+        else:
+            _sheets, matrices = parse_workbook(
+                blob=inline_bytes, file_format=blob_row["file_format"],
+            )
+    finally:
+        if tmp_path:
+            try:
+                os.unlink(tmp_path)
+            except Exception:  # noqa: BLE001
+                pass
     _MATRIX_CACHE[analysis_id] = matrices
     return matrices
 
@@ -307,19 +345,73 @@ async def upload_workbook(
     ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     if ext not in ACCEPT_EXT:
         raise HTTPException(415, f"workbook_format_unsupported: {ext}")
-    data = await file.read()
-    if len(data) > MAX_BYTES:
-        raise HTTPException(413, "workbook_too_large_250mb")
-    if not data:
-        raise HTTPException(400, "workbook_empty")
-
     fmt = "xlsx" if ext == ".xlsx" else "csv"
-    try:
-        sheets, matrices = parse_workbook(blob=data, file_format=fmt)
-    except Exception as e:  # noqa: BLE001
-        raise HTTPException(422, f"workbook_parse_failed: {e!s:.200}")
+
+    # JC-WS · BUG-ANL-UPLOAD-GRIDFS (2026-06-26) — streaming upload.
+    # The OLD path called `await file.read()` and held the full
+    # payload in memory; at 500 MB raw + ~700 MB base64 inflation
+    # that was a ~1.2 GB RAM peak. The NEW path:
+    #   1) size-validates from the spooled file (no full read).
+    #   2) streams the spooled file straight into GridFS in
+    #      255 KB chunks via `upload_to_gridfs(...)`.
+    #   3) streams it back into a tempfile for openpyxl parsing
+    #      via `read_workbook_bytes(...)`.
+    # Peak RAM ≈ a few MB of Motor buffering, NOT 500 MB+.
+    size_bytes = file.size or 0
+    if size_bytes == 0:
+        # Fallback for clients that don't send content-length: spool
+        # the file then size-check via seek+tell.
+        try:
+            file.file.seek(0, 2)            # SEEK_END
+            size_bytes = file.file.tell()
+            file.file.seek(0)
+        except Exception:  # noqa: BLE001
+            size_bytes = 0
+    if size_bytes == 0:
+        raise HTTPException(400, "workbook_empty")
+    if size_bytes > MAX_BYTES:
+        raise HTTPException(413, _over_ceiling_message(filename, size_bytes))
 
     analysis_id = "wba-" + uuid.uuid4().hex[:12]
+
+    # Stream → GridFS (peak RAM ≈ a few MB of Motor buffering).
+    gridfs_id = await upload_to_gridfs(
+        db,
+        source=file.file,
+        filename=filename,
+        metadata={
+            "kind":         "workbook_blob",
+            "analysis_id":  analysis_id,
+            "account_id":   current["id"],
+            "context_id":   current.get("active_context_id") or None,
+            "filename":     filename,
+            "file_format":  fmt,
+        },
+    )
+
+    # Stream back to a tempfile and parse from disk path. openpyxl's
+    # read_only=True mode is a row-iterator, peak RAM stays in the
+    # low-MB band even for 500 MB files.
+    inline_bytes, tmp_path = await read_workbook_bytes(
+        db,
+        {"gridfs_id": gridfs_id, "filename": filename, "file_format": fmt},
+    )
+    try:
+        if tmp_path:
+            sheets, matrices = parse_workbook(file_path=tmp_path, file_format=fmt)
+        else:
+            sheets, matrices = parse_workbook(blob=inline_bytes, file_format=fmt)
+    except Exception as e:  # noqa: BLE001
+        # Roll back the GridFS upload — no orphan files on parse fail.
+        from services.analysis_lifecycle import delete_gridfs_file
+        await delete_gridfs_file(db, gridfs_id)
+        raise HTTPException(422, f"workbook_parse_failed: {e!s:.200}")
+    finally:
+        if tmp_path:
+            try:
+                os.unlink(tmp_path)
+            except Exception:  # noqa: BLE001
+                pass
 
     analysis = WorkbookAnalysis(
         id=analysis_id,
@@ -328,18 +420,20 @@ async def upload_workbook(
         document_id=analysis_id,  # MVP: workbook is its own document
         filename=filename,
         file_format=fmt,
-        file_size_bytes=len(data),
+        file_size_bytes=size_bytes,
         status="parsed",
         sheets=sheets,
     )
     await db.workbook_analyses.insert_one(analysis.model_dump())  # tenancy:allow-no-account-id — model.dump() insert: analysis carries account_id+context_id fields stamped at WorkbookAnalysis(...) constructor (L274-286); non-literal scanner cannot resolve through model.dump()
+    # NEW shape — `gridfs_id` replaces `data_b64`; dual-read on the
+    # read path handles legacy `data_b64` rows transparently.
     await db.workbook_blobs.insert_one({
         "analysis_id": analysis_id,
-        "account_id": current["id"],
-        "filename": filename,
+        "account_id":  current["id"],
+        "filename":    filename,
         "file_format": fmt,
-        "data_b64": base64.b64encode(data).decode("ascii"),
-        "created_at": _now_iso(),
+        "gridfs_id":   gridfs_id,
+        "created_at":  _now_iso(),
     })
     _MATRIX_CACHE[analysis_id] = matrices
 
@@ -730,41 +824,96 @@ async def upload_workbook_multi(
     if not ctx:
         raise HTTPException(400, "context_id_required")
 
-    accepted: List[tuple] = []  # (filename, bytes, fmt)
-    for upload in files:
-        fname = upload.filename or "unnamed"
-        ext = "." + fname.rsplit(".", 1)[-1].lower() if "." in fname else ""
-        if ext not in ACCEPT_EXT:
-            raise HTTPException(415, f"workbook_format_unsupported: {ext}")
-        raw = await upload.read()
-        if len(raw) > MAX_BYTES:
-            raise HTTPException(413, f"workbook_too_large_250mb: {fname}")
-        if not raw:
-            raise HTTPException(400, f"workbook_empty: {fname}")
-        fmt = "xlsx" if ext == ".xlsx" else "csv"
-        # Light-touch parse-validation: every source must be
-        # readable as the declared format.
-        try:
-            parse_workbook(blob=raw, file_format=fmt)
-        except Exception as e:  # noqa: BLE001
-            raise HTTPException(422, f"workbook_parse_failed: {fname}: {e!s:.140}")
-        accepted.append((fname, raw, fmt))
+    # JC-WS · BUG-ANL-UPLOAD-GRIDFS (2026-06-26) — streaming multi-file
+    # upload. Per-file: validate ext + size from `UploadFile.size`,
+    # light-touch parse-validation by streaming to a tempfile + reading
+    # from disk path (peak RAM ~ a few MB per file), then stream to
+    # GridFS. NO `await upload.read()` of the full payload. We keep
+    # track of each file's `gridfs_id` so we can roll them back on
+    # any subsequent failure (parse error, batch fail).
+    from services.analysis_lifecycle import delete_gridfs_file
+    accepted: List[Tuple[str, int, str, str]] = []  # (filename, size_bytes, fmt, gridfs_id)
+    uploaded_gridfs_ids: List[str] = []
+    try:
+        for upload in files:
+            fname = upload.filename or "unnamed"
+            ext = "." + fname.rsplit(".", 1)[-1].lower() if "." in fname else ""
+            if ext not in ACCEPT_EXT:
+                raise HTTPException(415, f"workbook_format_unsupported: {ext}")
+            fmt = "xlsx" if ext == ".xlsx" else "csv"
+            size_bytes = upload.size or 0
+            if size_bytes == 0:
+                try:
+                    upload.file.seek(0, 2)
+                    size_bytes = upload.file.tell()
+                    upload.file.seek(0)
+                except Exception:  # noqa: BLE001
+                    size_bytes = 0
+            if size_bytes == 0:
+                raise HTTPException(400, f"workbook_empty: {fname}")
+            if size_bytes > MAX_BYTES:
+                raise HTTPException(413, _over_ceiling_message(fname, size_bytes))
+
+            # Stream → GridFS (peak RAM ~ Motor buffer, not full file).
+            gridfs_id = await upload_to_gridfs(
+                db,
+                source=upload.file,
+                filename=fname,
+                metadata={
+                    "kind":         "analysis_blob",
+                    "account_id":   current["id"],
+                    "context_id":   ctx,
+                    "filename":     fname,
+                    "file_format":  fmt,
+                },
+            )
+            uploaded_gridfs_ids.append(gridfs_id)
+
+            # Light-touch parse-validation from disk path. Stream the
+            # GridFS file back to a tempfile, parse, drop the tempfile.
+            inline_bytes, tmp_path = await read_workbook_bytes(
+                db,
+                {"gridfs_id": gridfs_id, "filename": fname, "file_format": fmt},
+            )
+            try:
+                if tmp_path:
+                    parse_workbook(file_path=tmp_path, file_format=fmt)
+                else:
+                    parse_workbook(blob=inline_bytes, file_format=fmt)
+            except Exception as e:  # noqa: BLE001
+                raise HTTPException(422, f"workbook_parse_failed: {fname}: {e!s:.140}")
+            finally:
+                if tmp_path:
+                    try:
+                        os.unlink(tmp_path)
+                    except Exception:  # noqa: BLE001
+                        pass
+
+            accepted.append((fname, size_bytes, fmt, gridfs_id))
+    except Exception:
+        # Roll back any GridFS uploads from this batch on ANY failure.
+        for fid in uploaded_gridfs_ids:
+            try:
+                await delete_gridfs_file(db, fid)
+            except Exception:  # noqa: BLE001
+                pass
+        raise
 
     display_title = (title or "").strip() or (
         accepted[0][0] if len(accepted) == 1
         else f"{accepted[0][0]} + {len(accepted) - 1} more"
     )
 
-    analysis, blob_docs = build_analysis_from_uploads(
+    analysis, blob_docs = build_analysis_metadata(
         account_id=current["id"],
         context_id=ctx,
         title=display_title,
         files=accepted,
         objective=(objective or "").strip(),
     )
-    await db.analyses.insert_one(analysis.model_dump())  # tenancy:allow-no-account-id — model.dump() insert: analysis carries account_id+context_id fields stamped at build_analysis_from_uploads(account_id, context_id) call (L710-716); non-literal scanner cannot resolve through model.dump()
+    await db.analyses.insert_one(analysis.model_dump())  # tenancy:allow-no-account-id — model.dump() insert: analysis carries account_id+context_id fields stamped at build_analysis_metadata(account_id, context_id) call; non-literal scanner cannot resolve through model.dump()
     if blob_docs:
-        await db.analysis_blobs.insert_many(blob_docs)  # tenancy:allow-no-account-id — blob_docs accumulator: each blob stamped with account_id+context_id at build_analysis_from_uploads; non-literal scanner cannot resolve through list accumulation
+        await db.analysis_blobs.insert_many(blob_docs)  # tenancy:allow-no-account-id — blob_docs accumulator: each blob stamped with account_id+context_id at build_analysis_metadata; non-literal scanner cannot resolve through list accumulation
 
     return {
         "id": analysis.id,
