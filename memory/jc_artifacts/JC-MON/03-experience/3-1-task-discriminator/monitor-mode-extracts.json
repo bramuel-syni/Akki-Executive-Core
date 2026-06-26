@@ -1,0 +1,69 @@
+{
+  "task_id": "task-8f60f2a41776",
+  "objective_id_on_task": "obj-stage3-1-a1ec6b59",
+  "response": {
+    "ok": true,
+    "task_id": "task-8f60f2a41776",
+    "doc_ids": [],
+    "comment_len": 281,
+    "monitor_progress_entry": {
+      "id": "c9fa9032-7e92-4f8c-b195-0797f09ee301",
+      "kind": "email_extract",
+      "extracted_at": "2026-06-26T04:43:52.506255+00:00",
+      "sender": "recovery-owner@mara-heritage.test",
+      "progress_pct": 65,
+      "rationale": "Overall progress against target: 65%.",
+      "target_metric": "active revenue index 92",
+      "refused": false,
+      "refusal_reason": null,
+      "audit_entry_ids": [
+        "f76cfa3d-6934-4d98-ae42-060013b0715e"
+      ]
+    }
+  },
+  "contributor_comments": [
+    {
+      "id": "8d7d9a23-9c12-42b7-980c-90d1374899fd",
+      "reviewer": "recovery-owner@mara-heritage.test",
+      "comment": "Week 9 status: Phase 1 exit gate PASSED. Weekly active sessions index recovered to 97 by Week 9. Checkout conversion pct now 102% of Q1 mean. Phase 2 reactivation campaign launched Week 8. Headline monthly active revenue index this period: 92. Overall progress against target: 65%.",
+      "kind": "email_body",
+      "subject": "Re: Weekly recovery update",
+      "doc_ids": [],
+      "created_at": "2026-06-26T04:43:52.500681+00:00"
+    }
+  ],
+  "team_status_after": [
+    "submitted"
+  ],
+  "progress_updates": [
+    {
+      "id": "c9fa9032-7e92-4f8c-b195-0797f09ee301",
+      "kind": "email_extract",
+      "extracted_at": "2026-06-26T04:43:52.506255+00:00",
+      "sender": "recovery-owner@mara-heritage.test",
+      "progress_pct": 65,
+      "rationale": "Overall progress against target: 65%.",
+      "target_metric": "active revenue index 92",
+      "refused": false,
+      "refusal_reason": null,
+      "audit_entry_ids": [
+        "f76cfa3d-6934-4d98-ae42-060013b0715e"
+      ]
+    }
+  ],
+  "monitor_progress_entry": {
+    "id": "c9fa9032-7e92-4f8c-b195-0797f09ee301",
+    "kind": "email_extract",
+    "extracted_at": "2026-06-26T04:43:52.506255+00:00",
+    "sender": "recovery-owner@mara-heritage.test",
+    "progress_pct": 65,
+    "rationale": "Overall progress against target: 65%.",
+    "target_metric": "active revenue index 92",
+    "refused": false,
+    "refusal_reason": null,
+    "audit_entry_ids": [
+      "f76cfa3d-6934-4d98-ae42-060013b0715e"
+    ]
+  },
+  "tasks_progress_pct": 65
+}

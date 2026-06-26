@@ -158,3 +158,35 @@ agent has stopped per dispatch instruction ("If you finish all
 three streams cleanly before user returns, do not invent new work.
 Stop. Idle."). Two clean sub-slices proposed for Stage 3 if user
 wants progress without full scope clarification.
+
+
+---
+
+## ADDENDUM 2026-06-26 — Stage 3 HALT resolved + closure
+
+User returned 2026-06-26 with strict resolutions to all open
+decisions. The HALT-AND-SURFACE on JC-MON Stage 3 is now resolved:
+
+- **3.0 Reassess action** — CLOSED · 5/5 GREEN. Candidate-objectives
+  generator landed at `services/monitor/objective_candidate_service.py`
+  + endpoint `POST /api/contexts/{cid}/monitor/objectives/generate-candidates`.
+  No objective exists until confirmed. Sprint memo
+  `sprints/JC_MON_STAGE_3_0_CANDIDATE_OBJECTIVES.md`.
+- **3.1 Task drawer discriminator** — CLOSED · 6/6 GREEN. `objective_id`
+  ADDED to `db.tasks` as additive discriminator; Monitor branch wired
+  ADDITIVELY into existing `_handle_task_contributor_reply` (ONE
+  inbound path; TM-mode unchanged). Sprint memo
+  `sprints/JC_MON_STAGE_3_1_TASK_DISCRIMINATOR.md`.
+- **Gate A verdict** — Convergent FITS; Divergent DOES-NOT-FIT
+  (structural gap unchanged). Track-2 dispatch UNBLOCKED at minimum
+  scope. Sprint memo `sprints/JC_MON_STAGE_3_GATE_A.md`; artefacts
+  at `jc_artifacts/jc_mon/gate_a_verdict.md` + `gate_a_inventory.json`.
+- **JC-CHAT C.4** — VERIFIED · OPTION_A (keep Z3 populate-composer
+  semantics). Per R5 lock + user resolution. No build. Sprint memo
+  `sprints/JC_CHAT_C4_GATE_VERIFIED.md`.
+
+Origin-triggered Briefs + brief surfacing locations remain
+DEFERRED to per-module dispatches (per Stage 3 user resolution:
+"Brief affordance NOT in Stage 3; belongs to origin-trigger,
+per-surface").
+

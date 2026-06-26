@@ -97,6 +97,13 @@ class _TaskIn(BaseModel):
     state: str = "draft"             # "draft" | "active"
     context_id: Optional[str] = None
     due_date: Optional[str] = None
+    # JC-MON Stage 3.1 (2026-06-25) — additive discriminator.
+    # When set, this task is a MONITOR task linked to a strategic
+    # objective; the drawer renders objective linkage + update
+    # history. When unset (default), this is a Task Manager task
+    # and the drawer renders contribution linkage. ONE entity,
+    # ONE drawer, rendered BY CONTEXT.
+    objective_id: Optional[str] = None
 
 
 class _TaskPatch(BaseModel):
@@ -107,6 +114,9 @@ class _TaskPatch(BaseModel):
     team: Optional[List[_TeamMemberIn]] = None
     state: Optional[str] = None
     due_date: Optional[str] = None
+    # JC-MON Stage 3.1 (2026-06-25) — discriminator can be (un)set
+    # via PATCH; additive only.
+    objective_id: Optional[str] = None
 
 
 class _AgentPrefillIn(BaseModel):
@@ -148,6 +158,14 @@ def _sanitize_task(t: Dict[str, Any]) -> Dict[str, Any]:
         # subject + timestamp inline on the Contributions tab. The
         # data was always being written; this surfaces it.
         "contributor_comments": _sanitize_comments(t.get("contributor_comments") or []),
+        # JC-MON Stage 3.1 (2026-06-25) — discriminator surface +
+        # Monitor-mode progress-update history. When `objective_id`
+        # is set the drawer renders Monitor-mode (objective linkage
+        # + progress_updates timeline); when unset the drawer renders
+        # the existing TM contribution view. ONE entity, ONE drawer,
+        # rendered BY CONTEXT.
+        "objective_id":         t.get("objective_id") or None,
+        "progress_updates":     list(t.get("progress_updates") or []),
     }
 
 
@@ -226,6 +244,9 @@ async def create_task(
         "created_at":       now_iso,
         "updated_at":       now_iso,
         "status_history":   [{"state": body.state, "at": now_iso}],
+        # JC-MON Stage 3.1 (2026-06-25) — discriminator (None for TM
+        # tasks, populated for Monitor tasks linked to an objective).
+        "objective_id":     body.objective_id,
     }
     task["readiness_score"] = _compute_readiness(task)
     await db.tasks.insert_one(dict(task))      # copy: insert_one mutates
@@ -535,6 +556,11 @@ async def patch_task(
         update["team"] = [m.model_dump() for m in body.team]
     if body.due_date is not None:
         update["due_date"] = body.due_date
+    # JC-MON Stage 3.1 (2026-06-25) — discriminator can be (un)set
+    # via PATCH (linking a TM task to an objective converts it to a
+    # Monitor task; clearing the field reverts to TM-mode). Additive.
+    if body.objective_id is not None:
+        update["objective_id"] = body.objective_id or None
     if body.state is not None:
         if body.state not in TASK_STATES:
             raise HTTPException(status_code=400, detail=f"state must be one of {TASK_STATES}")

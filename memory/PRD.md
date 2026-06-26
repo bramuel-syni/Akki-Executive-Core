@@ -1,6 +1,30 @@
 # AKKI Sandbox — Product Requirements Document (PRD)
 
 
+> **2026-06-26 update — JC-MON Stage 3.0 + 3.1 + Gate A CLOSED; JC-CHAT C.4 VERIFIED.**
+> The Stage 3 HALT-AND-SURFACE on JC-MON resolved with user
+> resolutions. Three stages landed in one chain:
+> - **JC-MON Stage 3.0** (5/5 GREEN) — Shield-routed candidate-objectives
+>   generator under `solve_v2.monitor_candidate_objectives` + endpoint
+>   `POST /api/contexts/{cid}/monitor/objectives/generate-candidates`.
+>   NO objective exists until confirmed; generator NEVER writes.
+> - **JC-MON Stage 3.1** (6/6 GREEN) — `objective_id` additive
+>   discriminator on `db.tasks`; ONE drawer rendered by context; ONE
+>   inbound email path (`_handle_task_contributor_reply` shared);
+>   Shield-routed `solve_v2.monitor_email_update_extract` extracts
+>   progress on Monitor-mode emails additively. JC-TM regression-free.
+> - **Gate A verdict** — Convergent FITS · Divergent DOES-NOT-FIT ·
+>   **Track-2 dispatch UNBLOCKED at minimum scope** (NOT a Decks
+>   rebuild). Artefacts at `jc_artifacts/jc_mon/gate_a_verdict.md`.
+> - **JC-CHAT C.4** — VERIFIED · OPTION_A (keep Z3 populate-composer
+>   semantics). Per R5 lock + user resolution. No build. JC-CHAT
+>   Stage C now fully 4/4 CLOSED.
+> Sprint memos: `JC_MON_STAGE_3_0_CANDIDATE_OBJECTIVES.md`,
+> `JC_MON_STAGE_3_1_TASK_DISCRIMINATOR.md`,
+> `JC_MON_STAGE_3_GATE_A.md`, `JC_CHAT_C4_GATE_VERIFIED.md`.
+
+
+
 > **2026-06-25 update — THREE PARALLEL STREAMS CLOSED.** JC-MON
 > Stage 2a + JC-CHAT Stage A + JC-TL Stage 0 (NEW build dispatch).
 > JC-MON Stage 2a: real progress + real Solva probability + honest

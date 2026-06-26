@@ -825,6 +825,54 @@ async def _handle_task_contributor_reply(
     except Exception as e:  # noqa: BLE001
         logger.warning("post-email audit failed: %s", e)
 
+    # JC-MON Stage 3.1 (2026-06-25) — Monitor-discriminator branch.
+    # `task.objective_id` discriminates whether this is a Task Manager
+    # task (TM-mode, contribution flow above is the entire behaviour)
+    # or a Monitor task linked to a strategic objective. For Monitor
+    # tasks, we ADDITIVELY extract a progress signal via a single
+    # Shield-routed call and append it to `tasks.progress_updates[]`.
+    # The TM-mode behaviour above is UNCHANGED for both kinds. ONE
+    # inbound email path; the discriminator only changes what extra
+    # work attaches on top.
+    monitor_progress_entry: Optional[Dict[str, Any]] = None
+    if t and t.get("objective_id"):
+        try:
+            from services.monitor.email_update_extractor import (
+                apply_monitor_progress_update,
+                extract_email_progress_update,
+            )
+            extraction = await extract_email_progress_update(
+                task=t,
+                cleaned_body=cleaned_body,
+                sender_email=from_email,
+            )
+            monitor_progress_entry = await apply_monitor_progress_update(
+                db=db, task_id=row["task_id"], extraction=extraction,
+            )
+            # Audit row distinct from the TM contribution audit so
+            # Monitor surfaces can filter on the Monitor-side action.
+            await db.audit_log.insert_one({
+                "id":            str(uuid.uuid4()),
+                "account_id":    row["task_account_id"],
+                "action":        "monitor.task.progress_extracted_via_email",
+                "resource_type": "task",
+                "resource_id":   row["task_id"],
+                "metadata": {
+                    "objective_id":    t.get("objective_id"),
+                    "progress_pct":    extraction.get("progress_pct"),
+                    "refused":         extraction.get("refused"),
+                    "refusal_reason":  extraction.get("refusal_reason"),
+                    "audit_entry_ids": extraction.get("audit_entry_ids") or [],
+                    "message_id":      message_id,
+                },
+                "created_at":    datetime.now(timezone.utc).isoformat(),
+            })
+        except Exception as _e:  # noqa: BLE001
+            logger.warning(
+                "JC-MON Stage 3.1 email-progress extract failed for task %s: %s",
+                row["task_id"], _e,
+            )
+
     # Best-effort confirmation reply (queued; failure non-fatal).
     try:
         from email_service import send_email
@@ -842,6 +890,12 @@ async def _handle_task_contributor_reply(
         "task_id":        row["task_id"],
         "doc_ids":        created_doc_ids,
         "comment_len":    len(cleaned_body),
+        # JC-MON Stage 3.1 (2026-06-25) — Monitor discriminator branch
+        # surfaced in the response so proving slices + future Monitor
+        # surfaces can verify the additive extraction ran. `None` for
+        # TM-mode tasks (no `objective_id`); populated for Monitor
+        # tasks. Field is additive; existing TM callers ignore it.
+        "monitor_progress_entry": monitor_progress_entry,
     }
 
 

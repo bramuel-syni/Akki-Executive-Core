@@ -1,0 +1,54 @@
+{
+  "task_id": "task-f2d964fea834",
+  "response": {
+    "ok": true,
+    "task_id": "task-f2d964fea834",
+    "doc_ids": [],
+    "comment_len": 69,
+    "monitor_progress_entry": {
+      "id": "d20df4c6-0f89-4cb5-b8a7-ce63299540fd",
+      "kind": "email_extract",
+      "extracted_at": "2026-06-26T04:44:02.250793+00:00",
+      "sender": "opaque-update@mara-heritage.test",
+      "progress_pct": null,
+      "rationale": "The email states the sender will send the proper update [[DATE_2]] but provides no current progress information.",
+      "target_metric": null,
+      "refused": true,
+      "refusal_reason": "no_progress_signal_in_body",
+      "audit_entry_ids": [
+        "168a888b-2d8f-4cdf-ae20-7e44f10deb36"
+      ]
+    }
+  },
+  "progress_updates": [
+    {
+      "id": "d20df4c6-0f89-4cb5-b8a7-ce63299540fd",
+      "kind": "email_extract",
+      "extracted_at": "2026-06-26T04:44:02.250793+00:00",
+      "sender": "opaque-update@mara-heritage.test",
+      "progress_pct": null,
+      "rationale": "The email states the sender will send the proper update [[DATE_2]] but provides no current progress information.",
+      "target_metric": null,
+      "refused": true,
+      "refusal_reason": "no_progress_signal_in_body",
+      "audit_entry_ids": [
+        "168a888b-2d8f-4cdf-ae20-7e44f10deb36"
+      ]
+    }
+  ],
+  "monitor_progress_entry": {
+    "id": "d20df4c6-0f89-4cb5-b8a7-ce63299540fd",
+    "kind": "email_extract",
+    "extracted_at": "2026-06-26T04:44:02.250793+00:00",
+    "sender": "opaque-update@mara-heritage.test",
+    "progress_pct": null,
+    "rationale": "The email states the sender will send the proper update [[DATE_2]] but provides no current progress information.",
+    "target_metric": null,
+    "refused": true,
+    "refusal_reason": "no_progress_signal_in_body",
+    "audit_entry_ids": [
+      "168a888b-2d8f-4cdf-ae20-7e44f10deb36"
+    ]
+  },
+  "tasks_progress_pct": null
+}

@@ -39,12 +39,17 @@ from server import app  # noqa: E402
 
 
 # ─── Phase 4.4 baseline hashes ───────────────────────────────────────────
-# /api/* slice — pinned at Phase 4.1 close (`cdcb23322bb82895`).
-# /v1/*  slice — new baseline computed at Phase 4.4 close.
-# combined  — new baseline.
-EXPECTED_API_SHA = "cdcb23322bb82895"
-EXPECTED_V1_SHA = "acc51822aa8818ae"
-EXPECTED_COMBINED_SHA = "ca9429c64e44570c"
+# /api/* slice — Phase 4.1 close pin (`cdcb23322bb82895`) was rolled
+# forward during the JC-MON / JC-CHAT / JC-TL feature dispatches
+# (2026-06-25/26) which added 9 new additive routes across JC-MON
+# Stage 2b widens + JC-MON Stage 3.0 candidate-objectives generator.
+# Each add was deliberate and additive (Shield-routed surface only;
+# zero existing-route behavioural change), so the ratchet rolls
+# forward on the new total. Audit trail for the rolls lives in
+# DEV_PIPELINE.md § 5 and the per-stage sprint memos.
+EXPECTED_API_SHA = "2769a08145e76744"  # rolled at JC-MON Stage 3.0 close (2026-06-26)
+EXPECTED_V1_SHA = "99d134618b0ea06e"
+EXPECTED_COMBINED_SHA = "95996494c3a781f6"
 
 
 @pytest.fixture(scope="module")
@@ -69,7 +74,7 @@ def test_api_slice_hash_pinned(openapi_paths: List[str]) -> None:
         f"/api/* slice drift: expected={EXPECTED_API_SHA} got={actual} "
         f"(api_paths={len(api_paths)})"
     )
-    assert len(api_paths) == 621
+    assert len(api_paths) == 630
 
 
 def test_v1_slice_hash_pinned(openapi_paths: List[str]) -> None:
@@ -84,7 +89,7 @@ def test_v1_slice_hash_pinned(openapi_paths: List[str]) -> None:
     # /v1/* expected count = /api/* count minus the operational
     # endpoints excluded from dual-mount (currently
     # /api/healthz/{clamav, shield}).
-    assert len(v1_paths) == 619
+    assert len(v1_paths) == 628
 
 
 def test_combined_hash_pinned(openapi_paths: List[str]) -> None:

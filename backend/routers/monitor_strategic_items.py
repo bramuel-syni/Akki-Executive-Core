@@ -201,6 +201,73 @@ async def auto_suggest_projects(
 
 
 # -----------------------------------------------------------------------------
+# JC-MON Stage 3.0 (2026-06-25) — Candidate-objectives generator
+#   (LLM, Shield-routed, additive — no objective is persisted here).
+#
+# Reads the BASE doc evidence (`is_base_document=true` documents tagged
+# for this Monitor context) and proposes 2-6 candidate objectives the
+# user reviews / edits / confirms. Confirmed candidates are persisted
+# by the EXISTING `POST /contexts/{cid}/monitor/objective` endpoint —
+# this endpoint NEVER writes.
+#
+# Source of truth: `/app/memory/JC_MON_CANONICAL_SPEC.md` § Stage 3 ·
+# "OBJECTIVES: generate from a strategy doc as a CANDIDATE LIST".
+# -----------------------------------------------------------------------------
+class _CandidateGenIn(BaseModel):
+    # Optional explicit base_doc_ids. When empty, the endpoint pulls
+    # all `is_base_document=true` documents in this context.
+    base_doc_ids: List[str] = Field(default_factory=list)
+    # Optional human-readable context label for prompt grounding.
+    # When None, the context_id is used.
+    context_label: Optional[str] = None
+
+
+@router.post("/contexts/{context_id}/monitor/objectives/generate-candidates")
+async def generate_candidate_objectives_endpoint(
+    context_id: str,
+    body: _CandidateGenIn,
+    ctx: Dict[str, Any] = Depends(require_context_membership()),
+):
+    """Generate candidate objectives from BASE doc evidence.
+
+    The candidates are returned for the user to review / edit /
+    confirm BEFORE anything is persisted. No objective row is
+    created here — confirmed candidates flow through the existing
+    `POST /contexts/{cid}/monitor/objective` endpoint.
+    """
+    from services.monitor.objective_candidate_service import (
+        generate_candidate_objectives,
+    )
+
+    # Resolve base docs — either explicit IDs or the full BASE set.
+    base_filter: Dict[str, Any] = {
+        "context_id": context_id,
+        "is_base_document": True,
+    }
+    if body.base_doc_ids:
+        base_filter["id"] = {"$in": body.base_doc_ids}
+    base_docs: List[Dict[str, Any]] = []
+    async for d in db.documents.find(
+        base_filter, {"_id": 0, "id": 1, "name": 1, "extracted_text": 1},
+    ):
+        base_docs.append(d)
+
+    # Resolve the account_id from the membership context.
+    account_id = (ctx.get("account") or {}).get("id") or ctx.get("account_id")
+
+    out = await generate_candidate_objectives(
+        base_docs=base_docs,
+        account_id=account_id,
+        context_id=context_id,
+        context_label=body.context_label or context_id,
+    )
+    # Surface the resolved base_doc_ids so the FE can show the user
+    # what evidence the candidates were grounded in.
+    out["base_doc_ids"] = [d["id"] for d in base_docs]
+    return out
+
+
+# -----------------------------------------------------------------------------
 # Owner-roles aggregator — Chunk 6.5-REVISED Task F (2026-05-13).
 #
 # Declared BEFORE the generic /monitor/{kind} route so FastAPI matches

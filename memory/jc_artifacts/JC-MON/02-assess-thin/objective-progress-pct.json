@@ -1,15 +1,15 @@
 {
-  "objective_id": "obj-thin-slice-c36bc123c4",
+  "objective_id": "obj-thin-slice-143fdfc865",
   "progress_pct": 98,
-  "rationale": "Per tracking doc 3 ([[DATE_18] ops update), the monthly active revenue index reached 98 (target \u2265100), with Phases 1 and 2 exit gates passed and trajectory projecting target achievement by Day 150, ahead of the Day-180 deadline.",
+  "rationale": "Per tracking doc 3 ([[DATE_18] ops update), the headline [[DATE_1]] active revenue index reached 98 with trajectory aiming for \u2265100 by Day 150, meaning the target (index \u2265100 by Day 180) is 98% achieved and ahead of schedule.",
   "base_doc_ids": [
-    "doc-base-recovery-plan-bd74efdfb1",
-    "doc-base-kpi-contract-27c577d906"
+    "doc-base-recovery-plan-05ff545546",
+    "doc-base-kpi-contract-52c6554cba"
   ],
   "tracking_doc_ids": [
-    "doc-track-week04-e0b65ac31e",
-    "doc-track-week09-08747f45b7",
-    "doc-track-week16-47115d7eb0"
+    "doc-track-week04-e56336b217",
+    "doc-track-week09-01b0e44557",
+    "doc-track-week16-64c232b862"
   ],
-  "assessed_at": "2026-06-25T20:19:06.820134+00:00"
+  "assessed_at": "2026-06-26T04:40:06.109019+00:00"
 }

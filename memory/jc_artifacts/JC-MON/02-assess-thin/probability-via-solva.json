@@ -1,20 +1,20 @@
 {
-  "objective_id": "obj-thin-slice-c36bc123c4",
-  "probability_pct": 65,
+  "objective_id": "obj-thin-slice-143fdfc865",
+  "probability_pct": 72,
   "band": "Likely",
-  "rationale": "Corpus-tiered claim with strategic plans and tracking updates as evidence, but future target achievement depends on sustained execution.",
+  "rationale": "Corpus-tier claim supported by multiple BASE and TRACKING documents showing consistent recovery trajectory.",
   "base_doc_ids": [
-    "doc-base-recovery-plan-bd74efdfb1",
-    "doc-base-kpi-contract-27c577d906"
+    "doc-base-recovery-plan-05ff545546",
+    "doc-base-kpi-contract-52c6554cba"
   ],
   "tracking_doc_ids": [
-    "doc-track-week04-e0b65ac31e",
-    "doc-track-week09-08747f45b7",
-    "doc-track-week16-47115d7eb0"
+    "doc-track-week04-e56336b217",
+    "doc-track-week09-01b0e44557",
+    "doc-track-week16-64c232b862"
   ],
   "audit_entry_ids": [
-    "cfac14c8-623d-4356-bba2-6ef575acc70c",
-    "b0e4f454-6a9d-48b9-b54e-d271d8f5ab26"
+    "259251c2-801e-4a75-a001-6c243adbdfa5",
+    "baa6c079-455d-4c67-a4cd-bb366a50f4cd"
   ],
-  "assessed_at": "2026-06-25T20:19:06.820134+00:00"
+  "assessed_at": "2026-06-26T04:40:06.109019+00:00"
 }

@@ -1,5 +1,5 @@
 {
-  "objective_id": "obj-refusal-a39e428a24",
+  "objective_id": "obj-refusal-77189ed4cf",
   "refused": true,
   "refusal_reason": "no_tracking_evidence_yet",
   "progress_pct": null,
@@ -8,14 +8,14 @@
   "probability_band": null,
   "probability_rationale": null,
   "base_doc_ids": [
-    "doc-base-recovery-plan-6fb7806448",
-    "doc-base-kpi-contract-23c7491373"
+    "doc-base-recovery-plan-89d59657e5",
+    "doc-base-kpi-contract-0cf5c237d2"
   ],
   "tracking_doc_ids": [],
   "audit_entry_ids": [],
-  "assessed_at": "2026-06-25T20:19:29.176995+00:00",
+  "assessed_at": "2026-06-26T04:40:26.791712+00:00",
   "_fixture_objective": {
-    "id": "obj-refusal-a39e428a24",
+    "id": "obj-refusal-77189ed4cf",
     "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
     "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
     "kind": "objective",

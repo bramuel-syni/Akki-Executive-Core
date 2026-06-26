@@ -1,0 +1,27 @@
+{
+  "task_id": "task-f8abc25e51f9",
+  "objective_id_on_task": null,
+  "response": {
+    "ok": true,
+    "task_id": "task-f8abc25e51f9",
+    "doc_ids": [],
+    "comment_len": 103,
+    "monitor_progress_entry": null
+  },
+  "contributor_comments": [
+    {
+      "id": "0ee0ec7c-230d-4fdb-8b51-e3fb17db6aec",
+      "reviewer": "tm-contributor@mara-heritage.test",
+      "comment": "Hi team, quick update \u2014 checkout regression is fixed in staging, release tonight. No surprises. Thanks!",
+      "kind": "email_body",
+      "subject": "Re: Weekly recovery update",
+      "doc_ids": [],
+      "created_at": "2026-06-26T04:43:52.128384+00:00"
+    }
+  ],
+  "team_status_after": [
+    "submitted"
+  ],
+  "progress_updates": [],
+  "monitor_progress_entry": null
+}

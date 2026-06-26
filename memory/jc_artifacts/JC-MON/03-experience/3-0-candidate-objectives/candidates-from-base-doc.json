@@ -1,0 +1,65 @@
+{
+  "refused": false,
+  "refusal_reason": null,
+  "candidates": [
+    {
+      "title": "Recover monthly active revenue index to \u2265 100",
+      "description": "Restore monthly active revenue to baseline performance (index = 100) through a three-phase recovery programme addressing checkout issues, customer reactivation, and sustained growth. This is the headline measure for board reporting and represents full recovery from the incident.",
+      "target_metric": "monthly_active_revenue_index",
+      "target_value": "Index \u2265 100 within 180 days from programme start",
+      "due_date": "",
+      "rationale": "Explicitly stated as the headline measure and board-level target in both BASE docs.",
+      "evidence_citation": "KPI Contract: 'Headline number for the board: monthly_active_revenue_index, baseline 100, target \u2265 100 by Day 180'",
+      "confidence_band": "Strongly-grounded"
+    },
+    {
+      "title": "Restore weekly active sessions index to \u2265 95 (Phase 1 exit gate)",
+      "description": "Fix checkout regression and restore weekly active sessions to near-baseline levels as the first phase deliverable. This is a lead indicator that must be achieved before progressing to revenue reactivation work.",
+      "target_metric": "weekly_active_sessions_index",
+      "target_value": "Index \u2265 95",
+      "due_date": "",
+      "rationale": "Phase 1 exit gate criterion and lead indicator specified in both the Strategic Plan and KPI Contract.",
+      "evidence_citation": "Strategic Plan Phase 1: 'Exit gate: weekly_active_sessions_index \u2265 95'; KPI Contract: 'weekly_active_sessions_index (target \u2265 95)'",
+      "confidence_band": "Strongly-grounded"
+    },
+    {
+      "title": "Achieve checkout conversion rate \u2265 pre-incident mean",
+      "description": "Restore checkout conversion performance to pre-incident baseline levels by resolving technical regressions and user experience issues. This lead indicator directly supports session-to-revenue conversion recovery.",
+      "target_metric": "checkout_conversion_pct",
+      "target_value": "\u2265 pre-incident mean",
+      "due_date": "",
+      "rationale": "Identified as a lead indicator in the KPI Contract with explicit target to match historical mean.",
+      "evidence_citation": "KPI Contract: 'checkout_conversion_pct (target \u2265 mean by [workstream delivery])'",
+      "confidence_band": "Strongly-grounded"
+    },
+    {
+      "title": "Achieve 12% reactivation email response rate",
+      "description": "Drive lapsed customer re-engagement through targeted reactivation campaigns, achieving a 12% response rate. This Phase 2 metric supports the recovery of monthly active revenue to \u2265 95% of baseline.",
+      "target_metric": "reactivation_email_response_pct",
+      "target_value": "\u2265 12%",
+      "due_date": "",
+      "rationale": "Explicitly defined as a lead indicator for Phase 2 customer reactivation efforts in the KPI Contract.",
+      "evidence_citation": "KPI Contract: 'reactivation_email_response_pct (target \u2265 12% by [workstream delivery])'",
+      "confidence_band": "Strongly-grounded"
+    },
+    {
+      "title": "Complete Phase 2: restore revenue index to \u2265 95",
+      "description": "Re-engage lapsed customers and restore monthly active revenue to 95% of baseline, completing the second phase of recovery. This intermediate milestone de-risks the path to full recovery (index \u2265 100).",
+      "target_metric": "monthly_active_revenue_index",
+      "target_value": "Index \u2265 95",
+      "due_date": "",
+      "rationale": "Phase 2 exit gate defined in the Strategic Plan as a concrete intermediate milestone.",
+      "evidence_citation": "Strategic Plan Phase 2: 'restore monthly active revenue to \u2265 95% of baseline. Exit gate: revenue index \u2265 95'",
+      "confidence_band": "Strongly-grounded"
+    }
+  ],
+  "refusal_note": null,
+  "audit_entry_ids": [
+    "c69a4a53-c84d-4c1d-b4cc-a16a8983bb59"
+  ],
+  "generated_at": "2026-06-26T04:43:19.512270+00:00",
+  "_fixture_base_doc_names": [
+    "MYDAWA Recovery Programme \u2014 Strategic Plan (BASE)",
+    "KPI Contract \u2014 Eight Workstreams (BASE)"
+  ]
+}

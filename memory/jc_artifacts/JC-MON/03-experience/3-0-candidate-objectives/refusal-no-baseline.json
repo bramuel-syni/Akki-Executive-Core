@@ -1,0 +1,8 @@
+{
+  "refused": true,
+  "refusal_reason": "no_baseline_evidence",
+  "candidates": [],
+  "refusal_note": "No BASE doc evidence supplied. Upload a strategic plan or performance agreement and mark it as the BASE doc on this Monitor surface, then re-generate.",
+  "audit_entry_ids": [],
+  "generated_at": "2026-06-26T04:43:44.963976+00:00"
+}
