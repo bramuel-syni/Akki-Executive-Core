@@ -23,7 +23,6 @@ trip — out of scope for unit-level coverage).
 """
 from __future__ import annotations
 
-import asyncio
 import os
 import sys
 import uuid
@@ -31,6 +30,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 import pymongo
+import pytest
 
 REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO / "backend"))
@@ -40,10 +40,6 @@ load_dotenv(REPO / "backend" / ".env")
 
 from httpx import ASGITransport, AsyncClient  # noqa: E402
 from server import app  # noqa: E402
-
-
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
 
 
 def _dbc():
@@ -105,15 +101,24 @@ def _seed_chat_with_messages(
     return chat_id, msg_ids
 
 
-def _http_get_audit_panel(*, chat_id: str, message_id: str, account_id: str):
+async def _http_get_audit_panel(*, chat_id: str, message_id: str, account_id: str):
     """Hit the endpoint with a synthetic auth context. We swap the
     `get_current_account` dep for a function that returns the test
-    account, so the endpoint's auth gate doesn't block the test."""
+    account, so the endpoint's auth gate doesn't block the test.
+
+    P5.7-Cluster-E fix (2026-06-26): converted from sync to async so
+    callers `await` directly on the session-scoped event loop
+    (conftest.py:210-221), instead of the previous `_run(_do()) =
+    asyncio.get_event_loop().run_until_complete(_do())` pattern which
+    bound Motor's singleton to a sync-test-local loop and caused
+    `RuntimeError: Future attached to a different loop` cascades into
+    downstream `@pytest.mark.asyncio` tests (FTT-023 polluter root cause).
+    """
     from core import get_current_account
     app.dependency_overrides[get_current_account] = lambda: {
         "id": account_id, "email": "test@test", "is_superadmin": False,
     }
-    async def _do():
+    try:
         async with AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://testserver",
@@ -122,14 +127,13 @@ def _http_get_audit_panel(*, chat_id: str, message_id: str, account_id: str):
                 f"/api/chats/{chat_id}/audit-panel",
                 params={"message_id": message_id},
             )
-    try:
-        return _run(_do())
     finally:
         app.dependency_overrides.pop(get_current_account, None)
 
 
 # ─── Direct linkage takes precedence over positional index ────────────
-def test_p5_10_audit_panel_uses_direct_shield_audit_id():
+@pytest.mark.asyncio
+async def test_p5_10_audit_panel_uses_direct_shield_audit_id():
     account_id = f"acc-p5-10-direct-{uuid.uuid4().hex[:6]}"
     chat_id, msg_ids = _seed_chat_with_messages(
         account_id=account_id,
@@ -143,7 +147,7 @@ def test_p5_10_audit_panel_uses_direct_shield_audit_id():
 
     # Look up audit for the 2nd turn. With direct linkage, the
     # resolver should return AUDIT-B (the one on the chat_messages row).
-    r = _http_get_audit_panel(chat_id=chat_id, message_id=msg_ids[1], account_id=account_id)
+    r = await _http_get_audit_panel(chat_id=chat_id, message_id=msg_ids[1], account_id=account_id)
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["audit_id"].startswith("AUDIT-B"), (
@@ -152,7 +156,8 @@ def test_p5_10_audit_panel_uses_direct_shield_audit_id():
 
 
 # ─── The fix: cancellation does NOT cascade to next-turn audit ────────
-def test_p5_10_cancelled_turn_does_not_break_next_turn_audit():
+@pytest.mark.asyncio
+async def test_p5_10_cancelled_turn_does_not_break_next_turn_audit():
     """The user-reported bug. Pre-fix scenario:
       - Turn 1 cancelled — assistant row inserted, NO push to audit_ids[]
       - Turn 2 succeeded — assistant row inserted, push to audit_ids[]
@@ -179,7 +184,7 @@ def test_p5_10_cancelled_turn_does_not_break_next_turn_audit():
     )
 
     # The cancelled turn now resolves via direct linkage.
-    r1 = _http_get_audit_panel(chat_id=chat_id, message_id=msg_ids[0], account_id=account_id)
+    r1 = await _http_get_audit_panel(chat_id=chat_id, message_id=msg_ids[0], account_id=account_id)
     assert r1.status_code == 200, r1.text
     assert r1.json()["audit_id"].startswith("AUDIT-CANCEL"), (
         "cancelled turn's audit should resolve via direct linkage; "
@@ -187,7 +192,7 @@ def test_p5_10_cancelled_turn_does_not_break_next_turn_audit():
     )
 
     # The next turn resolves to its OWN audit, not the cancelled one's.
-    r2 = _http_get_audit_panel(chat_id=chat_id, message_id=msg_ids[1], account_id=account_id)
+    r2 = await _http_get_audit_panel(chat_id=chat_id, message_id=msg_ids[1], account_id=account_id)
     assert r2.status_code == 200, r2.text
     assert r2.json()["audit_id"].startswith("AUDIT-T2"), (
         "subsequent successful turn must resolve to its own audit_id, "
@@ -197,7 +202,8 @@ def test_p5_10_cancelled_turn_does_not_break_next_turn_audit():
 
 
 # ─── Legacy positional fallback still works for pre-P5.10 rows ────────
-def test_p5_10_legacy_positional_fallback_when_direct_link_missing():
+@pytest.mark.asyncio
+async def test_p5_10_legacy_positional_fallback_when_direct_link_missing():
     """A pre-P5.10 chat_messages row has no `shield_audit_id` field.
     The resolver must fall back to positional indexing for it."""
     account_id = f"acc-p5-10-legacy-{uuid.uuid4().hex[:6]}"
@@ -225,7 +231,7 @@ def test_p5_10_legacy_positional_fallback_when_direct_link_missing():
         "protective_layer_events": [],
     })
 
-    r = _http_get_audit_panel(chat_id=chat_id, message_id=msg_id, account_id=account_id)
+    r = await _http_get_audit_panel(chat_id=chat_id, message_id=msg_id, account_id=account_id)
     assert r.status_code == 200, r.text
     assert r.json()["audit_id"] == legacy_audit_id, (
         f"positional fallback should still resolve legacy rows; got {r.json()['audit_id']!r}"
@@ -233,7 +239,8 @@ def test_p5_10_legacy_positional_fallback_when_direct_link_missing():
 
 
 # ─── 404 when message_id genuinely doesn't exist ──────────────────────
-def test_p5_10_404_when_message_id_missing():
+@pytest.mark.asyncio
+async def test_p5_10_404_when_message_id_missing():
     account_id = f"acc-p5-10-404-{uuid.uuid4().hex[:6]}"
     chat_id = uuid.uuid4().hex
     _dbc().chats.insert_one({
@@ -241,7 +248,7 @@ def test_p5_10_404_when_message_id_missing():
         "synisense_audit_ids": [], "protective_layer_events": [],
     })
 
-    r = _http_get_audit_panel(
+    r = await _http_get_audit_panel(
         chat_id=chat_id, message_id="nonexistent-id-xxxxx",
         account_id=account_id,
     )
@@ -249,7 +256,8 @@ def test_p5_10_404_when_message_id_missing():
 
 
 # ─── User-role messages get 404 (not silently mistaken for audit) ─────
-def test_p5_10_user_role_message_returns_404():
+@pytest.mark.asyncio
+async def test_p5_10_user_role_message_returns_404():
     """Audit panel is for assistant messages only. A user-role
     message_id must 404."""
     account_id = f"acc-p5-10-userrole-{uuid.uuid4().hex[:6]}"
@@ -265,7 +273,7 @@ def test_p5_10_user_role_message_returns_404():
         "synisense_audit_ids": [], "protective_layer_events": [],
     })
 
-    r = _http_get_audit_panel(
+    r = await _http_get_audit_panel(
         chat_id=chat_id, message_id=user_msg_id, account_id=account_id,
     )
     assert r.status_code == 404, r.text
