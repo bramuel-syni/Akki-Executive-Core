@@ -2,6 +2,20 @@
 
 > Append-only history of shipped work. Newest first.
 
+## 2026-06-26 — AUTONOMOUS BACKLOG RUN · Round 3 (Phase 5.6.2 + P5.7-DIAG, 2 ships, 5 proving slices GREEN total)
+
+Continuation of the autonomous-backlog-run banner. Two ships executed strictly per HALT-and-surface contract; testing-subagent rule reinforced (pure Python proving slices only).
+
+1. **Phase 5.6.2 — FTT-001 real-assertion repair** (4/4 proving slice GREEN · pytest target 1 passed · no sibling regression).
+   Replaced the `try: pass` no-op in `tests/test_phase_zz2_x.py::test_zz2_x_fixture_404_when_env_disabled` with a CSRF-grade dual-rail assertion: rail 1 (env disabled) monkey-patches `mint_chat_outcome` → ShieldFailure so the fall-through deterministically lands on 503; asserts ZERO fixture markers present. Rail 2 (env enabled, positive control) monkey-patches `stream_fixture` to a sentinel async generator; asserts sentinel present + no Shield fall-through. In-process ASGI, no preview-URL hop, no LLM call. FAILING_TEST_TRACKER counter: 25 → 24 active entries (FTT-001 moved to Resolved section).
+   - `sprints/P5_6_2_ftt001_real_assertion.md` · slice `backend/scripts/jc_p562_ftt001_slice.py`
+
+2. **P5.7-DIAG — Cross-test pollution diagnosis (FTT-002..026)** (DIAGNOSIS SHIPPED · AWAITING USER DIRECTION).
+   Investigate-only sprint. New READ-ONLY diagnostic slice (`backend/scripts/jc_test_pollution_diagnose_slice.py`) walks the 24 active FTT IDs across 9 clusters; runs targeted re-runs + static polluter-pattern scans. **No code mutated.** Outputs: 9 per-cluster evidence MDs + consolidated index at `memory/jc_artifacts/test_pollution/diagnosis_20260626T173637Z.md`. Findings: 337 static polluter-pattern hits surfaced; 0 dynamic reproductions in 2-file/4-file minimum-pytest invocations. **Critical surface**: broad-suite pollution is ordering-dependent; static signatures are sound structurally but cannot be collapsed to single-file polluters under targeted re-runs. Halt conditions: scope 24 ≤ 25 (no halt), no locked-area polluter (no halt). Three honest paths-forward surfaced for user pick (proactive guards + re-measure / fresh broad-suite capture / defer to CI trigger). **AWAITING USER PICK before any cleanup sprint scoped.**
+   - `sprints/P5_7_DIAG_test_pollution.md` · slice `backend/scripts/jc_test_pollution_diagnose_slice.py`
+
+GridFS backfill `--commit` window opens 2026-06-27 09:12 UTC — auto-fires next session past the window. Out of scope for this dispatch.
+
 ## 2026-06-26 — AUTONOMOUS BACKLOG RUN · Round 2 (5 sprints closed, 8 proving slices GREEN)
 
 Continuation of the same autonomous-backlog-run banner under the

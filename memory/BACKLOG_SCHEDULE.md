@@ -48,6 +48,19 @@
    conflict). Trigger criterion (on-demand has proved trustworthy)
    is met. Defer until user steers.
 
+11. **Cross-test pollution cleanup sprint (FTT-002..026 / 24 active).**
+    Diagnosis sprint P5.7-DIAG shipped 2026-06-26 with:
+    - 9-cluster classification (`memory/jc_artifacts/test_pollution/`)
+    - 337 static polluter-pattern hits surfaced
+    - 0 dynamic reproductions under 2-file/4-file targeted re-runs
+    - 3 paths-forward surfaced for user pick:
+      (a) ship static guards proactively + re-measure;
+      (b) upgrade to full broad-suite capture with deterministic
+          ordering (45-90 min);
+      (c) defer until CI lane forces the issue.
+    *Unblock condition:* user picks path (a)/(b)/(c). Sprint memo:
+    `sprints/P5_7_DIAG_test_pollution.md`.
+
 ### P2 (logged proactively)
 
 6. **Inline-blob sunset.** Once `jc_bug_analyze_upload_backfill.py

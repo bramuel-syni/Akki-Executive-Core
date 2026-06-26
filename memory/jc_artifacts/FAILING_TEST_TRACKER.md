@@ -11,9 +11,7 @@ diagnosed for a root-cause sprint.
 
 ### FLAGGED-FALSE-GREEN (from PHASE_5_6_1_CSRF_RIG_AUDIT.md, 2026-06-26)
 
-| ID | Node | Type | Reason | Sprint slot |
-|----|------|------|--------|-------------|
-| FTT-001 | `tests/test_phase_zz2_x.py::test_zz2_x_fixture_404_when_env_disabled` | THIN-ASSERTION | Docstring claims to verify "fixture branch is skipped entirely when env disabled"; body contains `try: pass` as the only fall-through hook → asserts nothing. PRE-EXISTING; CSRF fix only exposed it. | Phase 5.6.2 |
+— **(empty)** — FTT-001 resolved by Phase 5.6.2 on 2026-06-26; see Resolved section below.
 
 ### CROSS-TEST POLLUTION FLAKES (from broad-suite run delta, 2026-06-26)
 
@@ -39,7 +37,15 @@ These tests went GREEN → RED in the AFTER broad-suite run but PASS in isolatio
 | FTT-023 | `tests/test_track_b_phase2_task_lifecycle.py::test_cross_tenant_lifecycle_blocked` | ✅ | tenant-stub state |
 | FTT-024..026 | `test_track_b_phase_b5_g6_notes_autosave.py` (×3) | ✅ | autosave debounce timer |
 
-Total flake tracker: **25** distinct nodes (FTT-002..026); root causes need a separate sprint (not Phase 5.6.x scope).
+Total flake tracker: **24** distinct nodes (FTT-002..026); root causes need a separate sprint (not Phase 5.6.x scope).
+
+## Resolved entries
+
+### Phase 5.6.2 ship (2026-06-26)
+
+| ID | Node | Disposition | Sprint memo |
+|----|------|-------------|-------------|
+| FTT-001 | `tests/test_phase_zz2_x.py::test_zz2_x_fixture_404_when_env_disabled` | RE-IMPLEMENTED with real assertion (both rails: env-disabled fall-through + env-enabled positive control via sentinel-patched `stream_fixture`). 4/4 GREEN on proving slice; 1 passed on pytest target with no sibling regression. | `sprints/P5_6_2_ftt001_real_assertion.md` |
 
 ## Disposition rules
 

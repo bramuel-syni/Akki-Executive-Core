@@ -1,6 +1,17 @@
 # AKKI Sandbox — Product Requirements Document (PRD)
 
 
+> **2026-06-26 17:42 UTC — AUTONOMOUS BACKLOG RUN Round 3 closed (2 sprints, 5 proving slices GREEN cumulative).**
+> Continuation of the autonomous backlog run under the HARD-GATE reinforcements.
+> Two ships executed strictly per HALT-and-surface contract:
+> 1. **Phase 5.6.2 — FTT-001 real-assertion repair** (4/4 proving slice GREEN · pytest target passes · no sibling regression).
+>    Replaced the `try: pass` no-op in `tests/test_phase_zz2_x.py::test_zz2_x_fixture_404_when_env_disabled` with CSRF-grade dual-rail assertion (negative + positive control). FAILING_TEST_TRACKER counter: 25 → 24 active entries.
+> 2. **P5.7-DIAG — Cross-test pollution diagnosis (FTT-002..026)** (DIAGNOSIS SHIPPED · AWAITING USER DIRECTION).
+>    READ-ONLY diagnostic slice walked 24 active FTT IDs across 9 clusters; 337 static polluter-pattern hits surfaced; 0 dynamic reproductions under targeted re-runs. Halt conditions: scope 24 ≤ 25 (no halt); no locked-area polluter. Three honest paths-forward surfaced for user pick. **AWAITING USER PICK before any cleanup sprint scoped.**
+>
+> GridFS backfill `--commit` window opens 2026-06-27 09:12 UTC (~16 h away at sprint close) — auto-fires next session past the window.
+
+
 > **2026-06-26 16:36 UTC — AUTONOMOUS BACKLOG RUN Round 2 closed (5 sprints, 8 proving slices GREEN).**
 > Continuation of the autonomous backlog run under the HARD-GATE reinforcements.
 > Five sprints shipped in sequence:
