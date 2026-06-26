@@ -21,10 +21,10 @@ These 18 nodes / 7 files PASS in isolation in the default lane but FAIL in-suite
 |-------|------|--------------------------------|---------------|
 | FTT-004..009 | `tests/test_iter41_signal_actions_in_process.py` | shared_fixture_state_iter41 (in-file) | 🟧 INTRA-FILE — separate sprint shape (per-test-pair within file) |
 | FTT-010..012 | `tests/test_p_cleanup_c_help_tooltip_suppression.py` | dependency_overrides_leak | 🟥 SHARED GLOBAL STATE — 0/69 confirmed pairs in P5.7-HOLDOUT-FINISHER; different fix shape (test-side fixture reset on the polluted file) |
-| FTT-015, FTT-016 | `tests/test_phase_p3_2_cookie_hardening.py` | env_or_motor_loop_state | ✅ CONFIRMED — polluter `tests/test_phase4_2_http_transport_smoke.py` (P5.7-BISECT) |
-| FTT-017, FTT-018 | `tests/test_phase_p5_10_audit_panel_direct_linkage.py` | env_or_motor_loop_state | ✅ CONFIRMED — polluter `tests/test_phase4_2_http_transport_smoke.py` (P5.7-BISECT) |
-| FTT-019..022 | `tests/test_phase_p5_7_5_bounce_webhook.py` | sendgrid_env_stub_leak | ✅ CONFIRMED — polluter `tests/test_phase4_2_http_transport_smoke.py` (P5.7-BISECT) |
-| FTT-023 | `tests/test_track_b_phase2_task_lifecycle.py::test_cross_tenant_lifecycle_blocked` | tenant_resolver_stub_leak | ✅ CONFIRMED — polluter `tests/test_phase_p5_10_audit_panel_direct_linkage.py` (tiered, P5.7-BISECT) |
+| FTT-015, FTT-016 | `tests/test_phase_p3_2_cookie_hardening.py` | env_or_motor_loop_state | ✅ **CLOSED** by JC-POLLUTION-A-D-FIX (2026-06-26) — env + asyncio-loop-policy snapshot/restore on polluter `tests/test_phase4_2_http_transport_smoke.py` (paired-pytest GREEN) |
+| FTT-017, FTT-018 | `tests/test_phase_p5_10_audit_panel_direct_linkage.py` | env_or_motor_loop_state | ✅ **CLOSED** by JC-POLLUTION-A-D-FIX (2026-06-26) — same fix on `test_phase4_2_http_transport_smoke.py` (paired-pytest GREEN) |
+| FTT-019..022 | `tests/test_phase_p5_7_5_bounce_webhook.py` | sendgrid_env_stub_leak | ✅ **CLOSED** by JC-POLLUTION-A-D-FIX (2026-06-26) — `os.environ` snapshot/restore on polluter closed the SendGrid stub leak (paired-pytest GREEN) |
+| FTT-023 | `tests/test_track_b_phase2_task_lifecycle.py::test_cross_tenant_lifecycle_blocked` | tenant_resolver_stub_leak | 🟧 **RE-SCOPED** by JC-POLLUTION-A-D-FIX (2026-06-26) — empirical evidence proved `test_phase_p5_10_audit_panel_direct_linkage.py` is an INDEPENDENT polluter (NOT tiered downstream of phase4_2 as the bisect hypothesised). Pair `test_phase_p5_10 + test_track_b_phase2_task_lifecycle` (no phase4_2 in front) still fails 7/9 in task_lifecycle. Needs Cluster-E scope memo + own fix sprint with `test_phase_p5_10` as the polluter target. |
 | FTT-024..026 | `tests/test_track_b_phase_b5_g6_notes_autosave.py` | autosave_debounce_timer_leak | 🟧 BROAD-SENSITIVE — **15 confirmed polluters** in P5.7-HOLDOUT-FINISHER (uniformly auth/session/CSRF surface area). Recommended fix: single test-side hardening (per-test session/cookie state reset) closes all 3 IDs. |
 
 **KEY INSIGHTS**:
@@ -41,7 +41,8 @@ These are real bugs surfacing as deterministic failures in isolation — not fla
 
 | ID | Node | Evidence | Disposition |
 |----|------|----------|-------------|
-| FTT-014 | `tests/test_phase_i5_open_questions.py::test_i5_B1_backfill_idempotent` | FAIL_DETERMINISTIC at 12.2 s in isolation (per-file capture 2026-06-26) | **P1 bug-fix sprint** — backfill-idempotency assertion drifts in isolation; needs its own root-cause investigation. Logged in `BACKLOG_SCHEDULE.md`. |
+| FTT-014 | `tests/test_phase_i5_open_questions.py::test_i5_B1_backfill_idempotent` | FAIL_DETERMINISTIC at 12.2 s in isolation (per-file capture 2026-06-26) | **P1 bug-fix sprint** — backfill-idempotency assertion drifts in isolation; needs its own root-cause investigation. Logged in `BACKLOG_SCHEDULE.md`. **NOTE (2026-06-26 post-A+D)**: scope memo `P5_7_FIX_SCOPE.md §1` mislabelled the phase4_2 sha-drift sibling regression as "FTT-014 / Cluster D". A+D's sha refresh closed that sibling regression in `test_phase4_2_http_transport_smoke.py::test_internal_transport_openapi_hash_unchanged` (see "Cluster D sibling" row below). **This entry (the true FTT-014) is UNCHANGED** — verified RED post-A+D at `1 failed in 4.49s`. |
+| (untracked → "Cluster D sibling") | `tests/test_phase4_2_http_transport_smoke.py::test_internal_transport_openapi_hash_unchanged` | FAIL_DETERMINISTIC in isolation — hardcoded surface-ratchet sha `cdcb23322bb82895` drifted vs live `31e1d9769f632472` | ✅ **CLOSED** by JC-POLLUTION-A-D-FIX (2026-06-26) — sha refresh at line 101 + live re-verification (`/api/openapi.json` → 636 paths → sha256:16 = `31e1d9769f632472`). DEV_PIPELINE §5 + §6 also updated to match. |
 
 ### INTEGRATION-LANE-ONLY (reclassified from pollution, 2026-06-26)
 

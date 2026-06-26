@@ -98,7 +98,10 @@ def test_internal_transport_openapi_hash_unchanged() -> None:
     slice in isolation here to preserve the original byte-identical
     ratchet.
     """
-    EXPECTED = "cdcb23322bb82895"  # Phase 4.1 close ratchet (re-affirmed at 4.4)
+    # Phase 4.1 close ratchet baseline = "cdcb23322bb82895"; rolled forward
+    # through subsequent additive surface ships. Current pin verified live
+    # against `GET /api/openapi.json` at A+D fix-sprint close (2026-06-26).
+    EXPECTED = "31e1d9769f632472"
     status, body = _http_get(f"{SUPERVISOR_HOST}/api/openapi.json")
     assert status == 200
     spec = json.loads(body)
@@ -205,7 +208,28 @@ def test_http_mode_synisense_get_signal_round_trip(transport_secret: str) -> Non
 def test_http_mode_adapter_class_reconstructs_dto(transport_secret: str) -> None:
     """The HTTP adapter class generated from the in-process Protocol
     correctly reconstructs the typed DTO from the JSON response.
-    Exercises the `_http_client._reconstruct` codepath."""
+    Exercises the `_http_client._reconstruct` codepath.
+
+    P5.7-A+D fix (2026-06-26): this test previously polluted downstream
+    tests via TWO mechanisms — (1) `load_dotenv` injecting ~61 env keys
+    permanently into `os.environ` without restore (broke SendGrid /
+    INTERNAL_TRANSPORT_SECRET / OAuth-env-dependent tests), and (2)
+    `asyncio.run` leaves `asyncio.set_event_loop(None)` on the policy,
+    so downstream tests using `asyncio.get_event_loop().run_until_complete`
+    saw a stale/closed loop. Both are now snapshot-and-restored below.
+    """
+    # ── (1) Snapshot env BEFORE any mutation so `finally` can restore ──
+    _env_snapshot = dict(os.environ)
+    # ── (2) Snapshot asyncio event-loop policy state BEFORE asyncio.run ──
+    #     `asyncio.run` calls `set_event_loop(None)` on exit; we restore
+    #     whatever the policy held at entry. If nothing held (RuntimeError
+    #     on get_event_loop), nothing to restore.
+    _prev_loop = None
+    try:
+        _prev_loop = asyncio.get_event_loop_policy().get_event_loop()
+    except RuntimeError:
+        _prev_loop = None
+
     # We pre-set the env var so `get_akki()` returns the HTTP variant.
     os.environ["BOUNDED_CONTEXT_TRANSPORT"] = "http"
     try:
@@ -233,8 +257,23 @@ def test_http_mode_adapter_class_reconstructs_dto(transport_secret: str) -> None
             f"expected None for unknown document; got {result!r}"
         )
     finally:
-        # Restore default to avoid contaminating other tests.
-        os.environ.pop("BOUNDED_CONTEXT_TRANSPORT", None)
+        # ── Restore env exactly to pre-test snapshot (closes Cluster A) ──
+        for k in list(os.environ.keys()):
+            if k not in _env_snapshot:
+                del os.environ[k]
+        for k, v in _env_snapshot.items():
+            if os.environ.get(k) != v:
+                os.environ[k] = v
+        # ── Restore asyncio loop policy (closes loop-pollution cascade) ──
+        # If a prior loop was set (and is still usable), restore it. Else
+        # leave the policy in its "no current loop" state (the asyncio.run
+        # default), which is what downstream tests using @pytest.mark.asyncio
+        # or `asyncio.new_event_loop()` expect anyway.
+        if _prev_loop is not None and not _prev_loop.is_closed():
+            try:
+                asyncio.set_event_loop(_prev_loop)
+            except Exception:
+                pass
 
 
 def test_phase4_2_transport_config_constants() -> None:
