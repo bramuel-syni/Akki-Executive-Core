@@ -14,11 +14,11 @@
  */
 import React, { useMemo, useState, useEffect } from "react";
 import PerSectionSynisenseBadge from "@/components/solva/artefact/PerSectionSynisenseBadge";
-import { Download, MessageSquare, RefreshCw, Workflow } from "lucide-react";
+import { Download, FileText, MessageSquare, RefreshCw, Workflow } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import api from "@/lib/api/apiV2";
-import { apiErrorMessage } from "@/lib/api";
+import { apiErrorMessage, readActiveContextId } from "@/lib/api";
 import { takeToSolva } from "@/lib/takeToSolva";
 import { TOKEN, FONT, SUBMODULE_LABELS } from "../flow/tokens";
 import ProbabilityBar from "./ProbabilityBar";
@@ -678,6 +678,93 @@ function SolvaArtefactHandoffBar({ session, sessionId }) {
     }
   };
 
+  // Wave 3 Origin-triggered Briefs · Solva fan-out (2026-06-26).
+  // Module-native "Brief this session" affordance per the JC-WS Phase 3
+  // canonical-spec revision (Journey 3a). Auto-prefills description /
+  // objective / scope from the Solva session data (framing, synthesis
+  // diagnosis, scenarios, tensions, submodule label). POSTs to the
+  // SAME `/work-studio/export/brief` route the Monitor surface uses;
+  // stamps `origin_kind=solva_session` + `origin_id=<sessionId>` for
+  // audit + future surface-native preview wiring.
+  const [briefing, setBriefing] = useState(false);
+  const onBriefThisSession = async () => {
+    if (!sessionId || briefing) return;
+    const cid = session?.context_id || readActiveContextId();
+    if (!cid) {
+      toast.error("No active context — switch into a context first.");
+      return;
+    }
+    setBriefing(true);
+    try {
+      const framingTxt = (session?.framing?.user_input || "").slice(0, 400);
+      const diagnosis = (session?.synthesis?.primary_diagnosis ||
+                         session?.synthesis?.diagnosis ||
+                         "").toString().slice(0, 600);
+      const submoduleLabel = SUBMODULE_LABELS[session?.submodule] || "Solva";
+      const status = session?.status || "completed";
+      const sensitivity = (session?.synthesis?.sensitivity_drivers || [])
+        .slice(0, 4)
+        .map((d) => (typeof d === "string" ? d : (d?.label || d?.driver || "")))
+        .filter(Boolean)
+        .join("; ");
+      const tensions = (session?.synthesis?.tensions || [])
+        .slice(0, 3)
+        .map((t) => (typeof t === "string" ? t : (t?.label || t?.description || "")))
+        .filter(Boolean)
+        .join("; ");
+
+      const description = [
+        `Originating surface: ${submoduleLabel} (Solva v2).`,
+        framingTxt ? `Framing: ${framingTxt}` : "",
+        diagnosis ? `Primary diagnosis: ${diagnosis}` : "",
+        sensitivity ? `Sensitivity drivers: ${sensitivity}.` : "",
+        tensions ? `Surfaced tensions: ${tensions}.` : "",
+        `Session status: ${status}.`,
+      ].filter(Boolean).join("\n");
+
+      const objective = framingTxt
+        ? `Brief the board on the reasoning + finding for: ${framingTxt}`
+        : `Brief the board on the Solva ${submoduleLabel} session.`;
+
+      const scope = [
+        `Open with the framing in 1-2 lines so the reader understands the question.`,
+        `Lead with the primary diagnosis + scenario probabilities; close with the named tensions and what they imply for the executive.`,
+        `Format: an executive brief (1-2 pages). Faithfully carry the session's reasoning audit — no editorial rewriting.`,
+      ].join(" ");
+
+      const r = await api.post(
+        `/contexts/${cid}/work-studio/export/brief`,
+        {
+          description, objective, scope,
+          output_format: "auto", cadence: "one_off",
+          origin_kind: "solva_session",
+          origin_id: sessionId,
+        },
+      );
+      const exportId = r?.data?.export_id;
+      if (exportId) {
+        toast.success("Brief started.", {
+          description: "Akki is composing the brief. Opens in Work Studio when ready.",
+          action: {
+            label: "Open",
+            onClick: () => window.open(
+              `/app/work-studio?artefact=${encodeURIComponent(exportId)}`,
+              "_blank",
+              "noopener",
+            ),
+          },
+          duration: 8000,
+        });
+      } else {
+        toast.success("Brief request submitted.");
+      }
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    } finally {
+      setBriefing(false);
+    }
+  };
+
   const status = session?.status;
   return (
     <div
@@ -739,6 +826,27 @@ function SolvaArtefactHandoffBar({ session, sessionId }) {
         <Workflow width={14} height={14} />
         Take to Cycle
       </button>
+      {status !== "refused" && (
+        <button
+          type="button"
+          onClick={onBriefThisSession}
+          disabled={briefing}
+          aria-busy={briefing}
+          data-testid="solva-handoff-brief-this-session"
+          style={{
+            background: "transparent", color: TOKEN.INK,
+            border: `1px solid ${TOKEN.RULE}`,
+            padding: "9px 16px", borderRadius: 2,
+            cursor: briefing ? "wait" : "pointer", opacity: briefing ? 0.65 : 1,
+            fontFamily: FONT.CALIBRI, fontSize: 13,
+            display: "inline-flex", alignItems: "center", gap: 6,
+          }}
+          title="Compose an executive brief from this Solva session's reasoning audit"
+        >
+          <FileText width={14} height={14} />
+          {briefing ? "Starting brief…" : "Brief this session"}
+        </button>
+      )}
     </div>
   );
 }

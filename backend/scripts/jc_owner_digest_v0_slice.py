@@ -189,17 +189,26 @@ async def _run_async_checks() -> None:
 asyncio.get_event_loop().run_until_complete(_run_async_checks())
 
 
-# ─── 7 ─ APScheduler block arms Monday 09:00 owner_digest_weekly ──
-print("\n[7] APScheduler arms owner_digest_weekly @ Monday 09:00")
+# ─── 7 ─ APScheduler block arms owner_digest_weekly (v0.5 hourly TZ-gated) ──
+print("\n[7] APScheduler arms owner_digest_weekly (v0.5 = hourly :05 + endpoint TZ gate)")
 server_src = (REPO / "backend" / "server.py").read_text()
-ok_7 = (
-    'id="owner_digest_weekly"' in server_src
-    and re.search(
-        r'CronTrigger\(\s*day_of_week\s*=\s*["\']mon["\']\s*,\s*hour\s*=\s*9\s*,\s*minute\s*=\s*0\s*\)',
-        server_src,
-    ) is not None
+# v0.5 (2026-06-26) replaced the single Monday-09 UTC trigger with an
+# hourly fire so the cron endpoint can resolve per-context owner-tz.
+# Accept EITHER the v0 shape (Mon-09 single fire) OR the v0.5 shape
+# (hourly :05) so this slice keeps proving the schedule is armed
+# under either ship state.
+ok_v0 = re.search(
+    r'CronTrigger\(\s*day_of_week\s*=\s*["\']mon["\']\s*,\s*hour\s*=\s*9\s*,\s*minute\s*=\s*0\s*\)',
+    server_src,
+) is not None
+ok_v05 = re.search(r'CronTrigger\(\s*minute\s*=\s*5\s*\)', server_src) is not None
+ok_7 = 'id="owner_digest_weekly"' in server_src and (ok_v0 or ok_v05)
+_record(
+    "scheduler_armed_mon_09",
+    ok_7,
+    "owner_digest_weekly present + (v0 Mon-09 OR v0.5 hourly :05) trigger detected"
+    if ok_7 else "MISSING",
 )
-_record("scheduler_armed_mon_09", ok_7, "owner_digest_weekly + Mon 09:00 trigger present" if ok_7 else "MISSING")
 
 
 # ─── Summary ───────────────────────────────────────────────────────

@@ -150,6 +150,9 @@ _CSRF_ALLOWLIST_SUBSTRINGS = (
     "/api/inbound/sendgrid",
     "/api/cohort/email-events/sendgrid",
     "/api/internal/v1/",
+    "/api/cron/",
+    "/api/blog/cron/",
+    "/api/solva/v2/cron/",
 )
 
 

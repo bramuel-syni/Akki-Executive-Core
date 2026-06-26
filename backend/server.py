@@ -1159,16 +1159,12 @@ async def on_startup():
                 replace_existing=True,
             )
 
-            # ── Wave 3 — Owner Digest v0 (Monday 09:00 owner-tz).
-            # For v0, owner-tz resolution defaults to UTC (a per-context
-            # `account.preferences.tz` resolver lands in v0.5). Calls the
-            # in-process /api/cron/owner-digest-weekly endpoint which
-            # sweeps every context with an owner + at least one strategic
-            # goal, composes a deterministic delta, and persists only
-            # when the delta hash differs from the previous run. Same
-            # APScheduler/in-process caveat as the other jobs; no Shield
-            # or LLM call along the path. See
-            # /app/memory/sprints/OWNER_DIGEST_V0.md.
+            # ── Wave 3 — Owner Digest (v0.5: hourly + per-context TZ).
+            # The hourly fire lets the endpoint resolve each context's
+            # owner-tz and only send when *their* local time is
+            # Monday 09:00. v0 was UTC-anchored single-fire; v0.5
+            # replaces that with the TZ gate inside the endpoint.
+            # See /app/memory/sprints/OWNER_DIGEST_V05.md.
             async def _fire_owner_digest_weekly():
                 try:
                     async with httpx.AsyncClient(timeout=180.0) as ac:
@@ -1177,15 +1173,15 @@ async def on_startup():
                             headers={"X-Cron-Secret": cron_secret},
                         )
                     logger.info(
-                        "Owner Digest v0 cron: status=%s body=%s",
+                        "Owner Digest cron: status=%s body=%s",
                         resp.status_code, (resp.text or "")[:300],
                     )
                 except Exception as e:  # noqa: BLE001
-                    logger.warning("Owner Digest v0 cron failed: %s", e)
+                    logger.warning("Owner Digest cron failed: %s", e)
 
             scheduler.add_job(
                 _fire_owner_digest_weekly,
-                CronTrigger(day_of_week="mon", hour=9, minute=0),
+                CronTrigger(minute=5),  # hourly at :05
                 id="owner_digest_weekly",
                 replace_existing=True,
             )
@@ -1226,7 +1222,7 @@ async def on_startup():
 
             scheduler.start()
             app.state.scheduler = scheduler
-            logger.info("Schedulers armed: Exco360 (Tue 10:00) + Influence Digest (Mon 08:00) + Paragraph Anchors (daily 03:00) + Chat Retention (daily 03:30) + Solva v2 Stale (daily 04:00) + Owner Digest v0 (Mon 09:00) + JC-MON Background Tracker (hourly :15) UTC.")
+            logger.info("Schedulers armed: Exco360 (Tue 10:00) + Influence Digest (Mon 08:00) + Paragraph Anchors (daily 03:00) + Chat Retention (daily 03:30) + Solva v2 Stale (daily 04:00) + Owner Digest (hourly :05, per-context Mon-09 owner-tz) + JC-MON Background Tracker (hourly :15) UTC.")
         except Exception as e:  # noqa: BLE001
             logger.warning("Could not arm weekly scheduler: %s", e)
     else:

@@ -651,6 +651,77 @@ def _strip_email_signature(body: str) -> str:
     return "\n".join(lines).strip()
 
 
+async def _handle_owner_digest_reply(
+    *, payload: Dict[str, Any], digest_id: str,
+    from_email: str, from_name: str, subject: str,
+    text_body: str, html_body: str, message_id: str,
+) -> Dict[str, Any]:
+    """Wave 3 v0.5 — owner replied to a digest+<id>@... alias.
+
+    Insert the reply body as a Document Journal pending document so
+    the existing accept affordance picks it up. The accept rail itself
+    is NOT touched — this handler just produces the row in the shape
+    the Journal already expects.
+
+    Sender authority: From: must match the digest owner's email (the
+    same account that received the original send). If mismatched, we
+    still capture the row for audit but flag `sender_mismatch=True`
+    and `lifecycle_state="quarantine"` so the Journal hides it
+    from the default accept queue.
+    """
+    from datetime import datetime, timezone
+    from core import db
+
+    digest = await db.owner_digests.find_one(
+        {"id": digest_id}, {"_id": 0},
+    )
+    if not digest:
+        return {"ok": False, "error": "digest_unknown"}
+
+    owner_id = digest.get("owner_account_id")
+    cid = digest.get("context_id")
+    owner_acc = (
+        await db.accounts.find_one({"id": owner_id}, {"_id": 0, "email": 1})
+        or {}
+    )
+    owner_email = (owner_acc.get("email") or "").strip().lower()
+    sender_matches = bool(owner_email) and from_email == owner_email
+
+    cleaned_body = _strip_email_signature(text_body or html_body or "")
+    did = f"doc-{uuid.uuid4().hex[:10]}"
+    await db.documents.insert_one({
+        "id":                did,
+        "context_id":        cid,
+        "account_id":        owner_id,
+        "title":             (subject or "Owner digest reply").strip()[:200],
+        "summary":           cleaned_body[:1200],
+        "body":              cleaned_body,
+        # Canonical filter the Document Journal uses to discover
+        # incoming items for the accept rail. The marker also tells
+        # SIEM / governance the originating channel.
+        "source_channel":    "owner_digest_reply",
+        "lifecycle_state":   "pending" if sender_matches else "quarantine",
+        "origin_kind":       "owner_digest_reply",
+        "origin_id":         digest_id,
+        "from_email":        from_email,
+        "from_name":         from_name,
+        "message_id":        message_id,
+        "sender_matches_owner": sender_matches,
+        "created_at":        datetime.now(timezone.utc).isoformat(),
+    })
+    logger.info(
+        "owner_digest_reply: captured digest_id=%s doc_id=%s sender_match=%s",
+        digest_id, did, sender_matches,
+    )
+    return {
+        "ok":       True,
+        "route":    "owner_digest_reply",
+        "doc_id":   did,
+        "digest_id": digest_id,
+        "sender_matches_owner": sender_matches,
+    }
+
+
 async def _handle_task_contributor_reply(
     *, payload: Dict[str, Any], token_hash: str,
     from_email: str, from_name: str, subject: str,
@@ -1007,6 +1078,30 @@ async def _dispatch_inbound_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
         return await _handle_cycle_reply(
             payload=payload,
             recipient_alias=cycle_alias_recipient,
+            from_email=from_email, from_name=from_name,
+            subject=subject, text_body=text_body, html_body=html_body,
+            message_id=message_id,
+        )
+
+    # Wave 3 — Owner Digest v0.5 reply rail (2026-06-26). The digest
+    # email is sent with `Reply-To: digest+<digest_id>@<inbound_domain>`.
+    # When the owner hits Reply, the message lands here. We route to
+    # `_handle_owner_digest_reply` which writes a `documents` row with
+    # `source_channel="owner_digest_reply"` + `lifecycle_state="pending"`,
+    # so the Document Journal's existing accept affordance picks it
+    # up — zero net-new code on the accept rail itself.
+    from services.owner_digest import extract_digest_id_from_alias
+    digest_id = next(
+        (
+            extract_digest_id_from_alias(r) for r in candidate_recipients
+            if extract_digest_id_from_alias(r)
+        ),
+        None,
+    )
+    if digest_id:
+        return await _handle_owner_digest_reply(
+            payload=payload,
+            digest_id=digest_id,
             from_email=from_email, from_name=from_name,
             subject=subject, text_body=text_body, html_body=html_body,
             message_id=message_id,

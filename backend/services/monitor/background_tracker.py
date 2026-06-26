@@ -259,6 +259,38 @@ async def pre_warm_context(
     return summary
 
 
+async def _gather_goal_linked_docs(
+    *, context_id: str, account_id: str, goal_id: str,
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Source base + tracking docs for a single goal.
+
+    The on-demand `assess_objective` + `recommend_interventions` +
+    `explain_performance` + `extended_health` engine helpers all take
+    `(base_docs, tracking_docs)`. The linking convention in the
+    `documents` collection is `linked_objective_id == goal.id`. A
+    document can additionally carry `doc_role: "base" | "tracking"` so
+    the goal owner can mark which docs anchor the strategic intent
+    vs. which deliver weekly evidence; if `doc_role` is absent we
+    default to tracking (the canonical Monitor drawer behaviour).
+    """
+    cursor = db.documents.find(
+        {
+            "context_id": context_id,
+            "account_id": account_id,
+            "linked_objective_id": goal_id,
+        },
+        {"_id": 0},
+    )
+    base_docs: List[Dict[str, Any]] = []
+    tracking_docs: List[Dict[str, Any]] = []
+    async for d in cursor:
+        if (d.get("doc_role") or "").lower() == "base":
+            base_docs.append(d)
+        else:
+            tracking_docs.append(d)
+    return base_docs, tracking_docs
+
+
 async def _invoke_live_assessment(
     *, kind: str, rid: str, context_id: str, account_id: str,
 ) -> Dict[str, Any]:
@@ -270,6 +302,16 @@ async def _invoke_live_assessment(
     fields. This satisfies the user's invariant "must call the same
     `recommend_interventions` / `explain_performance` / `extended_health`
     paths" while keeping the tracker out-of-process-safe.
+
+    v0.5 (2026-06-26): extended to fan out to the three additional
+    engine legs (`recommend_interventions`, `explain_performance`,
+    `extended_health`) AFTER the status-assessment leg completes.
+    All four legs route through the same Shield path the on-demand
+    handler uses; the per-objective fingerprint gate (see
+    `should_skip` upstream) covers them as a unit — no per-leg
+    discriminator, no parallel pipeline. Each leg consumes from the
+    same per-context Shield budget on the caller's accounting (one
+    call per leg per row → up to 4 Shield calls per warmed row).
     """
     # Import lazily so this module is import-safe outside the FastAPI app
     # boot (the live router pulls in `contracts.get_synisense` which
@@ -324,4 +366,104 @@ async def _invoke_live_assessment(
             "status_assessment_source": "tracker_v0",
         }},
     )
+
+    # v0.5 fan-out — call the 3 additional engine legs on the same
+    # fingerprint gate. Honest refusal when evidence is thin (the
+    # legs themselves enforce that — see assess_objective's
+    # no_tracking_evidence_yet refusal). We still PERSIST the leg
+    # outputs (`tracker_legs.{recommendations,performance,extended_health}`)
+    # so the on-demand UI can deep-link to them.
+    leg_summary: Dict[str, Any] = {
+        "recommend_interventions": None,
+        "explain_performance":     None,
+        "extended_health":         None,
+        "leg_calls_made":          0,
+        "leg_refusals":            0,
+    }
+    try:
+        base_docs, tracking_docs = await _gather_goal_linked_docs(
+            context_id=context_id, account_id=account_id, goal_id=rid,
+        )
+        # Build the richer assessment shape the 4-leg engine functions
+        # expect. The on-demand-status assessment we already produced
+        # uses a slightly different field set — translate it cleanly.
+        engine_assessment = await _engine_assess_objective_if_evidence(
+            objective=item, base_docs=base_docs, tracking_docs=tracking_docs,
+        )
+
+        from services.monitor import (
+            recommend_interventions, explain_performance, extended_health,
+        )
+
+        recs = await recommend_interventions(
+            objective=item, assessment=engine_assessment,
+            base_docs=base_docs, tracking_docs=tracking_docs,
+        )
+        leg_summary["recommend_interventions"] = recs
+        leg_summary["leg_calls_made"] += 1
+        if recs.get("refused"):
+            leg_summary["leg_refusals"] += 1
+
+        perf = await explain_performance(
+            objective=item, assessment=engine_assessment,
+            base_docs=base_docs, tracking_docs=tracking_docs,
+        )
+        leg_summary["explain_performance"] = perf
+        leg_summary["leg_calls_made"] += 1
+        if perf.get("refused"):
+            leg_summary["leg_refusals"] += 1
+
+        eh = await extended_health(
+            objective=item, assessment=engine_assessment,
+            base_docs=base_docs, tracking_docs=tracking_docs,
+        )
+        leg_summary["extended_health"] = eh
+        leg_summary["leg_calls_made"] += 1
+        if eh.get("refused"):
+            leg_summary["leg_refusals"] += 1
+
+        await coll.update_one(
+            {"id": rid, "context_id": context_id},
+            {"$set": {
+                "tracker_legs": leg_summary,
+                "tracker_legs_assessed_at": iso(now()),
+                "status_assessment_source": "tracker_v05",
+            }},
+        )
+    except Exception:
+        # Honest failure — the status_assessment leg already landed
+        # above. We don't fail the whole row if the fan-out legs
+        # error out; we just don't update tracker_legs and the
+        # downstream caller doesn't get the additional content.
+        logger.exception("tracker_legs_fan_out_failed rid=%s", rid)
+
+    # Return the original assessment (callers only inspect status /
+    # rag fields). Tracker_legs is consumed via the row.
     return assessment
+
+
+async def _engine_assess_objective_if_evidence(
+    *, objective: Dict[str, Any],
+    base_docs: List[Dict[str, Any]],
+    tracking_docs: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Wrap `assess_objective` to be safe when the goal has zero
+    linked base/tracking docs. In that case the engine refuses
+    with `no_tracking_evidence_yet` — which is correct + the
+    3 downstream legs honour the refusal short-circuit (no LLM
+    call). Returning a synthesised refusal here keeps the call
+    shape consistent (always-a-dict) for the downstream legs.
+    """
+    if not base_docs and not tracking_docs:
+        return {
+            "objective_id":  objective.get("id"),
+            "refused":        True,
+            "refusal_reason": "no_tracking_evidence_yet",
+            "progress_pct":  0,
+            "probability_pct": 0,
+            "probability_band": "Low-conviction",
+        }
+    from services.monitor import assess_objective
+    return await assess_objective(
+        objective=objective, base_docs=base_docs, tracking_docs=tracking_docs,
+    )

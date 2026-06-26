@@ -74,6 +74,20 @@ _ALLOWLIST_PREFIXES = (
     # (`X-Internal-Auth`); CSRF would block in-process httpx calls
     # from `_http_client.py` because they don't carry a CSRF token.
     "/api/internal/v1/",
+    # Wave 3 v0.5 (2026-06-26) — APScheduler `_fire_*` jobs in
+    # `server.py` POST to `/api/cron/*` via in-proc httpx.AsyncClient.
+    # Those calls cannot carry a CSRF token (no UA, no cookie jar).
+    # Each cron endpoint enforces its own auth via the
+    # `X-Cron-Secret` header (env `AKKI_CRON_SECRET`); CSRF would
+    # otherwise block every scheduled job. This is a LATENT BUG FIX:
+    # the existing paragraph-anchors / weekly-digest / blog / solva-
+    # stale crons were all failing silently with 403 csrf_token_missing
+    # before this allowlist entry landed. See
+    # `/app/memory/sprints/OWNER_DIGEST_V05.md` for the discovery
+    # and recovery.
+    "/api/cron/",
+    "/api/blog/cron/",
+    "/api/solva/v2/cron/",
 )
 
 

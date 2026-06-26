@@ -15,11 +15,11 @@
  * Five footer CTAs (canonical `?ctx_type=task&ctx_id=<id>` URL contract):
  *   Use in Solva · Use in Chat · Generate brief · Test hypothesis · Share task
  */
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useTrackRecentView } from "@/lib/recentViews";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "@/lib/api/apiV2";
-import { apiErrorMessage } from "@/lib/api";
+import { apiErrorMessage, readActiveContextId } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -1050,6 +1050,15 @@ function CompileTab({ task }) {
             <span>readiness</span>
           </span>
         </div>
+        {/* Wave 3 Origin-triggered Briefs · Task Manager fan-out
+            (2026-06-26). Module-native "Brief this task" — synthesises
+            description/objective/scope from the task data (name,
+            description, readiness, due) and POSTs to the same
+            `/work-studio/export/brief` route the Monitor + Solva
+            surfaces use. Stamps `origin_kind=task_manager_task` +
+            `origin_id=<task.id>` for audit + future surface-native
+            preview wiring. */}
+        <BriefThisTaskButton task={task} />
       </div>
 
       {/* Progress strip */}
@@ -1637,5 +1646,103 @@ function FooterCTAs({ task, onPatched }) {
         <Share2 className="w-3 h-3 mr-1.5" /> Share task
       </Button>
     </footer>
+  );
+}
+
+
+/**
+ * BriefThisTaskButton — Wave 3 Origin-triggered Briefs · Task Manager
+ * fan-out (2026-06-26).
+ *
+ * Module-native "Brief this task" affordance per the JC-WS Phase 3
+ * canonical-spec revision (Journey 3a). Auto-synthesises the
+ * description / objective / scope payload from task data (name,
+ * description, readiness_score, due_date, output_spec, success_criteria)
+ * so the user doesn't see a Work-Studio form. Posts to the existing
+ * /work-studio/export/brief route with origin_kind=task_manager_task +
+ * origin_id=<task.id> stamped — same shape Monitor + Solva use.
+ */
+function BriefThisTaskButton({ task }) {
+  const [busy, setBusy] = useState(false);
+  const onClick = useCallback(async () => {
+    if (!task?.id || busy) return;
+    const cid = task?.context_id || readActiveContextId();
+    if (!cid) {
+      toast.error("No active context — switch into a context first.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const name = (task?.name || "Task").slice(0, 200);
+      const readiness = task?.readiness_score ?? 0;
+      const desc = (task?.description || task?.objective || "").toString().slice(0, 800);
+      const outputSpec = (task?.output_spec || "").toString().slice(0, 300);
+      const success = (task?.success_criteria || "").toString().slice(0, 300);
+      const dueLine = task?.due_date ? `Due: ${task.due_date}.` : "";
+
+      const description = [
+        `Originating surface: Task Manager.`,
+        `Task name: ${name}.`,
+        `Readiness: ${readiness}%. ${dueLine}`,
+        desc ? `Description: ${desc}` : "",
+        outputSpec ? `Output spec: ${outputSpec}` : "",
+        success ? `Success criteria: ${success}` : "",
+      ].filter(Boolean).join("\n");
+
+      const objective = `Brief the board on the current state of: ${name}.`;
+
+      const scope = [
+        `Open with what this task delivers and why it's on the executive radar.`,
+        `Lead with where readiness stands today (the ${readiness}% chip) and what's blocking it; close with what the board needs to decide or unblock.`,
+        `Format: an executive brief (1-2 pages). Keep cause-and-effect explicit; avoid restating the readiness telemetry without context.`,
+      ].join(" ");
+
+      const r = await api.post(
+        `/contexts/${cid}/work-studio/export/brief`,
+        {
+          description, objective, scope,
+          output_format: "auto", cadence: "one_off",
+          origin_kind: "task_manager_task",
+          origin_id: task.id,
+        },
+      );
+      const exportId = r?.data?.export_id;
+      if (exportId) {
+        toast.success("Brief started.", {
+          description: "Akki is composing the brief. Opens in Work Studio when ready.",
+          action: {
+            label: "Open",
+            onClick: () => window.open(
+              `/app/work-studio?artefact=${encodeURIComponent(exportId)}`,
+              "_blank", "noopener",
+            ),
+          },
+          duration: 8000,
+        });
+      } else {
+        toast.success("Brief request submitted.");
+      }
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }, [task, busy]);
+
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      onClick={onClick}
+      disabled={busy}
+      aria-busy={busy}
+      data-testid="task-drawer-brief-this-task"
+      title="Compose an executive brief from this task's plan + readiness"
+    >
+      {busy
+        ? <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" /> Starting brief…</>
+        : <><FileText className="w-3 h-3 mr-1.5" /> Brief this task</>}
+    </Button>
   );
 }
