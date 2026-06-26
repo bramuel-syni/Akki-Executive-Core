@@ -14,7 +14,9 @@
 
 ### P1 (deferred at user direction)
 
-1. **`services/solva_v2/` directory rename + `solva_phase_d_sessions` Mongo
+1. **FTT-014 — `test_phase_i5_open_questions::test_i5_B1_backfill_idempotent` deterministic regression** (NEW, promoted from pollution-tracker reclassification 2026-06-26). The per-file capture (`P5_7_PER_FILE_CAPTURE.md`) confirmed the test fails in isolation (FAIL_DETERMINISTIC at 12.2 s), not from pollution. Real bug hiding behind the broad-suite noise. **Bug-fix sprint required**: investigate the backfill-idempotency assertion drift in isolation; identify whether it's a per-test setup issue (Mongo collection state from prior in-FILE tests inside `test_phase_i5_open_questions.py`), a real backfill-idempotency regression in the i5 open-questions code path, or an environment-coupled assertion. *Unblock condition:* user picks fix scope (debug now vs. file Phase-I5 audit). Surface: `FAILING_TEST_TRACKER.md` → DETERMINISTIC REGRESSIONS section.
+
+2. **`services/solva_v2/` directory rename + `solva_phase_d_sessions` Mongo
    collection rename** — Blocked on Track-2 schema relocation
    (locked-area collision — Track-2 schema files live INSIDE
    `services/solva_v2/`). Defer until **JC-WS Phase 4 or post-GP-ship
@@ -48,24 +50,35 @@
    conflict). Trigger criterion (on-demand has proved trustworthy)
    is met. Defer until user steers.
 
-11. **Cross-test pollution cleanup sprint (FTT-002..026 / scoped down to 18 IDs in 7 files).**
-    Diagnosis sprints shipped 2026-06-26 (newest first):
-    - **P5.7-PER-FILE-CAPTURE** — per-file subprocess capture (path b done right;
-      user explicitly rejected (d)). 433 files in 54.8 min. **18 FTT IDs / 7 files
-      confirmed as TRUE cross-test pollution** (FAIL_IN_CONTEXT); 6 reclassified
-      (FTT-002/003 integration-only, FTT-013 deterministic-slow, FTT-014
-      deterministic regression). All halt thresholds clear. Three bisect
-      strategies surfaced: (a) binary-search per file (~3.5-7 h),
-      (b) statically-narrowed per file (~1-2 h), (c) two-file blanket sweep
-      (~1.5-3.5 h). Agent recommendation: **(b) then (a) on holdouts.**
-    - P5.7-CAPTURE-B-ATTEMPT-1 — superseded; in-process broad-suite hung at 16%.
-    - P5.7-DIAG — initial 9-cluster classification + 337 static polluter-pattern
-      hits + 0 dynamic reproductions.
+11. **Cross-test pollution cleanup sprint (now: 4 confirmed pairs · 10 FTT IDs).**
+    Bisect closed 2026-06-26 (newest first):
+    - **P5.7-BISECT** — statically-narrowed predecessor search.
+      **4 confirmed polluter→polluted pairs surfaced**:
+        · `test_phase4_2_http_transport_smoke.py` → 3 polluted files
+          (FTT-015..022 = 8 FTT IDs)
+        · `test_phase_p5_10_audit_panel_direct_linkage.py` →
+          `test_track_b_phase2_task_lifecycle.py` (FTT-023, **tiered**)
+      **KEY**: one file is the polluter for 8 of 10 confirmed FTT IDs;
+      that file is ALSO a deterministic regression itself.
+      **2 holdouts** for full-(a) binary search:
+        · `test_p_cleanup_c_help_tooltip_suppression.py` (FTT-010..012)
+        · `test_track_b_phase_b5_g6_notes_autosave.py` (FTT-024..026)
+      **1 intra-file cluster** for separate sprint:
+        · `test_iter41_signal_actions_in_process.py` (FTT-004..009)
+      All halt conditions clear; 0 locked-area polluters.
+    - P5.7-PER-FILE-CAPTURE (scope cut 24→18); P5.7-CAPTURE-B-ATTEMPT-1
+      (in-process broad-suite hung at 16%); P5.7-DIAG (initial diagnosis).
 
-    *Unblock condition:* user picks (a)/(b)/(c) for the bisect step.
+    *Unblock condition:* user picks fix scope: (a) single-file surgical
+    on `test_phase4_2_http_transport_smoke.py` (closes 8 FTT IDs + own
+    deterministic regression in 1 sprint); (b) all-4-pairs cleanup
+    (closes 10 FTT IDs); (c) defer fix & run full-(a) binary search
+    on the 2 holdouts first to see if they consolidate to the same
+    polluter. Agent recommendation: **(c) first, then (b)**.
     Sprint memos: `sprints/P5_7_DIAG_test_pollution.md`,
     `sprints/P5_7_CAPTURE_B_ATTEMPT_1.md`,
-    `sprints/P5_7_PER_FILE_CAPTURE.md`.
+    `sprints/P5_7_PER_FILE_CAPTURE.md`,
+    `sprints/P5_7_BISECT.md`.
 
 ### P2 (logged proactively)
 

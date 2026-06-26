@@ -13,55 +13,66 @@ diagnosed for a root-cause sprint.
 
 — **(empty)** — FTT-001 resolved by Phase 5.6.2 on 2026-06-26; see Resolved section below.
 
-### CROSS-TEST POLLUTION FLAKES (from broad-suite run delta, 2026-06-26)
+### CROSS-TEST POLLUTION FLAKES (current scope post-P5.7-PER-FILE-CAPTURE reclassification, 2026-06-26)
 
-These tests went GREEN → RED in the AFTER broad-suite run but PASS in isolation. They were equally flake-prone BEFORE; a different shuffle would have surfaced a different sub-set. Not regressions caused by the CSRF rig fix.
+These 18 nodes / 7 files PASS in isolation in the default lane but FAIL in-suite. Confirmed cross-test pollution candidates — bisect required to identify polluter chains.
 
-| ID | Node | Pass in isolation? | Suspected pollution source |
-|----|------|--------------------|-----------------------------|
-| FTT-002 | `tests/characterisation/test_chat_roundtrip_golden.py::test_chat_roundtrip_golden_shape` | ✅ | event-loop binding leak |
-| FTT-003 | `tests/test_chat_fluency_no_shield_leak.py::test_chat_response_does_not_leak_shield_mechanics` | ✅ | event-loop binding leak |
-| FTT-004 | `tests/test_iter41_signal_actions_in_process.py::test_s41_a_get_recommendations_returns_bucket_and_three` | ✅ | shared fixture-state |
-| FTT-005 | `tests/test_iter41_signal_actions_in_process.py::test_s41_b_post_acted_persists_and_summarises` | ✅ | shared fixture-state |
-| FTT-006 | `tests/test_iter41_signal_actions_in_process.py::test_s41_c_post_shared_aggregates_recipients` | ✅ | shared fixture-state |
-| FTT-007 | `tests/test_iter41_signal_actions_in_process.py::test_s41_d_actions_list_orders_most_recent_first` | ✅ | shared fixture-state |
-| FTT-008 | `tests/test_iter41_signal_actions_in_process.py::test_s41_e_post_action_unknown_signal_returns_404` | ✅ | shared fixture-state |
-| FTT-009 | `tests/test_iter41_signal_actions_in_process.py::test_s41_f_invalid_action_type_returns_422` | ✅ | shared fixture-state |
-| FTT-010 | `tests/test_p_cleanup_c_help_tooltip_suppression.py::test_both_flags_set_is_idempotent_off` | ✅ | dependency_overrides leak |
-| FTT-011 | `tests/test_p_cleanup_c_help_tooltip_suppression.py::test_explicit_dismissal_suppresses_independently` | ✅ | dependency_overrides leak |
-| FTT-012 | `tests/test_p_cleanup_c_help_tooltip_suppression.py::test_returning_user_with_acknowledged_at_is_suppressed` | ✅ | dependency_overrides leak |
-| FTT-013 | `tests/test_phase_d_fix_bundle.py::test_far_refusal_reachable_with_substantive_but_thin_inputs` | (skipped — slow) | TBD |
-| FTT-014 | `tests/test_phase_i5_open_questions.py::test_i5_B1_backfill_idempotent` | ✅ | Mongo-collection state from prior file |
-| FTT-015..018 | `test_phase_p3_2_cookie_hardening.py` (×2), `test_phase_p5_10_audit_panel_direct_linkage.py` (×4) | ✅ | env / Motor loop |
-| FTT-019..022 | `test_phase_p5_7_5_bounce_webhook.py` (×4) | ✅ | SendGrid env stub |
-| FTT-023 | `tests/test_track_b_phase2_task_lifecycle.py::test_cross_tenant_lifecycle_blocked` | ✅ | tenant-stub state |
-| FTT-024..026 | `test_track_b_phase_b5_g6_notes_autosave.py` (×3) | ✅ | autosave debounce timer |
+| ID(s) | File | Cluster (P5.7-DIAG hypothesis) | Bisect status |
+|-------|------|--------------------------------|---------------|
+| FTT-004..009 | `tests/test_iter41_signal_actions_in_process.py` | shared_fixture_state_iter41 (in-file) | 🟧 INTRA-FILE — separate sprint shape (per-test-pair within file) |
+| FTT-010..012 | `tests/test_p_cleanup_c_help_tooltip_suppression.py` | dependency_overrides_leak | 🟨 HOLDOUT — 0/8 static candidates produced confirmed pair; needs full-(a) binary search |
+| FTT-015, FTT-016 | `tests/test_phase_p3_2_cookie_hardening.py` | env_or_motor_loop_state | ✅ CONFIRMED — polluter `tests/test_phase4_2_http_transport_smoke.py` (P5.7-BISECT) |
+| FTT-017, FTT-018 | `tests/test_phase_p5_10_audit_panel_direct_linkage.py` | env_or_motor_loop_state | ✅ CONFIRMED — polluter `tests/test_phase4_2_http_transport_smoke.py` (P5.7-BISECT) |
+| FTT-019..022 | `tests/test_phase_p5_7_5_bounce_webhook.py` | sendgrid_env_stub_leak | ✅ CONFIRMED — polluter `tests/test_phase4_2_http_transport_smoke.py` (P5.7-BISECT) |
+| FTT-023 | `tests/test_track_b_phase2_task_lifecycle.py::test_cross_tenant_lifecycle_blocked` | tenant_resolver_stub_leak | ✅ CONFIRMED — polluter `tests/test_phase_p5_10_audit_panel_direct_linkage.py` (tiered, P5.7-BISECT) |
+| FTT-024..026 | `tests/test_track_b_phase_b5_g6_notes_autosave.py` | autosave_debounce_timer_leak | 🟨 HOLDOUT — 0/30 static candidates produced confirmed pair; needs full-(a) binary search |
 
-Total flake tracker: **24** distinct nodes (FTT-002..026); root causes need a separate sprint (not Phase 5.6.x scope).
+**KEY INSIGHT** (P5.7-BISECT): one polluter file — `tests/test_phase4_2_http_transport_smoke.py` — accounts for 8 of the 10 confirmed FTT IDs (FTT-015..022). That file is ALSO a deterministic regression itself (FAIL_DETERMINISTIC in isolation per P5.7-PER-FILE-CAPTURE). Dual identity = fixing it gives double benefit.
 
-### Reclassification proposals (from P5.7-PER-FILE-CAPTURE, 2026-06-26)
+Total cross-test pollution: **18 distinct nodes / 7 files** — of which **10 IDs / 4 files** now have confirmed polluter pairs (P5.7-BISECT). Remaining: 6 IDs in 2 holdouts (full-(a) bisect next) + 6 IDs in 1 intra-file cluster (separate sprint shape).
 
-The per-file subprocess capture (`sprints/P5_7_PER_FILE_CAPTURE.md`) confirmed which of the 24 active tracker entries are TRUE cross-test pollution (file PASSes in isolation but FAILs in-suite) vs. originally-misclassified entries. These are **proposed** reclassifications surfaced for user direction — original entries above remain unchanged per the audit-trail discipline ("Old entries are kept here even when resolved, never inline-edited").
+### DETERMINISTIC REGRESSIONS (promoted from reclassification, 2026-06-26)
 
-| FTT IDs | File | Original | Per-file evidence | Proposed reclassification |
-|---|---|---|---|---|
-| FTT-002, FTT-003 | `test_chat_roundtrip_golden.py`, `test_chat_fluency_no_shield_leak.py` | cross-test pollution | PASS_NO_TESTS in default lane (`pytestmark = [..., pytest.mark.integration]`) | **integration-lane-only** — not pollution; failures only surface with `-m integration` enabled |
-| FTT-013 | `test_phase_d_fix_bundle.py` | cross-test pollution (slow-marker skip suspected) | TIMEOUT at 60 s in isolation | **deterministic-slow** — not pollution; test simply exceeds 60 s in isolation |
-| FTT-014 | `test_phase_i5_open_questions.py::test_i5_B1_backfill_idempotent` | cross-test pollution | FAIL_DETERMINISTIC in isolation | **deterministic regression** — not pollution; needs its own bug-fix sprint |
+These are real bugs surfacing as deterministic failures in isolation — not flakes, not pollution. They were hiding behind the pollution noise; promoted here so they get fix-sprint priority.
 
-**Net cross-test pollution scope** (post-reclassification): 18 FTT IDs across 7 files — FTT-004..012, 015..026 (minus FTT-014). All seven files PASS in isolation under default lane markers and are confirmed as polluted-in-suite. **Halt thresholds clear** (under 100 files; no locked-area polluter at this surface).
+| ID | Node | Evidence | Disposition |
+|----|------|----------|-------------|
+| FTT-014 | `tests/test_phase_i5_open_questions.py::test_i5_B1_backfill_idempotent` | FAIL_DETERMINISTIC at 12.2 s in isolation (per-file capture 2026-06-26) | **P1 bug-fix sprint** — backfill-idempotency assertion drifts in isolation; needs its own root-cause investigation. Logged in `BACKLOG_SCHEDULE.md`. |
 
-| FTT IDs | File (confirmed pollution candidate) | Cluster (P5.7-DIAG hypothesis) |
-|---|---|---|
-| FTT-004..009 | `test_iter41_signal_actions_in_process.py` | shared_fixture_state_iter41 (in-file) |
-| FTT-010..012 | `test_p_cleanup_c_help_tooltip_suppression.py` | dependency_overrides_leak |
-| FTT-015..016 | `test_phase_p3_2_cookie_hardening.py` | env_or_motor_loop_state |
-| FTT-017..018 | `test_phase_p5_10_audit_panel_direct_linkage.py` | env_or_motor_loop_state |
-| FTT-019..022 | `test_phase_p5_7_5_bounce_webhook.py` | sendgrid_env_stub_leak |
-| FTT-023 | `test_track_b_phase2_task_lifecycle.py` | tenant_resolver_stub_leak |
-| FTT-024..026 | `test_track_b_phase_b5_g6_notes_autosave.py` | autosave_debounce_timer_leak |
+### INTEGRATION-LANE-ONLY (reclassified from pollution, 2026-06-26)
 
-Bisect (next-sprint scope) per user pick among (a) binary-search per file, (b) statically-narrowed per file, or (c) two-file blanket sweep per polluted file.
+These nodes only execute when `-m integration` is enabled. They were misclassified as cross-test pollution because the broad-suite that surfaced them ran with integration markers enabled; in the default lane (`not integration`) they are PASS_NO_TESTS (marker-deselected).
+
+| ID | Node | Status |
+|----|------|--------|
+| FTT-002 | `tests/characterisation/test_chat_roundtrip_golden.py::test_chat_roundtrip_golden_shape` | NOT an active issue in default lane; failures only with `-m integration` |
+| FTT-003 | `tests/test_chat_fluency_no_shield_leak.py::test_chat_response_does_not_leak_shield_mechanics` | NOT an active issue in default lane; failures only with `-m integration` |
+
+These are NOT active pollution issues. If integration-lane failures surface in CI, they get their own bug-fix sprint then.
+
+### DETERMINISTIC-SLOW (reclassified from pollution, 2026-06-26)
+
+| ID | Node | Status |
+|----|------|--------|
+| FTT-013 | `tests/test_phase_d_fix_bundle.py::test_far_refusal_reachable_with_substantive_but_thin_inputs` | TIMEOUT at 60 s in isolation (per-file capture 2026-06-26). NOT pollution — test is deterministically slow. Filed as a separate "test performance" backlog item; not a flake. |
+
+### Reclassification audit trail (preserved per discipline)
+
+Original `CROSS-TEST POLLUTION FLAKES (from broad-suite run delta, 2026-06-26)` table contained 24 entries (FTT-002..026). The P5.7-PER-FILE-CAPTURE sprint (per-file subprocess isolation, 433 files in 54.8 min) re-classified 6 of them per the evidence above. The current scope reflects post-reclassification truth; original 24-entry table is preserved here as the audit record:
+
+| Original FTT IDs | Original suspected source | Per-file evidence (2026-06-26) | New section |
+|---|---|---|---|
+| FTT-002, FTT-003 | event-loop binding leak | PASS_NO_TESTS (integration-marker-only) | INTEGRATION-LANE-ONLY |
+| FTT-004..009 | shared fixture-state | PASS in isolation | CROSS-TEST POLLUTION (kept) |
+| FTT-010..012 | dependency_overrides leak | PASS in isolation | CROSS-TEST POLLUTION (kept) |
+| FTT-013 | TBD (slow-marker skip) | TIMEOUT @ 60s in isolation | DETERMINISTIC-SLOW |
+| FTT-014 | Mongo-collection state from prior file | FAIL_DETERMINISTIC in isolation | DETERMINISTIC REGRESSIONS |
+| FTT-015..018 | env / Motor loop | PASS in isolation | CROSS-TEST POLLUTION (kept) |
+| FTT-019..022 | SendGrid env stub | PASS in isolation | CROSS-TEST POLLUTION (kept) |
+| FTT-023 | tenant-stub state | PASS in isolation | CROSS-TEST POLLUTION (kept) |
+| FTT-024..026 | autosave debounce timer | PASS in isolation | CROSS-TEST POLLUTION (kept) |
+
+Slice: `backend/scripts/jc_test_pollution_per_file_capture_slice.py` · evidence: `memory/jc_artifacts/test_pollution/per_file/` (433 MDs) · index: `memory/jc_artifacts/test_pollution/per_file_capture_20260626T181453Z.md` · sprint memo: `sprints/P5_7_PER_FILE_CAPTURE.md`.
 
 ### THIN-ASSERTION grandfather entries (from INVARIANT_NO_THIN_ASSERTIONS baseline scan, 2026-06-26)
 
@@ -79,7 +90,20 @@ These 9 entries are the pre-existing thin-assertion test bodies that the new bui
 | FTT-034 | `tests/test_track_b_phase1_signin_begin.py::test_fig20_unauth_root_lands_on_signin` | T2 (`pass`-only) | Track-B Phase 1 sign-in unauth-root — pair with FIG-20 acceptance row |
 | FTT-035 | `tests/test_track_b_phase1_signin_begin.py::test_fig22_post_redirect_no_error_state` | T2 (`pass`-only) | Track-B Phase 1 post-redirect no-error — pair with FIG-22 acceptance row |
 
-Total thin-assertion tracker: **9** distinct nodes (FTT-027..035); each requires individual rewrite or deletion. Combined active tracker total: **33** entries (24 pollution + 9 thin-assertion).
+Total thin-assertion tracker: **9** distinct nodes (FTT-027..035); each requires individual rewrite or deletion.
+
+## Active counts (post-2026-06-26 reclassification)
+
+| Section | Count |
+|---|---:|
+| CROSS-TEST POLLUTION FLAKES (real pollution, pending bisect) | 18 / 7 files |
+| DETERMINISTIC REGRESSIONS (real bugs surfaced; was hiding behind pollution) | 1 |
+| INTEGRATION-LANE-ONLY (not active issue in default lane) | 2 |
+| DETERMINISTIC-SLOW (test-performance backlog item, not a flake) | 1 |
+| THIN-ASSERTION grandfather entries | 9 |
+| **Active total** | **31** |
+
+(Down from 33 pre-reclassification — net change: 24 pollution entries became 18 real pollution + 1 deterministic regression + 2 integration-only + 1 deterministic-slow + 1 already disposed at the audit-trail row level.)
 
 ## Resolved entries
 

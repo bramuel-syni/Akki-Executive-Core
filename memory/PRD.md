@@ -1,6 +1,10 @@
 # AKKI Sandbox — Product Requirements Document (PRD)
 
 
+> **2026-06-26 19:48 UTC — P5.7-BISECT shipped · 4 confirmed polluter pairs · 1 file pollutes 8/10 FTT IDs.**
+> User-approved path (b) bisect with (a) holdout fallback. New READ-ONLY slice ran the bisect in 27.3 min on the 7 confirmed FAIL_IN_CONTEXT files from P5.7-PER-FILE-CAPTURE. **4 confirmed polluter→polluted pairs surfaced** — three of them share the SAME polluter `tests/test_phase4_2_http_transport_smoke.py` (8 of 10 confirmed FTT IDs). That polluter file ALSO has its own deterministic regression (dual identity). The fourth pair is tiered pollution. 2 files in holdouts (need full-(a) binary search next); 1 intra-file cluster (separate sprint shape). All halt conditions CLEAR (no locked-area polluters, sample-recheck clean). 0 LOC mutated. Three fix-scope options surfaced — agent recommendation: **(c) first** (full-(a) bisect on 2 holdouts to see if they consolidate to the same polluter), **then (b)** (all-pairs cleanup).
+
+
 > **2026-06-26 19:10 UTC — P5.7-PER-FILE-CAPTURE shipped · pollution scope cut 24 → 18 / 7 files.**
 > User explicitly rejected path (d) (back-circle anti-pattern). New READ-ONLY slice runs every test file in a fresh subprocess with a 60 s wall timeout: **433 files completed in 54.8 min** (in-process attempt-1 hung at 16%). Buckets: 350 PASS / 14 PASS_NO_TESTS / 59 FAIL_DETERMINISTIC / 10 TIMEOUT / 0 ERROR. **Tracker scope CORRECTED**: only **18 FTT IDs / 7 files** are TRUE cross-test pollution (PASS alone, FAIL in-suite). 6 reclassified: FTT-002/003 integration-lane-only, FTT-013 deterministic-slow, FTT-014 deterministic regression. All halt thresholds clear; 0 LOC mutated. Three bisect strategies surfaced for user pick — agent recommendation: **(b) then (a) on holdouts**.
 
