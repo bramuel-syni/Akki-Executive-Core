@@ -1,6 +1,49 @@
 # AKKI Sandbox — Product Requirements Document (PRD)
 
 
+> **2026-06-26 update — BUG-ANL-UPLOAD-GRIDFS CLOSED (P0) + AUTONOMOUS BACKLOG RUN waves 1+2 closed.**
+> P0 production bug: Analyze file upload failing on workbooks ≥ 11 MB
+> (MongoDB 16 MB BSON cap). **Fix: migrated two Analyze insert sites
+> (`/api/workbook/upload` + `/api/workbook/upload-multi`) from inline
+> base64 to GridFS streaming with a 500 MB ceiling.** Dual-read helper
+> `read_workbook_bytes` keeps legacy `data_b64` rows working forever.
+> Per-row atomic backfill at `scripts/jc_bug_analyze_upload_backfill.py`
+> (DRY-RUN default, `--commit` to migrate, idempotent, race-safe).
+> nginx in-repo `client_max_body_size 50m → 512m`,
+> `client_body_timeout 120s → 300s`. **Memory peak at 500 MB upload:
+> +20.85 MB RSS delta** (vs old ~1.2 GB inline-base64 peak — ≈ 60× win).
+> Proving slice 11/11 GREEN. Five-check convergent regression GREEN.
+> Sprint memo: `BUG_ANALYZE_UPLOAD.md`. K8s runbook:
+> `runbooks/PROD_INGRESS_AND_MEMORY.md`.
+>
+> **AUTONOMOUS BACKLOG RUN — Wave 1 + Wave 2 closed.**
+> Wave 1: news aggregator UA rotation (nation-africa disabled after
+> rotation still 403) · INVARIANT_HEALTH.md dashboard scaffold ·
+> Phase 5.5.3 broader-suite drift triage doc (101 failing files
+> mapped to 3 root-cause hypotheses · no fixes shipped). HALT
+> surfaced on `services/solva_v2/` rename + `solva_phase_d_sessions`
+> Mongo rename (Track-2 schema locked-area collision).
+> Wave 2: LLM_MODELS_REFRESH matrix doc shipped (21 model strings
+> audited; 7 stale; per-call-site refresh diff; 3-sub-sprint
+> implementation plan). HALT surfaced on Owner Digest + JC-MON
+> background tracker (scope ambiguity); Spread-heatmap delta +
+> Auto-tune candidate objectives gated on GP ship. Wave 3 paused
+> pending user steer.
+>
+> **Track-2 divergent first-render download URL is live:**
+> `GET /api/jc-artifacts/track2/divergent-first-render.pptx`
+> (superadmin-gated; verified 200 + 69 105 bytes with admin JWT).
+> Convergent regression deck also exposed at the matching path.
+>
+> **USER ACTIONS REMAIN** (load-bearing for GridFS rollout):
+> 1. K8s ingress on `akki.syni.ai` — apply `proxy-body-size: 512m`
+>    + `proxy-read-timeout: 300` + `proxy-send-timeout: 300`
+>    annotations (see runbook for kubectl one-liner).
+> 2. Confirm production pod memory ≥ 1 GiB (kubectl describe).
+> 3. (Optional, post-soak) `jc_bug_analyze_upload_backfill.py --commit`
+>    against prod Atlas at a quiet window.
+> 4. Inspect Track-2 divergent deck and authorise GP ship.
+
 > **2026-06-26 update — JC-TL Track-2 Decks upgrade CLOSED at minimum scope (8/8 GREEN).**
 > Gate A returned DOES-NOT-FIT for divergent rendering → user
 > dispatched Track-2 at MINIMUM SCOPE per the pre-stated rule. Three

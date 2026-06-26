@@ -1,18 +1,18 @@
 {
-  "task_id": "task-e43614f633f1",
+  "task_id": "task-3b0a60654525",
   "source_document_ids": [
     [
-      "doc-30b7068b11",
-      "doc-8bab4c9145"
+      "doc-73de6ad363",
+      "doc-8d8c9de6e1"
     ],
     [
-      "doc-30b7068b11",
-      "doc-8bab4c9145"
+      "doc-73de6ad363",
+      "doc-8d8c9de6e1"
     ]
   ],
   "confidence_pcts": [
-    85,
-    51
+    46,
+    58
   ],
   "sources_counts": [
     2,

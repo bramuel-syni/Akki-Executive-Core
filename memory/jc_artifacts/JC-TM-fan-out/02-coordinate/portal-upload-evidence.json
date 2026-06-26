@@ -1,9 +1,9 @@
 {
   "portal_view_response": {
     "contribution": "People & culture \u2014 Q3 attrition + key-talent retention",
-    "contributor_email": "chro.fanout-9eae22@mara-heritage.demo",
+    "contributor_email": "chro.fanout-9c4702@mara-heritage.demo",
     "docs": [],
-    "expires_at": "2026-07-25T16:05:16.621509+00:00",
+    "expires_at": "2026-07-26T09:22:21.692455+00:00",
     "peers": [
       {
         "name": "James Otieno",
@@ -11,7 +11,7 @@
       }
     ],
     "task": {
-      "id": "task-e43614f633f1",
+      "id": "task-3b0a60654525",
       "name": "JC-TM Fan-out \u2014 Mara Heritage Q3 Board Pack",
       "objective": "Equip the board with a concise, evidence-based read on the bank's strategic position so directors can take the capital, risk, and digital-transformation decisions queued at the Q3 meeting.",
       "success_criteria": "Each board member reads the pack in under 45 minutes and arrives able to vote on (a) Q4 capital allocation, (b) the digital-transformation refresh, and (c) the risk-tolerance recalibration.",
@@ -27,7 +27,7 @@
   "upload_response": {
     "ok": true,
     "message": null,
-    "doc_id": "doc-30b7068b11",
+    "doc_id": "doc-73de6ad363",
     "name": "chro-q3-contribution.txt"
   },
   "submit_response": {
@@ -35,5 +35,5 @@
     "message": null,
     "readiness_score": 12
   },
-  "contrib_doc_id": "doc-30b7068b11"
+  "contrib_doc_id": "doc-73de6ad363"
 }

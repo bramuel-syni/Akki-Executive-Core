@@ -71,6 +71,7 @@ from routers import daily_review as _daily_review
 from routers import decks as _decks
 from routers import depth as _depth
 from routers import docs_download as _docs_download
+from routers import jc_artifacts as _jc_artifacts
 from routers import document_engagement as _document_engagement
 from routers import documents as _documents
 from routers import documents_async_mirror as _documents_async_mirror
@@ -231,6 +232,7 @@ ROUTERS = [
     _first_session.router,
     _depth.router,
     _docs_download.router,
+    _jc_artifacts.router,
     # ─── server.py L324-410 ────────────────────────────────────────────
     _search.router,
     _website.router,

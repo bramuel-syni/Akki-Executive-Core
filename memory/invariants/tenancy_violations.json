@@ -1,10 +1,10 @@
 {
-  "scan_timestamp": "2026-06-25T07:49:08.888215+00:00",
+  "scan_timestamp": "2026-06-26T10:06:35.588759+00:00",
   "scan_roots": [
     "/app/backend/services",
     "/app/backend/routers"
   ],
-  "files_scanned": 314,
+  "files_scanned": 323,
   "tenant_scoped_collections": [
     "analyses",
     "analysis_blobs",
@@ -313,9 +313,31 @@
     "insert_one"
   ],
   "escape_hatch_marker": "tenancy:allow-no-account-id",
-  "violations": [],
-  "violation_count": 0,
-  "definite_violation_count": 0,
+  "violations": [
+    {
+      "file": "/app/backend/routers/documents.py",
+      "line": 833,
+      "collection": "documents",
+      "method": "find_one",
+      "kind": "filter"
+    },
+    {
+      "file": "/app/backend/routers/documents.py",
+      "line": 791,
+      "collection": "documents",
+      "method": "find",
+      "kind": "non_literal"
+    },
+    {
+      "file": "/app/backend/services/tasks/compile_service.py",
+      "line": 849,
+      "collection": "work_studio_exports",
+      "method": "count_documents",
+      "kind": "filter"
+    }
+  ],
+  "violation_count": 3,
+  "definite_violation_count": 2,
   "phase": "2.1_per_collection_enforce",
   "phase_2_enforce_target": "definite_violation_count == 0 for enforce_mode_collections"
 }

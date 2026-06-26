@@ -1,40 +1,40 @@
 [
   {
-    "export_id": "ebc3121b-10a2-4094-968f-561f978e36df",
+    "export_id": "4c490d10-ecda-4e1b-8b0d-4db4409f0171",
     "kind": "board_pack",
     "output_format": "docx",
     "lifecycle_state": "committed",
     "status": "complete",
-    "source_task_id": "task-e43614f633f1",
+    "source_task_id": "task-3b0a60654525",
     "file_name": "mara-heritage-bank-board-pack-q3-fy25.docx",
-    "byte_len": 41801,
-    "sha256": "e6e1cef9f608921c24bc5f23d6bfd5d72be4ffbd82617dafb146b99226ff469b",
-    "confidence_pct": 85,
+    "byte_len": 40870,
+    "sha256": "892582e5de1401751df536a8f0402097089a160b847298a22bee649409e979b5",
+    "confidence_pct": 46,
     "sources_count": 2,
     "source_document_ids": [
-      "doc-30b7068b11",
-      "doc-8bab4c9145"
+      "doc-73de6ad363",
+      "doc-8d8c9de6e1"
     ],
     "sensitivity_band": "INTERNAL",
-    "committed_at": "2026-06-25T16:10:21.697406+00:00"
+    "committed_at": "2026-06-26T09:27:06.251770+00:00"
   },
   {
-    "export_id": "50939b9c-da27-440e-b78c-3f76c822daf9",
+    "export_id": "798982b8-6649-4d7b-bd42-4db2c935fea0",
     "kind": "board_pack",
     "output_format": "pdf",
     "lifecycle_state": "committed",
     "status": "complete",
-    "source_task_id": "task-e43614f633f1",
-    "file_name": "mara-heritage-bank-board-pack-q3-fy26.pdf",
-    "byte_len": 28238,
-    "sha256": "6f8fa13418b401b18faf19bb0d828cdb8dce3dcf64fda0c20966c361db6f033d",
-    "confidence_pct": 51,
+    "source_task_id": "task-3b0a60654525",
+    "file_name": "mara-heritage-bank-board-pack-q3-fy25.pdf",
+    "byte_len": 26514,
+    "sha256": "551f194e518fdd29d62f7a1dd53f9669ef3b3ffe8b1f8e45898f94d7a65a9444",
+    "confidence_pct": 58,
     "sources_count": 2,
     "source_document_ids": [
-      "doc-30b7068b11",
-      "doc-8bab4c9145"
+      "doc-73de6ad363",
+      "doc-8d8c9de6e1"
     ],
     "sensitivity_band": "INTERNAL",
-    "committed_at": "2026-06-25T16:10:21.697827+00:00"
+    "committed_at": "2026-06-26T09:27:06.252255+00:00"
   }
 ]

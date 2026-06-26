@@ -2,8 +2,8 @@
   "rolling": {
     "journeys": {
       "01-create": {
-        "active_task_id": "task-e43614f633f1",
-        "draft_task_id": "task-ac87c472fde2",
+        "active_task_id": "task-3b0a60654525",
+        "draft_task_id": "task-205be7141774",
         "active_created": true,
         "draft_created": true,
         "team_size": 2
@@ -11,7 +11,7 @@
       "02-coordinate": {
         "invite_tokens_minted": 2,
         "portal_upload_succeeded": true,
-        "contrib_doc_id": "doc-30b7068b11",
+        "contrib_doc_id": "doc-73de6ad363",
         "portal_submit_status": {
           "ok": true,
           "message": null,
@@ -22,10 +22,10 @@
       "03-manage": {
         "contrib1_approved": true,
         "ai_draft_source": "shield",
-        "ai_draft_len": 593,
+        "ai_draft_len": 774,
         "contrib2_v2_approved": true,
         "task_linked_docs_count": 2,
-        "contrib2_doc_id": "doc-8bab4c9145"
+        "contrib2_doc_id": "doc-8d8c9de6e1"
       },
       "04-readiness": {
         "score": 85,
@@ -36,38 +36,38 @@
       },
       "05-generate": {
         "draft_export_ids": [
-          "ebc3121b-10a2-4094-968f-561f978e36df",
-          "50939b9c-da27-440e-b78c-3f76c822daf9"
+          "4c490d10-ecda-4e1b-8b0d-4db4409f0171",
+          "798982b8-6649-4d7b-bd42-4db2c935fea0"
         ],
         "all_complete": true,
         "all_committed": true,
         "all_edit_locked": true,
         "confidence_pcts": [
-          85,
-          51
+          46,
+          58
         ],
         "source_document_ids_wired": [
           [
-            "doc-30b7068b11",
-            "doc-8bab4c9145"
+            "doc-73de6ad363",
+            "doc-8d8c9de6e1"
           ],
           [
-            "doc-30b7068b11",
-            "doc-8bab4c9145"
+            "doc-73de6ad363",
+            "doc-8d8c9de6e1"
           ]
         ],
         "download_files": [
           {
-            "export_id": "ebc3121b-10a2-4094-968f-561f978e36df",
+            "export_id": "4c490d10-ecda-4e1b-8b0d-4db4409f0171",
             "file": "05-generate/JC-TM-fanout-bridge-compiled.docx",
-            "bytes": 41801,
+            "bytes": 40870,
             "magic_4": "504b0304",
             "format": "docx"
           },
           {
-            "export_id": "50939b9c-da27-440e-b78c-3f76c822daf9",
+            "export_id": "798982b8-6649-4d7b-bd42-4db2c935fea0",
             "file": "05-generate/JC-TM-fanout-bridge-compiled-2.pdf",
-            "bytes": 28238,
+            "bytes": 26514,
             "magic_4": "25504446",
             "format": "pdf"
           }
@@ -75,10 +75,10 @@
       },
       "06-monitor": {
         "counts": {
-          "all": 6,
-          "draft": 1,
-          "active": 0,
-          "closed": 5
+          "all": 15,
+          "draft": 2,
+          "active": 7,
+          "closed": 6
         },
         "search_found": true,
         "draft_delete_status": 200,
@@ -105,7 +105,7 @@
     {
       "label": "J1.b \u2014 Create draft task probe",
       "ok": true,
-      "detail": "id=task-ac87c472fde2"
+      "detail": "id=task-205be7141774"
     },
     {
       "label": "J2.a \u2014 Invite tokens minted",
@@ -115,7 +115,7 @@
     {
       "label": "J2.b \u2014 Portal upload (contributor 1) \u2014 REAL doc on disk",
       "ok": true,
-      "detail": "contrib_doc_id='doc-30b7068b11'"
+      "detail": "contrib_doc_id='doc-73de6ad363'"
     },
     {
       "label": "J2.c \u2014 Reinvite minted a new token (delta \u2265 1)",
@@ -125,17 +125,17 @@
     {
       "label": "J3.a \u2014 Contributor 1 approved",
       "ok": true,
-      "detail": "via portal /submit"
+      "detail": "shield/manual"
     },
     {
       "label": "J3.b \u2014 AI-drafted revision request returned a draft",
       "ok": true,
-      "detail": "source='shield' len=593"
+      "detail": "source='shield' len=774"
     },
     {
       "label": "J3.c \u2014 Contributor 2 v2 approved",
       "ok": true,
-      "detail": "contrib2_doc_id=doc-8bab4c9145"
+      "detail": "contrib2_doc_id=doc-8d8c9de6e1"
     },
     {
       "label": "J4.a \u2014 Real readiness score returned",
@@ -170,17 +170,17 @@
     {
       "label": "J5.e \u2014 source_document_ids WIRED THROUGH (non-empty)",
       "ok": true,
-      "detail": "ids=[['doc-30b7068b11', 'doc-8bab4c9145'], ['doc-30b7068b11', 'doc-8bab4c9145']]"
+      "detail": "ids=[['doc-73de6ad363', 'doc-8d8c9de6e1'], ['doc-73de6ad363', 'doc-8d8c9de6e1']]"
     },
     {
       "label": "J5.f \u2014 confidence_pct grounding-backed (\u22651 above 60 AND all above Stage-1 baseline)",
-      "ok": true,
-      "detail": "pcts=[85, 51]  vs Stage-1 baseline=[40,30]"
+      "ok": false,
+      "detail": "pcts=[46, 58]  vs Stage-1 baseline=[40,30]"
     },
     {
       "label": "J5.g \u2014 Real DOCX/PDF files on disk (valid magic bytes)",
       "ok": true,
-      "detail": "files=[('05-generate/JC-TM-fanout-bridge-compiled.docx', 41801, '504b0304'), ('05-generate/JC-TM-fanout-bridge-compiled-2.pdf', 28238, '25504446')]"
+      "detail": "files=[('05-generate/JC-TM-fanout-bridge-compiled.docx', 40870, '504b0304'), ('05-generate/JC-TM-fanout-bridge-compiled-2.pdf', 26514, '25504446')]"
     },
     {
       "label": "Deep-link \u2014 Open in Work Studio resolves end-to-end",
@@ -190,7 +190,7 @@
     {
       "label": "J6.a \u2014 Tasks counts endpoint returns shape",
       "ok": true,
-      "detail": "counts={'all': 6, 'draft': 1, 'active': 0, 'closed': 5}"
+      "detail": "counts={'all': 15, 'draft': 2, 'active': 7, 'closed': 6}"
     },
     {
       "label": "J6.b \u2014 Search/filter found the active task",
@@ -223,9 +223,8 @@
       "detail": "exports_n=2"
     }
   ],
-  "passed": 25,
-  "failed": 0,
+  "passed": 24,
+  "failed": 1,
   "total": 25,
-  "generated_at": "2026-06-25T16:12:25.299011+00:00",
-  "regenerated_with_corrected_gate": true
+  "generated_at": "2026-06-26T09:27:06.361303+00:00"
 }

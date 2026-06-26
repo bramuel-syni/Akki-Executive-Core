@@ -171,7 +171,14 @@ def parse_feed(
 # Fetch + persist
 # ---------------------------------------------------------------------------
 async def fetch_one(source: Dict[str, Any], client: httpx.AsyncClient) -> List[NewsItem]:
-    """Fetch + parse a single source. Never raises."""
+    """Fetch + parse a single source. Never raises.
+
+    UA rotation (2026-06-26): some sources (e.g. nation-africa) 403 on the
+    generic `AKKI-News-Aggregator/1.0` UA. We retry once with a real-world
+    browser UA on any 403 before logging the failure. Per the AUTONOMOUS
+    BACKLOG RUN contract, sources that STILL 403 after rotation are
+    candidates for `enabled: false` in `news_sources.json`.
+    """
     src_id = source["id"]
     src_name = source.get("name") or src_id
     src_regions = source.get("regions") or ["GLOBAL"]
@@ -179,6 +186,23 @@ async def fetch_one(source: Dict[str, Any], client: httpx.AsyncClient) -> List[N
     started = time.time()
     try:
         r = await client.get(url, follow_redirects=True, timeout=NEWS_FETCH_TIMEOUT_SECONDS)
+        if r.status_code == 403:
+            # 2026-06-26 — UA rotation. Retry with a browser-shaped UA.
+            r = await client.get(
+                url,
+                follow_redirects=True,
+                timeout=NEWS_FETCH_TIMEOUT_SECONDS,
+                headers={"User-Agent": _BROWSER_FALLBACK_UA},
+            )
+            if r.status_code == 403:
+                logger.warning(
+                    "news source %s still 403 after UA rotation — candidate for disable",
+                    src_id,
+                )
+                return []
+            else:
+                logger.info("news source %s recovered via UA rotation (HTTP %s)",
+                            src_id, r.status_code)
         if r.status_code >= 400:
             logger.warning("news source %s returned HTTP %s", src_id, r.status_code)
             return []
@@ -189,6 +213,16 @@ async def fetch_one(source: Dict[str, Any], client: httpx.AsyncClient) -> List[N
     except Exception as e:  # noqa: BLE001 — broad on purpose
         logger.warning("news source %s failed: %s", src_id, e)
         return []
+
+
+# Browser-shaped UA used by `fetch_one` as a one-time retry on 403. Many
+# RSS providers (esp. publisher sites with Cloudflare in front) reject
+# generic/aggregator UAs but allow common browser strings. Kept as a
+# module-level constant so it's discoverable + easy to rotate.
+_BROWSER_FALLBACK_UA = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 "
+    "(KHTML, like Gecko) Version/17.5 Safari/605.1.15"
+)
 
 
 async def fetch_once(

@@ -144,10 +144,21 @@ async def read_workbook_bytes(db, blob_row: Dict[str, Any]) -> Tuple[Optional[by
     `gridfs_id` — caller MUST `os.unlink(tempfile_path)` after use.
 
     Raises if the row carries neither field.
+
+    Suffix selection: the tempfile created for GridFS reads carries
+    the proper extension (`.xlsx` / `.csv` / `.bin`) so downstream
+    consumers like openpyxl (which extension-checks before opening)
+    accept the file. Falls back to `.gridfs` for unrecognised
+    formats.
     """
     gridfs_id = blob_row.get("gridfs_id")
     if gridfs_id:
-        path = await download_to_tempfile(db, gridfs_id)
+        fmt = (blob_row.get("file_format") or "").lower()
+        suffix = {
+            "xlsx": ".xlsx",
+            "csv":  ".csv",
+        }.get(fmt, ".gridfs")
+        path = await download_to_tempfile(db, gridfs_id, suffix=suffix)
         return None, path
     legacy_b64 = blob_row.get("data_b64")
     if legacy_b64:

@@ -1,9 +1,9 @@
 {
-  "probe_task_id": "task-bdec317283a3",
+  "probe_task_id": "task-afebeae2c513",
   "thin_intel": {
-    "task_id": "task-bdec317283a3",
+    "task_id": "task-afebeae2c513",
     "task_hash": "0ae95299180b68c65d499e6f1a164289",
-    "generated_at": "2026-06-25T16:05:28.342377+00:00",
+    "generated_at": "2026-06-26T09:22:34.421280+00:00",
     "readiness": {
       "score": 0,
       "components": [
@@ -41,18 +41,18 @@
     "roadmap": [],
     "recommendations": [
       {
-        "id": "rec-output_spec_missing",
-        "kind": "rule_based",
-        "title": "Output specification is missing. Set a template or free-text description in Step 2 of the wizard.",
-        "action": "Open the Plan tab to update the spec.",
-        "source": "rule"
+        "id": "REC-THIN-001",
+        "kind": "llm_voiced",
+        "title": "Define Output Specification",
+        "action": "Update Step 2 of the wizard to include a template or free-text description for the expected output.",
+        "source": "llm"
       },
       {
-        "id": "rec-no_contributors",
-        "kind": "rule_based",
-        "title": "No contributors are assigned yet. Add at least one team member to begin tracking progress.",
-        "action": "Open the Plan tab to update the spec.",
-        "source": "rule"
+        "id": "REC-THIN-002",
+        "kind": "llm_voiced",
+        "title": "Assign Task Contributors",
+        "action": "Add at least one team member to the task to initiate progress tracking and ensure accountability.",
+        "source": "llm"
       }
     ]
   },

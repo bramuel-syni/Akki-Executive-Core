@@ -1,13 +1,13 @@
 {
   "counts": {
-    "all": 6,
-    "draft": 1,
-    "active": 0,
-    "closed": 5
+    "all": 15,
+    "draft": 2,
+    "active": 7,
+    "closed": 6
   },
-  "active_n": 73,
-  "draft_n": 124,
-  "closed_n": 133,
+  "active_n": 80,
+  "draft_n": 125,
+  "closed_n": 134,
   "search_found": true,
   "found_in_state": "closed"
 }

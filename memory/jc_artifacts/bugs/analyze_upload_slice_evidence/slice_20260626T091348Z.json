@@ -1,0 +1,169 @@
+{
+  "ran_at": "2026-06-26T09:13:48.640559+00:00",
+  "n_pass": 10,
+  "n_total": 11,
+  "all_green": false,
+  "results": [
+    {
+      "row": "A",
+      "subject": "5 MB CSV via /upload",
+      "file_size_bytes": 5245250,
+      "rss_mb_delta": 29.44,
+      "rss_mb_peak": 256.96,
+      "analysis_id": "wba-88eb9a74c732",
+      "status": "parsed",
+      "verify": {
+        "ok": true,
+        "gridfs_id": "6a3e4295659e95a9820a877d",
+        "has_data_b64": false
+      },
+      "PASS": true,
+      "elapsed_s": 6.96
+    },
+    {
+      "row": "A2",
+      "subject": "Row A2 \u2014 Small XLSX via /upload (xlsx-format regression).",
+      "exception": "HTTPException: 422: workbook_parse_failed: openpyxl does not support .gridfs file format, please check you can open it with Excel first. Supported formats are: .xlsx,.xlsm,.xltx,.xltm",
+      "PASS": false,
+      "elapsed_s": 0.2
+    },
+    {
+      "row": "B",
+      "subject": "50 MB CSV via /upload",
+      "file_size_bytes": 52436048,
+      "rss_mb_delta": 48.22,
+      "rss_mb_peak": 305.64,
+      "analysis_id": "wba-74dbd91dd967",
+      "status": "parsed",
+      "verify": {
+        "ok": true,
+        "gridfs_id": "6a3e429c659e95a9820a8797",
+        "has_data_b64": false
+      },
+      "PASS": true,
+      "elapsed_s": 7.26
+    },
+    {
+      "row": "C",
+      "subject": "250 MB CSV via /upload",
+      "file_size_bytes": 262147784,
+      "rss_mb_delta": 21.27,
+      "rss_mb_peak": 326.91,
+      "analysis_id": "wba-bb9bb78af537",
+      "status": "parsed",
+      "verify": {
+        "ok": true,
+        "gridfs_id": "6a3e42a3659e95a9820a8863",
+        "has_data_b64": false
+      },
+      "PASS": true,
+      "elapsed_s": 7.82
+    },
+    {
+      "row": "D",
+      "subject": "500 MB CSV via /upload (ceiling)",
+      "file_size_bytes": 522194216,
+      "rss_mb_before": 326.91,
+      "rss_mb_peak": 347.73,
+      "rss_mb_after": 347.73,
+      "rss_mb_delta": 20.81,
+      "analysis_id": "wba-658d13c651e4",
+      "status": "parsed",
+      "verify": {
+        "ok": true,
+        "gridfs_id": "6a3e42ab659e95a9820a8c52",
+        "has_data_b64": false
+      },
+      "PASS": true,
+      "elapsed_s": 9.67
+    },
+    {
+      "row": "E",
+      "subject": "600 MB CSV via /upload (over-ceiling)",
+      "file_size_bytes": 629151404,
+      "status_code": 413,
+      "detail": "workbook_over_500mb_ceiling: 'row_e_600mb.csv' is 600.0 MB; max is 500 MB. Split the workbook or compress sheets to reduce size.",
+      "PASS": true,
+      "elapsed_s": 0.29
+    },
+    {
+      "row": "F",
+      "subject": "Multi-file 2\u00d7 ~250 MB CSVs via /upload-multi",
+      "file_sizes": [
+        262147784,
+        262147784
+      ],
+      "rss_mb_delta": 5.82,
+      "analysis_id": "ana-1603b836edbf",
+      "n_sources": 2,
+      "n_blob_rows": 2,
+      "all_gridfs_backed": true,
+      "no_legacy_data_b64": true,
+      "PASS": true,
+      "elapsed_s": 15.91
+    },
+    {
+      "row": "G",
+      "subject": "Round-trip byte-equality on 10 MB blob",
+      "payload_bytes": 10485760,
+      "roundtrip_bytes": 10485760,
+      "byte_equal": true,
+      "PASS": true,
+      "elapsed_s": 0.06
+    },
+    {
+      "row": "H",
+      "subject": "Legacy inline data_b64 row \u2192 dual-read",
+      "payload_bytes": 2097160,
+      "decoded_bytes": 2097160,
+      "tmp_path_used": false,
+      "byte_equal": true,
+      "PASS": true,
+      "elapsed_s": 0.01
+    },
+    {
+      "row": "I",
+      "subject": "Backfill: 2 inline + 1 GridFS \u2192 all GridFS; rerun no-op",
+      "first_run": {
+        "scanned": 3,
+        "eligible": 2,
+        "migrated": 2,
+        "skipped_decode": 0,
+        "skipped_gridfs": 1,
+        "errors": 0,
+        "commit": true,
+        "collection": "analysis_blobs"
+      },
+      "second_run": {
+        "scanned": 3,
+        "eligible": 0,
+        "migrated": 0,
+        "skipped_decode": 0,
+        "skipped_gridfs": 3,
+        "errors": 0,
+        "commit": true,
+        "collection": "analysis_blobs"
+      },
+      "n_rows_after": 3,
+      "all_gridfs": true,
+      "no_data_b64": true,
+      "second_was_noop": true,
+      "PASS": true,
+      "elapsed_s": 0.04
+    },
+    {
+      "row": "J",
+      "subject": "Lifecycle delete \u2192 no orphan fs.chunks",
+      "analysis_id": "ana-a406d822a17e",
+      "gridfs_ids_seen": [
+        "6a3e42c5659e95a9820a9c41"
+      ],
+      "metadata_rows_after_close": 0,
+      "fs_chunks_left": 0,
+      "fs_files_left": 0,
+      "session_close_returned_purged": true,
+      "PASS": true,
+      "elapsed_s": 6.96
+    }
+  ]
+}

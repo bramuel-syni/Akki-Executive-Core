@@ -65,8 +65,8 @@
     { "id": "the-east-african",     "name": "The East African",              "url": "https://www.theeastafrican.co.ke/tea/rss-feed",            "regions": ["KE", "UG", "TZ", "RW", "AF"], "enabled": false,
       "note": "Task 3 — Nairobi-based weekly covering EAC integration. NMG-owned. DISABLED 2026-05-27 — Cloudflare 403 on all fetches from the pod. Re-enable only after the operator wires a scraper/header-spoofing path."
     },
-    { "id": "nation-africa",        "name": "Nation Africa (Daily Nation)",  "url": "https://nation.africa/kenya/rss-business-1948940",        "regions": ["KE", "AF"],             "enabled": true,
-      "note": "Task 3 — Kenya's largest daily, NMG-owned. Business section RSS."
+    { "id": "nation-africa",        "name": "Nation Africa (Daily Nation)",  "url": "https://nation.africa/kenya/rss-business-1948940",        "regions": ["KE", "AF"],             "enabled": false,
+      "note": "Task 3 — Kenya's largest daily, NMG-owned. Business section RSS. DISABLED 2026-06-26 — Cloudflare 403 on all fetches from the pod, persists after Safari-shaped UA rotation (`Mozilla/5.0 … Version/17.5 Safari/605.1.15`). Re-enable only after the operator wires a scraper/header-spoofing path (cookie store, JS execution, or origin allowlist)."
     },
     { "id": "standard-kenya",       "name": "The Standard (Kenya)",          "url": "https://www.standardmedia.co.ke/rss/business.php",         "regions": ["KE", "AF"],             "enabled": true,
       "note": "Task 3 — Standard Group business RSS. Free."

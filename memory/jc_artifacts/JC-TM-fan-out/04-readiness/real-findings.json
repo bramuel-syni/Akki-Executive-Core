@@ -34,9 +34,9 @@
     }
   ],
   "intelligence_raw": {
-    "task_id": "task-e43614f633f1",
-    "task_hash": "29605a55461adaba4aed88e0aa5fc469",
-    "generated_at": "2026-06-25T16:05:25.328217+00:00",
+    "task_id": "task-3b0a60654525",
+    "task_hash": "538bb6bbcd5ae132662c4a06ad20c7d2",
+    "generated_at": "2026-06-26T09:22:32.452945+00:00",
     "readiness": {
       "score": 85,
       "components": [

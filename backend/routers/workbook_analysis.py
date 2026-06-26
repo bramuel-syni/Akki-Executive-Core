@@ -30,7 +30,7 @@ import os
 import re
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from contracts.responses import (
     AnomaliesResponse,
     IdResponse,
@@ -1030,12 +1030,39 @@ async def synthesize_v2_endpoint(
     total_bytes = 0
 
     for blob_idx, blob in enumerate(blobs[:MAX_BLOBS]):
-        raw_bytes = base64.b64decode(blob["data_b64"])
+        # JC-WS · BUG-ANL-UPLOAD-GRIDFS (2026-06-26) — dual-read for
+        # GridFS-migrated rows AND legacy `data_b64` inline rows. The
+        # helper returns (bytes, None) for legacy inline blobs and
+        # (None, tempfile_path) for GridFS-backed blobs. Caller is
+        # responsible for `os.unlink`-ing the tempfile when done.
+        try:
+            inline_bytes, tmp_path = await read_workbook_bytes(db, blob)
+        except RuntimeError as exc:
+            logger.warning(
+                "[synthesize_v2] read_workbook_bytes failed for blob %s: %s",
+                blob.get("source_id") or blob.get("filename"), exc,
+            )
+            source_files_meta.append({
+                "workbook_index": blob_idx,
+                "source_id": blob.get("source_id"),
+                "filename": blob.get("filename", "source"),
+                "parse_failed": True,
+            })
+            continue
         fmt = blob.get("file_format", "xlsx")
         fname = blob.get("filename", "source")
-        total_bytes += len(raw_bytes)
+        if inline_bytes is not None:
+            total_bytes += len(inline_bytes)
+        else:
+            try:
+                total_bytes += os.path.getsize(tmp_path)
+            except OSError:
+                pass
         try:
-            sheets, matrices = parse_workbook(blob=raw_bytes, file_format=fmt)
+            if tmp_path:
+                sheets, matrices = parse_workbook(file_path=tmp_path, file_format=fmt)
+            else:
+                sheets, matrices = parse_workbook(blob=inline_bytes, file_format=fmt)
         except Exception as exc:  # noqa: BLE001
             # Swallow contract: a single bad workbook should not
             # poison the whole synthesis run. We log with exc_info
@@ -1053,6 +1080,14 @@ async def synthesize_v2_endpoint(
                 "parse_failed": True,
             })
             continue
+        finally:
+            # Cleanup the streamed tempfile for GridFS reads. Legacy
+            # `data_b64` reads have no tempfile to clean.
+            if tmp_path:
+                try:
+                    os.unlink(tmp_path)
+                except Exception:  # noqa: BLE001
+                    pass
 
         # Strip extension; cap at 30 chars to keep cite-range strings
         # bounded. Citation regex tolerates `::` in sheet names.

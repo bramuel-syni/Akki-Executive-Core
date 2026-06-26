@@ -1,16 +1,16 @@
 {
-  "task_id": "task-e43614f633f1",
+  "task_id": "task-3b0a60654525",
   "selected_mode": "magic_link",
   "audit_log_rows": [
     {
-      "id": "f2a5bb93-3589-4a2d-9f29-cf818474cb9b",
+      "id": "0259906d-62cf-440e-ad04-46e78b4a7d4d",
       "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
       "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
       "action": "task.contributor.invited",
       "resource_type": "task",
-      "resource_id": "task-e43614f633f1",
+      "resource_id": "task-3b0a60654525",
       "metadata": {
-        "contributor_email": "cro.fanout-ce374f@mara-heritage.demo",
+        "contributor_email": "cro.fanout-55b1f3@mara-heritage.demo",
         "mode": "magic_link",
         "allow_email_reply": false,
         "channels": [
@@ -20,17 +20,17 @@
           "sent"
         ]
       },
-      "created_at": "2026-06-25T16:05:16.961047+00:00"
+      "created_at": "2026-06-26T09:22:22.102486+00:00"
     },
     {
-      "id": "c1df32e1-edbc-49fb-9ef1-38c6f2dc54cc",
+      "id": "171c9a7c-09de-447d-aaf2-aedb762928bd",
       "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
       "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
       "action": "task.contributor.invited",
       "resource_type": "task",
-      "resource_id": "task-e43614f633f1",
+      "resource_id": "task-3b0a60654525",
       "metadata": {
-        "contributor_email": "chro.fanout-9eae22@mara-heritage.demo",
+        "contributor_email": "chro.fanout-9c4702@mara-heritage.demo",
         "mode": "magic_link",
         "allow_email_reply": false,
         "channels": [
@@ -40,42 +40,42 @@
           "sent"
         ]
       },
-      "created_at": "2026-06-25T16:05:16.862721+00:00"
+      "created_at": "2026-06-26T09:22:21.916280+00:00"
     },
     {
-      "id": "4f637d22-75af-4800-8fcf-887f135d9ddf",
+      "id": "4f406be5-9aaf-4031-928c-b23680698246",
       "context_id": "a2937d0f-37f1-4042-a897-ab73a6cd652a",
       "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
       "action": "task.created",
       "resource_type": "task",
-      "resource_id": "task-e43614f633f1",
+      "resource_id": "task-3b0a60654525",
       "metadata": {
         "state": "active",
         "name": "JC-TM Fan-out \u2014 Mara Heritage Q3 Board Pack"
       },
-      "created_at": "2026-06-25T16:05:16.619593+00:00"
+      "created_at": "2026-06-26T09:22:21.690547+00:00"
     }
   ],
   "tokens_minted": [
     {
-      "id": "0fefcc69-54ea-47b9-af13-eb8d6c172de9",
-      "task_id": "task-e43614f633f1",
+      "id": "15fd3cee-4b52-4489-b353-db04a0fef1c1",
+      "task_id": "task-3b0a60654525",
       "task_account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
-      "contributor_email": "chro.fanout-9eae22@mara-heritage.demo",
-      "contributor_id": "chro.fanout-9eae22@mara-heritage.demo",
-      "expires_at": "2026-07-25T16:05:16.621509+00:00",
+      "contributor_email": "chro.fanout-9c4702@mara-heritage.demo",
+      "contributor_id": "chro.fanout-9c4702@mara-heritage.demo",
+      "expires_at": "2026-07-26T09:22:21.692455+00:00",
       "used": false,
-      "created_at": "2026-06-25T16:05:16.621525+00:00"
+      "created_at": "2026-06-26T09:22:21.692469+00:00"
     },
     {
-      "id": "b1167235-5af2-4ffa-aa83-54d117d1578a",
-      "task_id": "task-e43614f633f1",
+      "id": "b4e690dc-3c2b-4723-b270-6f274d3b54f6",
+      "task_id": "task-3b0a60654525",
       "task_account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
-      "contributor_email": "cro.fanout-ce374f@mara-heritage.demo",
-      "contributor_id": "cro.fanout-ce374f@mara-heritage.demo",
-      "expires_at": "2026-07-25T16:05:16.863911+00:00",
+      "contributor_email": "cro.fanout-55b1f3@mara-heritage.demo",
+      "contributor_id": "cro.fanout-55b1f3@mara-heritage.demo",
+      "expires_at": "2026-07-26T09:22:21.917511+00:00",
       "used": false,
-      "created_at": "2026-06-25T16:05:16.863931+00:00"
+      "created_at": "2026-06-26T09:22:21.917525+00:00"
     }
   ],
   "modes_supported": [

@@ -1,22 +1,22 @@
 {
   "drafts_list": [
     {
-      "id": "doc-8bab4c9145",
+      "id": "doc-8d8c9de6e1",
       "name": "cro-q3-contribution.txt",
       "original_filename": "cro-q3-contribution.txt",
       "state": "draft",
       "origin": "magic_link",
-      "created_at": "2026-06-25T16:05:22.294724+00:00"
+      "created_at": "2026-06-26T09:22:29.423997+00:00"
     },
     {
-      "id": "doc-30b7068b11",
+      "id": "doc-73de6ad363",
       "name": "chro-q3-contribution.txt",
       "original_filename": "chro-q3-contribution.txt",
       "state": "draft",
       "origin": "magic_link",
-      "created_at": "2026-06-25T16:05:17.018032+00:00"
+      "created_at": "2026-06-26T09:22:22.294391+00:00"
     }
   ],
-  "contrib1_doc_id": "doc-30b7068b11",
-  "contrib2_doc_id": "doc-8bab4c9145"
+  "contrib1_doc_id": "doc-73de6ad363",
+  "contrib2_doc_id": "doc-8d8c9de6e1"
 }

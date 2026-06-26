@@ -1,6 +1,6 @@
 {
   "task": {
-    "id": "task-ac87c472fde2",
+    "id": "task-205be7141774",
     "name": "JC-TM Fan-out \u2014 Draft probe",
     "objective": "Equip the board with a concise, evidence-based read on the bank's strategic position so directors can take the capital, risk, and digital-transformation decisions queued at the Q3 meeting.",
     "success_criteria": "Each board member reads the pack in under 45 minutes and arrives able to vote on (a) Q4 capital allocation, (b) the digital-transformation refresh, and (c) the risk-tolerance recalibration.",
@@ -20,16 +20,18 @@
     "account_id": "cf6e7587-9abd-46aa-b8f4-f342e9b066ef",
     "due_date": "2025-10-15",
     "readiness_score": 0,
-    "created_at": "2026-06-25T16:05:16.967469+00:00",
-    "updated_at": "2026-06-25T16:05:16.967469+00:00",
+    "created_at": "2026-06-26T09:22:22.247059+00:00",
+    "updated_at": "2026-06-26T09:22:22.247059+00:00",
     "status_history": [
       {
         "state": "draft",
-        "at": "2026-06-25T16:05:16.967469+00:00"
+        "at": "2026-06-26T09:22:22.247059+00:00"
       }
     ],
     "origin": null,
-    "contributor_comments": []
+    "contributor_comments": [],
+    "objective_id": null,
+    "progress_updates": []
   },
   "purpose": "Lifecycle test row \u2014 exercised by Journey 6 (Monitor) delete-draft."
 }

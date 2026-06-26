@@ -1,0 +1,178 @@
+{
+  "ran_at": "2026-06-26T09:15:57.846756+00:00",
+  "n_pass": 11,
+  "n_total": 11,
+  "all_green": true,
+  "results": [
+    {
+      "row": "A",
+      "subject": "5 MB CSV via /upload",
+      "file_size_bytes": 5245250,
+      "rss_mb_delta": 29.44,
+      "rss_mb_peak": 256.96,
+      "analysis_id": "wba-ea9abf63f699",
+      "status": "parsed",
+      "verify": {
+        "ok": true,
+        "gridfs_id": "6a3e4313721a64879e403c8a",
+        "has_data_b64": false
+      },
+      "PASS": true,
+      "elapsed_s": 7.06
+    },
+    {
+      "row": "A2",
+      "subject": "Synthetic XLSX via /upload",
+      "file_size_bytes": 225994,
+      "rss_mb_delta": 2.98,
+      "rss_mb_peak": 260.41,
+      "analysis_id": "wba-b20c62c54d23",
+      "status": "parsed",
+      "verify": {
+        "ok": true,
+        "gridfs_id": "6a3e431b721a64879e403ca2",
+        "has_data_b64": false
+      },
+      "PASS": true,
+      "elapsed_s": 0.78
+    },
+    {
+      "row": "B",
+      "subject": "50 MB CSV via /upload",
+      "file_size_bytes": 52436048,
+      "rss_mb_delta": 48.42,
+      "rss_mb_peak": 308.83,
+      "analysis_id": "wba-9830e70b530b",
+      "status": "parsed",
+      "verify": {
+        "ok": true,
+        "gridfs_id": "6a3e431b721a64879e403ca6",
+        "has_data_b64": false
+      },
+      "PASS": true,
+      "elapsed_s": 7.15
+    },
+    {
+      "row": "C",
+      "subject": "250 MB CSV via /upload",
+      "file_size_bytes": 262147784,
+      "rss_mb_delta": 21.03,
+      "rss_mb_peak": 329.86,
+      "analysis_id": "wba-cba5f6802eb8",
+      "status": "parsed",
+      "verify": {
+        "ok": true,
+        "gridfs_id": "6a3e4322721a64879e403d72",
+        "has_data_b64": false
+      },
+      "PASS": true,
+      "elapsed_s": 7.72
+    },
+    {
+      "row": "D",
+      "subject": "500 MB CSV via /upload (ceiling)",
+      "file_size_bytes": 522194216,
+      "rss_mb_before": 329.86,
+      "rss_mb_peak": 350.71,
+      "rss_mb_after": 350.71,
+      "rss_mb_delta": 20.85,
+      "analysis_id": "wba-c723e2255db8",
+      "status": "parsed",
+      "verify": {
+        "ok": true,
+        "gridfs_id": "6a3e432a721a64879e404161",
+        "has_data_b64": false
+      },
+      "PASS": true,
+      "elapsed_s": 8.74
+    },
+    {
+      "row": "E",
+      "subject": "600 MB CSV via /upload (over-ceiling)",
+      "file_size_bytes": 629151404,
+      "status_code": 413,
+      "detail": "workbook_over_500mb_ceiling: 'row_e_600mb.csv' is 600.0 MB; max is 500 MB. Split the workbook or compress sheets to reduce size.",
+      "PASS": true,
+      "elapsed_s": 0.28
+    },
+    {
+      "row": "F",
+      "subject": "Multi-file 2\u00d7 ~250 MB CSVs via /upload-multi",
+      "file_sizes": [
+        262147784,
+        262147784
+      ],
+      "rss_mb_delta": 5.86,
+      "analysis_id": "ana-f483073d8a6c",
+      "n_sources": 2,
+      "n_blob_rows": 2,
+      "all_gridfs_backed": true,
+      "no_legacy_data_b64": true,
+      "PASS": true,
+      "elapsed_s": 18.7
+    },
+    {
+      "row": "G",
+      "subject": "Round-trip byte-equality on 10 MB blob",
+      "payload_bytes": 10485760,
+      "roundtrip_bytes": 10485760,
+      "byte_equal": true,
+      "PASS": true,
+      "elapsed_s": 0.06
+    },
+    {
+      "row": "H",
+      "subject": "Legacy inline data_b64 row \u2192 dual-read",
+      "payload_bytes": 2097160,
+      "decoded_bytes": 2097160,
+      "tmp_path_used": false,
+      "byte_equal": true,
+      "PASS": true,
+      "elapsed_s": 0.01
+    },
+    {
+      "row": "I",
+      "subject": "Backfill: 2 inline + 1 GridFS \u2192 all GridFS; rerun no-op",
+      "first_run": {
+        "scanned": 3,
+        "eligible": 2,
+        "migrated": 2,
+        "skipped_decode": 0,
+        "skipped_gridfs": 1,
+        "errors": 0,
+        "commit": true,
+        "collection": "analysis_blobs"
+      },
+      "second_run": {
+        "scanned": 3,
+        "eligible": 0,
+        "migrated": 0,
+        "skipped_decode": 0,
+        "skipped_gridfs": 3,
+        "errors": 0,
+        "commit": true,
+        "collection": "analysis_blobs"
+      },
+      "n_rows_after": 3,
+      "all_gridfs": true,
+      "no_data_b64": true,
+      "second_was_noop": true,
+      "PASS": true,
+      "elapsed_s": 0.04
+    },
+    {
+      "row": "J",
+      "subject": "Lifecycle delete \u2192 no orphan fs.chunks",
+      "analysis_id": "ana-ac667e59da4a",
+      "gridfs_ids_seen": [
+        "6a3e4346721a64879e405150"
+      ],
+      "metadata_rows_after_close": 0,
+      "fs_chunks_left": 0,
+      "fs_files_left": 0,
+      "session_close_returned_purged": true,
+      "PASS": true,
+      "elapsed_s": 7.17
+    }
+  ]
+}

@@ -1,11 +1,11 @@
 {
-  "draft_task_id": "task-ac87c472fde2",
+  "draft_task_id": "task-205be7141774",
   "delete_response": {
     "status_code": 200,
     "body": {
       "ok": true,
       "message": null,
-      "deleted_at": "2026-06-25T16:10:21.785644+00:00"
+      "deleted_at": "2026-06-26T09:27:06.331771+00:00"
     }
   },
   "post_delete_get": 404,
