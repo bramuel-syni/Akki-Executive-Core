@@ -22,17 +22,13 @@
  * directly — no new strings drafted client-side.
  */
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { TOKEN, FONT } from "./tokens";
 import { Actions } from "@/lib/sandboxV2Flow";
 
-import { resolveBackendOrigin } from "@/lib/api";
-const API = resolveBackendOrigin();
-const api = axios.create({
-  baseURL: `${API}/api/sandbox/v2`,
-  withCredentials: true,
-  headers: { "Content-Type": "application/json" },
-});
+// JC-WAVE3 axios → shared client (2026-06-26) — drop the local
+// axios.create; use the shared client from lib/api which already
+// owns CSRF + same-origin guard + cross-origin fallback.
+import { api } from "@/lib/api";
 
 export default function Step4CycleSnapshot({ flow, dispatch, onComplete }) {
   const sid = flow.sessionId;
@@ -44,7 +40,7 @@ export default function Step4CycleSnapshot({ flow, dispatch, onComplete }) {
     async function init() {
       if (!sid) return;
       try {
-        const r = await api.get(`/sessions/${sid}/cycle-snapshot`);
+        const r = await api.get(`/sandbox/v2/sessions/${sid}/cycle-snapshot`);
         if (cancelled) return;
         setSnap(r.data?.snapshot || null);
         dispatch(Actions.cycleViewed());

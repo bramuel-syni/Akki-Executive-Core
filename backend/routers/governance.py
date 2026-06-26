@@ -32,12 +32,15 @@ router = APIRouter(prefix="/api/me/governance", tags=["governance"])
 
 # Which surfaces each model is used in. Used to decorate `connected_models`.
 # Kept static here because it's taxonomy, not user data.
+#
+# LLM-REFRESH.1 (2026-06-26) — taxonomy refreshed against the Feb 2026
+# canonical matrix (`memory/sprints/LLM_MODELS_REFRESH_MATRIX.md`).
 _MODEL_USAGE: Dict[str, List[str]] = {
-    "claude-sonnet-4-5":  ["Chat", "Briefings", "Catch-up", "Solve (deep)"],
+    "claude-sonnet-4-6":  ["Chat", "Briefings", "Catch-up", "Solve (deep)"],
     "claude-haiku-4-5":   ["Chat (fast)", "Ingestion", "Signal extraction"],
-    "gpt-5-2":            ["Chat", "Report drafts"],
-    "gemini-2-5-pro":     ["Research", "Influence Map"],
-    "gemini-2-5-flash":   ["Chat (fastest)", "Catch-up digests"],
+    "gpt-5-4":            ["Chat", "Report drafts"],
+    "gemini-3-1-pro":     ["Research", "Influence Map"],
+    "gemini-3-5-flash":   ["Chat (fastest)", "Catch-up digests"],
 }
 
 

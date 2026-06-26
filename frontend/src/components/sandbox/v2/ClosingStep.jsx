@@ -22,18 +22,14 @@
  * notice rather than a hard error.
  */
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { TOKEN, FONT } from "./tokens";
 import { Actions, writeResumeToken } from "@/lib/sandboxV2Flow";
 
-import { resolveBackendOrigin } from "@/lib/api";
-const API = resolveBackendOrigin();
-const api = axios.create({
-  baseURL: `${API}/api/sandbox/v2`,
-  withCredentials: true,
-  headers: { "Content-Type": "application/json" },
-});
+// JC-WAVE3 axios → shared client (2026-06-26) — drop the local
+// axios.create; use the shared client from lib/api which already
+// owns CSRF + same-origin guard + cross-origin fallback.
+import { api } from "@/lib/api";
 
 export default function ClosingStep({ flow, dispatch }) {
   const navigate = useNavigate();
@@ -51,7 +47,7 @@ export default function ClosingStep({ flow, dispatch }) {
     if (!e || !sid) return;
     setSaveBusy(true);
     try {
-      const r = await api.post(`/sessions/${sid}/save-and-send`, { email: e });
+      const r = await api.post(`/sandbox/v2/sessions/${sid}/save-and-send`, { email: e });
       setSaveResult(r.data);
       dispatch(Actions.captureEmail(e));
     } catch (err) {

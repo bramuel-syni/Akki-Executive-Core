@@ -1128,7 +1128,8 @@ export default function DocumentDrawer({
       <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
         <SheetContent
           side="right"
-          className="!w-[60vw] !max-w-[60vw] p-0 flex flex-col"
+          appDrawer
+          className="p-0 flex flex-col"
           data-testid="document-drawer"
           data-mode={mode}
           data-doc-id={activeId || ""}

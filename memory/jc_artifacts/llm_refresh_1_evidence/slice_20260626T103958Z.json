@@ -1,0 +1,200 @@
+{
+  "ran_at": "2026-06-26T10:39:58.474838+00:00",
+  "n_pass": 10,
+  "n_total": 10,
+  "all_green": true,
+  "results": [
+    {
+      "row": "A",
+      "subject": "Picker shape",
+      "actual_count": 7,
+      "expected_count": 7,
+      "extra_ids": [],
+      "missing_ids": [],
+      "delisted_still_present": [],
+      "PASS": true
+    },
+    {
+      "row": "B",
+      "subject": "No dated aliases in picker",
+      "bad_entries": [],
+      "PASS": true
+    },
+    {
+      "row": "C",
+      "subject": "Default model id",
+      "actual": "claude-sonnet-4-6",
+      "expected": "claude-sonnet-4-6",
+      "PASS": true
+    },
+    {
+      "row": "D",
+      "subject": "Fallback cascade shape",
+      "actual": [
+        "claude-sonnet-4-6",
+        "claude-sonnet-4-5",
+        "claude-haiku-4-5"
+      ],
+      "expected": [
+        "claude-sonnet-4-6",
+        "claude-sonnet-4-5",
+        "claude-haiku-4-5"
+      ],
+      "has_sonnet_3_7": false,
+      "PASS": true
+    },
+    {
+      "row": "E",
+      "subject": "Governance taxonomy keys",
+      "actual_keys": [
+        "claude-haiku-4-5",
+        "claude-sonnet-4-6",
+        "gemini-3-1-pro",
+        "gemini-3-5-flash",
+        "gpt-5-4"
+      ],
+      "expected_keys": [
+        "claude-haiku-4-5",
+        "claude-sonnet-4-6",
+        "gemini-3-1-pro",
+        "gemini-3-5-flash",
+        "gpt-5-4"
+      ],
+      "stale_keys": [],
+      "PASS": true
+    },
+    {
+      "row": "F",
+      "subject": "Pricing \u2014 new canonical entries present",
+      "required": [
+        [
+          "anthropic",
+          "claude-sonnet-4-6"
+        ],
+        [
+          "anthropic",
+          "claude-opus-4-8"
+        ],
+        [
+          "openai",
+          "gpt-5.5"
+        ],
+        [
+          "openai",
+          "gpt-5.4"
+        ],
+        [
+          "gemini",
+          "gemini-3.5-flash"
+        ],
+        [
+          "gemini",
+          "gemini-3.1-pro"
+        ]
+      ],
+      "missing": [],
+      "PASS": true
+    },
+    {
+      "row": "G",
+      "subject": "Pricing \u2014 stale entries dropped",
+      "stale_check": [
+        [
+          "openai",
+          "gpt-4o"
+        ],
+        [
+          "openai",
+          "gpt-4o-mini"
+        ],
+        [
+          "gemini",
+          "gemini-2.5-flash"
+        ]
+      ],
+      "still_present": [],
+      "PASS": true
+    },
+    {
+      "row": "H",
+      "subject": "Pricing \u2014 legacy entries kept",
+      "needed": [
+        [
+          "anthropic",
+          "claude-sonnet-4-5"
+        ],
+        [
+          "anthropic",
+          "claude-sonnet-4-5-20250929"
+        ],
+        [
+          "anthropic",
+          "claude-opus-4-5"
+        ],
+        [
+          "openai",
+          "gpt-5.2"
+        ],
+        [
+          "gemini",
+          "gemini-3-flash"
+        ],
+        [
+          "gemini",
+          "gemini-3-pro"
+        ]
+      ],
+      "missing": [],
+      "PASS": true
+    },
+    {
+      "row": "I",
+      "subject": "Pricing lookup resolves new canonical models",
+      "probes": [
+        [
+          "anthropic",
+          "claude-sonnet-4-6",
+          0.003
+        ],
+        [
+          "anthropic",
+          "claude-opus-4-8",
+          0.015
+        ],
+        [
+          "openai",
+          "gpt-5.5",
+          0.003
+        ],
+        [
+          "openai",
+          "gpt-5.4",
+          0.0015
+        ],
+        [
+          "gemini",
+          "gemini-3.1-pro",
+          0.004
+        ],
+        [
+          "gemini",
+          "gemini-3.5-flash",
+          0.0006
+        ]
+      ],
+      "bad": [],
+      "PASS": true
+    },
+    {
+      "row": "J",
+      "subject": "Cascade models all priced",
+      "cascade": [
+        "claude-sonnet-4-6",
+        "claude-sonnet-4-5",
+        "claude-haiku-4-5"
+      ],
+      "unpriced": [],
+      "PASS": true
+    }
+  ]
+}

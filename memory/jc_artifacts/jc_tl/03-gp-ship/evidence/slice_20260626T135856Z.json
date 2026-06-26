@@ -1,0 +1,103 @@
+{
+  "ran_at": "2026-06-26T13:58:56.420916+00:00",
+  "n_pass": 1,
+  "n_total": 6,
+  "all_green": false,
+  "results": [
+    {
+      "row": "A",
+      "subject": "build_divergent_payload accepts 3 sessions",
+      "results": [
+        {
+          "id": "sess-jctl-gp-ship-regulatory",
+          "ok": true,
+          "scenarios_empty": true,
+          "pathway_empty": true,
+          "spread_populated": true
+        },
+        {
+          "id": "sess-jctl-gp-ship-investment",
+          "ok": false,
+          "err": "ValidationError: 1 validation error for PreMortemSlide\nfailure_modes.0.failure_kind\n  Input should be 'execution_velocity', 'market_shift', 'stakeholder_misalignment', 'data_signal_misread', 'capability_gap' or 'external_shock' [type=literal_error, input_value='cap_table_compounding', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error"
+        },
+        {
+          "id": "sess-jctl-gp-ship-launch",
+          "ok": false,
+          "err": "ValidationError: 1 validation error for PreMortemSlide\nfailure_modes.0.failure_kind\n  Input should be 'execution_velocity', 'market_shift', 'stakeholder_misalignment', 'data_signal_misread', 'capability_gap' or 'external_shock' [type=literal_error, input_value='reliability_tail_failure', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error"
+        }
+      ],
+      "PASS": false,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "B",
+      "subject": "build_pptx renders 3 sessions (divergent order)",
+      "results": [
+        {
+          "id": "sess-jctl-gp-ship-regulatory",
+          "ok": true,
+          "bytes": 68204,
+          "is_pptx": true
+        },
+        {
+          "id": "sess-jctl-gp-ship-investment",
+          "ok": false,
+          "err": "ValidationError: 1 validation error for PreMortemSlide\nfailure_modes.0.failure_kind\n  Input should be 'execution_velocity', 'market_shift', 'stakeholder_misalignment', 'data_signal_misread', 'capability_gap' or 'external_shock' [type=literal_error, input_value='cap_table_compounding', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error"
+        },
+        {
+          "id": "sess-jctl-gp-ship-launch",
+          "ok": false,
+          "err": "ValidationError: 1 validation error for PreMortemSlide\nfailure_modes.0.failure_kind\n  Input should be 'execution_velocity', 'market_shift', 'stakeholder_misalignment', 'data_signal_misread', 'capability_gap' or 'external_shock' [type=literal_error, input_value='reliability_tail_failure', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error"
+        }
+      ],
+      "n_slides_in_order": 14,
+      "PASS": false,
+      "elapsed_s": 0.067
+    },
+    {
+      "row": "C",
+      "exception": "ValidationError: 1 validation error for PreMortemSlide\nfailure_modes.0.failure_kind\n  Input should be 'execution_velocity', 'market_shift', 'stakeholder_misalignment', 'data_signal_misread', 'capability_gap' or 'external_shock' [type=literal_error, input_value='cap_table_compounding', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error",
+      "PASS": false,
+      "elapsed_s": 0.128
+    },
+    {
+      "row": "D",
+      "subject": "Path-discipline rejects cross-path",
+      "PASS": false,
+      "validator_error": "1 validation error for ArtefactPayload\nscenarios.0.label\n  Field required [type=missing, input_value={'id': 'cross-1', 'claim_...'description': 'test'}]}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing",
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "E",
+      "exception": "ValidationError: 1 validation error for PreMortemSlide\nfailure_modes.0.failure_kind\n  Input should be 'execution_velocity', 'market_shift', 'stakeholder_misalignment', 'data_signal_misread', 'capability_gap' or 'external_shock' [type=literal_error, input_value='cap_table_compounding', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/literal_error",
+      "PASS": false,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "F",
+      "subject": "Each persona carries a distinct blind-spot",
+      "results": [
+        {
+          "id": "sess-jctl-gp-ship-regulatory",
+          "n_blind_spots": 3,
+          "n_unique_personas": 3,
+          "all_personas_covered": true
+        },
+        {
+          "id": "sess-jctl-gp-ship-investment",
+          "n_blind_spots": 3,
+          "n_unique_personas": 3,
+          "all_personas_covered": true
+        },
+        {
+          "id": "sess-jctl-gp-ship-launch",
+          "n_blind_spots": 3,
+          "n_unique_personas": 3,
+          "all_personas_covered": true
+        }
+      ],
+      "PASS": true,
+      "elapsed_s": 0.0
+    }
+  ]
+}

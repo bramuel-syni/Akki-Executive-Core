@@ -1,0 +1,141 @@
+{
+  "ran_at": "2026-06-26T14:14:13.663667+00:00",
+  "n_pass": 10,
+  "n_total": 10,
+  "all_green": true,
+  "results": [
+    {
+      "row": "A",
+      "subject": "Identical sessions \u2192 zero delta",
+      "delta": {
+        "previous_session_id": "sess-jctl-gp-ship-regulatory",
+        "current_session_id": "sess-jctl-gp-ship-regulatory",
+        "personas": [
+          {
+            "persona_label": "Auditor",
+            "previous_pct": 72,
+            "current_pct": 72,
+            "delta_pct": 0,
+            "direction": "stable"
+          },
+          {
+            "persona_label": "Customer advocate",
+            "previous_pct": 58,
+            "current_pct": 58,
+            "delta_pct": 0,
+            "direction": "stable"
+          },
+          {
+            "persona_label": "Regulator",
+            "previous_pct": 68,
+            "current_pct": 68,
+            "delta_pct": 0,
+            "direction": "stable"
+          }
+        ],
+        "personas_added": [],
+        "personas_removed": [],
+        "spread_breadth_delta": 0,
+        "blind_spots_added": [],
+        "blind_spots_removed": []
+      },
+      "PASS": true,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "B",
+      "subject": "All confidence +10 \u2192 all 'up'",
+      "delta_persona_count": 3,
+      "first_persona": {
+        "persona_label": "Auditor",
+        "previous_pct": 72,
+        "current_pct": 82,
+        "delta_pct": 10,
+        "direction": "up"
+      },
+      "PASS": true,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "C",
+      "subject": "Disjoint persona sets \u2192 added + removed populated",
+      "personas_added": [
+        "CFO",
+        "Founder",
+        "VC partner"
+      ],
+      "personas_removed": [
+        "Auditor",
+        "Customer advocate",
+        "Regulator"
+      ],
+      "deltas": 0,
+      "PASS": true,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "D",
+      "subject": "Spread breadth widens by 8 pct",
+      "breadth_delta": 8,
+      "PASS": true,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "E",
+      "subject": "New blind-spot \u2192 blind_spots_added populated",
+      "n_added": 1,
+      "n_removed": 0,
+      "added_text": "Newly surfaced cost-of-trust dimension the prior reads missed entirely.",
+      "PASS": true,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "F",
+      "subject": "Non-GP previous session \u2192 empty common set",
+      "personas_added": [
+        "Auditor",
+        "Customer advocate",
+        "Regulator"
+      ],
+      "personas_removed": [],
+      "common_deltas": 0,
+      "PASS": true,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "G",
+      "subject": "No-blind-spots prompt path byte-identical",
+      "a_eq_b": true,
+      "a_eq_c": true,
+      "PASS": true,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "H",
+      "subject": "Prompt grows BLIND-SPOTS block when supplied",
+      "has_block": true,
+      "has_both_blind_spots": true,
+      "grew_by_bytes": 306,
+      "PASS": true,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "I",
+      "subject": "Blind-spot order-independent (deterministic sort)",
+      "byte_equal": true,
+      "PASS": true,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "J",
+      "subject": "Blind-spots dedupe + strip blank",
+      "counts": {
+        "Alpha.": 1,
+        "alpha.": 1,
+        "Bravo.": 1
+      },
+      "PASS": true,
+      "elapsed_s": 0.0
+    }
+  ]
+}

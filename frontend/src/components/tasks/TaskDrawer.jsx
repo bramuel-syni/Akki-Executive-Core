@@ -137,7 +137,8 @@ export default function TaskDrawer() {
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-[60vw] p-0 flex flex-col min-h-0"
+        appDrawer
+        className="w-full p-0 flex flex-col min-h-0"
         data-testid="task-drawer"
       >
         {loading ? (

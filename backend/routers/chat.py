@@ -61,48 +61,41 @@ ShieldingPolicy = Literal["auto", "always", "off"]
 # Provider+model identifiers exposed to the user. Keep in sync with the
 # Universal LLM proxy.
 #
-# Patch 26G — refresh against latest provider releases (verified Feb 2026):
-#   * Anthropic — Claude Opus 4.6 added (verified GA via Anthropic — see
-#     https://www.anthropic.com/news/claude-opus-4-6). Sonnet 4.5 + Haiku
-#     4.5 kept as faster + cheaper alternatives.
-#   * Sprint Z1.1 (2026-05-29) — repaired the Opus id (was
-#     `claude-opus-4-7-20260416` which doesn't exist in the Anthropic
-#     model registry → `litellm.BadRequestError: Invalid model name`).
-#     Switched to `claude-opus-4-6` (verified id; already in use by
-#     `llm_service.LLM_MODEL_DEEP` default).
-#   * OpenAI — GPT-5.5 added (released May 2026 as the new default
-#     ChatGPT model per OpenAI). GPT-5.2 kept as legacy fallback.
-#   * Google — Gemini 3.1 Pro added (most advanced per DeepMind model
-#     card). Gemini 3 Flash added (3x faster than 2.5 Pro). Gemini
-#     2.5 family kept as legacy fallbacks.
+# LLM-REFRESH.1 (2026-06-26) — refresh against the Feb 2026 canonical
+# matrix documented in `memory/sprints/LLM_MODELS_REFRESH_MATRIX.md`:
+#   * Anthropic — Opus 4.6 → Opus 4.8 (top-tier per Anthropic Feb-2026
+#     refresh); Sonnet 4.5 (dated alias) → Sonnet 4.6 (workhorse);
+#     Haiku 4.5 keep but drop dated alias.
+#   * OpenAI — GPT-5.5 kept (newest default); GPT-5.2 → GPT-5.4.
+#   * Google — Gemini 3.1 Pro kept; Gemini 3 Flash → Gemini 3.5 Flash;
+#     Gemini 2.5 Pro + 2.5 Flash DELISTED (two generations stale).
+#
+# Patch 26G (historical, superseded by LLM-REFRESH.1 — Sprint Z1.1
+# Opus id repair is no longer relevant because we're on a newer Opus).
 #
 # Friendly `label` shows on the picker. `model` is the provider-side
 # identifier used by emergentintegrations; the full identifier shows
 # in the picker tooltip.
 SUPPORTED_MODELS: List[Dict[str, str]] = [
     # ── Anthropic ─────────────────────────────────────────────────────
-    {"id": "claude-opus-4-6",    "label": "Claude Opus 4.6",    "provider": "anthropic",
-     "model": "claude-opus-4-6",            "tone": "highest reasoning, agentic"},
-    {"id": "claude-sonnet-4-5",  "label": "Claude Sonnet 4.5",  "provider": "anthropic",
-     "model": "claude-sonnet-4-5-20250929", "tone": "careful, long-form"},
+    {"id": "claude-opus-4-8",    "label": "Claude Opus 4.8",    "provider": "anthropic",
+     "model": "claude-opus-4-8",            "tone": "highest reasoning, agentic"},
+    {"id": "claude-sonnet-4-6",  "label": "Claude Sonnet 4.6",  "provider": "anthropic",
+     "model": "claude-sonnet-4-6",          "tone": "careful, long-form"},
     {"id": "claude-haiku-4-5",   "label": "Claude Haiku 4.5",   "provider": "anthropic",
-     "model": "claude-haiku-4-5-20251001",  "tone": "fast, terse"},
+     "model": "claude-haiku-4-5",           "tone": "fast, terse"},
     # ── OpenAI ────────────────────────────────────────────────────────
     {"id": "gpt-5-5",            "label": "GPT-5.5",            "provider": "openai",
      "model": "gpt-5.5",                    "tone": "newest default"},
-    {"id": "gpt-5-2",            "label": "GPT-5.2",            "provider": "openai",
-     "model": "gpt-5.2",                    "tone": "balanced, fast"},
+    {"id": "gpt-5-4",            "label": "GPT-5.4",            "provider": "openai",
+     "model": "gpt-5.4",                    "tone": "balanced, fast"},
     # ── Google ────────────────────────────────────────────────────────
     {"id": "gemini-3-1-pro",     "label": "Gemini 3.1 Pro",     "provider": "gemini",
      "model": "gemini-3.1-pro",             "tone": "most advanced"},
-    {"id": "gemini-3-flash",     "label": "Gemini 3 Flash",     "provider": "gemini",
-     "model": "gemini-3-flash",             "tone": "fastest in class"},
-    {"id": "gemini-2-5-pro",     "label": "Gemini 2.5 Pro",     "provider": "gemini",
-     "model": "gemini-2.5-pro",             "tone": "research-heavy"},
-    {"id": "gemini-2-5-flash",   "label": "Gemini 2.5 Flash",   "provider": "gemini",
-     "model": "gemini-2.5-flash",           "tone": "fast"},
+    {"id": "gemini-3-5-flash",   "label": "Gemini 3.5 Flash",   "provider": "gemini",
+     "model": "gemini-3.5-flash",           "tone": "fastest in class"},
 ]
-DEFAULT_MODEL_ID = "claude-sonnet-4-5"
+DEFAULT_MODEL_ID = "claude-sonnet-4-6"
 
 
 # ─── Sprint Z1.1 (2026-05-29) — model-cascade fallback ────────────────
@@ -116,8 +109,8 @@ DEFAULT_MODEL_ID = "claude-sonnet-4-5"
 # Each demotion writes a `model_fallback` audit-log row capturing
 # `from`/`to`/`reason` so operators can correlate spikes.
 MODEL_FALLBACK_CASCADE: List[str] = [
-    "claude-sonnet-4-5",   # workhorse — verified id, fast
-    "claude-sonnet-3-7",   # older Sonnet (Anthropic-published anchored alias)
+    "claude-sonnet-4-6",   # workhorse — verified id, fast (LLM-REFRESH.1 2026-06-26)
+    "claude-sonnet-4-5",   # prior workhorse, kept as 1-step fallback
     "claude-haiku-4-5",    # safety net — cheapest, smallest
 ]
 

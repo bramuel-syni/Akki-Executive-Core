@@ -1,0 +1,100 @@
+{
+  "ran_at": "2026-06-26T13:55:50.039356+00:00",
+  "n_pass": 1,
+  "n_total": 6,
+  "all_green": false,
+  "results": [
+    {
+      "row": "A",
+      "subject": "build_divergent_payload accepts 3 sessions",
+      "results": [
+        {
+          "id": "sess-jctl-gp-ship-regulatory",
+          "ok": false,
+          "err": "ValidationError: 3 validation errors for HeadlineSlide\nkey_findings.0.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 1'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.1.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 2'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.2.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 3'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+        },
+        {
+          "id": "sess-jctl-gp-ship-investment",
+          "ok": false,
+          "err": "ValidationError: 3 validation errors for HeadlineSlide\nkey_findings.0.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 1'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.1.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 2'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.2.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 3'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+        },
+        {
+          "id": "sess-jctl-gp-ship-launch",
+          "ok": false,
+          "err": "ValidationError: 3 validation errors for HeadlineSlide\nkey_findings.0.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 1'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.1.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 2'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.2.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 3'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+        }
+      ],
+      "PASS": false,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "B",
+      "subject": "build_pptx renders 3 sessions (divergent order)",
+      "results": [
+        {
+          "id": "sess-jctl-gp-ship-regulatory",
+          "ok": false,
+          "err": "ValidationError: 3 validation errors for HeadlineSlide\nkey_findings.0.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 1'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.1.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 2'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.2.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 3'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+        },
+        {
+          "id": "sess-jctl-gp-ship-investment",
+          "ok": false,
+          "err": "ValidationError: 3 validation errors for HeadlineSlide\nkey_findings.0.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 1'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.1.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 2'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.2.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 3'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+        },
+        {
+          "id": "sess-jctl-gp-ship-launch",
+          "ok": false,
+          "err": "ValidationError: 3 validation errors for HeadlineSlide\nkey_findings.0.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 1'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.1.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 2'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.2.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 3'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing"
+        }
+      ],
+      "n_slides_in_order": 14,
+      "PASS": false,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "C",
+      "exception": "ValidationError: 3 validation errors for HeadlineSlide\nkey_findings.0.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 1'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.1.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 2'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.2.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 3'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing",
+      "PASS": false,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "D",
+      "subject": "Path-discipline rejects cross-path",
+      "PASS": false,
+      "validator_error": "3 validation errors for HeadlineSlide\nkey_findings.0.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 1'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.1.source_citati",
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "E",
+      "exception": "ValidationError: 3 validation errors for HeadlineSlide\nkey_findings.0.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 1'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.1.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 2'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nkey_findings.2.source_citations.0.excerpt\n  Field required [type=missing, input_value={'source_input_id': 'audi...': 'headline finding 3'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing",
+      "PASS": false,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "F",
+      "subject": "Each persona carries a distinct blind-spot",
+      "results": [
+        {
+          "id": "sess-jctl-gp-ship-regulatory",
+          "n_blind_spots": 3,
+          "n_unique_personas": 3,
+          "all_personas_covered": true
+        },
+        {
+          "id": "sess-jctl-gp-ship-investment",
+          "n_blind_spots": 3,
+          "n_unique_personas": 3,
+          "all_personas_covered": true
+        },
+        {
+          "id": "sess-jctl-gp-ship-launch",
+          "n_blind_spots": 3,
+          "n_unique_personas": 3,
+          "all_personas_covered": true
+        }
+      ],
+      "PASS": true,
+      "elapsed_s": 0.0
+    }
+  ]
+}

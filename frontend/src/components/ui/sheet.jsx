@@ -43,19 +43,48 @@ const sheetVariants = cva(
   }
 )
 
-const SheetContent = React.forwardRef(({ side = "right", className, children, ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
-    <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-      <SheetPrimitive.Close
-        className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </SheetPrimitive.Close>
-      {children}
-    </SheetPrimitive.Content>
-  </SheetPortal>
-))
+// JC-UI-DRAWER (2026-06-26) — Standardised app-drawer width.
+//
+// User direction at AUTONOMOUS BACKLOG RUN: "additive-or-hide
+// discipline carries over — it standardizes at the shared Sheet
+// layer, NOT per-drawer-edit."
+//
+// The four module drawers (TaskDrawer, AnalyzeDrawer, DocumentDrawer,
+// plus future module drawers) consume `<SheetContent>` and historically
+// each one passed its own `!w-[60vw] !max-w-[60vw]` override. The
+// standard is now `appDrawer={true}` which applies 55vw on sm+. Each
+// drawer drops its inline width override and passes the boolean prop.
+//
+// Per-context EXEMPTIONS are documented in sprints/JC_UI_DRAWER_55VW.md
+// and flow through the SAME boolean + explicit className override
+// (NOT a one-off drawer rebuild). cn() preserves the last-wins
+// precedence so callers can still widen / narrow when justified.
+const APP_DRAWER_WIDTH_CLASSES =
+  "sm:!max-w-[55vw] sm:!w-[55vw] sm:!min-w-[55vw]";
+
+const SheetContent = React.forwardRef(
+  ({ side = "right", className, children, appDrawer = false, ...props }, ref) => (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content
+        ref={ref}
+        className={cn(
+          sheetVariants({ side }),
+          appDrawer && APP_DRAWER_WIDTH_CLASSES,
+          className
+        )}
+        data-app-drawer={appDrawer || undefined}
+        {...props}>
+        <SheetPrimitive.Close
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </SheetPrimitive.Close>
+        {children}
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  )
+)
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
 const SheetHeader = ({

@@ -114,15 +114,45 @@ def _build_candidates_prompt(
     *,
     base_docs: List[Dict[str, Any]],
     context_label: Optional[str] = None,
+    divergent_blind_spots: Optional[List[str]] = None,
 ) -> str:
+    """Assemble the prompt for the candidate-objectives generator.
+
+    JC-TL AUTO-TUNE (2026-06-26) — added the `divergent_blind_spots`
+    keyword argument so persona-spread blind-spots from a
+    Get-Perspectives session can fold in as fresh signal alongside
+    the BASE docs. When supplied, each blind-spot becomes a
+    "consider also" line in the prompt; when omitted (the default),
+    behaviour is byte-identical to the pre-auto-tune prompt body.
+
+    Path-discipline: blind-spots are EVIDENCE, not COMMANDS. The
+    extractor still grounds candidates in BASE docs first; the
+    blind-spots only widen the lens.
+    """
     base_block = "\n".join(_summarise_doc(d) for d in base_docs) or "  (none)"
     ctx = (context_label or "(unnamed context)").strip()
-    return (
+    base_prompt = (
         f"CONTEXT: {ctx}\n\n"
         f"BASE DOCS (baseline / strategic plan / performance agreement):\n"
         f"{base_block}\n\n"
-        f"Generate 2-6 candidate objectives grounded in these BASE"
-        f" docs. Return the candidates JSON now."
+    )
+    if divergent_blind_spots:
+        # Deterministic ordering — sorted set; preserves prompt
+        # byte-identity for repeated runs with same inputs.
+        bs_items = sorted({(s or "").strip() for s in divergent_blind_spots if (s or "").strip()})
+        if bs_items:
+            bs_block = "\n".join(f"  - {s}" for s in bs_items)
+            base_prompt += (
+                "BLIND-SPOTS SURFACED BY A RECENT GET-PERSPECTIVES SESSION\n"
+                "(treat as widening signal; do NOT generate objectives\n"
+                "that are ONLY anchored on blind-spots — every objective\n"
+                "still grounds in a BASE doc):\n"
+                f"{bs_block}\n\n"
+            )
+    return (
+        base_prompt
+        + "Generate 2-6 candidate objectives grounded in these BASE"
+          " docs. Return the candidates JSON now."
     )
 
 
@@ -190,8 +220,17 @@ async def generate_candidate_objectives(
     account_id: Optional[str] = None,
     context_id: Optional[str] = None,
     context_label: Optional[str] = None,
+    divergent_blind_spots: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Public entry — generate candidates from BASE doc evidence.
+
+    JC-TL AUTO-TUNE (2026-06-26) — accepts an optional
+    `divergent_blind_spots` list of blind-spot descriptions
+    surfaced by a Get-Perspectives session. When supplied, the
+    extractor folds them into the prompt as widening signal
+    alongside the BASE docs (NOT as a replacement for grounding).
+    When omitted, behaviour is byte-identical to the pre-auto-tune
+    path (proven by JC-MON Stage 3.0 close evidence).
 
     Shape returned (intentionally parallel to Stage 2b.1):
         {
@@ -234,7 +273,9 @@ async def generate_candidate_objectives(
         "context_id": context_id,
     }
     prompt = _build_candidates_prompt(
-        base_docs=base_docs, context_label=context_label,
+        base_docs=base_docs,
+        context_label=context_label,
+        divergent_blind_spots=divergent_blind_spots,
     )
     result = await shielded_call(
         engine="monitor_candidate_objectives",
@@ -248,7 +289,10 @@ async def generate_candidate_objectives(
         session_id=session["id"],
         context_id=context_id,
         engine_version="monitor_candidate_objectives@1.0",
-        extra_output={"base_doc_count": len(base_docs)},
+        extra_output={
+            "base_doc_count":            len(base_docs),
+            "divergent_blind_spot_count": len(divergent_blind_spots or []),
+        },
     )
     audit = result.reasoning_audit_entry or {}
     audit_ids: List[str] = []

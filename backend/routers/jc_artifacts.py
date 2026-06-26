@@ -48,6 +48,22 @@ _ARTEFACTS = {
         "JC-TL-Track2-convergent-regression.pptx",
         "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     ),
+    # JC-TL GP ship (2026-06-26) — 3 representative divergent renders.
+    "gp-ship/regulatory.pptx": (
+        Path("/app/memory/jc_artifacts/jc_tl/03-gp-ship/sess-jctl-gp-ship-regulatory.pptx"),
+        "JC-TL-GP-Ship-Regulatory.pptx",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ),
+    "gp-ship/investment.pptx": (
+        Path("/app/memory/jc_artifacts/jc_tl/03-gp-ship/sess-jctl-gp-ship-investment.pptx"),
+        "JC-TL-GP-Ship-Investment.pptx",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ),
+    "gp-ship/launch.pptx": (
+        Path("/app/memory/jc_artifacts/jc_tl/03-gp-ship/sess-jctl-gp-ship-launch.pptx"),
+        "JC-TL-GP-Ship-Launch.pptx",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ),
 }
 
 
@@ -55,6 +71,32 @@ _ARTEFACTS = {
 async def get_track2_artefact(filename: str, _: Dict[str, Any] = Depends(_require_admin)):
     """Serve a JC-TL Track-2 build artefact. Superadmin only."""
     slug = f"track2/{filename}"
+    if slug not in _ARTEFACTS:
+        raise HTTPException(status_code=404, detail="artefact_not_whitelisted")
+    fs_path, download_name, media_type = _ARTEFACTS[slug]
+    if not fs_path.exists():
+        raise HTTPException(status_code=404, detail="artefact_file_missing")
+    return FileResponse(
+        path=str(fs_path),
+        media_type=media_type,
+        filename=download_name,
+    )
+
+
+@router.get("/gp-ship/{filename}")
+async def get_gp_ship_artefact(filename: str, _: Dict[str, Any] = Depends(_require_admin)):
+    """Serve a JC-TL GP ship build artefact. Superadmin only.
+
+    Exposes the 3 representative divergent renders produced by the
+    proving slice (`scripts/jc_tl_gp_ship_slice.py`):
+      • regulatory.pptx — regulatory-action persona spread
+        (auditor / regulator / customer-advocate)
+      • investment.pptx — investment-thesis persona spread
+        (founder / CFO / VC partner)
+      • launch.pptx — product-launch persona spread
+        (PM / engineering / sales)
+    """
+    slug = f"gp-ship/{filename}"
     if slug not in _ARTEFACTS:
         raise HTTPException(status_code=404, detail="artefact_not_whitelisted")
     fs_path, download_name, media_type = _ARTEFACTS[slug]

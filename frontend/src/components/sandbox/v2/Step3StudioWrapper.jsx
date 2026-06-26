@@ -22,19 +22,15 @@
  *   POST /api/sandbox/v2/sessions/{sid}/studio/add-sentence
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import axios from "axios";
 
 import { TOKEN, FONT } from "./tokens";
 import { Actions } from "@/lib/sandboxV2Flow";
 import usePrefersReducedMotion from "@/components/solva/flow/usePrefersReducedMotion";
 
-import { resolveBackendOrigin } from "@/lib/api";
-const API = resolveBackendOrigin();
-const api = axios.create({
-  baseURL: `${API}/api/sandbox/v2`,
-  withCredentials: true,
-  headers: { "Content-Type": "application/json" },
-});
+// JC-WAVE3 axios → shared client (2026-06-26) — drop the local
+// axios.create; use the shared client from lib/api which already
+// owns CSRF + same-origin guard + cross-origin fallback.
+import { api } from "@/lib/api";
 
 /* The 5 narration lines the agent rotates through over ~75s.
  * Brief-locked phrasing (§6.2). */
@@ -70,8 +66,8 @@ export default function Step3StudioWrapper({ flow, dispatch, onComplete }) {
       if (!sid) return;
       try {
         const [src, dr] = await Promise.all([
-          api.get(`/sessions/${sid}/studio-sources`),
-          api.get(`/sessions/${sid}/composed-draft`),
+          api.get(`/sandbox/v2/sessions/${sid}/studio-sources`),
+          api.get(`/sandbox/v2/sessions/${sid}/composed-draft`),
         ]);
         if (cancelled) return;
         setSources(src.data?.sources || []);
@@ -136,7 +132,7 @@ export default function Step3StudioWrapper({ flow, dispatch, onComplete }) {
     if (!txt || !sid) return;
     setAddBusy(true);
     try {
-      const r = await api.post(`/sessions/${sid}/studio/add-sentence`, {
+      const r = await api.post(`/sandbox/v2/sessions/${sid}/studio/add-sentence`, {
         sentence: txt,
       });
       const data = r.data || {};

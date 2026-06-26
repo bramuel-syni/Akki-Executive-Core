@@ -73,6 +73,8 @@ from .artefact_schema import (
     RiskMitigation, MethodologicalHonesty, InClosing, FooterTemplate,
     AdversarialCounterCase, PreMortemSlide, PreMortemFailureMode,
     CostAsymmetrySlide, CostAsymmetryScenario,
+    # JC-TL GP ship (2026-06-26) — divergent path imports.
+    BiasInventorySection, PerspectiveSpread,
 )
 
 
@@ -1454,7 +1456,17 @@ def build_payload(session: Dict[str, Any], context_name: str = "Context") -> Art
     refuse_to_decide / methodological_honesty), callers MUST run
     `integrity_validators.validate_artefact()` on the result before
     serializing to the renderer.
+
+    PATH DISPATCH (2026-06-26 — JC-TL GP ship):
+      `session.submodule == "get_perspective"` ⇒ delegates to
+      `build_divergent_payload(session, context_name)` (divergent path).
+      All other submodules ⇒ convergent path (this function body).
+      Convergent behaviour is UNCHANGED.
     """
+    # JC-TL GP ship — path discriminator at the entry point.
+    if (session.get("submodule") or "").lower() in {"get_perspective", "get-perspectives"}:
+        return build_divergent_payload(session, context_name)
+
     scenarios, conf_table = _build_scenarios(session)
     tensions, deep_dives = _build_tensions(session)
     sensitivity = _build_sensitivity(session, scenarios)
@@ -1484,9 +1496,148 @@ def build_payload(session: Dict[str, Any], context_name: str = "Context") -> Art
     )
 
 
+def build_divergent_payload(session: Dict[str, Any], context_name: str = "Context") -> ArtefactPayload:
+    """JC-TL Get-Perspectives — build a DIVERGENT `ArtefactPayload`.
+
+    Source of truth: `/app/memory/JC_TL_CANONICAL_SPEC.md` §4 (DIVERGE
+    to a spread; synthesis INVERTS — the object is "the span of views
+    and where they tension," not "the most probable cause").
+
+    Design contract (mirrors the convergent `build_payload`):
+      • PURE: no DB access, no LLM call, no IO.
+      • DETERMINISTIC: same session input → same payload output across
+        any number of runs. No randomness, no time-dependent fields
+        beyond `session.completed_at`. The GP ship proving slice
+        verifies byte-stability across two consecutive runs.
+      • LOSSLESS: every populated `session.synthesis.*` block surfaces
+        in the payload. The session carries the deck-grade synthesis
+        already (in this dispatch's reference shape — same pattern as
+        MYDAWA's hand-curated convergent reference); future dispatches
+        can layer Shield-routed LLM synthesis ABOVE this adapter
+        without disturbing the deterministic baseline.
+      • PATH-DISCIPLINE-PASSING by construction: produces a payload
+        with `perspective_spread` populated and `scenarios=[]` /
+        `pathway=[]`, which the `_enforce_path_discipline` validator
+        on `ArtefactPayload` accepts.
+
+    Session contract (the schema the divergent path reads from):
+      session = {
+        "id":          str,
+        "submodule":   "get_perspective",
+        "intent":      str,                 # used for cover.title
+        "started_at":  ISO8601 str,
+        "completed_at": ISO8601 str,
+        "synthesis": {
+          "perspective_spread": {            # the load-bearing slot
+            "personas":       [PersonaView dicts],
+            "agreement_map":  [AgreementCluster dicts],
+            "conflict_map":   [ConflictCluster dicts],
+            "blind_spots":    [BlindSpot dicts],
+          },
+          "headline":               HeadlineSlide dict,
+          "tensions":               [TensionSlide dict],
+          "per_tension_deep_dive":  [TensionDeepDive dict],
+          "sensitivity_inputs":     [SensitivityInput dict],
+          "reflection_section":     ReflectionSection dict,
+          "risk_mitigation":        [RiskMitigation dict],
+          "methodological_honesty": MethodologicalHonesty dict,
+          "in_closing":             InClosing dict,
+          "bias_inventory":         BiasInventorySection dict,
+          "pre_mortem":             PreMortemSlide dict,
+          "cost_asymmetry":         CostAsymmetrySlide dict,
+          "decision_logic":         [DecisionBranch dict],   # optional
+        },
+      }
+
+    Raises:
+      ValueError — session.submodule mismatches, or
+      `synthesis.perspective_spread` is missing/empty (the load-bearing
+      slot for the divergent path).
+    """
+    submod = (session.get("submodule") or "").lower()
+    if submod not in {"get_perspective", "get-perspectives"}:
+        raise ValueError(
+            f"build_divergent_payload requires session.submodule in "
+            f"{{'get_perspective', 'get-perspectives'}}; got {submod!r}"
+        )
+    synth = session.get("synthesis") or {}
+    spread_dict = synth.get("perspective_spread")
+    if not spread_dict:
+        raise ValueError(
+            "Get-Perspectives session must carry "
+            "synthesis.perspective_spread (personas / agreement_map / "
+            "conflict_map / blind_spots). Without it, the divergent "
+            "path has nothing to render."
+        )
+
+    # Path-agnostic spine slots — same builders convergent uses, where
+    # the session inputs are present. Tensions are spine-shared.
+    tensions, deep_dives = _build_tensions(session)
+
+    # Spine slots the session carries directly (typed lift, deterministic).
+    def _lift(key: str, model_cls, required: bool):
+        block = synth.get(key)
+        if block is None:
+            if required:
+                raise ValueError(
+                    f"Get-Perspectives session must carry synthesis.{key} — "
+                    f"divergent path requires the spine slot."
+                )
+            return None
+        return model_cls.model_validate(block)
+
+    def _lift_list(key: str, model_cls):
+        return [model_cls.model_validate(r) for r in (synth.get(key) or [])]
+
+    headline = _lift("headline", HeadlineSlide, required=True)
+    reflection_section = _lift("reflection_section", ReflectionSection, required=True)
+    methodological_honesty = _lift("methodological_honesty", MethodologicalHonesty, required=True)
+    in_closing = _lift("in_closing", InClosing, required=True)
+    bias_inventory = _lift("bias_inventory", BiasInventorySection, required=True)
+    pre_mortem = _lift("pre_mortem", PreMortemSlide, required=True)
+    cost_asymmetry = _lift("cost_asymmetry", CostAsymmetrySlide, required=True)
+
+    sensitivity_inputs = _lift_list("sensitivity_inputs", SensitivityInput)
+    risk_mitigation = _lift_list("risk_mitigation", RiskMitigation)
+    decision_logic = _lift_list("decision_logic", DecisionBranch)
+
+    # If session carries explicit divergent-tension overrides
+    # (e.g. the spread itself surfaces a tension), prefer those over
+    # the convergent _build_tensions extraction. The spec is explicit:
+    # divergent surfaces tension WITHOUT converging on it.
+    if synth.get("tensions"):
+        tensions = _lift_list("tensions", TensionSlide)
+    if synth.get("per_tension_deep_dive"):
+        deep_dives = _lift_list("per_tension_deep_dive", TensionDeepDive)
+
+    perspective_spread = PerspectiveSpread.model_validate(spread_dict)
+
+    return ArtefactPayload(
+        session_id=str(session.get("id") or "unknown"),
+        cover=_build_cover(session, context_name),
+        headline=headline,
+        tensions=tensions,
+        per_tension_deep_dive=deep_dives,
+        scenarios=[],                              # divergent path discipline
+        per_scenario_confidence_table=PerScenarioConfidenceTable(),
+        sensitivity_inputs=sensitivity_inputs,
+        reflection_section=reflection_section,
+        pathway=[],                                # divergent path discipline
+        decision_logic=decision_logic,
+        risk_mitigation=risk_mitigation,
+        methodological_honesty=methodological_honesty,
+        in_closing=in_closing,
+        bias_inventory=bias_inventory,
+        pre_mortem=pre_mortem,
+        cost_asymmetry=cost_asymmetry,
+        footer_template=FooterTemplate(),
+        perspective_spread=perspective_spread,
+    )
+
+
 def payload_signature(payload: ArtefactPayload) -> str:
     """Stable hash of a payload — used by tests / runtime drift detection."""
     return hashlib.sha256(payload.model_dump_json().encode("utf-8")).hexdigest()[:16]
 
 
-__all__ = ["build_payload", "payload_signature"]
+__all__ = ["build_payload", "build_divergent_payload", "payload_signature"]

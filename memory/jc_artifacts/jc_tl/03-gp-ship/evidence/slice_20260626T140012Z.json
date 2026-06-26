@@ -1,0 +1,106 @@
+{
+  "ran_at": "2026-06-26T14:00:12.257360+00:00",
+  "n_pass": 2,
+  "n_total": 6,
+  "all_green": false,
+  "results": [
+    {
+      "row": "A",
+      "subject": "build_divergent_payload accepts 3 sessions",
+      "results": [
+        {
+          "id": "sess-jctl-gp-ship-regulatory",
+          "ok": true,
+          "scenarios_empty": true,
+          "pathway_empty": true,
+          "spread_populated": true
+        },
+        {
+          "id": "sess-jctl-gp-ship-investment",
+          "ok": false,
+          "err": "ValidationError: 2 validation errors for CostAsymmetrySlide\nscenarios.0.if_wrong_cost\n  String should have at least 80 characters [type=string_too_short, input_value='Slower close (extra week...ut cap table preserved.', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_too_short\nscenarios.1.if_correct_outcome\n  String should have at least 80 characters [type=string_too_short, input_value='Fast close at top-of-ran...under runway maximised.', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_too_short"
+        },
+        {
+          "id": "sess-jctl-gp-ship-launch",
+          "ok": true,
+          "scenarios_empty": true,
+          "pathway_empty": true,
+          "spread_populated": true
+        }
+      ],
+      "PASS": false,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "B",
+      "subject": "build_pptx renders 3 sessions (divergent order)",
+      "results": [
+        {
+          "id": "sess-jctl-gp-ship-regulatory",
+          "ok": true,
+          "bytes": 68204,
+          "is_pptx": true
+        },
+        {
+          "id": "sess-jctl-gp-ship-investment",
+          "ok": false,
+          "err": "ValidationError: 2 validation errors for CostAsymmetrySlide\nscenarios.0.if_wrong_cost\n  String should have at least 80 characters [type=string_too_short, input_value='Slower close (extra week...ut cap table preserved.', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_too_short\nscenarios.1.if_correct_outcome\n  String should have at least 80 characters [type=string_too_short, input_value='Fast close at top-of-ran...under runway maximised.', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_too_short"
+        },
+        {
+          "id": "sess-jctl-gp-ship-launch",
+          "ok": true,
+          "bytes": 68234,
+          "is_pptx": true
+        }
+      ],
+      "n_slides_in_order": 14,
+      "PASS": false,
+      "elapsed_s": 0.132
+    },
+    {
+      "row": "C",
+      "exception": "ValidationError: 2 validation errors for CostAsymmetrySlide\nscenarios.0.if_wrong_cost\n  String should have at least 80 characters [type=string_too_short, input_value='Slower close (extra week...ut cap table preserved.', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_too_short\nscenarios.1.if_correct_outcome\n  String should have at least 80 characters [type=string_too_short, input_value='Fast close at top-of-ran...under runway maximised.', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_too_short",
+      "PASS": false,
+      "elapsed_s": 0.13
+    },
+    {
+      "row": "D",
+      "subject": "Path-discipline rejects cross-path",
+      "PASS": true,
+      "validator_error": "1 validation error for ArtefactPayload\n  Value error, Path-discipline: divergent payload (perspective_spread is set) must not carry scenarios[]. scenarios is a convergent-synthesis slot \u2014 the divergent synthesis lives in perspective_spread.conflict_map / agreement_map / personas / blind_spots. [type",
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "E",
+      "exception": "ValidationError: 2 validation errors for CostAsymmetrySlide\nscenarios.0.if_wrong_cost\n  String should have at least 80 characters [type=string_too_short, input_value='Slower close (extra week...ut cap table preserved.', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_too_short\nscenarios.1.if_correct_outcome\n  String should have at least 80 characters [type=string_too_short, input_value='Fast close at top-of-ran...under runway maximised.', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_too_short",
+      "PASS": false,
+      "elapsed_s": 0.0
+    },
+    {
+      "row": "F",
+      "subject": "Each persona carries a distinct blind-spot",
+      "results": [
+        {
+          "id": "sess-jctl-gp-ship-regulatory",
+          "n_blind_spots": 3,
+          "n_unique_personas": 3,
+          "all_personas_covered": true
+        },
+        {
+          "id": "sess-jctl-gp-ship-investment",
+          "n_blind_spots": 3,
+          "n_unique_personas": 3,
+          "all_personas_covered": true
+        },
+        {
+          "id": "sess-jctl-gp-ship-launch",
+          "n_blind_spots": 3,
+          "n_unique_personas": 3,
+          "all_personas_covered": true
+        }
+      ],
+      "PASS": true,
+      "elapsed_s": 0.0
+    }
+  ]
+}

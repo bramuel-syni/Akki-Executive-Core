@@ -29,7 +29,6 @@
  * second reasoning loop.
  */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
 
 import FramingScreen from "@/components/solva/flow/FramingScreen";
 import QuestionScreen from "@/components/solva/flow/QuestionScreen";
@@ -40,15 +39,11 @@ import { TOKEN, FONT } from "@/components/solva/flow/tokens";
 
 import { Actions as SbxActions } from "@/lib/sandboxV2Flow";
 
-import { resolveBackendOrigin } from "@/lib/api";
-const API = resolveBackendOrigin();
-
-// Pre-auth axios — relies on the cookie the welcome step minted.
-const api = axios.create({
-  baseURL: `${API}/api`,
-  withCredentials: true,
-  headers: { "Content-Type": "application/json" },
-});
+// JC-WAVE3 axios → shared client (2026-06-26) — drop the local
+// pre-auth axios.create; use the shared client from lib/api which
+// already owns CSRF + same-origin guard + cross-origin fallback.
+// Paths already relative to /api so callers stay byte-identical.
+import { api } from "@/lib/api";
 
 // 3-question Sandbox v3 micro-state-machine (subset of Phase I).
 const SBX_STATES = ["FRAMING", "Q1", "Q2", "Q3", "PREPARING", "ARTEFACT", "ARTEFACT_REFUSAL"];

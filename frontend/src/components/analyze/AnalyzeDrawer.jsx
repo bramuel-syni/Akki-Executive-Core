@@ -148,7 +148,8 @@ export default function AnalyzeDrawer({ aid, onClose }) {
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <SheetContent
         side="right"
-        className="!w-[60vw] !max-w-[60vw] p-0 flex flex-col"
+        appDrawer
+        className="p-0 flex flex-col"
         data-testid="analyze-drawer"
         data-aid={aid || ""}
       >
