@@ -20,16 +20,20 @@ These 18 nodes / 7 files PASS in isolation in the default lane but FAIL in-suite
 | ID(s) | File | Cluster (P5.7-DIAG hypothesis) | Bisect status |
 |-------|------|--------------------------------|---------------|
 | FTT-004..009 | `tests/test_iter41_signal_actions_in_process.py` | shared_fixture_state_iter41 (in-file) | 🟧 INTRA-FILE — separate sprint shape (per-test-pair within file) |
-| FTT-010..012 | `tests/test_p_cleanup_c_help_tooltip_suppression.py` | dependency_overrides_leak | 🟨 HOLDOUT — 0/8 static candidates produced confirmed pair; needs full-(a) binary search |
+| FTT-010..012 | `tests/test_p_cleanup_c_help_tooltip_suppression.py` | dependency_overrides_leak | 🟥 SHARED GLOBAL STATE — 0/69 confirmed pairs in P5.7-HOLDOUT-FINISHER; different fix shape (test-side fixture reset on the polluted file) |
 | FTT-015, FTT-016 | `tests/test_phase_p3_2_cookie_hardening.py` | env_or_motor_loop_state | ✅ CONFIRMED — polluter `tests/test_phase4_2_http_transport_smoke.py` (P5.7-BISECT) |
 | FTT-017, FTT-018 | `tests/test_phase_p5_10_audit_panel_direct_linkage.py` | env_or_motor_loop_state | ✅ CONFIRMED — polluter `tests/test_phase4_2_http_transport_smoke.py` (P5.7-BISECT) |
 | FTT-019..022 | `tests/test_phase_p5_7_5_bounce_webhook.py` | sendgrid_env_stub_leak | ✅ CONFIRMED — polluter `tests/test_phase4_2_http_transport_smoke.py` (P5.7-BISECT) |
 | FTT-023 | `tests/test_track_b_phase2_task_lifecycle.py::test_cross_tenant_lifecycle_blocked` | tenant_resolver_stub_leak | ✅ CONFIRMED — polluter `tests/test_phase_p5_10_audit_panel_direct_linkage.py` (tiered, P5.7-BISECT) |
-| FTT-024..026 | `tests/test_track_b_phase_b5_g6_notes_autosave.py` | autosave_debounce_timer_leak | 🟨 HOLDOUT — 0/30 static candidates produced confirmed pair; needs full-(a) binary search |
+| FTT-024..026 | `tests/test_track_b_phase_b5_g6_notes_autosave.py` | autosave_debounce_timer_leak | 🟧 BROAD-SENSITIVE — **15 confirmed polluters** in P5.7-HOLDOUT-FINISHER (uniformly auth/session/CSRF surface area). Recommended fix: single test-side hardening (per-test session/cookie state reset) closes all 3 IDs. |
 
-**KEY INSIGHT** (P5.7-BISECT): one polluter file — `tests/test_phase4_2_http_transport_smoke.py` — accounts for 8 of the 10 confirmed FTT IDs (FTT-015..022). That file is ALSO a deterministic regression itself (FAIL_DETERMINISTIC in isolation per P5.7-PER-FILE-CAPTURE). Dual identity = fixing it gives double benefit.
+**KEY INSIGHTS**:
+- **Cluster A** — one polluter file `tests/test_phase4_2_http_transport_smoke.py` accounts for 8 of 10 confirmed pairs in P5.7-BISECT (FTT-015..022). That file is ALSO a deterministic regression itself (FAIL_DETERMINISTIC in isolation per P5.7-PER-FILE-CAPTURE). Dual identity = surgical sprint closes 10 FTT IDs (Cluster A + FTT-014 Cluster D).
+- **Cluster B.1** — `test_p_cleanup_c_help_tooltip_suppression.py` returned 0 pairwise polluters across 69 candidates → SHARED GLOBAL STATE pollution. Different fix shape (test-side fixture reset, source inspection).
+- **Cluster B.2** — `test_track_b_phase_b5_g6_notes_autosave.py` has 15 distinct polluters, all auth/session/CSRF surface area. Single test-side hardening closes all 3 FTT IDs.
+- **Cluster C** — `test_iter41_signal_actions_in_process.py` in-file pollution. Fixture refactor (module-scoped → function-scoped) closes 6 FTT IDs.
 
-Total cross-test pollution: **18 distinct nodes / 7 files** — of which **10 IDs / 4 files** now have confirmed polluter pairs (P5.7-BISECT). Remaining: 6 IDs in 2 holdouts (full-(a) bisect next) + 6 IDs in 1 intra-file cluster (separate sprint shape).
+Total cross-test pollution: **18 distinct nodes / 7 files** — of which **10 IDs / 4 files** have confirmed external polluter pairs (Cluster A), **3 IDs / 1 file** is broad-sensitive (Cluster B.2), **3 IDs / 1 file** is shared-global-state shape (Cluster B.1), and **6 IDs / 1 file** is intra-file (Cluster C). All 18 IDs mapped to concrete fix-shapes with paired-pytest-confirmed evidence (except B.1 where the 0-pairwise-polluter finding IS the evidence).
 
 ### DETERMINISTIC REGRESSIONS (promoted from reclassification, 2026-06-26)
 

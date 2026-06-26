@@ -50,35 +50,44 @@
    conflict). Trigger criterion (on-demand has proved trustworthy)
    is met. Defer until user steers.
 
-11. **Cross-test pollution cleanup sprint (now: 4 confirmed pairs · 10 FTT IDs).**
-    Bisect closed 2026-06-26 (newest first):
-    - **P5.7-BISECT** — statically-narrowed predecessor search.
-      **4 confirmed polluter→polluted pairs surfaced**:
-        · `test_phase4_2_http_transport_smoke.py` → 3 polluted files
-          (FTT-015..022 = 8 FTT IDs)
-        · `test_phase_p5_10_audit_panel_direct_linkage.py` →
-          `test_track_b_phase2_task_lifecycle.py` (FTT-023, **tiered**)
-      **KEY**: one file is the polluter for 8 of 10 confirmed FTT IDs;
-      that file is ALSO a deterministic regression itself.
-      **2 holdouts** for full-(a) binary search:
-        · `test_p_cleanup_c_help_tooltip_suppression.py` (FTT-010..012)
-        · `test_track_b_phase_b5_g6_notes_autosave.py` (FTT-024..026)
-      **1 intra-file cluster** for separate sprint:
-        · `test_iter41_signal_actions_in_process.py` (FTT-004..009)
-      All halt conditions clear; 0 locked-area polluters.
-    - P5.7-PER-FILE-CAPTURE (scope cut 24→18); P5.7-CAPTURE-B-ATTEMPT-1
-      (in-process broad-suite hung at 16%); P5.7-DIAG (initial diagnosis).
+11. **Cross-test pollution cleanup sprint (full taxonomy mapped · 4 fix-shapes confirmed).**
+    Diagnostic chain closed 2026-06-26 (newest first):
+    - **P5.7-HOLDOUT-FINISHER** — full-(a) sweep on the 2 holdouts.
+      Consolidation question answered: **NO**, holdouts do NOT
+      consolidate to `test_phase4_2_http_transport_smoke.py`. Two
+      distinct shapes:
+        · B.1 `test_p_cleanup_c_help_tooltip_suppression.py` — 0/69
+          confirmed pairs → SHARED GLOBAL STATE shape (FTT-010..012)
+        · B.2 `test_track_b_phase_b5_g6_notes_autosave.py` — 15
+          confirmed polluters → BROAD-SENSITIVE; single test-side
+          hardening fixes all 3 (FTT-024..026)
+    - P5.7-BISECT — 4 confirmed pairs · 1 polluter file for 8/10
+    - P5.7-PER-FILE-CAPTURE · P5.7-CAPTURE-B-ATTEMPT-1 · P5.7-DIAG
 
-    *Unblock condition:* user picks fix scope: (a) single-file surgical
-    on `test_phase4_2_http_transport_smoke.py` (closes 8 FTT IDs + own
-    deterministic regression in 1 sprint); (b) all-4-pairs cleanup
-    (closes 10 FTT IDs); (c) defer fix & run full-(a) binary search
-    on the 2 holdouts first to see if they consolidate to the same
-    polluter. Agent recommendation: **(c) first, then (b)**.
+    **Full cluster taxonomy (post-holdout sweep) — 19 active FTT IDs all mapped**:
+        · **A** — ext-pollution from `test_phase4_2_http_transport_smoke.py`
+          (FTT-015..023, 9 IDs); polluter file ALSO has FTT-014
+          deterministic regression (Cluster **D**) → dual identity,
+          surgical sprint closes 10 IDs
+        · **B.1** — shared global state, `test_p_cleanup_c_help_tooltip_
+          suppression.py` (FTT-010..012, 3 IDs); source-inspect +
+          per-test fixture reset
+        · **B.2** — broad-sensitive, `test_track_b_phase_b5_g6_notes_
+          autosave.py` (FTT-024..026, 3 IDs); single test-side
+          hardening fix
+        · **C** — intra-file, `test_iter41_signal_actions_in_process.py`
+          (FTT-004..009, 6 IDs); fixture refactor
+
+    *Unblock condition:* user picks fix-sprint sequence. Agent recommendation:
+    1 (Cluster A+D surgical) → 2 (Cluster B.2 test-side) → 3 (Cluster B.1
+    source-inspect) → 4 (Cluster C intra-file). Alternative: bundle 1+2 as
+    ONE "session/cookie state hygiene" sprint closing 13 IDs.
+
     Sprint memos: `sprints/P5_7_DIAG_test_pollution.md`,
     `sprints/P5_7_CAPTURE_B_ATTEMPT_1.md`,
     `sprints/P5_7_PER_FILE_CAPTURE.md`,
-    `sprints/P5_7_BISECT.md`.
+    `sprints/P5_7_BISECT.md`,
+    `sprints/P5_7_HOLDOUT_FINISHER.md`.
 
 ### P2 (logged proactively)
 
