@@ -1,12 +1,208 @@
-# BUG · "Analyze file upload failing" — Phase 2 diagnosis
+# BUG · "Analyze file upload failing" — Phase 2b diagnosis (PRODUCTION-confirmed)
 
-> **Source of truth:** `/app/memory/JC_WS_CANONICAL_SPEC.md` (referenced
-> per dispatch — Analyze drawer is JC-WS Phase 2 surface).
+> **Source of truth:** `/app/memory/JC_WS_CANONICAL_SPEC.md` (Analyze
+> drawer = JC-WS Phase 2 surface).
 
-**Produced:** 2026-06-26 (preview env, post Track-2 close).
-**Status:** **CANNOT REPRODUCE in preview · awaiting environment clarification.**
-**Recommendation:** HALT and surface — do NOT patch until user confirms
-which environment + which failure mode.
+**Updated:** 2026-06-26 (post-Phase-2b static analysis + hard repro).
+**Environment:** PRODUCTION (`https://akki.syni.ai`) per user
+confirmation.
+**Status:** **ROOT CAUSE LOCKED at ~85% confidence — Mongo 16 MB BSON
+cap on the inline-base64 blob insert.** Awaiting user sign-off on the
+minimum-fix proposal before patching.
+
+## Root cause (locked)
+
+The Analyze drawer's upload path persists the raw file bytes
+**base64-inlined into a Mongo document** (`analysis_blobs` for the
+multi-file path; `workbook_blobs` for the single-file path). The
+Mongo wire protocol caps a single BSON document at **16,793,598
+bytes**. Base64 inflates raw bytes by 4/3. Therefore the cliff is:
+
+> **~12.00 MB raw input → BSON doc exceeds 16 MB → `DocumentTooLarge`
+> → uncaught 500 from the upload handler → user-facing
+> "upload failed" toast.**
+
+### Hard repro in preview (deterministic — fires every time)
+
+```python
+raw = b'X' * int(12.5 * 1024 * 1024)            # 12.5 MB
+doc = {
+    "analysis_id": "ana-...", "source_id": "src-...",
+    "account_id": "...", "context_id": "...",
+    "filename": "cap_repro.xlsx", "file_format": "xlsx",
+    "data_b64": base64.b64encode(raw).decode("ascii"),    # ← 17,476,268 bytes
+    "created_at": datetime.now(timezone.utc).isoformat(),
+}
+await db.analysis_blobs.insert_one(doc)
+# pymongo.errors.DocumentTooLarge: BSON document too large (17476687 bytes)
+#   — the connected server supports BSON document sizes up to 16793598 bytes.
+```
+
+Same script with `raw = b'X' * (11 * 1024 * 1024)` → INSERT OK.
+
+This bug **manifests on both preview and production** — but preview
+users rarely upload 12 MB+ workbooks during testing (CSV samples /
+small XLSX are typical preview shapes), so the bug is invisible in
+preview QA and routinely fires in production where real users upload
+real workbooks (multi-quarter financials, full-year sheets with
+hundreds of rows × 50+ cols).
+
+### Why preview's initial probe passed
+
+My Phase 2a probe uploaded a 93-byte CSV + 4964-byte XLSX. Both
+under the cap by 5+ orders of magnitude → false-pass. Only a
+≥ 12 MB payload triggers the cap. Hard lesson: ALWAYS reproduce upload
+bugs at the user's actual file size.
+
+## Confirmed insert paths (both share the same exposure)
+
+| Endpoint | Insert site | Encoding | Exposed? |
+|---|---|---|---|
+| `POST /api/workbook/upload` (legacy WorkStudio Analyze tab single-file) | `routers/workbook_analysis.py:336` — `db.workbook_blobs.insert_one({..., "data_b64": base64.b64encode(data).decode("ascii"), ...})` | base64-inline | ✅ YES — > 12 MB raw fails |
+| `POST /api/workbook/upload-multi` (AnalyzeJournal Analyze drawer multi-file) | `routers/workbook_analysis.py:767` — `db.analysis_blobs.insert_many(blob_docs)` where each blob from `services/analysis_lifecycle.py:79`: `"data_b64": base64.b64encode(raw).decode("ascii")` | base64-inline | ✅ YES — any file in batch > 12 MB fails the whole batch |
+
+**No pre-insert size guard** on either path. The existing handler caps
+at 250 MB per file (`MAX_BYTES = 250 * 1024 * 1024` at line 102), but
+this is 20× larger than what Mongo's BSON protocol allows for an inline
+blob — i.e., the 250 MB cap is a load-bearing footgun.
+
+## Secondary suspect (still real, but fires LATER than the 12 MB cap)
+
+**nginx `client_max_body_size 50m`** in `/app/nginx/frontend.conf:60`.
+Files > 50 MB hit the proxy reject before nginx forwards to uvicorn
+— 413 immediate fail. But this only matters for files > 50 MB. The
+Atlas cap fires FIRST at 12 MB for all files in the 12-50 MB band,
+which is the most common "real workbook" size band.
+
+The K8s production ingress may or may not have its own body-size
+annotation — not visible from the repo. If the user's file is
+> 50 MB, both nginx AND Atlas would fail it; nginx fails earlier
+(at the proxy) so the user would see a slightly different error
+shape (HTML 413 page vs JSON 500 from FastAPI).
+
+## Suspects RULED OUT (concrete reasons)
+
+| Suspect | Verdict | Evidence |
+|---|---|---|
+| Clamav unreachable in prod (#1 from Phase 2a) | RULED OUT | Workbook upload paths do NOT call `clamav_service.scan(...)` — verified by grep across `routers/workbook_analysis.py` |
+| CSRF cookie domain mismatch (#3 from Phase 2a) | RULED OUT | `services/csrf.py:179` uses default cookie domain (binds to exact origin = `akki.syni.ai` in prod), SameSite=Lax, path=/. Cookie WILL ride on POSTs to `/api/workbook/*` |
+| Atlas connection / driver timeout (#4 from Phase 2a) | UNLIKELY | The bug would be intermittent + slow-fail (10-30s delay). User's report implies a clean fast-fail. Atlas cap fails at insert-time, fast |
+
+## Confidence ranking
+
+| Cause | Confidence | Evidence quality |
+|---|---|---|
+| **Mongo 16 MB BSON cap on inline blob** | **~85%** | Hard repro in preview + insert site identified + size math confirmed + matches "fast-fail on moderately-sized files" pattern |
+| nginx 50 MB cap | ~10% | Real but fires later than Atlas; only relevant if file > 50 MB |
+| Other | ~5% | Unknown failure mode user didn't share |
+
+## Proposed minimum-fix scope (Phase 3 — awaiting user sign-off)
+
+**Per the user's hard rule** ("at 70%+ confidence … the proposal still
+surfaces for user sign-off before patching"), surfacing here before
+any code change.
+
+### Item 1 — Pre-insert size guard returning a clean 413 (BACKEND)
+
+Add a single constant + 1 check per upload handler.
+
+```python
+# routers/workbook_analysis.py
+# Mongo 16 MB BSON cap → max raw bytes that fit an inline base64 blob
+# after metadata overhead. 11 MB is a safe ceiling (11 MB raw → ~14.7 MB
+# base64 → ~14.7 MB BSON + ~50 KB doc overhead → well under 16 MB).
+MAX_INLINE_RAW_BYTES = 11 * 1024 * 1024
+
+# In `upload_workbook` AND `upload_workbook_multi`, AFTER the existing
+# extension + MAX_BYTES + parse checks, BEFORE the insert:
+if len(raw) > MAX_INLINE_RAW_BYTES:
+    raise HTTPException(
+        413,
+        f"workbook_too_large_for_inline_storage: "
+        f"{fname} is {len(raw) / 1024 / 1024:.1f}MB; "
+        f"inline-storage limit is {MAX_INLINE_RAW_BYTES // 1024 // 1024}MB. "
+        f"Reduce the file size or contact support to enable large-file storage."
+    )
+```
+
+**Estimate:** +12 LOC in `routers/workbook_analysis.py` (2 sites × ~6
+LOC each, including comment). Zero schema change. Zero new dependency.
+
+### Item 2 — DocumentTooLarge handler (BACKEND, defensive)
+
+If somehow the size guard misses (e.g., a future caller bypasses the
+guard), catch `pymongo.errors.DocumentTooLarge` around the `insert_one`
+/ `insert_many` calls and convert to 413 with the same clean message.
+
+```python
+from pymongo.errors import DocumentTooLarge
+try:
+    await db.analysis_blobs.insert_many(blob_docs)
+except DocumentTooLarge as exc:
+    raise HTTPException(
+        413,
+        "workbook_too_large_for_inline_storage: inline blob exceeds Mongo 16MB doc cap. "
+        "Reduce the file size or contact support to enable large-file storage."
+    ) from exc
+```
+
+**Estimate:** +14 LOC (2 sites × ~7 LOC each). Defensive — the size
+guard above should make this branch unreachable; the catch is purely
+to convert raw `DocumentTooLarge` into a clean 413 if a developer adds
+a third upload path and forgets the guard.
+
+### Item 3 — Proving slice (BACKEND)
+
+`backend/scripts/jc_bug_analyze_upload_slice.py` — exercises:
+- (A) 11 MB upload → succeeds (under cap, returns analysis row).
+- (B) 13 MB upload → 413 with clean `workbook_too_large_for_inline_storage` message (pre-fix would be 500 with raw `DocumentTooLarge`).
+- (C) Multi-file with one 13 MB file + one 1 MB file → 413 with the offending filename in the message.
+- (D) The existing 5-row CSV + 5-row XLSX paths still return 200 (regression check on the small-file path).
+
+**Estimate:** +180 LOC (new file).
+
+### What is OUT of this minimum-scope fix
+
+- ❌ **GridFS migration** — the canonical long-term fix for large
+  workbook storage. Out of scope per user's "minimum scope" rule.
+  Surface as backlog after this fix lands.
+- ❌ **nginx 50 MB cap** — infra config, not code. Document only.
+- ❌ **K8s ingress body-size annotation** — also infra. Document only.
+
+## Blast-radius re-check
+
+| Locked area | Touched by this fix? |
+|---|---|
+| JC-WS Generate Document UI | NO |
+| Shield path internals | NO |
+| Monitor's additive contract | NO |
+| pptx_exporter | NO |
+| Track-2 schema/builder | NO |
+| Convergent / divergent decks | NO |
+| Existing tests | NO (additive — new tests pass before & after the small-file path) |
+
+## HALT-AND-SURFACE decision
+
+**Surfacing for sign-off** before Phase 3 patch. Two go/no-go knobs:
+
+1. **Confirm Item 1+2+3 minimum-fix scope is acceptable** (returns
+   413 with clean message at the 11 MB cliff; defers GridFS to
+   backlog).
+2. **OR confirm a different file-size threshold** (default 11 MB; the
+   theoretical safe-max is ~12 MB but 11 MB gives a 1 MB safety margin
+   for metadata overhead variance).
+
+## TL;DR (the original)
+
+(see Phase 2a section below — preview probe showed PASS on small
+files; that probe was insufficient because it didn't exercise the
+12 MB+ band where the Atlas / Mongo BSON cap fires.)
+
+---
+
+# Phase 2a — original diagnosis note (kept for record)
+
+
 
 ## TL;DR
 
