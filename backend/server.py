@@ -480,13 +480,33 @@ async def on_startup():
     # the pass fails for any reason, log + continue (the on-demand
     # /api/v1/engine/admin/derive endpoint remains the canonical
     # path; this is just a convenience refresh).
+    #
+    # 2026-06-26 — startup-race fix. When `BOUNDED_CONTEXT_TRANSPORT
+    # is `http` (production), the backfill's per-tenant
+    # `list_memberships()` call routes through the HTTP transport
+    # loopback (`http://127.0.0.1:8001/...`). On cold start, this
+    # task can fire BEFORE uvicorn finishes binding to 0.0.0.0:8001,
+    # producing 3× `httpx.ConnectError: All connection attempts
+    # failed` retries before the hourly cron kicks in anyway. Defer
+    # the task body by a small grace window so the listener is up
+    # first. The hourly cron is the durable scheduler — this
+    # one-shot is just a convenience refresh.
     try:
         import asyncio as _asyncio_boot
         from services.synisense.engine.derivation_scheduler import (
             run_startup_backfill as _engine_backfill,
         )
 
+        _BACKFILL_BOOT_GRACE_S = float(
+            os.environ.get("ENGINE_BACKFILL_BOOT_GRACE_S", "20.0")
+        )
+
         async def _engine_backfill_task():
+            # Wait for uvicorn to finish binding the listener so the
+            # HTTP-transport loopback (if `BOUNDED_CONTEXT_TRANSPORT=http`)
+            # has somewhere to connect to. Cheap in-process backfills
+            # also benefit from a small grace window (DB warm-up).
+            await _asyncio_boot.sleep(_BACKFILL_BOOT_GRACE_S)
             try:
                 totals = await _engine_backfill()
                 logger.info("[engine] derivation backfill done: %s", totals)
