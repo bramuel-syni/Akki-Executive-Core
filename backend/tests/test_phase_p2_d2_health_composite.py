@@ -1,7 +1,11 @@
-"""Phase P2 D.2 — Composite health probe lockdown."""
+"""Phase P2 D.2 — Composite health probe lockdown.
+
+Cluster-F.2 (2026-06-26): converted from sync `_run`-helper pattern to
+`@pytest.mark.asyncio + async def` so tests bind to the session-scoped
+loop instead of creating local loops that bind Motor to the wrong loop.
+"""
 from __future__ import annotations
 
-import asyncio
 import os
 import sys
 from pathlib import Path
@@ -18,18 +22,15 @@ from httpx import ASGITransport, AsyncClient  # noqa: E402
 from server import app  # noqa: E402
 
 
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
-
-
 async def _get(path: str, headers=None):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
         return await ac.get(path, headers=headers)
 
 
-def test_d2_composite_shape():
-    r = _run(_get("/api/health/composite"))
+@pytest.mark.asyncio
+async def test_d2_composite_shape():
+    r = await _get("/api/health/composite")
     assert r.status_code == 200
     data = r.json()
     assert data["overall"] in {"ok", "warn", "fail"}
@@ -43,6 +44,10 @@ def test_d2_composite_shape():
 
 
 def test_d2_overall_rolls_up_fail_if_any_fails():
+    """Pure-Python unit test on the state-machine roll-up function.
+    Cluster-F.2 (2026-06-26): kept sync — exercises only the
+    `_overall` helper, no asyncio anywhere; converting to async would
+    add `@pytest.mark.asyncio` decoration without any benefit."""
     # State machine: fail > warn > ok
     from routers.health_composite import _overall
     assert _overall({"a": {"state": "ok"}, "b": {"state": "ok"}}) == "ok"
@@ -50,15 +55,17 @@ def test_d2_overall_rolls_up_fail_if_any_fails():
     assert _overall({"a": {"state": "warn"}, "b": {"state": "fail"}}) == "fail"
 
 
-def test_d2_caches_for_30_seconds():
-    r1 = _run(_get("/api/health/composite"))
-    r2 = _run(_get("/api/health/composite"))
+@pytest.mark.asyncio
+async def test_d2_caches_for_30_seconds():
+    r1 = await _get("/api/health/composite")
+    r2 = await _get("/api/health/composite")
     # Identical checked_at means we hit the cache on r2.
     assert r1.status_code == 200 and r2.status_code == 200
     assert r1.json()["checked_at"] == r2.json()["checked_at"]
 
 
-def test_d2_no_auth_required():
+@pytest.mark.asyncio
+async def test_d2_no_auth_required():
     """Public route — must not require a token."""
-    r = _run(_get("/api/health/composite", headers={"Authorization": ""}))
+    r = await _get("/api/health/composite", headers={"Authorization": ""})
     assert r.status_code == 200

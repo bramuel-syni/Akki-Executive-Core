@@ -49,9 +49,9 @@ from server import app  # noqa: E402
 # (no existing-route behavioural change), so the ratchet rolls
 # forward on the new total. Audit trail for the rolls lives in
 # DEV_PIPELINE.md § 5 and the per-stage sprint memos.
-EXPECTED_API_SHA = "9aa905f6d951f2a8"  # rolled at JC-TL GP ship close (2026-06-26)
-EXPECTED_V1_SHA = "6ce751ef812f6816"
-EXPECTED_COMBINED_SHA = "4f050f7e95b8dd10"
+EXPECTED_API_SHA = "31e1d9769f632472"  # rolled forward at JC-RATCHET-PHASE4_4-REFRESH (2026-06-26)
+EXPECTED_V1_SHA = "beb97b57a4bb2660"   # rolled forward at JC-RATCHET-PHASE4_4-REFRESH (2026-06-26)
+EXPECTED_COMBINED_SHA = "8082e79d5d7302f5"  # rolled forward at JC-RATCHET-PHASE4_4-REFRESH (2026-06-26)
 
 
 @pytest.fixture(scope="module")
@@ -76,7 +76,7 @@ def test_api_slice_hash_pinned(openapi_paths: List[str]) -> None:
         f"/api/* slice drift: expected={EXPECTED_API_SHA} got={actual} "
         f"(api_paths={len(api_paths)})"
     )
-    assert len(api_paths) == 632
+    assert len(api_paths) == 636
 
 
 def test_v1_slice_hash_pinned(openapi_paths: List[str]) -> None:
@@ -91,7 +91,7 @@ def test_v1_slice_hash_pinned(openapi_paths: List[str]) -> None:
     # /v1/* expected count = /api/* count minus the operational
     # endpoints excluded from dual-mount (currently
     # /api/healthz/{clamav, shield}).
-    assert len(v1_paths) == 630
+    assert len(v1_paths) == 634
 
 
 def test_combined_hash_pinned(openapi_paths: List[str]) -> None:

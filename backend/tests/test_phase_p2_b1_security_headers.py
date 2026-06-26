@@ -7,10 +7,14 @@ responses; the other headers ride on every response.
 Uses AsyncClient + ASGITransport driven by the session event loop
 (conftest.py) so it co-exists cleanly with the PKCE Motor-bound tests
 in the same pytest invocation.
+
+Cluster-F.2 (2026-06-26): converted from sync `_run`-helper pattern to
+`@pytest.mark.asyncio + async def` so tests bind to the session-scoped
+loop instead of creating local loops that bind Motor to the wrong loop
+(the same root cause as Cluster-E's FTT-023 closure).
 """
 from __future__ import annotations
 
-import asyncio
 import os
 import sys
 from pathlib import Path
@@ -27,18 +31,15 @@ from httpx import ASGITransport, AsyncClient  # noqa: E402
 from server import app  # noqa: E402
 
 
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
-
-
 async def _get(path: str, headers=None):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
         return await ac.get(path, headers=headers)
 
 
-def test_b1_baseline_headers_on_json_response():
-    r = _run(_get("/api/health/composite"))
+@pytest.mark.asyncio
+async def test_b1_baseline_headers_on_json_response():
+    r = await _get("/api/health/composite")
     assert r.status_code == 200
     # JSON responses carry every header EXCEPT CSP (gated to HTML).
     assert r.headers.get("X-Frame-Options") == "DENY"
@@ -48,29 +49,32 @@ def test_b1_baseline_headers_on_json_response():
     assert r.headers.get("X-Permitted-Cross-Domain-Policies") == "none"
 
 
-def test_b1_hsts_set_on_https_forwarded():
+@pytest.mark.asyncio
+async def test_b1_hsts_set_on_https_forwarded():
     """HSTS only emits when the request is HTTPS (via x-forwarded-proto)."""
-    r = _run(_get(
+    r = await _get(
         "/api/health/composite",
         headers={"x-forwarded-proto": "https"},
-    ))
+    )
     assert r.status_code == 200
     hsts = r.headers.get("Strict-Transport-Security")
     assert hsts and "max-age=" in hsts and "includeSubDomains" in hsts
 
 
-def test_b1_hsts_absent_on_plain_http():
-    r = _run(_get("/api/health/composite"))
+@pytest.mark.asyncio
+async def test_b1_hsts_absent_on_plain_http():
+    r = await _get("/api/health/composite")
     # AsyncClient default scheme is http → HSTS must NOT appear.
     assert r.headers.get("Strict-Transport-Security") is None
 
 
-def test_b1_csp_present_on_json_too():
+@pytest.mark.asyncio
+async def test_b1_csp_present_on_json_too():
     """Phase P2.1-1 — CSP must ride on every response (API + HTML).
     The original B.1 ship gated CSP to HTML only; tester correctly
     flagged this as a P2.1-1 fail. CSP is now unconditional on the
     backend."""
-    r = _run(_get("/api/health/composite"))
+    r = await _get("/api/health/composite")
     csp = r.headers.get("Content-Security-Policy")
     assert csp, "CSP must be present on JSON API responses (P2.1-1 lockdown)"
     assert "default-src 'self'" in csp
@@ -85,6 +89,12 @@ def test_b1_html_shell_headers_via_live_probe():
     TestClient.
 
     Skipped if REACT_APP_BACKEND_URL is unreachable.
+
+    Cluster-F.2 (2026-06-26): kept sync because it uses subprocess.run
+    only (no asyncio anywhere); converting to async would add
+    `@pytest.mark.asyncio` decoration without any benefit. The other
+    4 tests in this file are async-converted; this one's purely OS-
+    process-driven so it stays sync.
     """
     import subprocess
 
