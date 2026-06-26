@@ -40,7 +40,7 @@ import server  # noqa: F401
 from server import app
 
 
-@pytest_asyncio.fixture(scope="module")
+@pytest_asyncio.fixture(scope="function")
 async def transport():
     yield ASGITransport(app=app)
 
