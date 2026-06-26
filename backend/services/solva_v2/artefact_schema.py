@@ -34,7 +34,7 @@ from __future__ import annotations
 
 from typing import List, Optional, Literal
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -556,6 +556,139 @@ class FooterTemplate(BaseModel):
 
 
 # ─────────────────────────────────────────────────────────────────
+# JC-TL Track-2 (2026-06-26) — Perspective spread (divergent path)
+# ─────────────────────────────────────────────────────────────────
+#
+# Minimum-scope extension to make the Get-Perspectives divergent
+# render expressible. The convergent exporter narrows toward a
+# weighted picture (tensions → scenarios → sensitivity → pathway);
+# the divergent shape inverts to a SPREAD of persona views, the
+# clusters where they AGREE, the clusters where they CONFLICT, and
+# each persona's BLIND-SPOTS.
+#
+# Path discipline (enforced by the model_validator on ArtefactPayload):
+#   - convergent path: `perspective_spread is None` AND
+#                      `scenarios[]` / `pathway[]` may be populated.
+#   - divergent path:  `perspective_spread is not None` AND
+#                      `scenarios[]` / `pathway[]` MUST be empty.
+#
+# Acceptance bar (per JC-MON Stage 3 Gate A + user Track-2 brief):
+# methodology-spine, judged on first sight. NOT measured against
+# MYDAWA (MYDAWA is convergent). The first divergent render produced
+# here IS the reference Get-Perspectives ships against.
+
+
+class PersonaView(BaseModel):
+    """One persona's read on the question + their grounding."""
+    persona_label: str = Field(
+        ..., min_length=1, max_length=80,
+        description="Short persona handle, e.g. 'Auditor', 'Customer advocate', 'Regulator'",
+    )
+    view_summary: str = Field(
+        ..., min_length=40,
+        description="The persona's read in their own voice — ≥ 40 chars, observational",
+    )
+    confidence_pct: int = Field(
+        ..., ge=0, le=100,
+        description="How firmly this view is grounded for the persona",
+    )
+    source_citations: List[SourceCitation] = Field(
+        default_factory=list,
+        description="Audit-log references that ground this persona's view",
+    )
+
+
+class AgreementCluster(BaseModel):
+    """A statement multiple personas would back."""
+    statement: str = Field(
+        ..., min_length=20,
+        description="The shared read, in observational voice",
+    )
+    backing_personas: List[str] = Field(
+        ..., min_length=2,
+        description="≥2 persona_labels that agree on this statement",
+    )
+    rationale: str = Field(
+        ..., min_length=1,
+        description="Why this convergence is meaningful (not coincidence)",
+    )
+
+
+class ConflictCluster(BaseModel):
+    """A point of tension where personas disagree."""
+    tension_statement: str = Field(
+        ..., min_length=20,
+        description="The framing of the disagreement, observational",
+    )
+    opposing_personas: List[str] = Field(
+        ..., min_length=2,
+        description="≥2 persona_labels on different sides of this tension",
+    )
+    why_it_matters: str = Field(
+        ..., min_length=1,
+        description="Operating significance of this conflict",
+    )
+
+
+class BlindSpot(BaseModel):
+    """A perspective each persona is structurally NOT seeing."""
+    persona_label: str = Field(
+        ..., min_length=1,
+        description="The persona whose blind-spot this is",
+    )
+    blind_spot_description: str = Field(
+        ..., min_length=20,
+        description="What the persona is structurally missing, observational",
+    )
+    source_citations: List[SourceCitation] = Field(
+        default_factory=list,
+        description="Evidence supporting that this is a genuine blind-spot, not speculation",
+    )
+
+
+class PerspectiveSpread(BaseModel):
+    """The divergent-synthesis payload for Get-Perspectives.
+
+    The four sub-arrays compose the SPREAD: the multiple voices, where
+    they meet, where they tension, and where each is structurally not
+    looking.
+
+    Locked constraints:
+      • personas ≥ 2 (a "spread" of one is not a spread)
+      • agreement_map ≥ 1 (the synthesis must surface at least one
+        convergence — even if it's just "all personas grant the same
+        operative reality before disagreeing")
+      • conflict_map ≥ 1 (the load-bearing output: WHERE they tension)
+      • blind_spots ≥ 1 (refusal-to-decide carrier — every persona
+        has at least one structural gap; surfacing zero would be
+        false certainty)
+    """
+    intro_copy: str = Field(
+        default=(
+            "Not a single weighted picture — a spread of legitimate"
+            " reads. Where they agree, where they tension, where each"
+            " is structurally not looking."
+        ),
+    )
+    personas: List[PersonaView] = Field(
+        ..., min_length=2, max_length=8,
+        description="2-8 persona views (spread requires ≥ 2)",
+    )
+    agreement_map: List[AgreementCluster] = Field(
+        ..., min_length=1, max_length=6,
+        description="≥ 1 cluster the personas converge on",
+    )
+    conflict_map: List[ConflictCluster] = Field(
+        ..., min_length=1, max_length=6,
+        description="≥ 1 cluster where the personas tension",
+    )
+    blind_spots: List[BlindSpot] = Field(
+        ..., min_length=1, max_length=8,
+        description="≥ 1 per-persona blind-spot (refusal-to-decide carrier)",
+    )
+
+
+# ─────────────────────────────────────────────────────────────────
 # Root payload
 # ─────────────────────────────────────────────────────────────────
 
@@ -586,6 +719,47 @@ class ArtefactPayload(BaseModel):
     pre_mortem: PreMortemSlide
     cost_asymmetry: CostAsymmetrySlide
     footer_template: FooterTemplate = Field(default_factory=FooterTemplate)
+    # JC-TL Track-2 (2026-06-26) — divergent-path slot. None on the
+    # convergent path (Diagnosis / Develop-Strategy / Test-Hypothesis);
+    # populated on the divergent path (Get-Perspectives). Presence is
+    # the path discriminator — see the path-aware validator below.
+    perspective_spread: Optional[PerspectiveSpread] = None
+
+    @model_validator(mode="after")
+    def _enforce_path_discipline(self) -> "ArtefactPayload":
+        """JC-TL Track-2 path-aware validator.
+
+        Path discriminator: `perspective_spread is not None` ⇒ divergent.
+
+        Rules:
+          • convergent (perspective_spread is None): pass through —
+            scenarios[] / pathway[] may carry the convergent synthesis
+            unchanged. **NO behavioural change to convergent payloads.**
+          • divergent (perspective_spread is not None): scenarios[]
+            AND pathway[] MUST be empty. They are convergent-only
+            slots — surfacing them on a divergent payload would
+            indicate a path-cross at the synthesis layer.
+        """
+        if self.perspective_spread is None:
+            return self  # convergent path — unchanged
+        # Divergent path discipline.
+        if self.scenarios:
+            raise ValueError(
+                "Path-discipline: divergent payload "
+                "(perspective_spread is set) must not carry scenarios[]. "
+                "scenarios is a convergent-synthesis slot — the divergent "
+                "synthesis lives in perspective_spread.conflict_map / "
+                "agreement_map / personas / blind_spots."
+            )
+        if self.pathway:
+            raise ValueError(
+                "Path-discipline: divergent payload "
+                "(perspective_spread is set) must not carry pathway[]. "
+                "pathway is a convergent recommendation slot — divergent "
+                "synthesis stops at the SPREAD, it does not converge to "
+                "a sequenced recommendation."
+            )
+        return self
 
 
 __all__ = [
@@ -622,4 +796,10 @@ __all__ = [
     "SensitivityRank",
     "TimelineTag",
     "TensionSource",
+    # JC-TL Track-2 (2026-06-26) — divergent path.
+    "PerspectiveSpread",
+    "PersonaView",
+    "AgreementCluster",
+    "ConflictCluster",
+    "BlindSpot",
 ]

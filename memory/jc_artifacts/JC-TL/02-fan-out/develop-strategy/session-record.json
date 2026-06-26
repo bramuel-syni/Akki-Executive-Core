@@ -2,7 +2,7 @@
   "session_id": "sess-jctl-stage2-develop-strategy",
   "submodule": "develop_strategy",
   "intent": "Given Diagnosis's two-cause read of the Q3 contraction, what's the sequenced recovery pathway?",
-  "payload_signature": "221ce0bbbecb5b96",
+  "payload_signature": "5d0d40c7ea830841",
   "summary_text": "Parallel recovery pathway, 8-10 week target. Convergent to recommendation with conditional fallback to sequential.",
   "prior_session_intent": {
     "session_id": "sess-jctl-stage1-mydawa-diagnosis",

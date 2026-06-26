@@ -1,0 +1,284 @@
+{
+  "session_id": "sess-track2-min-scope-convergent",
+  "schema_version": "solva.v2.artefact.1.0",
+  "cover": {
+    "method_tag": "SOLVA \u00b7 SESSION OUTPUT \u00b7 CONFIDENTIAL",
+    "title": "Spread of perspectives on the regulatory action",
+    "prepared_for": "Track-2 proving slice \u00b7 MYDAWA-shaped problem",
+    "subject": "Get Perspectives",
+    "method": "Solva 5-layer pass \u2014 frame audit \u00b7 surface \u00b7 depth \u00b7 synthesis \u00b7 reflection",
+    "inputs_range": "Layer 0 (frame audit) to Layer 4 (reflection), 9 user inputs",
+    "date_str": "2026-06-26"
+  },
+  "headline": {
+    "intro_copy": "If you read nothing else, read this.",
+    "key_findings": [
+      {
+        "number": 1,
+        "paragraph_text": "Three legitimate readings of the regulatory action exist; converging prematurely on one would lose the operating signal carried in the spread.",
+        "source_citations": [
+          {
+            "source_input_id": "audit-001",
+            "source_kind": "audit_log",
+            "excerpt": "regulatory framing \u2014 three personas",
+            "source_layer": "grounding"
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "paragraph_text": "Auditor and Regulator converge on the procedural discipline finding; Customer-advocate dissents on the tone and pace of the response.",
+        "source_citations": [
+          {
+            "source_input_id": "audit-002",
+            "source_kind": "audit_log",
+            "excerpt": "agreement cluster \u00b7 procedural read",
+            "source_layer": "grounding"
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "paragraph_text": "Each persona carries a structural blind-spot: Auditor on customer-experience trade-offs, Regulator on internal capacity constraints, Customer-advocate on the regulatory floor.",
+        "source_citations": [
+          {
+            "source_input_id": "audit-003",
+            "source_kind": "audit_log",
+            "excerpt": "blind-spot inventory",
+            "source_layer": "grounding"
+          }
+        ]
+      }
+    ]
+  },
+  "tensions": [
+    {
+      "number": "01",
+      "title": "Procedural finding versus operating reality",
+      "subtitle": null,
+      "prevailing_framing": "The procedural read is necessary AND sufficient",
+      "evidence_block": {
+        "user_quote": "We followed the documented escalation path on every flag.",
+        "source_layer_question_id": "L1-Q3",
+        "source_layer": "grounding"
+      },
+      "implication": "The persona spread does NOT settle whether procedural compliance was the operative variable \u2014 it surfaces the tension and refuses to converge.",
+      "severity": "medium",
+      "contradiction_source": "user_vs_corpus"
+    }
+  ],
+  "per_tension_deep_dive": [],
+  "scenarios": [
+    {
+      "label": "Spread held",
+      "description": "The response keeps all three persona reads visible.",
+      "weight_pct": 55,
+      "confidence_pct": 72,
+      "supporting_evidence": [
+        {
+          "source_input_id": "audit-011",
+          "source_kind": "audit_log",
+          "excerpt": "spread-held scenario",
+          "source_layer": "grounding"
+        }
+      ],
+      "confidence_calibration_reasoning": "Two triangulating sources (audit-005 Auditor + audit-007 Customer-advocate) support the >= 70 confidence.",
+      "tier": null
+    },
+    {
+      "label": "Convergence early",
+      "description": "The response narrows on procedural framing within 30 days.",
+      "weight_pct": 30,
+      "confidence_pct": 55,
+      "supporting_evidence": [
+        {
+          "source_input_id": "audit-012",
+          "source_kind": "audit_log",
+          "excerpt": "convergence-early scenario",
+          "source_layer": "grounding"
+        }
+      ],
+      "confidence_calibration_reasoning": "Confidence below 70 \u2014 only one source pattern grounds this scenario, so we calibrate conservatively.",
+      "tier": null
+    },
+    {
+      "label": "Dissent escalation",
+      "description": "The Customer-advocate cluster gains weight and reshapes the response.",
+      "weight_pct": 15,
+      "confidence_pct": 45,
+      "supporting_evidence": [
+        {
+          "source_input_id": "audit-013",
+          "source_kind": "audit_log",
+          "excerpt": "dissent-escalation scenario",
+          "source_layer": "grounding"
+        }
+      ],
+      "confidence_calibration_reasoning": "Speculative branch \u2014 single-source grounding only, so weight and confidence both held below 50.",
+      "tier": null
+    }
+  ],
+  "per_scenario_confidence_table": {
+    "rows": []
+  },
+  "sensitivity_inputs": [
+    {
+      "rank": "HIGH",
+      "input_description": "A regulator's deposition next week",
+      "impact_explanation": "A single high-credibility regulator input could collapse the spread toward Regulator+Auditor and dissolve the Customer-advocate dissent \u2014 the spread is sensitive to this one signal.",
+      "cluster_weight_shift_mechanic": "Could move the Customer-advocate persona from active dissent to minority observer in the spread.",
+      "affected_cluster_id": null,
+      "source_citations": [
+        {
+          "source_input_id": "audit-004",
+          "source_kind": "audit_log",
+          "excerpt": "regulator-deposition sensitivity",
+          "source_layer": "grounding"
+        }
+      ]
+    }
+  ],
+  "reflection_section": {
+    "title": "Reflection \u2014 what could be wrong, what would change, what to watch",
+    "intro_copy": "Three closing questions. Every diagnosis carries provisional weight.",
+    "questions": [
+      {
+        "question_text": "What would shift the spread?",
+        "user_verbatim_response": "A regulator's deposition next week.",
+        "diagnostic_interpretation": "Single high-credibility input could collapse the spread toward Regulator+Auditor; without it, the spread holds."
+      },
+      {
+        "question_text": "What's the cost of premature convergence?",
+        "user_verbatim_response": "We'd over-rotate on procedural fix and under-invest in trust repair.",
+        "diagnostic_interpretation": "Customer-advocate dissent is the load-bearing signal here \u2014 losing it would distort the response."
+      },
+      {
+        "question_text": "What's the strongest case against your spread?",
+        "user_verbatim_response": "That three personas isn't enough.",
+        "diagnostic_interpretation": "Provisional \u2014 first-render spread; the bar is methodology-spine, not exhaustive persona coverage."
+      }
+    ]
+  },
+  "pathway": [
+    {
+      "number": 1,
+      "timeline_tag": "DAYS 0-30",
+      "follows_from_cluster_id": null,
+      "follows_from_cluster_label": null,
+      "action_heading": "Preserve the spread in every executive review",
+      "detail_paragraph": "Hold the three persona reads visible in board materials for the next 30 days without weighting them toward a single answer.",
+      "source_citations": [
+        {
+          "source_input_id": "audit-014",
+          "source_kind": "audit_log",
+          "excerpt": "pathway \u00b7 spread-preservation",
+          "source_layer": "grounding"
+        }
+      ],
+      "adversarial_counter": null
+    }
+  ],
+  "decision_logic": [
+    {
+      "condition": "If the regulator's deposition next week confirms the procedural framing",
+      "conclusion": "the spread narrows but does not collapse \u2014 Customer-advocate dissent stays visible as a minority read.",
+      "rationale": "The deposition would resolve the Auditor\u2194Regulator agreement cluster but not the Customer-advocate tone-and-pace tension.",
+      "adversarial_counter": {
+        "targets_conclusion_id": "decision-0",
+        "steel_man_position": "The strongest case against narrowing the spread is that the regulator's deposition itself reflects a procedural lens, which would re-introduce convergence bias on a single high-credibility input \u2014 losing the operating spread the divergent synthesis was built to preserve.",
+        "source_input_ids": [
+          "L3-Q1",
+          "L4-Q1"
+        ],
+        "why_it_matters": "If the spread collapses on procedural authority alone, the Customer-advocate dissent becomes invisible in executive review."
+      }
+    }
+  ],
+  "risk_mitigation": [
+    {
+      "risk": "Premature convergence collapses the spread",
+      "mitigation": "Hold the spread visible at every executive review until Layer-4 reflection clears."
+    }
+  ],
+  "methodological_honesty": {
+    "what_report_is": "A spread of three legitimate persona reads with their agreement-cluster, conflict-cluster, and blind-spot map.",
+    "what_report_is_not": "A single weighted picture or a recommended pathway. The divergent shape stops at the spread by design.",
+    "provisional_nature_paragraph": "First-render against the new divergent slot; quality bar is methodology-spine, not MYDAWA (MYDAWA is convergent).",
+    "input_confidence_pct": 70,
+    "not_sole_basis_paragraph": "The spread does not authorise a decision; it preserves the operating spread the user must weigh."
+  },
+  "in_closing": {
+    "reframing_paragraph": "Three voices, one agreement, one tension, three blind-spots. What changes when you stop weighting them?",
+    "key_findings_recap": [
+      "Three personas, no single weighted read.",
+      "Auditor + Regulator agree on procedure; Customer-advocate dissents on tone.",
+      "Each persona carries a structural blind-spot the others fill."
+    ],
+    "final_statement": "Hold the spread \u2014 that is the answer."
+  },
+  "bias_inventory": {
+    "intro_copy": "What systematic patterns of reasoning may be shaping the framing. Each bias below cites the user inputs that triggered it.",
+    "biases": [
+      {
+        "bias_name": "convergence_bias",
+        "bias_display_name": "Convergence bias",
+        "likelihood": "medium",
+        "evidence_grounded_reasoning": "The framing presents a strong pull toward a single weighted answer; the persona spread surfaces this without collapsing it.",
+        "source_input_ids": [
+          "L0-Q1",
+          "L1-Q2"
+        ],
+        "suggested_mitigation": "Inviting the user to read each persona aloud separately before any synthesis surface."
+      }
+    ]
+  },
+  "pre_mortem": {
+    "intro_copy": "Imagine twelve months from now you regret this pathway. What was the most likely failure mode?",
+    "failure_modes": [
+      {
+        "failure_kind": "stakeholder_misalignment",
+        "failure_narrative": "Twelve months from now the response narrows too far on procedural compliance and the customer-trust signal degrades silently \u2014 the spread was not preserved.",
+        "triggering_signals": [
+          "CSAT decline despite procedural-fix headlines",
+          "Customer-advocate cluster falls out of executive reviews"
+        ],
+        "counter_action": "Surfacing customer-advocate dissent at every executive review until the L4 reflection clears.",
+        "source_input_ids": [
+          "L3-Q1",
+          "L4-Q2"
+        ]
+      }
+    ]
+  },
+  "cost_asymmetry": {
+    "intro_copy": "What does each pathway cost if it's right \u2014 and what does it cost if it's wrong? Founders cost-count the upside; this slide surfaces the downside in parallel.",
+    "scenarios": [
+      {
+        "pathway_label": "Spread held",
+        "if_correct_outcome": "If the spread holds, the operating tension stays visible and the response weights all three voices proportionally \u2014 trust repair lands alongside procedural fix.",
+        "if_wrong_cost": "If the spread is a red herring, the cost is review overhead (repeat-explain the persona reads) but no operating regret.",
+        "cost_kind": "time_cost",
+        "cost_magnitude": "low",
+        "source_input_ids": [
+          "L0-Q1",
+          "L3-Q1"
+        ]
+      },
+      {
+        "pathway_label": "Premature convergence",
+        "if_correct_outcome": "If premature convergence is justified, the response ships faster and avoids the appearance of paralysis \u2014 short-term executive comfort gain.",
+        "if_wrong_cost": "If convergence was wrong, the customer-trust signal degrades and a six-month under-investment compounds before the next review can re-open the spread.",
+        "cost_kind": "stakeholder_trust",
+        "cost_magnitude": "high",
+        "source_input_ids": [
+          "L3-Q2",
+          "L4-Q1"
+        ]
+      }
+    ]
+  },
+  "footer_template": {
+    "template": "Solva Session Output \u00b7 Confidential \u00b7 {context_name} \u00b7 {n} / {total}"
+  },
+  "perspective_spread": null
+}

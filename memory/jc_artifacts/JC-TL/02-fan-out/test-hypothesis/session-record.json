@@ -2,7 +2,7 @@
   "session_id": "sess-jctl-stage2-test-hypothesis",
   "submodule": "simulate_hypothesis",
   "intent": "Hypothesis to test: the Q3 contraction will recover within 12 weeks if we ship both fixes in parallel.",
-  "payload_signature": "0cb250f582020b34",
+  "payload_signature": "5d15a53be1a3779a",
   "summary_text": "Parallel recovery hypothesis is Possible (45%); two falsifying scenarios credible. Week-6 weekly index is the falsification gate.",
   "prior_session_intent": null
 }

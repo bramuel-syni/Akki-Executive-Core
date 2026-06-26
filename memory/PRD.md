@@ -1,6 +1,31 @@
 # AKKI Sandbox — Product Requirements Document (PRD)
 
 
+> **2026-06-26 update — JC-TL Track-2 Decks upgrade CLOSED at minimum scope (8/8 GREEN).**
+> Gate A returned DOES-NOT-FIT for divergent rendering → user
+> dispatched Track-2 at MINIMUM SCOPE per the pre-stated rule. Three
+> additive items shipped exactly as scoped:
+> - **Schema slot** — `perspective_spread: Optional[PerspectiveSpread]`
+>   added to `ArtefactPayload` carrying `personas[]/agreement_map[]/
+>   conflict_map[]/blind_spots[]` via 5 NEW Pydantic models.
+> - **One pptx builder** — `_build_perspective_spread` (~190 LOC,
+>   brand-token palette + slide geometry reused). NEW
+>   `DIVERGENT_DECK_ORDER` (14 slides) + path-aware `build_pptx`.
+> - **Path-aware validator** — `model_validator` on `ArtefactPayload`
+>   enforces convergent (`perspective_spread is None`) vs divergent
+>   (scenarios/pathway must be empty) discipline.
+> **Convergent regression-free** — Stage 1 deck still 76555 bytes
+> byte-identical; 450/450 pre-existing Solva v2 tests still pass.
+> First divergent render at `/app/memory/jc_artifacts/jc_tl/track2/
+> divergent-first-render.pptx` (69105 bytes, 14 slides) — this IS
+> the reference Get-Perspectives ships against. Sprint memo:
+> `JC_TL_TRACK2_MIN_SCOPE.md`.
+> **HARD STOP** — no chain into GP ship. User must inspect the
+> divergent first-render before authorising GP-ship-against-this-
+> reference.
+
+
+
 > **2026-06-26 update — JC-MON Stage 3.0 + 3.1 + Gate A CLOSED; JC-CHAT C.4 VERIFIED.**
 > The Stage 3 HALT-AND-SURFACE on JC-MON resolved with user
 > resolutions. Three stages landed in one chain:

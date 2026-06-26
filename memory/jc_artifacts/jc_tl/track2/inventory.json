@@ -1,0 +1,42 @@
+{
+  "produced_at": "2026-06-26T04:54:03.310318+00:00",
+  "convergent_path": "/app/memory/jc_artifacts/jc_tl/track2/convergent-regression.pptx",
+  "divergent_path": "/app/memory/jc_artifacts/jc_tl/track2/divergent-first-render.pptx",
+  "convergent_slides": [
+    "SOLVA SESSION OUTPUT",
+    "HEADLINE",
+    "TENSIONS OVERVIEW",
+    "PER-TENSION DEEP DIVE",
+    "SCENARIOS OVERVIEW",
+    "PER-SCENARIO CONFIDENCE",
+    "SENSITIVITY",
+    "REFLECTION",
+    "BIAS INVENTORY \u00b7 TRUST PILLAR 2",
+    "PATHWAY",
+    "PRE-MORTEM \u00b7 TRUST PILLAR 4",
+    "DECISION LOGIC",
+    "COST ASYMMETRY \u00b7 TRUST PILLAR 5",
+    "RISK + MITIGATION",
+    "METHODOLOGICAL HONESTY \u00b7 TRUST PILLAR 6",
+    "IN CLOSING"
+  ],
+  "divergent_slides": [
+    "SOLVA SESSION OUTPUT",
+    "HEADLINE",
+    "TENSIONS OVERVIEW",
+    "PER-TENSION DEEP DIVE",
+    "PERSPECTIVE SPREAD \u2014 DIVERGENT SYNTHESIS",
+    "SENSITIVITY",
+    "REFLECTION",
+    "BIAS INVENTORY \u00b7 TRUST PILLAR 2",
+    "PRE-MORTEM \u00b7 TRUST PILLAR 4",
+    "DECISION LOGIC",
+    "COST ASYMMETRY \u00b7 TRUST PILLAR 5",
+    "RISK + MITIGATION",
+    "METHODOLOGICAL HONESTY \u00b7 TRUST PILLAR 6",
+    "IN CLOSING"
+  ],
+  "convergent_count": 16,
+  "divergent_count": 14,
+  "perspective_spread_slide_text": "PERSPECTIVE SPREAD \u2014 DIVERGENT SYNTHESIS\nWhere they agree, where they tension, where each is not looking.\nNot a single weighted picture \u2014 a spread of legitimate reads. Where they agree, where they tension, where each is structurally not looking.\nPERSONAS \u00b7 WHO IS SPEAKING\n\nAuditor\nconf 72%\nReads the procedural escalation path as load-bearing \u2014 compliance was followed, exceptions are documentable, and the audit trail closes the operating question.\nRegulator\nconf 68%\nReads the same procedural facts but emphasises that documented compliance is the floor, not the ceiling \u2014 asks whether the discipline transferred to operating behaviour during the live event.\nCustomer advocate\nconf 58%\nDissents on tone and pace \u2014 procedural compliance is necessary but insufficient, the customer-trust signal was secondary in the response sequencing and that is the operating tension worth preserving.\nAGREEMENT \u00b7 WHERE THEY CONVERGE\n\nProcedural escalation path was followed and is documentable from the audit log.\nshared by \u00b7 Auditor \u00b7 Regulator\nTENSION \u00b7 WHERE THEY DIVERGE\n\nProcedural compliance settles the operating question (Auditor) versus procedural compliance is necessary but insufficient (Regulator + Customer advocate).\nopposed \u00b7 Auditor \u21c4 Customer advocate\nTone and pace of the response are first-order operating variables (Customer advocate) versus second-order (Auditor + Regulator).\nopposed \u00b7 Customer advocate \u21c4 Auditor\nBLIND-SPOTS \u00b7 WHAT EACH ISN'T SEEING\n\nAuditor \u00b7 Customer-experience trade-offs that don't land in the audit log are invisible to the Auditor's read by construction \u2014 the persona reads the trail, not the experience.\nRegulator \u00b7 Internal capacity constraints during the live event are not in the Regulator's frame \u2014 the persona reads the floor, not the operating headroom.\nCustomer advocate \u00b7 The regulatory floor exists for reasons that bind even when the tone-and-pace optimum would deviate \u2014 the persona reads the customer, not the regulatory frame.\nSolva Session Output \u00b7 Confidential \u00b7 Track-2 \u00b7 divergent first render \u00b7 5 / 14"
+}

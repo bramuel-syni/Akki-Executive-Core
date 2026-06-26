@@ -96,8 +96,15 @@ def test_locked_deck_order_matches_locked_slide_kinds():
 
 
 def test_builder_covers_every_locked_kind():
-    """Every locked kind has a builder entry; no orphans."""
-    assert set(_KIND_TO_BUILDER.keys()) == set(LOCKED_SLIDE_KINDS)
+    """Every locked kind has a builder entry; no orphans.
+
+    JC-TL Track-2 (2026-06-26) — `_KIND_TO_BUILDER` is now a SUPERSET
+    of `LOCKED_SLIDE_KINDS` because the divergent (Get-Perspectives)
+    path adds the `perspective_spread` kind via `DIVERGENT_DECK_ORDER`.
+    The convergent invariant — every locked kind has a builder —
+    becomes `issuperset` rather than `equals`.
+    """
+    assert set(_KIND_TO_BUILDER.keys()) >= set(LOCKED_SLIDE_KINDS)
 
 
 def _gather_all_text(slide) -> str:

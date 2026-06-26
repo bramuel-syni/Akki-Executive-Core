@@ -667,6 +667,198 @@ def _build_in_closing(prs, p: ArtefactPayload, ctx: str, n: int, total: int):
 
 
 # ─────────────────────────────────────────────────────────────────
+# JC-TL Track-2 (2026-06-26) — Perspective-spread builder (divergent)
+# ─────────────────────────────────────────────────────────────────
+#
+# ONE additional builder for the divergent-synthesis slide. Reuses
+# brand-token palette + slide geometry — no new exporter modes, no
+# Decks rebuild. Renders the SPREAD: personas (left column with
+# confidence) + agreement clusters (top right) + conflict clusters
+# (mid right) + blind-spots (bottom right). Mirrors the convergent
+# `scenarios_overview` slot in the locked deck order — the divergent
+# walk swaps this slide in and drops the scenarios/per_scenario/
+# pathway slots (path discipline enforced upstream by the
+# `ArtefactPayload` model_validator).
+
+
+def _build_perspective_spread(prs, p: ArtefactPayload, ctx: str, n: int, total: int):
+    """Render the divergent-synthesis slide for Get-Perspectives.
+
+    Layout (16:9, parchment background, ned-purple accent):
+      - Eyebrow + title row at top.
+      - Left column: persona views (label · confidence pct · view summary).
+      - Right column upper: agreement clusters (where personas converge).
+      - Right column middle: conflict clusters (where personas tension).
+      - Right column lower: blind-spots (per-persona structural gap).
+    """
+    slide = _new_slide(prs)
+    spread = p.perspective_spread
+    # Path guard — should never trigger because the divergent walk
+    # only routes here when `perspective_spread` is set, but be
+    # explicit for any downstream caller that forgets.
+    if spread is None:
+        _add_eyebrow(slide, MARGIN_IN, MARGIN_IN, CONTENT_W, "Perspective spread")
+        _add_text(slide, MARGIN_IN, MARGIN_IN + 0.6, CONTENT_W, 0.8,
+                  "(payload carries no perspective_spread — divergent slot empty)",
+                  size_pt=12, italic=True, color=MUTED)
+        _add_footer(slide, n=n, total=total, context_name=ctx)
+        return
+
+    # Eyebrow + title.
+    _add_eyebrow(
+        slide, MARGIN_IN, MARGIN_IN, CONTENT_W,
+        "Perspective spread — divergent synthesis",
+    )
+    _add_text(
+        slide, MARGIN_IN, MARGIN_IN + 0.4, CONTENT_W, 0.6,
+        "Where they agree, where they tension, where each is not looking.",
+        size_pt=20, bold=True, color=INK, font="Georgia",
+    )
+    _add_text(
+        slide, MARGIN_IN, MARGIN_IN + 1.05, CONTENT_W, 0.5,
+        spread.intro_copy, size_pt=10, italic=True, color=DEEP,
+    )
+
+    # Left column — personas (5.6" wide).
+    left_x = MARGIN_IN
+    left_w = 5.6
+    right_x = MARGIN_IN + left_w + 0.4
+    right_w = CONTENT_W - left_w - 0.4
+    y = MARGIN_IN + 1.8
+
+    _add_text(
+        slide, left_x, y, left_w, 0.3,
+        "PERSONAS · WHO IS SPEAKING", size_pt=9, bold=True, color=NED_PURPLE,
+    )
+    y += 0.35
+    _add_rule(slide, left_x, y, left_w, color=RULE)
+    y += 0.1
+
+    for persona in (spread.personas or [])[:6]:
+        # Persona label + confidence chip line.
+        _add_text(
+            slide, left_x, y, left_w, 0.32,
+            persona.persona_label,
+            size_pt=12, bold=True, color=INK,
+        )
+        _add_text(
+            slide, left_x + left_w - 1.2, y, 1.2, 0.32,
+            f"conf {persona.confidence_pct}%",
+            size_pt=9, color=NED_PURPLE, align="right",
+        )
+        y += 0.34
+        # View summary — observational paragraph.
+        view = (persona.view_summary or "").strip()
+        _add_text(
+            slide, left_x, y, left_w, 0.7,
+            view, size_pt=9, color=DEEP,
+        )
+        y += 0.75
+
+    # Right column upper — agreement clusters.
+    ry = MARGIN_IN + 1.8
+    _add_text(
+        slide, right_x, ry, right_w, 0.3,
+        "AGREEMENT · WHERE THEY CONVERGE",
+        size_pt=9, bold=True, color=NED_PURPLE,
+    )
+    ry += 0.35
+    _add_rule(slide, right_x, ry, right_w, color=RULE)
+    ry += 0.1
+    for cluster in (spread.agreement_map or [])[:2]:
+        backers = " · ".join((cluster.backing_personas or [])[:4])
+        _add_text(
+            slide, right_x, ry, right_w, 0.42,
+            cluster.statement, size_pt=10, color=INK,
+        )
+        ry += 0.42
+        _add_text(
+            slide, right_x, ry, right_w, 0.28,
+            f"shared by · {backers}",
+            size_pt=8, italic=True, color=MUTED,
+        )
+        ry += 0.3
+
+    # Right column middle — conflict clusters.
+    ry += 0.1
+    _add_text(
+        slide, right_x, ry, right_w, 0.3,
+        "TENSION · WHERE THEY DIVERGE",
+        size_pt=9, bold=True, color=EYEBROW_RED,
+    )
+    ry += 0.35
+    _add_rule(slide, right_x, ry, right_w, color=RULE)
+    ry += 0.1
+    for cluster in (spread.conflict_map or [])[:2]:
+        opposing = " ⇄ ".join((cluster.opposing_personas or [])[:4])
+        _add_text(
+            slide, right_x, ry, right_w, 0.42,
+            cluster.tension_statement, size_pt=10, color=INK,
+        )
+        ry += 0.42
+        _add_text(
+            slide, right_x, ry, right_w, 0.28,
+            f"opposed · {opposing}",
+            size_pt=8, italic=True, color=MUTED,
+        )
+        ry += 0.3
+
+    # Right column lower — blind-spots.
+    ry += 0.1
+    _add_text(
+        slide, right_x, ry, right_w, 0.3,
+        "BLIND-SPOTS · WHAT EACH ISN'T SEEING",
+        size_pt=9, bold=True, color=NED_PURPLE,
+    )
+    ry += 0.35
+    _add_rule(slide, right_x, ry, right_w, color=RULE)
+    ry += 0.1
+    for bs in (spread.blind_spots or [])[:3]:
+        _add_text(
+            slide, right_x, ry, right_w, 0.4,
+            f"{bs.persona_label} · {bs.blind_spot_description}",
+            size_pt=9, color=DEEP,
+        )
+        ry += 0.4
+
+    _add_footer(slide, n=n, total=total, context_name=ctx)
+
+
+# ─────────────────────────────────────────────────────────────────
+# JC-TL Track-2 (2026-06-26) — Divergent deck order
+# ─────────────────────────────────────────────────────────────────
+#
+# Convergent deck (Diagnosis / Develop-Strategy / Test-Hypothesis)
+# uses LOCKED_DECK_ORDER above — UNCHANGED. Divergent deck
+# (Get-Perspectives) walks the same SHARED methodology-spine slots
+# (cover · headline · tensions · per_tension · sensitivity ·
+# reflection · bias_inventory · pre_mortem · decision_logic ·
+# cost_asymmetry · risk_mitigation · methodological_honesty ·
+# in_closing) and SWAPS the convergent-only `scenarios_overview` +
+# `per_scenario_table` slots for ONE `perspective_spread` slide.
+# `pathway` is dropped (divergent does not converge to a sequenced
+# recommendation — path discipline enforced by the schema validator).
+# Net: 14 slides vs 16 for convergent. Brand-token palette unchanged.
+
+DIVERGENT_DECK_ORDER = (
+    "cover",
+    "headline",
+    "tensions_overview",
+    "per_tension",
+    "perspective_spread",  # ← swap-in for scenarios_overview + per_scenario_table
+    "sensitivity",
+    "reflection",
+    "bias_inventory",
+    "pre_mortem",
+    "decision_logic",
+    "cost_asymmetry",
+    "risk_mitigation",
+    "methodological_honesty",
+    "in_closing",
+)
+
+
+# ─────────────────────────────────────────────────────────────────
 # Public entry point
 # ─────────────────────────────────────────────────────────────────
 
@@ -688,17 +880,34 @@ _KIND_TO_BUILDER: Dict[str, Callable] = {
     "risk_mitigation":        _build_risk_mitigation,
     "methodological_honesty": _build_methodological_honesty,
     "in_closing":             _build_in_closing,
+    # JC-TL Track-2 (2026-06-26) — divergent-only kind.
+    "perspective_spread":     _build_perspective_spread,
 }
-assert set(_KIND_TO_BUILDER.keys()) == set(LOCKED_DECK_ORDER), (
-    "PPTX builders must cover the locked 16 kinds EXACTLY."
+# Convergent deck must cover the locked 16 kinds EXACTLY — unchanged.
+_CONVERGENT_KIND_SET = set(LOCKED_DECK_ORDER)
+assert _CONVERGENT_KIND_SET.issubset(_KIND_TO_BUILDER.keys()), (
+    "PPTX builders must cover the locked 16 convergent kinds EXACTLY."
+)
+# Divergent deck order must also be fully covered.
+assert set(DIVERGENT_DECK_ORDER).issubset(_KIND_TO_BUILDER.keys()), (
+    "PPTX builders must cover every kind in DIVERGENT_DECK_ORDER."
 )
 
 
 def build_pptx(payload: ArtefactPayload, context_name: str = "Context") -> bytes:
     """Walk the locked deck order and emit a native .pptx binary.
 
-    The total returned matches the on-screen `slide_count` — 16 slides,
-    one per locked kind, in `LOCKED_DECK_ORDER` exactly.
+    Path-aware (JC-TL Track-2, 2026-06-26):
+      • Convergent payload (`perspective_spread is None`): walks
+        `LOCKED_DECK_ORDER` — 16 slides, UNCHANGED. Existing
+        Diagnosis / Develop-Strategy / Test-Hypothesis renders are
+        byte-identical to pre-Track-2 behaviour.
+      • Divergent payload (`perspective_spread is not None`): walks
+        `DIVERGENT_DECK_ORDER` — 14 slides, swapping the convergent
+        `scenarios_overview` + `per_scenario_table` for a single
+        `perspective_spread` slide and dropping `pathway` (divergent
+        does not converge to a sequenced recommendation; the schema
+        validator enforces empty scenarios/pathway on this path).
 
     Z2.0 (2026-05-29) — every slide receives a chair-readable
     speaker-notes audit footer (sources · bias · confidence + slide-
@@ -708,8 +917,13 @@ def build_pptx(payload: ArtefactPayload, context_name: str = "Context") -> bytes
     prs.slide_width = Inches(SLIDE_W_IN)
     prs.slide_height = Inches(SLIDE_H_IN)
 
-    total = len(LOCKED_DECK_ORDER)
-    for n, kind in enumerate(LOCKED_DECK_ORDER, start=1):
+    # Path-aware deck order selection. Convergent path unchanged.
+    deck_order = (
+        DIVERGENT_DECK_ORDER if payload.perspective_spread is not None
+        else LOCKED_DECK_ORDER
+    )
+    total = len(deck_order)
+    for n, kind in enumerate(deck_order, start=1):
         builder = _KIND_TO_BUILDER[kind]
         builder(prs, payload, context_name, n, total)
         # Append the chair-readable audit footer to the slide just
@@ -723,4 +937,4 @@ def build_pptx(payload: ArtefactPayload, context_name: str = "Context") -> bytes
     return buf.read()
 
 
-__all__ = ["build_pptx", "LOCKED_DECK_ORDER"]
+__all__ = ["build_pptx", "LOCKED_DECK_ORDER", "DIVERGENT_DECK_ORDER"]
