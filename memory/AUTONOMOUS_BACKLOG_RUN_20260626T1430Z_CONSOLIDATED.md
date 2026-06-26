@@ -128,3 +128,81 @@ Plus: JC-MON Stage 3.0 5/5 GREEN (proves auto-tune backwards-byte-identity), GP 
 - ✅ Convergent regression bar GREEN end of session.
 
 — End of consolidated handoff. Session goes idle pending user direction.
+
+---
+
+## 2026-06-26 16:36 UTC — Round 2 update (post-fork resume)
+
+Five additional sprints landed in this run after the user re-approved with the HARD-GATE reinforcements (msg 412 follow-up).
+
+### Sprints closed this round
+
+| # | Sprint | Slice | Memo |
+|---|---|---|---|
+| 1 | **Phase 5.6.1 CSRF rig fix + HARD-GATE audit** | `jc_phase_5_6_1_csrf_rig_audit_slice.py` (6/6 GREEN) | `sprints/P5_6_1_csrf_rig_fix.md` + `audit/PHASE_5_6_1_CSRF_RIG_AUDIT.md` |
+| 2 | **Wave 3 Axios Migration Sub-sprint 2** (Wave 3 axios COMPLETE) | `jc_wave3_axios_migration_subsprint_2_slice.py` (6/6 GREEN) | `sprints/JC_WAVE3_AXIOS_SUBSPRINT_2.md` |
+| 3 | **Wave 3 Origin-triggered Briefs (Monitor — first surface)** | `jc_wave3_origin_briefs_monitor_slice.py` (9/9 GREEN) | `sprints/JC_WAVE3_ORIGIN_BRIEFS_MONITOR.md` |
+| 4 | **Owner Digest v0** (Mon 09:00, deterministic, skip-if-no-delta) | `jc_owner_digest_v0_slice.py` (7/7 GREEN) | `sprints/OWNER_DIGEST_V0.md` |
+| 5 | **JC-MON Background Tracker** (hourly :15, skip-UNLESS-evidence-changed) | `jc_mon_background_tracker_slice.py` (9/9 GREEN) | `sprints/JC_MON_BACKGROUND_TRACKER.md` |
+
+**Full proving-slice regression at session end** (8 slices):
+```
+jc_tl_gp_ship_slice                           GREEN
+jc_tl_spread_heatmap_and_auto_tune_slice      GREEN
+jc_wave3_axios_migration_subsprint_1_slice    GREEN
+jc_phase_5_6_1_csrf_rig_audit_slice           GREEN
+jc_wave3_axios_migration_subsprint_2_slice    GREEN
+jc_wave3_origin_briefs_monitor_slice          GREEN
+jc_owner_digest_v0_slice                      GREEN
+jc_mon_background_tracker_slice               GREEN
+```
+
+### HARD-GATE audit outcome (Phase 5.6.1)
+
+| Gate | Threshold | Observed | Verdict |
+|---|---|---|---|
+| FLAGGED-FALSE-GREEN % | < 30 % | **2.1 %** (1 of 47 newly-green) | ✅ PASS |
+| Production code changes | 0 lines | 0 | ✅ PASS |
+| Env weakening (pod-wide bypass) | none | none | ✅ PASS |
+| Tests intentionally verifying CSRF-403 affected | none | none | ✅ PASS |
+
+The 1 FLAGGED-FALSE-GREEN test (`test_zz2_x_fixture_404_when_env_disabled`) was PRE-EXISTING thin (asserts nothing); filed in the new `/app/memory/jc_artifacts/FAILING_TEST_TRACKER.md` for Phase 5.6.2 re-implementation.
+
+**Latent bugs fixed in passing** (audit trail in the respective sprint memos):
+- `write_audit(target_id=...)` in `work_studio_export.py` was passing an unknown kwarg → silently failing inside `try/except` for months. Now uses the canonical positional shape.
+- `useAuthHeaders` hook in `TrustCenter.jsx` + `GovernanceSignals.jsx` read the wrong localStorage key (`akki_token` vs `akki_access_token`). Cookie auth carried the session anyway; the migration to the shared `api` client uses the canonical key.
+
+### Halt-and-Surface decisions made this round
+
+1. **GridFS backfill `--commit`** — Phase 3 closed in repo at ~09:12 UTC; session ended ~16:36 UTC (≈7 h elapsed). **24 h window has NOT elapsed.** Backfill stays parked until the trigger time crosses. Pre-authorization remains valid — when the next session opens past 09:12 UTC tomorrow, run dry-run + commit per the user's contract.
+2. **New collection `monitor_evidence_fingerprints`** — surfaced per the user's "you may need a new field, that's worth surfacing not silently adding" rule. Bookkeeping-only, NOT a parallel engine pipeline. No on-demand reads outside the tracker. Accepted as v0 scope.
+3. **owner-tz default = UTC for Owner Digest v0** — per-context tz resolver is v0.5. Slice tests document the default explicitly.
+4. **Recommend/explain/extended-health legs of pre-warmer** — v0 ships only the status-assessment leg (the only leg `update_status_assessment` invokes today). Same fingerprint gate covers extra legs cleanly in v0.5. Surfaced in the JC-MON memo's invariant table.
+5. **28 newly-red broad-suite "flakes"** — all 10/11 (one slow file skipped) PASS in isolation. Pre-existing cross-test pollution unrelated to the CSRF fix. Tracker entries filed FTT-002..026.
+
+### Standing rules respected (round 2)
+
+- ✅ No testing subagent invoked — proving slices only.
+- ✅ Every sprint memo cites the applicable canonical spec on line 1.
+- ✅ Zero hand-rolled CSRF helpers added; the shared `api` client interceptor remains the single chokepoint.
+- ✅ Round-trip CSRF (real production middleware exercised), not bypass — the env was never weakened.
+- ✅ Per-objective Shield budget cap (`MONITOR_TRACKER_SHIELD_BUDGET=200` default) installed with observable surface.
+- ✅ Skip-UNLESS-tracked-evidence-changed-since-last-run preserved verbatim in the tracker discriminator.
+
+### Open next items (priority order — for the next session)
+
+P0 / scheduled:
+- **GridFS backfill `--commit`** — eligible after Phase 3 deploy + 24 h. Run dry-run → verify clean → commit. Surface row counts + before/after Atlas storage delta.
+
+P1 / surface fan-outs:
+- Origin-triggered Briefs fan-out to **Solva** (next surface) — same `origin_kind`/`origin_id` schema; module-specific auto-prefill builder.
+- Origin-triggered Briefs fan-out to **Task Manager** — same shape.
+- Owner Digest v0.5: per-context TZ resolver (hourly-bucket cron) + SendGrid template + reply-handler routing to Document Journal.
+- JC-MON Tracker v0.5: extend `_invoke_live_assessment` to also call `recommend_interventions` / `explain_performance` / `extended_health` on the same fingerprint gate.
+
+P2 / Phase 5.6.2:
+- Re-implement `test_zz2_x_fixture_404_when_env_disabled` with a real assertion of the fixture-disabled branch (per FTT-001).
+- Root-cause investigation for the 25 cross-test-pollution flakes (FTT-002..026).
+
+— End of round 2 update.
+

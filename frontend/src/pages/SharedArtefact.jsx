@@ -13,15 +13,18 @@
  */
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import axios from "axios";
 import Logo from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
-import { resolveBackendOrigin } from "@/lib/api";
+// Phase JC-WAVE3 axios sub-sprint 2 (2026-06-26) — migrated to shared
+// `api` client. The two endpoints used here are public (no-auth):
+//   * GET /api/public/studio/read/{token} — magic-link read access
+//   * GET /api/auth/me                    — best-effort auth detect
+// The api client tolerates 401 on /auth/me (caught below); for the
+// public read it just routes through the same-origin guard.
+import { api } from "@/lib/api";
 import {
   ShieldCheck, Loader2, AlertTriangle, ArrowUpRight, Eye,
 } from "lucide-react";
-
-const BACKEND = resolveBackendOrigin();
 
 const SENS_TONE = {
   public:       "text-emerald-800 bg-emerald-50 border-emerald-200",
@@ -40,7 +43,7 @@ export default function SharedArtefact() {
     let live = true;
     (async () => {
       try {
-        const { data } = await axios.get(`${BACKEND}/api/public/studio/read/${token}`);
+        const { data } = await api.get(`/public/studio/read/${token}`);
         if (live) setState({ loading: false, data, error: null });
       } catch (err) {
         if (!live) return;
@@ -60,7 +63,7 @@ export default function SharedArtefact() {
   // we surface an "Open in AKKI" affordance so they can jump into the
   // full app surface.
   useEffect(() => {
-    axios.get(`${BACKEND}/api/auth/me`, { withCredentials: true })
+    api.get(`/auth/me`)
       .then(() => setAuthed(true))
       .catch(() => setAuthed(false));
   }, []);

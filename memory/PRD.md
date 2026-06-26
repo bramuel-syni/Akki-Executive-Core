@@ -1,6 +1,19 @@
 # AKKI Sandbox — Product Requirements Document (PRD)
 
 
+> **2026-06-26 16:36 UTC — AUTONOMOUS BACKLOG RUN Round 2 closed (5 sprints, 8 proving slices GREEN).**
+> Continuation of the autonomous backlog run under the HARD-GATE reinforcements.
+> Five sprints shipped in sequence:
+> 1. **Phase 5.6.1 CSRF rig fix** + HARD-GATE audit (6/6 GREEN; 47 newly-green tests; 2.1 % FLAGGED-FALSE-GREEN, well under the 30 % halt threshold).
+> 2. **Wave 3 Axios Migration Sub-sprint 2** (Wave 3 axios migration **COMPLETE**; 6/6 GREEN; 2 latent localStorage-key bugs fixed in passing).
+> 3. **Wave 3 Origin-triggered Briefs · Monitor (first surface)** (9/9 GREEN; module-native `Brief this goal` affordance posting `origin_kind=monitor_objective` + `origin_id` through the existing `/work-studio/export/brief` route).
+> 4. **Owner Digest v0** (7/7 GREEN; Mon 09:00 UTC; deterministic-only; skip-if-no-delta via SHA-256 over `(goal_id, status, score, probability, band)`; replies route to Document Journal accept rail in v0.5).
+> 5. **JC-MON Background Tracker** (9/9 GREEN; hourly :15; user's verbatim discriminator `skip-UNLESS-tracked-evidence-changed-since-last-run` preserved; pre-warmer for the on-demand engine, NOT a parallel pipeline; per-objective Shield budget cap with observable exhaustion surface).
+>
+> GridFS backfill `--commit` deferred — Phase 3 deploy was at ~09:12 UTC same day; 24-hour soak window has NOT elapsed. Backfill stays pre-authorized and parked.
+
+
+
 > **2026-06-26 update — BUG-ANL-UPLOAD-GRIDFS CLOSED (P0) + AUTONOMOUS BACKLOG RUN waves 1+2 closed.**
 > P0 production bug: Analyze file upload failing on workbooks ≥ 11 MB
 > (MongoDB 16 MB BSON cap). **Fix: migrated two Analyze insert sites

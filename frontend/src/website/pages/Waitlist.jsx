@@ -13,10 +13,12 @@
  */
 import React, { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import axios from "axios";
 import WebsiteShell from "../WebsiteShell";
+// Phase JC-WAVE3 axios sub-sprint 2 (2026-06-26) — drop the manual
+// `axios.get(/api/csrf)` priming step. The shared `apiV2` -> `api`
+// client interceptor handles the CSRF double-submit automatically on
+// every non-idempotent request.
 import api from "@/lib/api/apiV2";
-import { resolveApiUrl } from "@/lib/api";
 export default function Waitlist() {
   const [params] = useSearchParams();
   const sourceApplicationId = useMemo(
@@ -34,19 +36,12 @@ export default function Waitlist() {
     setBusy(true);
     setError("");
     try {
-      // Mint a CSRF token first (idempotent — the /api/csrf endpoint
-      // returns the existing one if the cookie is already present).
-      const csrfRes = await axios.get(resolveApiUrl("/csrf"), {
-        withCredentials: true,
-      });
-      const csrf = csrfRes?.data?.csrf_token;
       await api.post(
         "/cohort/waitlist",
         {
           email: email.trim(),
           source_application_id: sourceApplicationId,
         },
-        { headers: csrf ? { "X-CSRF-Token": csrf } : {} },
       );
       setSubmitted(true);
     } catch (err) {

@@ -1159,9 +1159,74 @@ async def on_startup():
                 replace_existing=True,
             )
 
+            # ── Wave 3 — Owner Digest v0 (Monday 09:00 owner-tz).
+            # For v0, owner-tz resolution defaults to UTC (a per-context
+            # `account.preferences.tz` resolver lands in v0.5). Calls the
+            # in-process /api/cron/owner-digest-weekly endpoint which
+            # sweeps every context with an owner + at least one strategic
+            # goal, composes a deterministic delta, and persists only
+            # when the delta hash differs from the previous run. Same
+            # APScheduler/in-process caveat as the other jobs; no Shield
+            # or LLM call along the path. See
+            # /app/memory/sprints/OWNER_DIGEST_V0.md.
+            async def _fire_owner_digest_weekly():
+                try:
+                    async with httpx.AsyncClient(timeout=180.0) as ac:
+                        resp = await ac.post(
+                            "http://localhost:8001/api/cron/owner-digest-weekly",
+                            headers={"X-Cron-Secret": cron_secret},
+                        )
+                    logger.info(
+                        "Owner Digest v0 cron: status=%s body=%s",
+                        resp.status_code, (resp.text or "")[:300],
+                    )
+                except Exception as e:  # noqa: BLE001
+                    logger.warning("Owner Digest v0 cron failed: %s", e)
+
+            scheduler.add_job(
+                _fire_owner_digest_weekly,
+                CronTrigger(day_of_week="mon", hour=9, minute=0),
+                id="owner_digest_weekly",
+                replace_existing=True,
+            )
+
+            # ── Wave 3 — JC-MON background tracker (hourly).
+            # Pre-warmer for the on-demand engine: every hour at :15,
+            # sweep every (tenant, context) pair and decide per-objective
+            # whether to invoke the same engine helpers the user calls
+            # when they click "Update goal." The skip-UNLESS-tracked-
+            # evidence-changed-since-last-run discriminator on
+            # `monitor_evidence_fingerprints` means an unchanged input
+            # set is a free no-op (zero Shield calls). The per-context
+            # Shield-call budget cap (`MONITOR_TRACKER_SHIELD_BUDGET`
+            # env, default 200) prevents runaway billing. The hour-mark
+            # offset (:15) deliberately avoids the top-of-hour signal
+            # seeders that the Synisense Engine fires.
+            # See /app/memory/sprints/JC_MON_BACKGROUND_TRACKER.md.
+            async def _fire_monitor_background_tracker():
+                try:
+                    async with httpx.AsyncClient(timeout=300.0) as ac:
+                        resp = await ac.post(
+                            "http://localhost:8001/api/cron/monitor-background-tracker",
+                            headers={"X-Cron-Secret": cron_secret},
+                        )
+                    logger.info(
+                        "JC-MON background tracker: status=%s body=%s",
+                        resp.status_code, (resp.text or "")[:300],
+                    )
+                except Exception as e:  # noqa: BLE001
+                    logger.warning("JC-MON background tracker failed: %s", e)
+
+            scheduler.add_job(
+                _fire_monitor_background_tracker,
+                CronTrigger(minute=15),  # hourly at :15
+                id="monitor_background_tracker_hourly",
+                replace_existing=True,
+            )
+
             scheduler.start()
             app.state.scheduler = scheduler
-            logger.info("Schedulers armed: Exco360 (Tue 10:00) + Influence Digest (Mon 08:00) + Paragraph Anchors (daily 03:00) + Chat Retention (daily 03:30) + Solva v2 Stale (daily 04:00) UTC.")
+            logger.info("Schedulers armed: Exco360 (Tue 10:00) + Influence Digest (Mon 08:00) + Paragraph Anchors (daily 03:00) + Chat Retention (daily 03:30) + Solva v2 Stale (daily 04:00) + Owner Digest v0 (Mon 09:00) + JC-MON Background Tracker (hourly :15) UTC.")
         except Exception as e:  # noqa: BLE001
             logger.warning("Could not arm weekly scheduler: %s", e)
     else:

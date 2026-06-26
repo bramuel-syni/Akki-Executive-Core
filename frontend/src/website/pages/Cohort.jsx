@@ -9,13 +9,15 @@
  * multi-recipient founder notify wired dispatch 10).
  */
 import React, { useState } from "react";
-import axios from "axios";
 import WebsiteShell from "../WebsiteShell";
 import { HeroWithLift, InvertedCtaSection } from "../components/PagePrimitives";
 import { COHORT, INVERTED_CTA } from "../copy";
 
-import { resolveBackendOrigin } from "@/lib/api";
-const API = resolveBackendOrigin();
+// Phase JC-WAVE3 axios sub-sprint 2 (2026-06-26) — migrated to shared
+// `api` client. `/api/cohort/applications` is a public POST endpoint;
+// the CSRF interceptor in lib/api.js handles the double-submit token
+// transparently, so call sites no longer prime the cookie manually.
+import { api } from "@/lib/api";
 const FIELDS = [
   { id: "name",            label: "Name",                        required: true,  type: "text",     placeholder: "Full name" },
   { id: "email",           label: "Email",                       required: true,  type: "email",    placeholder: "you@organisation" },
@@ -45,7 +47,7 @@ export default function Cohort() {
         FIELDS.map((f) => [f.id, (values[f.id] || "").trim()]),
       );
       if (!payload.referral_source) payload.referral_source = null;
-      const r = await axios.post(`${API}/api/cohort/applications`, payload);
+      const r = await api.post(`/cohort/applications`, payload);
       if (r.data?.deduplicated) {
         setStatus("sent");
         return;

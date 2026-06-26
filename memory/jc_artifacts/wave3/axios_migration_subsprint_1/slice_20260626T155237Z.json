@@ -1,0 +1,57 @@
+{
+  "ran_at": "2026-06-26T15:52:37.841583+00:00",
+  "n_pass": 6,
+  "n_total": 6,
+  "all_green": true,
+  "results": [
+    {
+      "row": "A",
+      "subject": "No direct axios import in migrated files",
+      "bad": [],
+      "PASS": true
+    },
+    {
+      "row": "B",
+      "subject": "No local axios.create in migrated files",
+      "bad": [],
+      "PASS": true
+    },
+    {
+      "row": "C",
+      "subject": "All 4 files import `api` from @/lib/api",
+      "bad": [],
+      "PASS": true
+    },
+    {
+      "row": "D",
+      "subject": "Every api.* call uses a leading-slash relative path",
+      "bad": [],
+      "PASS": true
+    },
+    {
+      "row": "E",
+      "subject": "Sandbox-v2-baseURL files prefix paths with /sandbox/v2/",
+      "bad": [],
+      "PASS": true
+    },
+    {
+      "row": "F",
+      "subject": "Step1SolvaWrapper paths stay /sandbox/v2 or /solva/v2",
+      "paths": [
+        "/sandbox/v2/sessions/${sandboxSid}/opening-question",
+        "/sandbox/v2/sessions/${sandboxSid}/fallback-situation",
+        "/solva/v2/sessions/${sid}",
+        "/solva/v2/sessions/${solvaSession.id}/turn",
+        "/solva/v2/sessions/${solvaSession.id}/turn"
+      ],
+      "bad": [],
+      "PASS": true
+    }
+  ],
+  "migrated_files": [
+    "/app/frontend/src/components/sandbox/v2/Step4CycleSnapshot.jsx",
+    "/app/frontend/src/components/sandbox/v2/ClosingStep.jsx",
+    "/app/frontend/src/components/sandbox/v2/Step1SolvaWrapper.jsx",
+    "/app/frontend/src/components/sandbox/v2/Step3StudioWrapper.jsx"
+  ]
+}

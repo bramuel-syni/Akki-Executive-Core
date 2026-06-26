@@ -106,6 +106,99 @@ def _patched_sync_request(self, method, url, **kwargs):
     return _orig_sync_request(self, method, url, **kwargs)
 _StarletteTestClient.request = _patched_sync_request
 
+# Phase P5.6.1 (2026-06) — extend the bypass to the `requests` library.
+# A long tail of legacy E2E tests (`test_phase_b_sandbox_upload.py`,
+# `test_prepare_redirect_alias.py`, `test_governance_endpoint.py`,
+# `test_cycle_manager_actions_tab.py`, `test_iter*.py`, …) hits the
+# **live** FastAPI backend at `http://localhost:8001/api/...` via
+# `requests.Session` rather than the in-process ASGITransport. The
+# live backend runs production CSRFMiddleware which rejects every
+# state-changing request with 403 `csrf_token_missing` unless the
+# bypass header is present. The httpx + starlette TestClient
+# monkey-patches above do NOT cover this code path, so these tests
+# regressed silently when the CSRF middleware shipped in P3.1.
+#
+# IMPORTANT: the live backend (preview supervisor pod) does NOT have
+# `CSRF_TEST_BYPASS_HEADER=1` in its env (and must NOT — that env
+# would weaken security across the whole pod). So the bypass header
+# is honoured only by the in-process ASGI tests where conftest sets
+# the env at import time. For the `requests`-against-localhost
+# tests, we instead do a real **double-submit round-trip**: mint a
+# CSRF token via `GET /api/csrf` (which sets the cookie on the
+# Session jar) and copy the same value into the `X-CSRF-Token`
+# header on every state-changing request. The production
+# CSRFMiddleware then HMAC-verifies the token and lets the request
+# through — exercising the FULL middleware path (HMAC verify, cookie
+# match, age check) rather than bypassing it.
+#
+# Idempotent methods (GET/HEAD/OPTIONS) and the mint endpoint itself
+# skip the round-trip to avoid recursion. Sessions cache the cookie
+# across requests so the mint cost is once-per-Session, not
+# per-request.
+import requests as _requests  # noqa: E402
+from urllib.parse import urlparse as _urlparse  # noqa: E402
+
+_orig_requests_session_request = _requests.Session.request
+_CSRF_NON_IDEMPOTENT = {"POST", "PUT", "PATCH", "DELETE"}
+# Mirror services/csrf.py:_ALLOWLIST_PREFIXES so we don't mint when
+# the target is itself allowlisted (Stripe webhook receivers, etc.).
+_CSRF_ALLOWLIST_SUBSTRINGS = (
+    "/api/csrf",
+    "/api/billing/webhook/",
+    "/api/auth/oauth/google/callback",
+    "/api/auth/oauth/microsoft/callback",
+    "/api/inbound/sendgrid",
+    "/api/cohort/email-events/sendgrid",
+    "/api/internal/v1/",
+)
+
+
+def _patched_requests_session_request(self, method, url, **kwargs):
+    # Always announce the bypass header (cheap; honoured by in-proc
+    # ASGI app only — live backend ignores it). The live-backend path
+    # gets the real token round-trip below.
+    headers = kwargs.get("headers") or {}
+    headers = dict(headers) if headers else {}
+    headers.setdefault("X-CSRF-Test-Bypass", "1")
+
+    method_upper = (method or "").upper()
+    if method_upper in _CSRF_NON_IDEMPOTENT and not any(s in url for s in _CSRF_ALLOWLIST_SUBSTRINGS):
+        # Resolve the same-origin /api/csrf URL from the target.
+        try:
+            parsed = _urlparse(url)
+            origin = f"{parsed.scheme}://{parsed.netloc}" if parsed.scheme else ""
+        except Exception:
+            origin = ""
+
+        if origin:
+            csrf_token_val = None
+            # Try the existing session cookie jar first (avoid extra mint per request).
+            jar_val = self.cookies.get("csrf_token", default=None)
+            if jar_val:
+                csrf_token_val = jar_val
+            else:
+                try:
+                    mint = _orig_requests_session_request(
+                        self, "GET", f"{origin}/api/csrf", timeout=10,
+                    )
+                    if mint.status_code == 200:
+                        try:
+                            csrf_token_val = mint.json().get("csrf_token")
+                        except Exception:
+                            csrf_token_val = None
+                except Exception:
+                    csrf_token_val = None
+
+            if csrf_token_val:
+                headers.setdefault("X-CSRF-Token", csrf_token_val)
+                # Ensure the cookie is in the session for the next call too.
+                if not self.cookies.get("csrf_token", default=None):
+                    self.cookies.set("csrf_token", csrf_token_val)
+
+    kwargs["headers"] = headers
+    return _orig_requests_session_request(self, method, url, **kwargs)
+_requests.Session.request = _patched_requests_session_request
+
 BACKEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)

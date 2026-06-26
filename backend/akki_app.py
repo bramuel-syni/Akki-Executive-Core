@@ -104,6 +104,8 @@ from routers import oauth_google as _oauth_google
 from routers import observability as _observability
 from routers import onboarding_briefs as _onboarding_briefs
 from routers import onboarding_status as _onboarding_status
+from routers import owner_digest as _owner_digest
+from routers import monitor_background_tracker as _monitor_background_tracker
 from routers import password_reset as _password_reset
 from routers import pipeline as _pipeline
 from routers import portfolio as _portfolio
@@ -222,6 +224,8 @@ ROUTERS = [
     _cohort_applications.router,
     _admin_qa_hooks.router,
     _onboarding_status.router,
+    _owner_digest.router,
+    _monitor_background_tracker.router,
     _active_context.router,
     _studio.router,
     _studio_blocks.router,

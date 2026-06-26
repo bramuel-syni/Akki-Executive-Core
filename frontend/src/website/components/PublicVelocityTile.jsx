@@ -13,10 +13,13 @@
  * "Solva" because authenticated users know the internal name.
  */
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 
-import { resolveBackendOrigin } from "@/lib/api";
-const API = resolveBackendOrigin();
+// Phase JC-WAVE3 axios sub-sprint 2 (2026-06-26) — migrated to shared
+// `api` client. This tile reads a public observability endpoint; the
+// api client's same-origin guard ensures the request lands on the
+// correct host whether or not the bundle was baked for a different
+// domain.
+import { api } from "@/lib/api";
 
 export default function PublicVelocityTile() {
   const [data, setData] = useState(null);
@@ -24,8 +27,8 @@ export default function PublicVelocityTile() {
     let cancel = false;
     (async () => {
       try {
-        const r = await axios.get(
-          `${API}/api/public/observability/reasoning_velocity?window=30d`,
+        const r = await api.get(
+          `/public/observability/reasoning_velocity?window=30d`,
         );
         if (!cancel) setData(r.data);
       } catch (_err) { /* fail silent — empty-state copy below covers the failure surface */ }

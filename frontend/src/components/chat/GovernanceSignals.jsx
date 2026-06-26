@@ -16,11 +16,12 @@
  */
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { resolveBackendOrigin } from "@/lib/api";
-
-// Phase P5.6.1 (2026-02) — same-origin guard. See lib/api.js.
-const API = resolveBackendOrigin();
+// Phase JC-WAVE3 axios sub-sprint 2 (2026-06-26) — migrated to shared
+// `api` client. Replaces a hand-rolled fetch that read the wrong
+// localStorage key (`akki_token` vs the canonical `akki_access_token`)
+// AND lacked the CSRF double-submit header. The shared client handles
+// both transparently.
+import { api } from "@/lib/api";
 
 export default function GovernanceSignals({ governance, chatId, messageId }) {
   const navigate = useNavigate();
@@ -37,11 +38,9 @@ export default function GovernanceSignals({ governance, chatId, messageId }) {
     e.preventDefault();
     try {
       if (chatId) {
-        const token = localStorage.getItem("akki_token");
-        await axios.post(
-          `${API}/api/chats/${chatId}/governance/solva-escalation-clicked`,
+        await api.post(
+          `/chats/${chatId}/governance/solva-escalation-clicked`,
           { message_id: messageId || null },
-          { headers: token ? { Authorization: `Bearer ${token}` } : {} },
         );
       }
     } catch (_err) { /* non-fatal — navigation still proceeds */ }

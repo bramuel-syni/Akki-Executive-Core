@@ -912,7 +912,7 @@ function GoalDetailDrawer({ goal, onClose, contextId, onGoalUpdated, isNED }) {
           )}
 
           {!isNED && (
-            <div className="pt-2 border-t border-[var(--rule)]">
+            <div className="pt-2 border-t border-[var(--rule)] flex flex-col gap-2">
               {/* QA-2026-05-16-049 — "Edit this goal" → "Update Goal".
                   All manual-edit affordances are removed; this is now
                   the only way to modify the goal from the drawer. */}
@@ -928,11 +928,122 @@ function GoalDetailDrawer({ goal, onClose, contextId, onGoalUpdated, isNED }) {
                   ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> Updating…</>
                   : <><Sparkles className="w-3.5 h-3.5 mr-2" /> Update Goal</>}
               </Button>
+              {/* Wave 3 Origin-triggered Briefs (2026-06-26).
+                  Module-native "Brief this" affordance per the
+                  canonical spec's Journey 3a — invokes the existing
+                  POST /work-studio/export/brief route with
+                  `origin_kind=monitor_objective` + `origin_id=goal.id`
+                  stamped so the audit row and the export row both
+                  carry the originating surface. UX is surface-native
+                  (button + toast → deep link), NOT a redirect to
+                  Work Studio. */}
+              <BriefThisGoalButton goal={goal} contextId={contextId} />
             </div>
           )}
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/**
+ * BriefThisGoalButton — Wave 3 Origin-triggered Briefs (2026-06-26).
+ *
+ * Surface-native "Brief this goal" affordance per the canonical spec
+ * Journey 3a revision. Auto-synthesises the description / objective /
+ * scope payload from the goal data (title, status, score, probability,
+ * target, target_date, rationale) so the user doesn't see a Work-Studio
+ * form. Posts to the existing /work-studio/export/brief route with
+ * origin_kind=monitor_objective + origin_id=goal.id stamped so the
+ * audit row + export row both carry the originating surface.
+ *
+ * After the export starts (202 + export_id), surfaces a toast with a
+ * deep link to the brief artefact AT this origin surface (modally
+ * over Monitor, NOT a redirect to Work Studio). For v0 the toast
+ * carries an "Open" action that opens the artefact detail in a new tab;
+ * a follow-up sprint will mount an inline preview drawer.
+ */
+function BriefThisGoalButton({ goal, contextId }) {
+  const [busy, setBusy] = useState(false);
+
+  const buildPayload = useCallback(() => {
+    const title = (goal?.title || "Strategic goal").slice(0, 200);
+    const status = STATUS_STYLE[goal?.status]?.label || "—";
+    const score = goal?.current_score != null ? `${goal.current_score}%` : "—";
+    const prob = goal?.probability != null ? `${goal.probability}%` : "—";
+    const target = `${goal?.target_value || "—"} ${goal?.target_metric || ""}`.trim();
+    const targetDate = goal?.target_date || "—";
+    const rationale = goal?.last_akki_update?.rationale || goal?.description || "";
+
+    return {
+      description: [
+        `Originating surface: Monitor / Strategic Goals.`,
+        `Goal title: ${title}.`,
+        `Status: ${status}.`,
+        `Performance score: ${score}. Probability of success: ${prob}.`,
+        `Target: ${target} by ${targetDate}.`,
+        rationale ? `Most recent reassessment rationale: ${rationale.slice(0, 800)}` : "",
+      ].filter(Boolean).join("\n"),
+      objective: `Brief the board on the current state and recent movement of: ${title}.`,
+      scope: [
+        `Focus on the goal performance vs. target, the score and probability movement since the last reading,`,
+        `the underlying signals driving the change, and the implication for the executive sponsoring this goal.`,
+        `Format: an executive brief (1-2 pages). Keep cause-and-effect explicit; avoid telemetry-only restatement.`,
+      ].join(" "),
+      output_format: "auto",
+      cadence: "one_off",
+      origin_kind: "monitor_objective",
+      origin_id: goal?.id,
+    };
+  }, [goal]);
+
+  const onClick = useCallback(async () => {
+    if (!goal?.id || !contextId || busy) return;
+    setBusy(true);
+    try {
+      const payload = buildPayload();
+      const r = await api.post(
+        `/contexts/${contextId}/work-studio/export/brief`,
+        payload,
+      );
+      const exportId = r?.data?.export_id;
+      if (exportId) {
+        toast.success("Brief started.", {
+          description: "Akki is composing the brief. Opens in Work Studio when ready.",
+          action: {
+            label: "Open",
+            onClick: () => window.open(
+              `/app/work-studio?artefact=${encodeURIComponent(exportId)}`,
+              "_blank",
+              "noopener",
+            ),
+          },
+          duration: 8000,
+        });
+      } else {
+        toast.success("Brief request submitted.");
+      }
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }, [goal, contextId, busy, buildPayload]);
+
+  return (
+    <Button
+      type="button"
+      onClick={onClick}
+      disabled={busy}
+      aria-busy={busy}
+      variant="outline"
+      className="w-full inline-flex items-center justify-center"
+      data-testid="goal-drawer-brief-this-btn"
+    >
+      {busy
+        ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> Starting brief…</>
+        : <><FileText className="w-3.5 h-3.5 mr-2" /> Brief this goal</>}
+    </Button>
   );
 }
 

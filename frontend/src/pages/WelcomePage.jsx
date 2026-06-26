@@ -15,7 +15,6 @@
  */
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,8 +22,15 @@ import { toast } from "sonner";
 import WebsiteShell from "@/website/WebsiteShell";
 import { Loader2 } from "lucide-react";
 
-import { resolveBackendOrigin } from "@/lib/api";
-const API = resolveBackendOrigin();
+// Phase JC-WAVE3 axios sub-sprint 2 (2026-06-26) — migrated to shared
+// `api` client. WelcomePage is unauthenticated until the magic-link
+// is consumed; the client still works because:
+//   * GET endpoints (preview / oauth start) are public.
+//   * POST /api/auth/magic-link/consume is gated by the magic-link
+//     token in the body, not by the standard auth cookie/header.
+//   * The api client's CSRF interceptor handles the double-submit
+//     handshake automatically, replacing the ad-hoc ensureCsrf() helper.
+import { api } from "@/lib/api";
 
 export default function WelcomePage() {
   const { token } = useParams();
@@ -40,9 +46,8 @@ export default function WelcomePage() {
     let cancelled = false;
     (async () => {
       try {
-        const r = await axios.get(
-          `${API}/api/auth/magic-link/preview/${token}`,
-          { withCredentials: true },
+        const r = await api.get(
+          `/auth/magic-link/preview/${token}`,
         );
         if (cancelled) return;
         setData(r.data);
@@ -58,14 +63,6 @@ export default function WelcomePage() {
     return () => { cancelled = true; };
   }, [token]);
 
-  // Pull CSRF cookie for the consume POST.
-  async function ensureCsrf() {
-    const m = (document.cookie || "").match(/csrf_token=([^;]+)/);
-    if (m) return decodeURIComponent(m[1]);
-    const r = await axios.get(`${API}/api/csrf`, { withCredentials: true });
-    return r?.data?.csrf_token || "";
-  }
-
   async function submitPassword(e) {
     e.preventDefault();
     if (!password || password.length < 10) {
@@ -78,11 +75,10 @@ export default function WelcomePage() {
     }
     setBusy(true);
     try {
-      const csrf = await ensureCsrf();
-      const r = await axios.post(
-        `${API}/api/auth/magic-link/consume`,
+      // CSRF token is attached automatically by the api interceptor.
+      const r = await api.post(
+        `/auth/magic-link/consume`,
         { token, mode: "password", password },
-        { withCredentials: true, headers: { "X-CSRF-Token": csrf } },
       );
       setState("consumed_ok");
       // Phase P5.2 (2026-02) — full-page nav (not react-router navigate)
@@ -118,15 +114,16 @@ export default function WelcomePage() {
   async function withMagicLinkOAuth(provider) {
     try {
       if (provider === "microsoft") {
-        const url = `${API}/api/auth/oauth/microsoft/start?magic_link_token=${encodeURIComponent(token)}`;
-        const r = await axios.get(url, { withCredentials: true });
+        const r = await api.get(
+          `/auth/oauth/microsoft/start?magic_link_token=${encodeURIComponent(token)}`,
+        );
         const authorizeUrl = r?.data?.authorize_url;
         if (!authorizeUrl) throw new Error("microsoft start returned no authorize_url");
         window.location.href = authorizeUrl;
         return;
       }
       // Google path — stash + redirect to Emergent Auth.
-      const r = await axios.get(`${API}/api/auth/oauth/google/start`, { withCredentials: true });
+      const r = await api.get(`/auth/oauth/google/start`);
       const authBase = r?.data?.auth_base_url;
       const callbackPath = r?.data?.callback_path || "/oauth/callback";
       if (!authBase) throw new Error("google start returned no auth_base_url");

@@ -126,6 +126,27 @@ class ExportRequestIn(BaseModel):
     # scheduler is a separate worker not in scope for this slice.
     cadence: Literal["one_off", "recurring", "scheduled"] = "one_off"
 
+    # Wave 3 Origin-triggered Briefs (2026-06-26) — surface-native
+    # "Brief this" affordances on Solva / Monitor / Task Manager (per
+    # `JC-WS Phase 3` canonical-spec revision, Journey 3a). When a brief
+    # is initiated from a non-Work-Studio surface, the caller stamps
+    # the originating module + identifier here. Persisted on the export
+    # row so the round-trip "Open brief AT the origin surface" UX has
+    # a stable handle to route on; also surfaced in the audit metadata
+    # for traceability.
+    #
+    # Conservative validation: enum the known origins, free-form id
+    # capped at 128 chars (matches existing target_id constraints in
+    # `core.write_audit`). When omitted the existing in-Studio flow
+    # behaviour is unchanged (no extra row fields written).
+    origin_kind: Optional[Literal[
+        "monitor_objective",   # Strategic Goal / monitored objective
+        "monitor_signal",      # signal-card-level brief
+        "solva_session",       # Solva v2 16-slide diagnostic
+        "task_manager_task",   # Task Manager F.x task
+    ]] = None
+    origin_id: Optional[str] = Field(default=None, max_length=128)
+
 
 class ExportStatusOut(BaseModel):
     export_id: str
@@ -2049,15 +2070,33 @@ async def start_export(
         # "committed" → blocked the Draft → In Review transition.
         # Setting "draft" here is consistent across all consumers.
         "lifecycle_state": "draft",
+        # Wave 3 Origin-triggered Briefs (2026-06-26) — stamp the
+        # originating module + id when the caller is module-native
+        # (Solva / Monitor / Task Manager "Brief this" affordance).
+        # When omitted, defaults to None so the in-Studio path is
+        # unchanged.
+        "origin_kind": getattr(body, "origin_kind", None),
+        "origin_id": getattr(body, "origin_id", None),
     }
     await db.work_studio_exports.insert_one(row)
 
     try:
+        # Wave 3 — surface origin in the audit row so SIEM /
+        # governance can trace the request back to its launching
+        # surface without rejoining work_studio_exports.
+        _audit_meta: Dict[str, Any] = {
+            "export_id": export_id, "kind": kind,
+            "output_format": output_format,
+        }
+        if row.get("origin_kind"):
+            _audit_meta["origin_kind"] = row["origin_kind"]
+        if row.get("origin_id"):
+            _audit_meta["origin_id"] = row["origin_id"]
         await write_audit(
-            account_id=ctx["account"]["id"], context_id=context_id,
-            action="work_studio.export.requested", target_id=export_id,
-            metadata={"export_id": export_id, "kind": kind,
-                      "output_format": output_format},
+            context_id, ctx["account"]["id"],
+            "work_studio.export.requested",
+            "work_studio_export", export_id,
+            _audit_meta,
         )
     except Exception:
         pass

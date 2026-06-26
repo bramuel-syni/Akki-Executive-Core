@@ -18,27 +18,25 @@
  *
  * No marketing language. Trust Center is factual reporting.
  */
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ShieldCheck, Hash, ChevronRight, ChevronDown, Download,
   Eye, AlertTriangle, FileSearch, X, Filter, Lock, Info,
 } from "lucide-react";
-import axios from "axios";
 import {
   Popover, PopoverTrigger, PopoverContent,
 } from "../components/ui/popover";
 import TrustCenterTour from "../components/trust/TrustCenterTour";
 
-import { resolveBackendOrigin } from "@/lib/api";
-const API = resolveBackendOrigin();
-
-function useAuthHeaders() {
-  return useMemo(() => {
-    const token = localStorage.getItem("akki_token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  }, []);
-}
+// Phase JC-WAVE3 axios sub-sprint 2 (2026-06-26) — migrated to shared
+// `api` client. The interceptor in `lib/api.js` attaches the Bearer
+// token (from `akki_access_token`), the X-Active-Context header, AND
+// the CSRF double-submit token automatically. The previous local
+// `useAuthHeaders` hook read the WRONG key (`akki_token` vs
+// `akki_access_token`) and was a latent bug; cookie auth carried the
+// session anyway. Migration fixes the latent bug + unifies behaviour.
+import { api } from "@/lib/api";
 
 // ─────────────────────────────────────────────────────────────────────
 // Standards footer — single row, subtle. Each segment tooltips
@@ -79,7 +77,6 @@ function StandardsFooter() {
 // Drill-down panel — 4-row comparison
 // ─────────────────────────────────────────────────────────────────────
 function DrilldownPanel({ chatId, messageId, onClose }) {
-  const hdrs = useAuthHeaders();
   const [data, setData] = useState(null);
   const [err, setErr] = useState(null);
   const [plaintextOpen, setPlaintextOpen] = useState(false);
@@ -88,9 +85,8 @@ function DrilldownPanel({ chatId, messageId, onClose }) {
     let cancelled = false;
     (async () => {
       try {
-        const r = await axios.get(
-          `${API}/api/trust-center/session/${chatId}/turn/${messageId}`,
-          { headers: hdrs },
+        const r = await api.get(
+          `/trust-center/session/${chatId}/turn/${messageId}`,
         );
         if (!cancelled) setData(r.data);
       } catch (e) {
@@ -98,7 +94,7 @@ function DrilldownPanel({ chatId, messageId, onClose }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [chatId, messageId, hdrs]);
+  }, [chatId, messageId]);
 
   if (err) {
     return (
@@ -248,7 +244,6 @@ function DrilldownPanel({ chatId, messageId, onClose }) {
 // Plaintext modal — explicit, audit-logged view of raw input
 // ─────────────────────────────────────────────────────────────────────
 function PlaintextModal({ chatId, messageId, onClose }) {
-  const hdrs = useAuthHeaders();
   const [text, setText] = useState(null);
   const [err, setErr] = useState(null);
 
@@ -256,9 +251,8 @@ function PlaintextModal({ chatId, messageId, onClose }) {
     let cancelled = false;
     (async () => {
       try {
-        const r = await axios.get(
-          `${API}/api/trust-center/session/${chatId}/turn/${messageId}/plaintext`,
-          { headers: hdrs },
+        const r = await api.get(
+          `/trust-center/session/${chatId}/turn/${messageId}/plaintext`,
         );
         if (!cancelled) setText(r.data);
       } catch (e) {
@@ -266,7 +260,7 @@ function PlaintextModal({ chatId, messageId, onClose }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [chatId, messageId, hdrs]);
+  }, [chatId, messageId]);
 
   return (
     <div
@@ -324,22 +318,20 @@ function PlaintextModal({ chatId, messageId, onClose }) {
 // "This session" view
 // ─────────────────────────────────────────────────────────────────────
 function SessionView({ chatId }) {
-  const hdrs = useAuthHeaders();
   const [data, setData] = useState(null);
   const [err, setErr] = useState(null);
   const [openTurn, setOpenTurn] = useState(null);
 
   const load = useCallback(async () => {
     try {
-      const r = await axios.get(
-        `${API}/api/trust-center/session/${chatId}`,
-        { headers: hdrs },
+      const r = await api.get(
+        `/trust-center/session/${chatId}`,
       );
       setData(r.data);
     } catch (e) {
       setErr(e?.response?.data?.detail || String(e));
     }
-  }, [chatId, hdrs]);
+  }, [chatId]);
 
   useEffect(() => {
     load();
@@ -604,7 +596,6 @@ function DeIdSummaryInfoPopover() {
 // "All activity" view
 // ─────────────────────────────────────────────────────────────────────
 function ActivityView() {
-  const hdrs = useAuthHeaders();
   const [data, setData] = useState(null);
   const [err, setErr] = useState(null);
   const [filters, setFilters] = useState({ pii_class: "", model: "" });
@@ -616,15 +607,14 @@ function ActivityView() {
       params.set("limit", "50");
       if (filters.pii_class) params.set("pii_class", filters.pii_class);
       if (filters.model) params.set("model", filters.model);
-      const r = await axios.get(
-        `${API}/api/trust-center/activity?${params.toString()}`,
-        { headers: hdrs },
+      const r = await api.get(
+        `/trust-center/activity?${params.toString()}`,
       );
       setData(r.data);
     } catch (e) {
       setErr(e?.response?.data?.detail || String(e));
     }
-  }, [filters, hdrs]);
+  }, [filters]);
 
   useEffect(() => {
     load();
@@ -636,9 +626,8 @@ function ActivityView() {
     const params = new URLSearchParams();
     if (filters.pii_class) params.set("pii_class", filters.pii_class);
     if (filters.model) params.set("model", filters.model);
-    const r = await axios.get(
-      `${API}/api/trust-center/activity/export?${params.toString()}`,
-      { headers: hdrs },
+    const r = await api.get(
+      `/trust-center/activity/export?${params.toString()}`,
     );
     const blob = new Blob([JSON.stringify(r.data, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
@@ -646,7 +635,7 @@ function ActivityView() {
     a.download = `trust-center-export-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
-  }, [filters, hdrs]);
+  }, [filters]);
 
   if (err) {
     return <div data-testid="tc-activity-error" className="text-[13px] text-rose-700">{err}</div>;
@@ -809,7 +798,6 @@ function ReasoningVelocityTile({ vel, window }) {
 }
 
 function ReasoningView() {
-  const hdrs = useAuthHeaders();
   const [window, setWindow] = useState("7d");
   const [data, setData] = useState(null);
   const [vel, setVel] = useState(null);
@@ -820,8 +808,8 @@ function ReasoningView() {
     (async () => {
       try {
         const [r1, r2] = await Promise.all([
-          axios.get(`${API}/api/trust-center/reasoning?window=${window}`, { headers: hdrs }),
-          axios.get(`${API}/api/observability/reasoning_velocity?window=${window}`, { headers: hdrs }),
+          api.get(`/trust-center/reasoning?window=${window}`),
+          api.get(`/observability/reasoning_velocity?window=${window}`),
         ]);
         if (cancel) return;
         setData(r1.data);
@@ -831,7 +819,7 @@ function ReasoningView() {
       }
     })();
     return () => { cancel = true; };
-  }, [window, hdrs]);
+  }, [window]);
 
   if (err) {
     return <div data-testid="tc-reasoning-error" className="text-[13px] text-rose-700">{err}</div>;
@@ -941,17 +929,15 @@ export default function TrustCenter() {
   // navigation away.
   const showIntroCard = searchParams.get("intro") === "shield";
   const [introDismissed, setIntroDismissed] = useState(false);
-  const hdrs = useAuthHeaders();
   const acknowledgeIntro = useCallback(async () => {
     try {
-      await axios.post(
-        `${API}/api/users/me/onboarding-status/acknowledge`,
+      await api.post(
+        `/users/me/onboarding-status/acknowledge`,
         {},
-        { headers: hdrs },
       );
     } catch (_e) { /* non-fatal */ }
     setIntroDismissed(true);
-  }, [hdrs]);
+  }, []);
 
   // J3 (2026-05-25, ratified spec §3 Stage 5) — Trust Center tour.
   // Reads `trust_center_tour.show` from the onboarding-status
@@ -963,9 +949,8 @@ export default function TrustCenter() {
     let cancel = false;
     (async () => {
       try {
-        const { data: status } = await axios.get(
-          `${API}/api/users/me/onboarding-status`,
-          { headers: hdrs },
+        const { data: status } = await api.get(
+          `/users/me/onboarding-status`,
         );
         if (cancel) return;
         const tour = status?.trust_center_tour || {};

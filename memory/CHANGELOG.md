@@ -2,6 +2,87 @@
 
 > Append-only history of shipped work. Newest first.
 
+## 2026-06-26 — AUTONOMOUS BACKLOG RUN · Round 2 (5 sprints closed, 8 proving slices GREEN)
+
+Continuation of the same autonomous-backlog-run banner under the
+HARD-GATE reinforcements (msg 412 follow-up). Sequence shipped in
+priority order:
+
+1. **Phase 5.6.1 CSRF rig fix + HARD-GATE audit** (6/6 GREEN).
+   `requests.Session.request` monkey-patch in `tests/conftest.py`
+   performs a real CSRF round-trip (no bypass, no env weakening).
+   47 newly-green tests; 2.1 % FLAGGED-FALSE-GREEN (1 pre-existing
+   thin test, filed in `FAILING_TEST_TRACKER.md`). Hard-gate halt
+   threshold 30 %; passed cleanly. Latent bug fixed in passing:
+   `work_studio_export.write_audit(target_id=...)` was silently
+   failing on an unknown kwarg.
+   - `audit/PHASE_5_6_1_CSRF_RIG_AUDIT.md` · `sprints/P5_6_1_csrf_rig_fix.md`
+
+2. **Wave 3 axios → shared api client · Sub-sprint 2** (6/6 GREEN).
+   7 files / ~20 sites migrated; Wave 3 axios migration COMPLETE.
+   Only `src/lib/api.js` (the wrapper) and `_archived_legacy/` retain
+   axios imports. Latent localStorage-key bug fixed in two files
+   (`akki_token` → `akki_access_token`).
+   - `sprints/JC_WAVE3_AXIOS_SUBSPRINT_2.md`
+
+3. **Wave 3 Origin-triggered Briefs · Monitor (first surface)** (9/9 GREEN).
+   Coverage-gap analysis ranked Monitor highest. Backend schema
+   accepts `origin_kind` + `origin_id`; persisted on the export row +
+   audit metadata. Frontend `BriefThisGoalButton` synthesises
+   description/objective/scope from goal data and POSTs to the
+   existing `/work-studio/export/brief` route. Fan-outable pattern
+   for Solva / Task Manager in subsequent sub-sprints.
+   - `sprints/JC_WAVE3_ORIGIN_BRIEFS_MONITOR.md`
+
+4. **Owner Digest v0** (7/7 GREEN). `services/owner_digest.py`
+   deterministic composer + `routers/owner_digest.py` 3 endpoints
+   (preview / latest / cron) + APScheduler hourly Mon 09:00 UTC.
+   Zero Shield / LLM calls along the path. Skip-if-no-delta via
+   SHA-256 over `(goal_id, status, score, probability, band)` tuples.
+   Persisted digests stamped `surface: "owner_digest_v0"` for the
+   v0.5 reply-rail to route into the existing Document Journal
+   accept rail.
+   - `sprints/OWNER_DIGEST_V0.md`
+
+5. **JC-MON Background Tracker** (9/9 GREEN). Pre-warmer for the
+   on-demand engine; **skip-UNLESS-tracked-evidence-changed-since-
+   last-run** (user's verbatim discriminator). New collection
+   `monitor_evidence_fingerprints` (bookkeeping only — surfaced per
+   the user's "you may need a new field, surface not silently add"
+   rule). `_invoke_live_assessment` imports the same 5 helpers
+   `update_status_assessment` calls (no parallel pipeline). Per-
+   objective Shield budget cap (`MONITOR_TRACKER_SHIELD_BUDGET=200`
+   default) with `shield_budget_exhausted_contexts` surface in the
+   cron summary. APScheduler hourly at :15 UTC (deliberately off
+   the top-of-hour Synisense Engine cron).
+   - `sprints/JC_MON_BACKGROUND_TRACKER.md`
+
+### End-of-round regression (all 8 cumulative proving slices)
+
+```
+jc_tl_gp_ship_slice                           GREEN
+jc_tl_spread_heatmap_and_auto_tune_slice      GREEN
+jc_wave3_axios_migration_subsprint_1_slice    GREEN
+jc_phase_5_6_1_csrf_rig_audit_slice           GREEN
+jc_wave3_axios_migration_subsprint_2_slice    GREEN
+jc_wave3_origin_briefs_monitor_slice          GREEN
+jc_owner_digest_v0_slice                      GREEN
+jc_mon_background_tracker_slice               GREEN
+```
+
+### Halt-and-Surface decisions this round
+
+- GridFS backfill `--commit` — 24h window from Phase 3 deploy has
+  NOT elapsed; deferred to next-session trigger.
+- `monitor_evidence_fingerprints` collection — surfaced to the
+  user per the new-field discipline; accepted as v0 scope.
+- Owner Digest v0 owner-tz defaults to UTC (per-context resolver in
+  v0.5).
+- 28 broad-suite "newly red" tests after the CSRF fix — all pass
+  in isolation; pre-existing cross-test pollution flakes (FTT-002..026
+  in the tracker), unrelated to the fix.
+
+
 ## 2026-06-25 — AUTONOMOUS OVERNIGHT RUN (7 stages closed, 1 halt-and-surface)
 
 The user moved to autonomous mode partway through 2026-06-25 with
