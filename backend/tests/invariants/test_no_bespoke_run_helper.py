@@ -345,13 +345,13 @@ def test_grandfather_list_does_not_drift():
 # guard but added here to lock the Cluster-F closure schedule)
 # ─────────────────────────────────────────────────────────────────────
 
-# Hard ceiling: M1 entries must be <= 11 (post-F.4 baseline, ratcheted
-# down from the original 13 by F.4's 2-file close) and trend DOWN as
-# Cluster-F sub-sprints ship. M2 entries must be <= 28 (baseline) and
-# trend DOWN as Cluster-G dispatches address them. The ceiling LOCKS
-# the trajectory; a new addition to either YAML section pushes the
-# count past the ceiling and fails the build.
-M1_CEILING = 11
+# Hard ceiling: M1 entries must be <= 8 (post-F.5 baseline, ratcheted
+# down from 13 → 11 (F.4) → 8 (F.5) as Cluster-F sub-sprints ship).
+# M2 entries must be <= 28 (baseline) and trend DOWN as Cluster-G
+# dispatches address them. The ceiling LOCKS the trajectory; a new
+# addition to either YAML section pushes the count past the ceiling
+# and fails the build.
+M1_CEILING = 8
 M2_CEILING = 28
 
 

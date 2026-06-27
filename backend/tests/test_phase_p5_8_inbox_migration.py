@@ -14,10 +14,14 @@ Covers:
     - body / sender / subject sanitization on render is client-side
       (not tested here — visual concern; we just verify storage of
       the raw payload).
+
+Cluster-F.5 (2026-06-27): converted from sync `_run`-helper pattern to
+`@pytest.mark.asyncio + async def` so tests bind to the session-scoped
+loop instead of creating local loops that bind Motor to the wrong loop
+(same root cause as Cluster-E's FTT-023 closure).
 """
 from __future__ import annotations
 
-import asyncio
 import base64
 import os
 import sys
@@ -37,10 +41,6 @@ from httpx import ASGITransport, AsyncClient  # noqa: E402
 from server import app  # noqa: E402
 
 
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
-
-
 def _dbc():
     return pymongo.MongoClient(os.environ["MONGO_URL"])[os.environ["DB_NAME"]]
 
@@ -51,22 +51,21 @@ def _basic_auth_header(user: str, pw: str) -> str:
 
 
 # ─── P5.8.1 SendGrid endpoint auth ────────────────────────────────────
-def test_p5_8_1_sendgrid_inbound_rejects_no_auth():
-    async def _do():
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-        ) as ac:
-            return await ac.post(
-                "/api/inbound/sendgrid",
-                files={"from": (None, "test@example.com")},
-            )
-
-    r = _run(_do())
+@pytest.mark.asyncio
+async def test_p5_8_1_sendgrid_inbound_rejects_no_auth():
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        r = await ac.post(
+            "/api/inbound/sendgrid",
+            files={"from": (None, "test@example.com")},
+        )
     assert r.status_code == 401, r.text
 
 
-def test_p5_8_1_sendgrid_inbound_rejects_wrong_auth():
+@pytest.mark.asyncio
+async def test_p5_8_1_sendgrid_inbound_rejects_wrong_auth():
     """If SENDGRID_INBOUND_AUTH_USERNAME / _PASSWORD are set in env,
     a wrong Basic Auth header must 401. If they aren't set, the auth
     layer accepts anything (development convenience) — that's the
@@ -75,36 +74,32 @@ def test_p5_8_1_sendgrid_inbound_rejects_wrong_auth():
             os.environ.get("SENDGRID_INBOUND_AUTH_PASSWORD")):
         pytest.skip("SENDGRID_INBOUND_AUTH_USERNAME/_PASSWORD not configured")
 
-    async def _do():
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        r = await ac.post(
+            "/api/inbound/sendgrid",
+            headers={"Authorization": _basic_auth_header("wrong", "creds")},
+            files={"from": (None, "test@example.com")},
+        )
+    assert r.status_code == 401, r.text
+
+
+@pytest.mark.asyncio
+async def test_p5_8_1_inbound_provider_flag_disables_sendgrid():
+    """INBOUND_PROVIDER=postmark → SendGrid endpoint returns 410."""
+    os.environ["INBOUND_PROVIDER"] = "postmark"
+    try:
         async with AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://testserver",
         ) as ac:
-            return await ac.post(
+            r = await ac.post(
                 "/api/inbound/sendgrid",
-                headers={"Authorization": _basic_auth_header("wrong", "creds")},
+                headers={"Authorization": _basic_auth_header("any", "any")},
                 files={"from": (None, "test@example.com")},
             )
-
-    r = _run(_do())
-    assert r.status_code == 401, r.text
-
-
-def test_p5_8_1_inbound_provider_flag_disables_sendgrid():
-    """INBOUND_PROVIDER=postmark → SendGrid endpoint returns 410."""
-    os.environ["INBOUND_PROVIDER"] = "postmark"
-    try:
-        async def _do():
-            async with AsyncClient(
-                transport=ASGITransport(app=app),
-                base_url="http://testserver",
-            ) as ac:
-                return await ac.post(
-                    "/api/inbound/sendgrid",
-                    headers={"Authorization": _basic_auth_header("any", "any")},
-                    files={"from": (None, "test@example.com")},
-                )
-        r = _run(_do())
         assert r.status_code == 410, r.text
         body = r.json()
         assert body["detail"]["error"] == "inbound_provider_disabled"
@@ -113,7 +108,8 @@ def test_p5_8_1_inbound_provider_flag_disables_sendgrid():
 
 
 # ─── P5.8.2 Admin inbox capture ───────────────────────────────────────
-def test_p5_8_2_capture_for_admin_inbox_writes_row():
+@pytest.mark.asyncio
+async def test_p5_8_2_capture_for_admin_inbox_writes_row():
     from routers.admin_inbox import capture_for_admin_inbox
 
     payload = {
@@ -127,10 +123,7 @@ def test_p5_8_2_capture_for_admin_inbox_writes_row():
         "_provider": "sendgrid",
     }
 
-    async def _do():
-        return await capture_for_admin_inbox(payload, routing_result="pending")
-
-    msg_id = _run(_do())
+    msg_id = await capture_for_admin_inbox(payload, routing_result="pending")
     assert msg_id, "capture returned no id"
     row = _dbc().admin_inbox_messages.find_one({"id": msg_id}, {"_id": 0})
     assert row is not None
@@ -141,39 +134,36 @@ def test_p5_8_2_capture_for_admin_inbox_writes_row():
     assert row["provider"] == "sendgrid"
 
 
-def test_p5_8_2_list_requires_admin():
-    async def _do():
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-        ) as ac:
-            return await ac.get("/api/admin/inbox/messages")
-
-    r = _run(_do())
+@pytest.mark.asyncio
+async def test_p5_8_2_list_requires_admin():
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        r = await ac.get("/api/admin/inbox/messages")
     # Auth gate fires before any handler logic. Status: 401 (no
     # session) or 403 (session-but-not-admin).
     assert r.status_code in (401, 403), r.text
 
 
-def test_p5_8_2_detail_404_when_missing():
+@pytest.mark.asyncio
+async def test_p5_8_2_detail_404_when_missing():
     """A super-admin session is required to hit this endpoint, so the
     behaviour we lock here is the route-existence + the auth gate.
     The 404 path requires both auth AND a missing row; for unit-test
     speed we just verify the route is wired and protected."""
-    async def _do():
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-        ) as ac:
-            return await ac.get(f"/api/admin/inbox/messages/{uuid.uuid4().hex}")
-
-    r = _run(_do())
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        r = await ac.get(f"/api/admin/inbox/messages/{uuid.uuid4().hex}")
     # No session → auth gate trips first.
     assert r.status_code in (401, 403), r.text
 
 
 # ─── P5.8.2 Capture preserves multi-recipient + caps body sizes ───────
-def test_p5_8_2_capture_caps_body_at_64kb_text():
+@pytest.mark.asyncio
+async def test_p5_8_2_capture_caps_body_at_64kb_text():
     from routers.admin_inbox import capture_for_admin_inbox
 
     huge_text = "X" * (200 * 1024)  # 200KB
@@ -187,10 +177,7 @@ def test_p5_8_2_capture_caps_body_at_64kb_text():
         "_provider": "sendgrid",
     }
 
-    async def _do():
-        return await capture_for_admin_inbox(payload, routing_result="pending")
-
-    msg_id = _run(_do())
+    msg_id = await capture_for_admin_inbox(payload, routing_result="pending")
     row = _dbc().admin_inbox_messages.find_one({"id": msg_id}, {"_id": 0})
     assert row is not None
     # Stored body must be capped at 64KB.

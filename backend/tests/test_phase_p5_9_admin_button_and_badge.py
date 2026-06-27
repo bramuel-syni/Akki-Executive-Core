@@ -1,7 +1,12 @@
-"""Phase P5.9.2 (2026-02) — admin inbox unread-count endpoint."""
+"""Phase P5.9.2 (2026-02) — admin inbox unread-count endpoint.
+
+Cluster-F.5 (2026-06-27): converted from sync `_run`-helper pattern to
+`@pytest.mark.asyncio + async def` so tests bind to the session-scoped
+loop instead of creating local loops that bind Motor to the wrong loop
+(same root cause as Cluster-E's FTT-023 closure).
+"""
 from __future__ import annotations
 
-import asyncio
 import os
 import sys
 import uuid
@@ -9,6 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pymongo
+import pytest
 
 REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO / "backend"))
@@ -20,24 +26,19 @@ from httpx import ASGITransport, AsyncClient  # noqa: E402
 from server import app  # noqa: E402
 
 
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
-
-
-def test_p5_9_2_unread_count_requires_super_admin():
+@pytest.mark.asyncio
+async def test_p5_9_2_unread_count_requires_super_admin():
     """The endpoint is super-admin only. Unauthenticated → 401/403."""
-    async def _do():
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-        ) as ac:
-            return await ac.get("/api/admin/inbox/unread-count")
-
-    r = _run(_do())
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        r = await ac.get("/api/admin/inbox/unread-count")
     assert r.status_code in (401, 403), r.text
 
 
-def test_p5_9_2_capture_updates_count_after_cache_bust():
+@pytest.mark.asyncio
+async def test_p5_9_2_capture_updates_count_after_cache_bust():
     """A direct capture call should bust the cache so the next call
     to `get_unread_count` reflects the new row."""
     from routers.admin_inbox import capture_for_admin_inbox, _unread_count_cache
@@ -56,10 +57,7 @@ def test_p5_9_2_capture_updates_count_after_cache_bust():
         "_provider": "sendgrid",
     }
 
-    async def _do():
-        return await capture_for_admin_inbox(payload, routing_result="pending")
-
-    msg_id = _run(_do())
+    msg_id = await capture_for_admin_inbox(payload, routing_result="pending")
     assert msg_id, "capture failed"
 
     # Cache MUST be busted by the capture helper.
@@ -75,7 +73,12 @@ def test_p5_9_2_capture_updates_count_after_cache_bust():
 def test_p5_9_2_cache_busted_when_status_flips_to_read():
     """When the admin marks a message read via the status endpoint
     (or the implicit open-marks-read transition), the cache must be
-    invalidated so the badge count drops without waiting the 30s TTL."""
+    invalidated so the badge count drops without waiting the 30s TTL.
+
+    Pure-Python contract test — no asyncio surface, stays sync per
+    Cluster-F.2 heuristic. Exercises only direct dict mutation +
+    pymongo writes; no HTTP / no async function calls.
+    """
     from routers.admin_inbox import _unread_count_cache
 
     dbc = pymongo.MongoClient(os.environ["MONGO_URL"])[os.environ["DB_NAME"]]
@@ -117,16 +120,14 @@ def test_p5_9_2_cache_busted_when_status_flips_to_read():
     assert ai._unread_count_cache["expires_at"] == 0
 
 
-def test_p5_9_2_endpoint_route_registered():
+@pytest.mark.asyncio
+async def test_p5_9_2_endpoint_route_registered():
     """The /unread-count route should be registered on the app
     (return 401/403 — confirms wiring, not behaviour)."""
-    async def _do():
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-        ) as ac:
-            return await ac.get("/api/admin/inbox/unread-count")
-
-    r = _run(_do())
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        r = await ac.get("/api/admin/inbox/unread-count")
     # Anything other than 404 confirms the route exists.
     assert r.status_code != 404, "unread-count endpoint not registered"

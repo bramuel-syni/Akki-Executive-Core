@@ -15,18 +15,13 @@ Asserts:
 
 Live MS endpoints are NEVER hit — token exchange + JWKS are mocked.
 
-P2 A.2 quality bar — every test must pass under file-level pytest.
-The test file uses `httpx.AsyncClient` + `ASGITransport` driven by the
-session-scoped event loop in conftest.py, which keeps Motor's async
-client bound to a single loop for the lifetime of the suite. (The
-previous module-level `TestClient(app)` pattern spawned a fresh
-asyncio loop per request and broke Motor on the 2nd hit — see the
-`RuntimeError: Event loop is closed` trace in the iter1 fork
-handoff.)
+Cluster-F.5 (2026-06-27): converted from sync `_run`-helper pattern to
+`@pytest.mark.asyncio + async def` so tests bind to the session-scoped
+loop instead of creating local loops that bind Motor to the wrong loop
+(same root cause as Cluster-E's FTT-023 closure).
 """
 from __future__ import annotations
 
-import asyncio
 import base64
 import hashlib
 import os
@@ -69,20 +64,16 @@ async def _async_get(path: str, **kwargs):
         return await ac.get(path, **kwargs)
 
 
-def _run(coro):
-    """Run an awaitable on the session event loop (defined in conftest.py)."""
-    return asyncio.get_event_loop().run_until_complete(coro)
-
-
 def _authorize_url_params(url: str) -> dict:
     return {k: v[0] for k, v in parse_qs(urlparse(url).query).items()}
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("path", ["/api/auth/oauth/microsoft/start"])
-def test_a2_start_returns_code_challenge_S256(path):
+async def test_a2_start_returns_code_challenge_S256(path):
     """The authorize_url carries the PKCE challenge + method on every
     non-probe /start call."""
-    r = _run(_async_get(path))
+    r = await _async_get(path)
     assert r.status_code == 200, r.text
     data = r.json()
     assert "authorize_url" in data
@@ -94,27 +85,30 @@ def test_a2_start_returns_code_challenge_S256(path):
     assert 43 <= len(params["code_challenge"]) <= 128
 
 
-def test_a2_start_response_shape_unchanged():
+@pytest.mark.asyncio
+async def test_a2_start_response_shape_unchanged():
     """End-user shape is still {authorize_url, provider} — no
     verifier / sid / pkce metadata leaked."""
-    r = _run(_async_get("/api/auth/oauth/microsoft/start"))
+    r = await _async_get("/api/auth/oauth/microsoft/start")
     assert r.status_code == 200, r.text
     data = r.json()
     assert set(data.keys()) == {"authorize_url", "provider"}
 
 
-def test_a2_probe_returns_minimal_shape():
+@pytest.mark.asyncio
+async def test_a2_probe_returns_minimal_shape():
     """Probe mode skips PKCE generation entirely."""
-    r = _run(_async_get("/api/auth/oauth/microsoft/start?probe=1"))
+    r = await _async_get("/api/auth/oauth/microsoft/start?probe=1")
     assert r.status_code == 200
     data = r.json()
     assert data == {"configured": True, "provider": "microsoft"}
 
 
-def test_a2_pkce_verifier_persisted_in_mongo():
+@pytest.mark.asyncio
+async def test_a2_pkce_verifier_persisted_in_mongo():
     """After /start, the verifier MUST be in oauth_pkce_verifiers
     keyed by the sid encoded in the state JWT."""
-    r = _run(_async_get("/api/auth/oauth/microsoft/start"))
+    r = await _async_get("/api/auth/oauth/microsoft/start")
     assert r.status_code == 200, r.text
     params = _authorize_url_params(r.json()["authorize_url"])
     state = params["state"]
@@ -139,7 +133,11 @@ def test_a2_pkce_verifier_persisted_in_mongo():
 
 
 def test_a2_pkce_verifier_helpers_round_trip():
-    """Pure-function round-trip — verifier → challenge → S256 match."""
+    """Pure-function round-trip — verifier → challenge → S256 match.
+
+    Pure-Python helper test — no asyncio surface, stays sync per
+    Cluster-F.2 heuristic.
+    """
     from routers.auth_oauth import _ms_pkce_verifier, _ms_pkce_challenge
     v = _ms_pkce_verifier()
     assert 43 <= len(v) <= 128
@@ -150,7 +148,8 @@ def test_a2_pkce_verifier_helpers_round_trip():
     assert c == derived
 
 
-def test_a2_exchange_code_sends_code_verifier():
+@pytest.mark.asyncio
+async def test_a2_exchange_code_sends_code_verifier():
     """_ms_exchange_code MUST include `code_verifier` in the POST body
     when one is provided."""
     from routers import auth_oauth as ao
@@ -175,13 +174,14 @@ def test_a2_exchange_code_sends_code_verifier():
 
     with patch.object(ao, "httpx") as mock_httpx:
         mock_httpx.AsyncClient = lambda *a, **kw: _FakeClient()
-        _run(ao._ms_exchange_code("FAKE_CODE", code_verifier="FAKE_VERIFIER_12345"))
+        await ao._ms_exchange_code("FAKE_CODE", code_verifier="FAKE_VERIFIER_12345")
     assert captured["data"]["code_verifier"] == "FAKE_VERIFIER_12345"
     assert captured["data"]["code"] == "FAKE_CODE"
     assert captured["data"]["grant_type"] == "authorization_code"
 
 
-def test_a2_callback_rejects_when_verifier_missing():
+@pytest.mark.asyncio
+async def test_a2_callback_rejects_when_verifier_missing():
     """A callback whose state has no corresponding verifier in Mongo
     must reject with microsoft_oauth_pkce_state_invalid (replay or
     expiry protection)."""
@@ -196,10 +196,10 @@ def test_a2_callback_rejects_when_verifier_missing():
          "exp": int(time.time()) + _MS_STATE_TTL_SECONDS},
         JWT_SECRET, algorithm="HS256",
     )
-    r = _run(_async_get(
+    r = await _async_get(
         f"/api/auth/oauth/microsoft/callback?code=FAKE_CODE&state={fake_state}",
         follow_redirects=False,
-    ))
+    )
     assert r.status_code == 400
     detail = r.json()["detail"]
     assert detail["error"] == "microsoft_oauth_pkce_state_invalid"

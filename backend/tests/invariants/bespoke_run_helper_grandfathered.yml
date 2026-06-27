@@ -54,11 +54,6 @@
 
 # M1 entries — module-level `def _run` helper
 m1_entries:
-  - file: backend/tests/test_phase_p2_a2_microsoft_pkce.py
-    lineno: 72
-    cluster_f_sub_sprint: F.5
-    reason: Cluster-F.5 will close (microsoft_pkce + inbox_migration + admin_button_and_badge)
-
   - file: backend/tests/test_phase_p2_b2_rate_limits.py
     lineno: 24
     cluster_f_sub_sprint: "Cluster-G (post-F)"
@@ -93,16 +88,6 @@ m1_entries:
     lineno: 42
     cluster_f_sub_sprint: "Cluster-G (post-F)"
     reason: Discovered by 2026-06-27 invariant baseline scan; missed by Cluster-F scope memo §0 survey
-
-  - file: backend/tests/test_phase_p5_8_inbox_migration.py
-    lineno: 40
-    cluster_f_sub_sprint: F.5
-    reason: Cluster-F.5 will close (microsoft_pkce + inbox_migration + admin_button_and_badge)
-
-  - file: backend/tests/test_phase_p5_9_admin_button_and_badge.py
-    lineno: 23
-    cluster_f_sub_sprint: F.5
-    reason: Cluster-F.5 will close (microsoft_pkce + inbox_migration + admin_button_and_badge)
 
   - file: backend/tests/test_phase_p5_corrections.py
     lineno: 24
