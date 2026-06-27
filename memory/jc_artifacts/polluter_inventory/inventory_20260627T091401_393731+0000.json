@@ -1,0 +1,35 @@
+{
+  "closure_status": {
+    "all_grandfathered_match_live": true
+  },
+  "drift": {
+    "new_m1_ungrandfathered": [],
+    "new_m2_ungrandfathered": [],
+    "stale_m1_in_yaml": [],
+    "stale_m2_in_yaml": []
+  },
+  "generated_at": "2026-06-27T09:14:01.393731+00:00",
+  "grandfather": {
+    "m1_ceiling": 5,
+    "m1_ceiling_proximity": "5/5",
+    "m1_entry_count": 5,
+    "m2_ceiling": 26,
+    "m2_ceiling_proximity": "26/26",
+    "m2_entry_count": 26
+  },
+  "live_scan": {
+    "m1_file_count": 5,
+    "m2_file_count": 8,
+    "m2_site_count": 26
+  },
+  "sub_sprint_rollup": {
+    "A+D fix preserves this asyncio.run with snapshot/restore": {
+      "m1": 0,
+      "m2": 1
+    },
+    "Cluster-G (post-F)": {
+      "m1": 5,
+      "m2": 25
+    }
+  }
+}
