@@ -94,16 +94,6 @@ m1_entries:
     cluster_f_sub_sprint: "Cluster-G (post-F)"
     reason: Discovered by 2026-06-27 invariant baseline scan; missed by Cluster-F scope memo §0 survey
 
-  - file: backend/tests/test_phase_p5_7_5_bounce_webhook.py
-    lineno: 21
-    cluster_f_sub_sprint: F.4
-    reason: Cluster-F.4 will close (bounce_webhook + waitlist_reminder)
-
-  - file: backend/tests/test_phase_p5_7_waitlist_reminder.py
-    lineno: 36
-    cluster_f_sub_sprint: F.4
-    reason: Cluster-F.4 will close (bounce_webhook + waitlist_reminder)
-
   - file: backend/tests/test_phase_p5_8_inbox_migration.py
     lineno: 40
     cluster_f_sub_sprint: F.5

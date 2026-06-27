@@ -10,10 +10,14 @@ Covers:
   - run_expiry_reminder_sweep is idempotent — second run sends 0.
   - Reminder body word-count ≤60.
   - Decline-with-waitlist body word-count ≤80.
+
+Cluster-F.4 (2026-06-27): converted from sync `_run`-helper pattern to
+`@pytest.mark.asyncio + async def` so tests bind to the session-scoped
+loop instead of creating local loops that bind Motor to the wrong loop
+(same root cause as Cluster-E's FTT-023 closure).
 """
 from __future__ import annotations
 
-import asyncio
 import os
 import sys
 import uuid
@@ -33,96 +37,83 @@ from httpx import ASGITransport, AsyncClient  # noqa: E402
 from server import app  # noqa: E402
 
 
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
-
-
 # ─── Waitlist endpoint ────────────────────────────────────────────────
-def test_p5_7_6_waitlist_accepts_valid_email():
+@pytest.mark.asyncio
+async def test_p5_7_6_waitlist_accepts_valid_email():
     email = f"p5-7-waitlist-{uuid.uuid4().hex[:6]}@example.com"
     fake_ip = f"203.0.{uuid.uuid4().int % 200 + 50}.{uuid.uuid4().int % 250 + 1}"
 
-    async def _do():
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-        ) as ac:
-            return await ac.post(
-                "/api/cohort/waitlist",
-                headers={"X-Forwarded-For": fake_ip},
-                json={"email": email},
-            )
-
-    r = _run(_do())
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        r = await ac.post(
+            "/api/cohort/waitlist",
+            headers={"X-Forwarded-For": fake_ip},
+            json={"email": email},
+        )
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["ok"] is True
     assert body["already_present"] is False
 
 
-def test_p5_7_6_waitlist_idempotent_on_repeat_email():
+@pytest.mark.asyncio
+async def test_p5_7_6_waitlist_idempotent_on_repeat_email():
     email = f"p5-7-waitlist-idem-{uuid.uuid4().hex[:6]}@example.com"
     fake_ip = f"203.0.{uuid.uuid4().int % 200 + 50}.{uuid.uuid4().int % 250 + 1}"
 
-    async def _do():
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-        ) as ac:
-            r1 = await ac.post(
-                "/api/cohort/waitlist",
-                headers={"X-Forwarded-For": fake_ip},
-                json={"email": email},
-            )
-            r2 = await ac.post(
-                "/api/cohort/waitlist",
-                headers={"X-Forwarded-For": fake_ip},
-                json={"email": email},
-            )
-            return r1, r2
-
-    r1, r2 = _run(_do())
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        r1 = await ac.post(
+            "/api/cohort/waitlist",
+            headers={"X-Forwarded-For": fake_ip},
+            json={"email": email},
+        )
+        r2 = await ac.post(
+            "/api/cohort/waitlist",
+            headers={"X-Forwarded-For": fake_ip},
+            json={"email": email},
+        )
     assert r1.status_code == 200
     assert r2.status_code == 200
     assert r2.json()["already_present"] is True
 
 
-def test_p5_7_6_waitlist_rejects_malformed_email():
+@pytest.mark.asyncio
+async def test_p5_7_6_waitlist_rejects_malformed_email():
     fake_ip = f"203.0.{uuid.uuid4().int % 200 + 50}.{uuid.uuid4().int % 250 + 1}"
 
-    async def _do():
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-        ) as ac:
-            return await ac.post(
-                "/api/cohort/waitlist",
-                headers={"X-Forwarded-For": fake_ip},
-                json={"email": "not-an-email"},
-            )
-
-    r = _run(_do())
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        r = await ac.post(
+            "/api/cohort/waitlist",
+            headers={"X-Forwarded-For": fake_ip},
+            json={"email": "not-an-email"},
+        )
     # Pydantic EmailStr rejects → 422; the body validator also catches.
     assert r.status_code in (400, 422)
 
 
-def test_p5_7_6_waitlist_correlates_source_application_id():
+@pytest.mark.asyncio
+async def test_p5_7_6_waitlist_correlates_source_application_id():
     email = f"p5-7-waitlist-corr-{uuid.uuid4().hex[:6]}@example.com"
     app_id = f"p5-7-app-{uuid.uuid4().hex[:8]}"
     fake_ip = f"203.0.{uuid.uuid4().int % 200 + 50}.{uuid.uuid4().int % 250 + 1}"
 
-    async def _do():
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-        ) as ac:
-            return await ac.post(
-                "/api/cohort/waitlist",
-                headers={"X-Forwarded-For": fake_ip},
-                json={"email": email, "source_application_id": app_id},
-            )
-
-    r = _run(_do())
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        r = await ac.post(
+            "/api/cohort/waitlist",
+            headers={"X-Forwarded-For": fake_ip},
+            json={"email": email, "source_application_id": app_id},
+        )
     assert r.status_code == 200
     # Verify the stored row carries the correlation.
     dbc = pymongo.MongoClient(os.environ["MONGO_URL"])[os.environ["DB_NAME"]]
@@ -133,8 +124,9 @@ def test_p5_7_6_waitlist_correlates_source_application_id():
 
 # ─── Decline-with-waitlist body ───────────────────────────────────────
 def test_p5_7_6_send_decline_with_waitlist_url_switches_body():
-    """When `waitlist_url` is passed, the body must include the
-    door-back line. When omitted, the original body is unchanged."""
+    """Pure-Python format-string contract — no asyncio surface, stays
+    sync per Cluster-F.2 heuristic.
+    """
     from services.cohort_email import (
         DECLINE_BODY, DECLINE_BODY_WITH_WAITLIST,
     )
@@ -149,6 +141,9 @@ def test_p5_7_6_send_decline_with_waitlist_url_switches_body():
 
 # ─── HTML escape ──────────────────────────────────────────────────────
 def test_p5_7_html_escapes_first_name_and_magic_link():
+    """Pure-Python HTML-rendering contract — no asyncio surface, stays
+    sync per Cluster-F.2 heuristic.
+    """
     from services.cohort_email_html import (
         render_approval_html, render_decline_html, render_receipt_html,
     )
@@ -167,7 +162,8 @@ def test_p5_7_html_escapes_first_name_and_magic_link():
 
 
 # ─── Reminder sweep idempotency ───────────────────────────────────────
-def test_p5_7_4_reminder_sweep_idempotent():
+@pytest.mark.asyncio
+async def test_p5_7_4_reminder_sweep_idempotent():
     """Seed a magic_link row at day-10.5; run the sweep twice; first
     run sends, second run finds nothing."""
     dbc = pymongo.MongoClient(os.environ["MONGO_URL"])[os.environ["DB_NAME"]]
@@ -190,13 +186,9 @@ def test_p5_7_4_reminder_sweep_idempotent():
         "consumed_at": None,
     })
 
-    async def _do():
-        from routers.cohort_expiry_reminder import run_expiry_reminder_sweep
-        first = await run_expiry_reminder_sweep()
-        second = await run_expiry_reminder_sweep()
-        return first, second
-
-    first, second = _run(_do())
+    from routers.cohort_expiry_reminder import run_expiry_reminder_sweep
+    first = await run_expiry_reminder_sweep()
+    second = await run_expiry_reminder_sweep()
     # First run picks up the seeded row.
     assert first["candidates_scanned"] >= 1
     # Stamped now → second run scans 0.
@@ -210,7 +202,11 @@ def test_p5_7_4_reminder_sweep_idempotent():
 def test_p5_7_self_check_passes():
     """`cohort_email._self_check()` runs at import; if any word cap
     is exceeded the import itself raises. This test re-runs it to be
-    explicit about the contract."""
+    explicit about the contract.
+
+    Pure-Python word-counting — no asyncio surface, stays sync per
+    Cluster-F.2 heuristic.
+    """
     from services.cohort_email import _self_check
     counts = _self_check()
     # All known kinds present.
