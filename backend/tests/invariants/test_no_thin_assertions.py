@@ -336,3 +336,50 @@ def test_grandfather_list_does_not_drift():
         lines.append("Remove these entries from "
                      "`backend/tests/invariants/thin_assertions_grandfathered.yml`.")
         pytest.fail("\n".join(lines))
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Hard count-ceiling enforcement (Step 4 audit fix 2026-06-27)
+#
+# Discovered during 2026-06-27 Step 4 audit: the original invariant
+# allowed unbounded growth of the grandfather YAML — a careless agent
+# could add new thin-assertion tests and silently grandfather them
+# past the 10-finding HALT threshold that the original ship-memo
+# documented. The ship-memo's HALT threshold was a one-shot baseline
+# check, NOT a continuous enforcement. This function adds the
+# continuous enforcement at the ship-time ceiling.
+# ─────────────────────────────────────────────────────────────────────
+
+GRANDFATHER_CEILING = 10
+
+
+def test_grandfather_count_below_ceiling():
+    """Hard ceiling: thin-assertion grandfather YAML cannot quietly
+    grow past the ship-time HALT threshold of 10 entries.
+
+    Adding a new entry is an audit-level change. To stay within the
+    ceiling, the new test MUST be either:
+      - rewritten with a real assertion (preferred), or
+      - marked with `@pytest.mark.acceptable_thin_assertion` + `# reason:`
+        comment (the marker exemption path).
+
+    Silently growing the grandfather YAML is forbidden. The ceiling
+    LOCKS the rewrite trajectory; FTT-027..035 close-out reduces the
+    count toward zero, never up.
+    """
+    if yaml is None:
+        pytest.skip("PyYAML not installed; cannot read grandfather list")
+
+    grandfathered = _load_grandfather()
+    if len(grandfathered) > GRANDFATHER_CEILING:
+        pytest.fail(
+            f"\n🟥 Thin-assertion grandfather ceiling breached.\n\n"
+            f"Grandfather count: {len(grandfathered)} > ceiling {GRANDFATHER_CEILING}\n\n"
+            f"Resolution options:\n"
+            f"  (1) Rewrite the new test with a real assertion (preferred).\n"
+            f"  (2) Mark the test with `@pytest.mark.acceptable_thin_assertion`\n"
+            f"      + `# reason:` comment within 3 lines of the def.\n\n"
+            f"Silently adding to `thin_assertions_grandfathered.yml` is\n"
+            f"forbidden — the YAML count must trend DOWN as FTT-027..035\n"
+            f"close, never UP."
+        )

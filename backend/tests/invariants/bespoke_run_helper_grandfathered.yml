@@ -1,0 +1,290 @@
+# bespoke_run_helper_grandfathered.yml
+#
+# Canonical Spec: /app/memory/sprints/P5_7_FIX_SCOPE_CLUSTER_F.md §1.1
+#                 (Cluster-F sub-sprints F.3, F.4, F.5, F.6 ship the
+#                 mechanical sync→async conversion; this invariant
+#                 prevents the anti-pattern from re-introducing itself
+#                 in NEW test files AND tracks the closure of existing
+#                 polluter files)
+# Sprint memo:    /app/memory/sprints/INVARIANT_NO_BESPOKE_RUN_HELPER.md
+# Seeded by:      backend/scripts/jc_invariant_bespoke_run_helper_slice.py
+#                 baseline scan 2026-06-27 03:30 UTC
+#
+# This file grandfathers existing M1 + M2 polluter sites that existed
+# BEFORE the invariant shipped. The invariant catches two patterns:
+#
+#   M1: module-level `def _run(coro): return asyncio.get_event_loop()
+#       .run_until_complete(coro)` helper — the Cluster-E / Cluster-F
+#       wrong-loop-binding anti-pattern. 13 files currently carry this.
+#
+#   M2: `asyncio.run(...)` call inside a `test_*` function body —
+#       different fix shape (policy mutation / pure-Python pipeline
+#       call), but same broad-suite landmine risk. 28 sites across
+#       10 files currently carry this.
+#
+# Two-tier exemption (same shape as thin-assertion guard):
+#
+#   (a) **File-based grandfather list** — this file. Entries roll up
+#       to Cluster-F sub-sprint dispatches (F.3, F.4, F.5, F.6) for
+#       M1 closure; M2 sites that aren't Cluster-F-scoped need their
+#       own follow-up sprint to evaluate.
+#
+#   (b) **In-source marker** — `@pytest.mark.acceptable_bespoke_run`
+#       + a `# reason:` comment within 3 lines of the offending call /
+#       helper def. For genuinely intentional uses (e.g. pure-Python
+#       coroutine that has no Motor I/O and is verified loop-isolated).
+#
+# REMOVAL PROTOCOL: when a Cluster-F sub-sprint ships, its target
+# files MUST be removed from this YAML simultaneously. The companion
+# drift detector (test_grandfather_list_does_not_drift) will FAIL the
+# build if a file appears here but the pattern is no longer present
+# (i.e. test was converted but the grandfather entry forgotten).
+#
+# ─────────────────────────────────────────────────────────────────────
+# DISCOVERY NOTE (2026-06-27): the Cluster-F scope memo §0 surveyed
+# 14 files. This invariant's baseline scan surfaced 23 distinct files
+# carrying the M1 / M2 patterns — 9 MORE than the scope memo
+# identified. Documented as a scope-correction finding in the sprint
+# memo. Closure trajectory: F.2 (3 files) + F.1 (2 files) shipped;
+# F.3 + F.4 + F.5 + F.6 will close 9 more M1 + 1 M2 file = 10 files;
+# the additional 5 M1 (rate_limits, mfa, cohort_funnel,
+# csrf_cookie_domain, corrections) + ~9 M2 files surfaced by THIS
+# scan need a future "Cluster-G" sub-sprint dispatch.
+# ─────────────────────────────────────────────────────────────────────
+
+# M1 entries — module-level `def _run` helper
+m1_entries:
+  - file: backend/tests/test_phase_p2_a2_microsoft_pkce.py
+    lineno: 72
+    cluster_f_sub_sprint: F.5
+    reason: Cluster-F.5 will close (microsoft_pkce + inbox_migration + admin_button_and_badge)
+
+  - file: backend/tests/test_phase_p2_b2_rate_limits.py
+    lineno: 24
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: Discovered by 2026-06-27 invariant baseline scan; missed by Cluster-F scope memo §0 survey
+
+  - file: backend/tests/test_phase_p3_1_csrf.py
+    lineno: 21
+    cluster_f_sub_sprint: F.3
+    reason: Cluster-F.3 will close (csrf + session_timeout + session_reauth)
+
+  - file: backend/tests/test_phase_p3_3_mfa.py
+    lineno: 25
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: Discovered by 2026-06-27 invariant baseline scan; missed by Cluster-F scope memo §0 survey
+
+  - file: backend/tests/test_phase_p3_4_session_timeout.py
+    lineno: 25
+    cluster_f_sub_sprint: F.3
+    reason: Cluster-F.3 will close (csrf + session_timeout + session_reauth)
+
+  - file: backend/tests/test_phase_p4_cohort_funnel.py
+    lineno: 31
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: Discovered by 2026-06-27 invariant baseline scan; missed by Cluster-F scope memo §0 survey
+
+  - file: backend/tests/test_phase_p5_5_session_reauth.py
+    lineno: 46
+    cluster_f_sub_sprint: F.3
+    reason: Cluster-F.3 will close (csrf + session_timeout + session_reauth)
+
+  - file: backend/tests/test_phase_p5_6_csrf_cookie_domain.py
+    lineno: 42
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: Discovered by 2026-06-27 invariant baseline scan; missed by Cluster-F scope memo §0 survey
+
+  - file: backend/tests/test_phase_p5_7_5_bounce_webhook.py
+    lineno: 21
+    cluster_f_sub_sprint: F.4
+    reason: Cluster-F.4 will close (bounce_webhook + waitlist_reminder)
+
+  - file: backend/tests/test_phase_p5_7_waitlist_reminder.py
+    lineno: 36
+    cluster_f_sub_sprint: F.4
+    reason: Cluster-F.4 will close (bounce_webhook + waitlist_reminder)
+
+  - file: backend/tests/test_phase_p5_8_inbox_migration.py
+    lineno: 40
+    cluster_f_sub_sprint: F.5
+    reason: Cluster-F.5 will close (microsoft_pkce + inbox_migration + admin_button_and_badge)
+
+  - file: backend/tests/test_phase_p5_9_admin_button_and_badge.py
+    lineno: 23
+    cluster_f_sub_sprint: F.5
+    reason: Cluster-F.5 will close (microsoft_pkce + inbox_migration + admin_button_and_badge)
+
+  - file: backend/tests/test_phase_p5_corrections.py
+    lineno: 24
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: Discovered by 2026-06-27 invariant baseline scan; missed by Cluster-F scope memo §0 survey
+
+# M2 entries — asyncio.run(...) inside a test_* function body
+m2_entries:
+  - file: backend/tests/test_iter39_briefings_objective_check.py
+    func: test_clear_then_mark_read_manual
+    lineno: 75
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter39_briefings_objective_check.py
+    func: test_objective_check_lifecycle_seeded
+    lineno: 174
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter39_briefings_objective_check.py
+    func: test_objective_check_lifecycle_seeded
+    lineno: 210
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter39_briefings_objective_check.py
+    func: test_objective_check_skip_dismisses
+    lineno: 227
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter39_briefings_objective_check.py
+    func: test_objective_check_skip_dismisses
+    lineno: 249
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter39_briefings_objective_check.py
+    func: test_objective_check_invalid_answer
+    lineno: 266
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter53_deep_tier_minutes.py
+    func: test_quota_all_surfaces
+    lineno: 86
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter53_deep_tier_minutes.py
+    func: test_brief_non_deep_does_not_decrement
+    lineno: 113
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter53_deep_tier_minutes.py
+    func: test_brief_deep_decrements_and_uses_opus
+    lineno: 128
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter53_deep_tier_minutes.py
+    func: test_brief_deep_quota_exhausted_falls_back
+    lineno: 149
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter53_deep_tier_minutes.py
+    func: test_brief_deep_quota_exhausted_falls_back
+    lineno: 166
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter53_deep_tier_minutes.py
+    func: test_seed_then_idempotent
+    lineno: 175
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter53_deep_tier_minutes.py
+    func: test_400_when_no_actions
+    lineno: 220
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter53_deep_tier_minutes.py
+    func: test_400_when_no_actions
+    lineno: 227
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter53_deep_tier_minutes.py
+    func: test_narrative_generates_persists
+    lineno: 235
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter54_llm_spend_quota_inbound.py
+    func: test_unique_index_exists
+    lineno: 126
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter54_llm_spend_quota_inbound.py
+    func: test_at_cap_and_under_cap_combined
+    lineno: 170
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter54_llm_spend_quota_inbound.py
+    func: test_eicar_attachment_rejected_and_audited
+    lineno: 257
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_iter54_llm_spend_quota_inbound.py
+    func: test_eicar_attachment_rejected_and_audited
+    lineno: 298
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_phase12_2_surfaces.py
+    func: test_paragraph_anchors_stable_through_redaction
+    lineno: 61
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_phase4_2_http_transport_smoke.py
+    func: test_http_mode_adapter_class_reconstructs_dto
+    lineno: 254
+    cluster_f_sub_sprint: "A+D fix preserves this asyncio.run with snapshot/restore"
+    reason: A+D fix wrapped this asyncio.run with env + loop-policy snapshot/restore; this M2 site is THE polluter that A+D's surgical fix neutralized. Pattern preserved as-is.
+
+  - file: backend/tests/test_phase_a_synisense_unification.py
+    func: test_synisense_adapter_returns_pipeline_shaped_tokens
+    lineno: 58
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_phase_a_synisense_unification.py
+    func: test_rehydrate_round_trips_via_synisense_helpers
+    lineno: 96
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_solva_v2_llm_adapter.py
+    func: test_synisense_runs_before_llm
+    lineno: 81
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_solva_v2_llm_adapter.py
+    func: test_adapter_refuses_when_synisense_fails
+    lineno: 125
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
+
+  - file: backend/tests/test_synisense_security.py
+    func: test_shield_reversible_produces_shield_map_id_only
+    lineno: 35
+    cluster_f_sub_sprint: F.6
+    reason: Cluster-F.6 will address (M2 outlier, Shield-adjacency HALT pre-armed)
+
+  - file: backend/tests/test_synisense_security.py
+    func: test_redact_mode_never_creates_shield_map
+    lineno: 52
+    cluster_f_sub_sprint: F.6
+    reason: Cluster-F.6 will address (M2 outlier, Shield-adjacency HALT pre-armed)
+
+  - file: backend/tests/test_synisense_surface_validation.py
+    func: test_real_pipeline_run_rejects_bad_subsurface
+    lineno: 78
+    cluster_f_sub_sprint: "Cluster-G (post-F)"
+    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
