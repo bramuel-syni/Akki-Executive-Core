@@ -20,10 +20,17 @@ stay on the same page". The actual pre-fix outcome was a bounce to
      unrecoverable loop. (root cause class (b))
 
 This file locks both fixes.
+
+Cluster-F.3 (2026-06-27): converted from sync `_run`-helper pattern to
+`@pytest.mark.asyncio + async def` so tests bind to the session-scoped
+loop instead of creating local loops that bind Motor to the wrong loop
+(same root cause as Cluster-E's FTT-023 closure). Risk verdict per
+advance scan memo §5: LOW (all timeout-related state injected via
+pymongo BEFORE the HTTP call; the one wall-clock assertion has a 2-min
+tolerance on a 1s test — 120× larger than any plausible async jitter).
 """
 from __future__ import annotations
 
-import asyncio
 import os
 import sys
 import uuid
@@ -41,10 +48,6 @@ load_dotenv(REPO / "backend" / ".env")
 
 from httpx import ASGITransport, AsyncClient  # noqa: E402
 from server import app  # noqa: E402
-
-
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
 
 
 def _make_account(prefix: str, password: str = "P5_5Pass!2026") -> dict:
@@ -70,35 +73,34 @@ def _make_account(prefix: str, password: str = "P5_5Pass!2026") -> dict:
     return doc
 
 
-def test_p5_5_login_bypasses_session_timeout_middleware():
+@pytest.mark.asyncio
+async def test_p5_5_login_bypasses_session_timeout_middleware():
     """/api/auth/login must be reachable even when the calling
     session is past its idle window. Without the bypass, the
     middleware returns 401 session_idle_timeout BEFORE the login
     handler runs, and the re-auth modal can never recover."""
     acc = _make_account("p5-5-bypass")
 
-    async def _do():
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-        ) as ac:
-            # First, prove the idle state by hitting a protected endpoint
-            # WITH a cookie that mimics a logged-in session. The bearer
-            # token isn't needed for the bypass assertion — we just
-            # need the middleware to see a token-carrying request to
-            # /api/auth/login.
-            from core import create_access_token
-            stale_tok = create_access_token(acc["id"], acc["email"])
-            return await ac.post(
-                "/api/auth/login",
-                headers={
-                    "Authorization": f"Bearer {stale_tok}",
-                    "Cookie": f"access_token={stale_tok}",
-                },
-                json={"email": acc["email"], "password": "P5_5Pass!2026"},
-            )
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        # First, prove the idle state by hitting a protected endpoint
+        # WITH a cookie that mimics a logged-in session. The bearer
+        # token isn't needed for the bypass assertion — we just
+        # need the middleware to see a token-carrying request to
+        # /api/auth/login.
+        from core import create_access_token
+        stale_tok = create_access_token(acc["id"], acc["email"])
+        r = await ac.post(
+            "/api/auth/login",
+            headers={
+                "Authorization": f"Bearer {stale_tok}",
+                "Cookie": f"access_token={stale_tok}",
+            },
+            json={"email": acc["email"], "password": "P5_5Pass!2026"},
+        )
 
-    r = _run(_do())
     # Must NOT be 401 session_idle_timeout — the bypass means the
     # request reached the login handler and the handler succeeded.
     assert r.status_code == 200, f"expected 200, got {r.status_code}: {r.text[:200]}"
@@ -107,7 +109,8 @@ def test_p5_5_login_bypasses_session_timeout_middleware():
     assert body.get("account", {}).get("email") == acc["email"]
 
 
-def test_p5_5_login_refreshes_last_activity_at():
+@pytest.mark.asyncio
+async def test_p5_5_login_refreshes_last_activity_at():
     """After a successful login, the FIRST subsequent protected
     request must NOT trip the idle check. This requires the login
     handler itself to write last_activity_at on the account doc —
@@ -124,24 +127,21 @@ def test_p5_5_login_refreshes_last_activity_at():
         pre_ts = pre_ts.replace(tzinfo=timezone.utc)
     assert (datetime.now(timezone.utc) - pre_ts) > timedelta(minutes=30)
 
-    async def _login_then_probe():
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-        ) as ac:
-            login_r = await ac.post(
-                "/api/auth/login",
-                json={"email": acc["email"], "password": "RefreshTest!2026"},
-            )
-            assert login_r.status_code == 200, login_r.text
-            new_tok = login_r.json()["access_token"]
-            probe = await ac.get(
-                "/api/auth/me",
-                headers={"Authorization": f"Bearer {new_tok}"},
-            )
-            return probe
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        login_r = await ac.post(
+            "/api/auth/login",
+            json={"email": acc["email"], "password": "RefreshTest!2026"},
+        )
+        assert login_r.status_code == 200, login_r.text
+        new_tok = login_r.json()["access_token"]
+        probe = await ac.get(
+            "/api/auth/me",
+            headers={"Authorization": f"Bearer {new_tok}"},
+        )
 
-    probe = _run(_login_then_probe())
     # The probe must NOT be a session timeout. If the login handler
     # didn't refresh last_activity_at, the middleware would still see
     # the 35-min-stale value and reject this call.
@@ -160,7 +160,8 @@ def test_p5_5_login_refreshes_last_activity_at():
     )
 
 
-def test_p5_5_login_wrong_password_still_returns_401_not_timeout():
+@pytest.mark.asyncio
+async def test_p5_5_login_wrong_password_still_returns_401_not_timeout():
     """A wrong-password attempt on an idle session must still return
     401 with the existing `Invalid email or password` message, NOT
     a session_idle_timeout — otherwise the SessionTimeoutGuard would
@@ -168,17 +169,15 @@ def test_p5_5_login_wrong_password_still_returns_401_not_timeout():
     stay open with an error'."""
     acc = _make_account("p5-5-wrong-pw")
 
-    async def _do():
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-        ) as ac:
-            return await ac.post(
-                "/api/auth/login",
-                json={"email": acc["email"], "password": "WrongPassword!2026"},
-            )
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        r = await ac.post(
+            "/api/auth/login",
+            json={"email": acc["email"], "password": "WrongPassword!2026"},
+        )
 
-    r = _run(_do())
     assert r.status_code == 401
     body = r.json()
     detail = body.get("detail")
@@ -192,18 +191,17 @@ def test_p5_5_login_wrong_password_still_returns_401_not_timeout():
         assert "session_" not in detail
 
 
-def test_p5_5_csrf_endpoint_bypasses_idle_timeout():
+@pytest.mark.asyncio
+async def test_p5_5_csrf_endpoint_bypasses_idle_timeout():
     """The CSRF endpoint must be reachable even on an idle session —
     the SPA re-fetches the CSRF token via the response interceptor
     after a 403; if it can't, the user cannot recover via the
     re-auth modal (which itself is a CSRF-protected POST)."""
-    async def _do():
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-        ) as ac:
-            return await ac.get("/api/csrf")
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        r = await ac.get("/api/csrf")
 
-    r = _run(_do())
     assert r.status_code == 200
     assert r.json().get("csrf_token"), "csrf endpoint did not return a token"

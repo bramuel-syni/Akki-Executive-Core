@@ -59,30 +59,15 @@ m1_entries:
     cluster_f_sub_sprint: "Cluster-G (post-F)"
     reason: Discovered by 2026-06-27 invariant baseline scan; missed by Cluster-F scope memo §0 survey
 
-  - file: backend/tests/test_phase_p3_1_csrf.py
-    lineno: 21
-    cluster_f_sub_sprint: F.3
-    reason: Cluster-F.3 will close (csrf + session_timeout + session_reauth)
-
   - file: backend/tests/test_phase_p3_3_mfa.py
     lineno: 25
     cluster_f_sub_sprint: "Cluster-G (post-F)"
     reason: Discovered by 2026-06-27 invariant baseline scan; missed by Cluster-F scope memo §0 survey
 
-  - file: backend/tests/test_phase_p3_4_session_timeout.py
-    lineno: 25
-    cluster_f_sub_sprint: F.3
-    reason: Cluster-F.3 will close (csrf + session_timeout + session_reauth)
-
   - file: backend/tests/test_phase_p4_cohort_funnel.py
     lineno: 31
     cluster_f_sub_sprint: "Cluster-G (post-F)"
     reason: Discovered by 2026-06-27 invariant baseline scan; missed by Cluster-F scope memo §0 survey
-
-  - file: backend/tests/test_phase_p5_5_session_reauth.py
-    lineno: 46
-    cluster_f_sub_sprint: F.3
-    reason: Cluster-F.3 will close (csrf + session_timeout + session_reauth)
 
   - file: backend/tests/test_phase_p5_6_csrf_cookie_domain.py
     lineno: 42

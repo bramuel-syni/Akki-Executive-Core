@@ -1,5 +1,5 @@
 {
-  "scan_timestamp": "2026-06-27T03:45:03.144353+00:00",
+  "scan_timestamp": "2026-06-27T08:45:15.327601+00:00",
   "scan_roots": [
     "/app/backend/services",
     "/app/backend/routers"

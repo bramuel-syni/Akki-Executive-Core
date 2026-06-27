@@ -1,7 +1,16 @@
-"""Phase P3.4 — Absolute + idle session timeout."""
+"""Phase P3.4 — Absolute + idle session timeout.
+
+Cluster-F.3 (2026-06-27): converted from sync `_run`-helper pattern to
+`@pytest.mark.asyncio + async def` so tests bind to the session-scoped
+loop instead of creating local loops that bind Motor to the wrong loop
+(same root cause as Cluster-E's FTT-023 closure). Risk verdict per
+advance scan memo §5: LOW (every timeout assertion uses INJECTED
+state — JWT `iat` claims forged at mint time and `last_activity_at`
+written to Mongo BEFORE the HTTP call; no real wall-clock waits or
+`time.sleep` anywhere).
+"""
 from __future__ import annotations
 
-import asyncio
 import os
 import sys
 import uuid
@@ -20,10 +29,6 @@ load_dotenv(REPO / "backend" / ".env")
 
 from httpx import ASGITransport, AsyncClient  # noqa: E402
 from server import app  # noqa: E402
-
-
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
 
 
 def _make_account(prefix: str) -> dict:
@@ -59,20 +64,20 @@ def _forge_token(account_id: str, email: str, iat_offset_minutes: int = 0) -> st
     }, JWT_SECRET, algorithm=JWT_ALGO)
 
 
-def test_p3_4_absolute_timeout_rejects_after_12h():
+@pytest.mark.asyncio
+async def test_p3_4_absolute_timeout_rejects_after_12h():
     """Token issued >12h ago must be rejected with session_absolute_timeout."""
     acc = _make_account("p3-4-absolute")
     tok = _forge_token(acc["id"], acc["email"], iat_offset_minutes=-13 * 60)
-    async def _do():
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-            return await ac.get("/api/admin/users",
-                                headers={"Authorization": f"Bearer {tok}"})
-    r = _run(_do())
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r = await ac.get("/api/admin/users",
+                         headers={"Authorization": f"Bearer {tok}"})
     assert r.status_code == 401
     assert r.json()["detail"]["code"] == "session_absolute_timeout"
 
 
-def test_p3_4_idle_timeout_rejects_after_30m_inactive():
+@pytest.mark.asyncio
+async def test_p3_4_idle_timeout_rejects_after_30m_inactive():
     acc = _make_account("p3-4-idle")
     # Set last_activity_at to 31 minutes ago.
     import pymongo
@@ -82,25 +87,21 @@ def test_p3_4_idle_timeout_rejects_after_30m_inactive():
         {"$set": {"last_activity_at": (datetime.now(timezone.utc) - timedelta(minutes=31)).isoformat()}},
     )
     tok = _forge_token(acc["id"], acc["email"], iat_offset_minutes=-5)  # token still fresh
-    async def _do():
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-            return await ac.get("/api/admin/users",
-                                headers={"Authorization": f"Bearer {tok}"})
-    r = _run(_do())
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r = await ac.get("/api/admin/users",
+                         headers={"Authorization": f"Bearer {tok}"})
     assert r.status_code == 401
     assert r.json()["detail"]["code"] == "session_idle_timeout"
 
 
-def test_p3_4_fresh_session_passes():
+@pytest.mark.asyncio
+async def test_p3_4_fresh_session_passes():
     """A token issued recently AND with recent activity must NOT trigger
     either timeout."""
     acc = _make_account("p3-4-fresh")
     tok = _forge_token(acc["id"], acc["email"], iat_offset_minutes=-1)
-    async def _do():
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-            r = await ac.get("/api/me", headers={"Authorization": f"Bearer {tok}"})
-            return r
-    r = _run(_do())
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r = await ac.get("/api/me", headers={"Authorization": f"Bearer {tok}"})
     # /api/me should return 200 for a fresh, valid token.
     assert r.status_code in (200, 404), r.text  # 200 if endpoint exists; 404 acceptable for non-existent route
     # Critical: NOT a session_*_timeout 401.
@@ -109,7 +110,8 @@ def test_p3_4_fresh_session_passes():
         assert "session_" not in code, f"unexpected session timeout on fresh token: {code}"
 
 
-def test_p3_4_silent_refresh_emits_x_token_refreshed_header():
+@pytest.mark.asyncio
+async def test_p3_4_silent_refresh_emits_x_token_refreshed_header():
     """Token issued >1h ago but within absolute window → middleware
     silently re-signs and sets X-Token-Refreshed: 1."""
     acc = _make_account("p3-4-refresh")
@@ -121,20 +123,17 @@ def test_p3_4_silent_refresh_emits_x_token_refreshed_header():
         {"id": acc["id"]},
         {"$set": {"last_activity_at": datetime.now(timezone.utc).isoformat()}},
     )
-    async def _do():
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-            return await ac.get("/api/me", headers={"Authorization": f"Bearer {tok}"})
-    r = _run(_do())
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r = await ac.get("/api/me", headers={"Authorization": f"Bearer {tok}"})
     # Either 200 + refresh header, OR a non-timeout error (we just want
     # to assert the middleware took the refresh path when applicable).
     if r.status_code == 200:
         assert r.headers.get("X-Token-Refreshed") == "1", "expected silent refresh header"
 
 
-def test_p3_4_public_routes_bypass_session_timeout():
+@pytest.mark.asyncio
+async def test_p3_4_public_routes_bypass_session_timeout():
     """Public routes (no Bearer / no cookie) must NOT trigger timeouts."""
-    async def _do():
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-            return await ac.get("/api/health/composite")
-    r = _run(_do())
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r = await ac.get("/api/health/composite")
     assert r.status_code == 200
