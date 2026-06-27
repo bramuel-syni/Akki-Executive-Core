@@ -231,18 +231,6 @@ m2_entries:
     cluster_f_sub_sprint: "Cluster-G (post-F)"
     reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
 
-  - file: backend/tests/test_synisense_security.py
-    func: test_shield_reversible_produces_shield_map_id_only
-    lineno: 35
-    cluster_f_sub_sprint: F.6
-    reason: Cluster-F.6 will address (M2 outlier, Shield-adjacency HALT pre-armed)
-
-  - file: backend/tests/test_synisense_security.py
-    func: test_redact_mode_never_creates_shield_map
-    lineno: 52
-    cluster_f_sub_sprint: F.6
-    reason: Cluster-F.6 will address (M2 outlier, Shield-adjacency HALT pre-armed)
-
   - file: backend/tests/test_synisense_surface_validation.py
     func: test_real_pipeline_run_rejects_bad_subsurface
     lineno: 78
