@@ -63,7 +63,8 @@ class TestBriefings:
             assert "read_via" in row
             assert isinstance(row["is_read"], bool)
 
-    def test_clear_then_mark_read_manual(self, session, account_id):
+    @pytest.mark.asyncio
+    async def test_clear_then_mark_read_manual(self, session, account_id):
         # Clear briefing_reads for this account on this ctx so we have a fresh slate.
         async def _clear():
             client = AsyncIOMotorClient(MONGO_URL)
@@ -72,7 +73,7 @@ class TestBriefings:
                 {"context_id": TULI_NED_CTX, "account_id": account_id}
             )
             client.close()
-        asyncio.run(_clear())
+        await _clear()
 
         rows = session.get(f"{API}/contexts/{TULI_NED_CTX}/briefings", timeout=20).json()
         assert all(r["is_read"] is False for r in rows), "After clear, all should be unread"
@@ -142,7 +143,8 @@ class TestObjectiveCheck:
         assert cid, f"No context id in seeded response: {data}"
         return cid
 
-    def test_objective_check_lifecycle_seeded(self, session, account_id):
+    @pytest.mark.asyncio
+    async def test_objective_check_lifecycle_seeded(self, session, account_id):
         cid = self._create_seeded_ctx(session)
 
         # Fresh: not eligible
@@ -171,7 +173,7 @@ class TestObjectiveCheck:
             await db.contexts.update_one({"id": cid}, update)
             client.close()
             return old_iso
-        old_iso = asyncio.run(_backdate())
+        old_iso = await _backdate()
 
         # Now eligible
         r = session.get(f"{API}/sandbox/contexts/{cid}/objective-check", timeout=20)
@@ -207,9 +209,10 @@ class TestObjectiveCheck:
             db = client[DB_NAME]
             await db.contexts.delete_one({"id": cid})
             client.close()
-        asyncio.run(_cleanup())
+        await _cleanup()
 
-    def test_objective_check_skip_dismisses(self, session):
+    @pytest.mark.asyncio
+    async def test_objective_check_skip_dismisses(self, session):
         cid = self._create_seeded_ctx(session)
         # Backdate + ensure objective
         async def _backdate():
@@ -224,7 +227,7 @@ class TestObjectiveCheck:
                 }},
             )
             client.close()
-        asyncio.run(_backdate())
+        await _backdate()
 
         # Skip
         r = session.post(
@@ -246,9 +249,10 @@ class TestObjectiveCheck:
             db = client[DB_NAME]
             await db.contexts.delete_one({"id": cid})
             client.close()
-        asyncio.run(_cleanup())
+        await _cleanup()
 
-    def test_objective_check_invalid_answer(self, session):
+    @pytest.mark.asyncio
+    async def test_objective_check_invalid_answer(self, session):
         cid = self._create_seeded_ctx(session)
         try:
             r = session.post(
@@ -263,4 +267,4 @@ class TestObjectiveCheck:
                 db = client[DB_NAME]
                 await db.contexts.delete_one({"id": cid})
                 client.close()
-            asyncio.run(_cleanup())
+            await _cleanup()

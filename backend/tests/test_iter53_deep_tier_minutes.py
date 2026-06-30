@@ -81,9 +81,10 @@ async def _cleanup_test_questions(context_id: str, doc_id: str):
 # /api/llm/quota
 # ---------------------------------------------------------------------------
 class TestLlmQuota:
-    def test_quota_all_surfaces(self, session):
+    @pytest.mark.asyncio
+    async def test_quota_all_surfaces(self, session):
         # ensure clean baseline for brief
-        asyncio.run(_reset_quota(session.account_id, "brief"))
+        await _reset_quota(session.account_id, "brief")
         r = session.get(f"{BASE_URL}/api/llm/quota", timeout=15)
         assert r.status_code == 200, r.text
         data = r.json()
@@ -109,8 +110,9 @@ class TestLlmQuota:
 # Briefs - deep tier path & quota decrement
 # ---------------------------------------------------------------------------
 class TestDeepBrief:
-    def test_brief_non_deep_does_not_decrement(self, session):
-        asyncio.run(_reset_quota(session.account_id, "brief"))
+    @pytest.mark.asyncio
+    async def test_brief_non_deep_does_not_decrement(self, session):
+        await _reset_quota(session.account_id, "brief")
         before = session.get(f"{BASE_URL}/api/llm/quota?surface=brief").json()["used"]
         r = session.post(
             f"{BASE_URL}/api/contexts/{CTX_ID}/briefs",
@@ -124,8 +126,9 @@ class TestDeepBrief:
         after = session.get(f"{BASE_URL}/api/llm/quota?surface=brief").json()["used"]
         assert after == before, f"non-deep brief should not decrement quota (before={before}, after={after})"
 
-    def test_brief_deep_decrements_and_uses_opus(self, session):
-        asyncio.run(_reset_quota(session.account_id, "brief"))
+    @pytest.mark.asyncio
+    async def test_brief_deep_decrements_and_uses_opus(self, session):
+        await _reset_quota(session.account_id, "brief")
         r = session.post(
             f"{BASE_URL}/api/contexts/{CTX_ID}/briefs",
             json={"kind": "topic", "objective": "Deep tier opus smoke - quota check.", "deep": True},
@@ -144,9 +147,10 @@ class TestDeepBrief:
         peek = session.get(f"{BASE_URL}/api/llm/quota?surface=brief").json()
         assert peek["used"] == 1
 
-    def test_brief_deep_quota_exhausted_falls_back(self, session):
+    @pytest.mark.asyncio
+    async def test_brief_deep_quota_exhausted_falls_back(self, session):
         # Fast-forward to limit so we don't burn 10 Opus calls.
-        asyncio.run(_set_quota(session.account_id, "brief", 10))
+        await _set_quota(session.account_id, "brief", 10)
         r = session.post(
             f"{BASE_URL}/api/contexts/{CTX_ID}/briefs",
             json={"kind": "topic", "objective": "Quota exhaustion - should downgrade gracefully.", "deep": True},
@@ -163,16 +167,17 @@ class TestDeepBrief:
         # body still ships
         assert isinstance(body.get("body"), str) and len(body["body"]) >= 40
         # Reset back so we don't pollute future runs
-        asyncio.run(_reset_quota(session.account_id, "brief"))
+        await _reset_quota(session.account_id, "brief")
 
 
 # ---------------------------------------------------------------------------
 # Minutes -> Cycle
 # ---------------------------------------------------------------------------
 class TestMinutesToCycle:
-    def test_seed_then_idempotent(self, session):
+    @pytest.mark.asyncio
+    async def test_seed_then_idempotent(self, session):
         # Pre-clean any prior seed for this doc so we can assert seeded count
-        asyncio.run(_cleanup_test_questions(CTX_ID, DOC_ID))
+        await _cleanup_test_questions(CTX_ID, DOC_ID)
         r1 = session.post(
             f"{BASE_URL}/api/contexts/{CTX_ID}/minutes/{DOC_ID}/to_cycle", timeout=30
         )
@@ -195,7 +200,8 @@ class TestMinutesToCycle:
         assert len(d2["seeded"]) == 0, f"second run must be idempotent: {d2}"
         assert len(d2["unmatched"]) == 0, f"second run must be idempotent: {d2}"
 
-    def test_400_when_no_actions(self, session):
+    @pytest.mark.asyncio
+    async def test_400_when_no_actions(self, session):
         # Find or fabricate a minutes doc with no minutes_meta. We can use a
         # nonexistent doc id to hit the 404 instead. Test the 400 by zeroing
         # actions on a temp doc.
@@ -217,22 +223,23 @@ class TestMinutesToCycle:
             db = _db()
             await db.documents.delete_one({"id": tmp_id})
 
-        tmp = asyncio.run(_run())
+        tmp = await _run()
         try:
             r = session.post(
                 f"{BASE_URL}/api/contexts/{CTX_ID}/minutes/{tmp}/to_cycle", timeout=15
             )
             assert r.status_code == 400, r.text
         finally:
-            asyncio.run(_clean(tmp))
+            await _clean(tmp)
 
 
 # ---------------------------------------------------------------------------
 # Minutes narrative (deep)
 # ---------------------------------------------------------------------------
 class TestMinutesNarrative:
-    def test_narrative_generates_persists(self, session):
-        asyncio.run(_reset_quota(session.account_id, "minutes"))
+    @pytest.mark.asyncio
+    async def test_narrative_generates_persists(self, session):
+        await _reset_quota(session.account_id, "minutes")
         r = session.post(
             f"{BASE_URL}/api/contexts/{CTX_ID}/minutes/{DOC_ID}/narrative", timeout=180
         )
