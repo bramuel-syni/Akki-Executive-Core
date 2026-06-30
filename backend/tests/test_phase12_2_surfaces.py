@@ -31,7 +31,8 @@ load_dotenv("/app/backend/.env")
 # ---------------------------------------------------------------------------
 # ITEM B — paragraph anchor stability through redaction
 # ---------------------------------------------------------------------------
-def test_paragraph_anchors_stable_through_redaction():
+@pytest.mark.asyncio
+async def test_paragraph_anchors_stable_through_redaction():
     """The anchor IDs computed BEFORE Synisense must equal the anchor
     IDs that appear on the persisted document AFTER Synisense runs.
 
@@ -58,7 +59,7 @@ def test_paragraph_anchors_stable_through_redaction():
     # would differ — proving anchors must be computed on original first.
     diverged = 0
     for p in payload["paragraphs"]:
-        out = asyncio.run(dryrun(p["text"], context_id="t", surface="ingest"))
+        out = await dryrun(p["text"], context_id="t", surface="ingest")
         if out["redacted_text"] != p["text"]:
             diverged += 1
             redacted_payload = compute_paragraphs("doc-redacted", out["redacted_text"])

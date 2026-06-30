@@ -57,41 +57,11 @@ m1_entries: []
 
 # M2 entries — asyncio.run(...) inside a test_* function body
 m2_entries:
-  - file: backend/tests/test_phase12_2_surfaces.py
-    func: test_paragraph_anchors_stable_through_redaction
-    lineno: 61
-    cluster_f_sub_sprint: "Cluster-G (post-F)"
-    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
-
   - file: backend/tests/test_phase4_2_http_transport_smoke.py
     func: test_http_mode_adapter_class_reconstructs_dto
     lineno: 254
     cluster_f_sub_sprint: "A+D fix preserves this asyncio.run with snapshot/restore"
     reason: A+D fix wrapped this asyncio.run with env + loop-policy snapshot/restore; this M2 site is THE polluter that A+D's surgical fix neutralized. Pattern preserved as-is.
-
-  - file: backend/tests/test_phase_a_synisense_unification.py
-    func: test_synisense_adapter_returns_pipeline_shaped_tokens
-    lineno: 58
-    cluster_f_sub_sprint: "Cluster-G (post-F)"
-    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
-
-  - file: backend/tests/test_phase_a_synisense_unification.py
-    func: test_rehydrate_round_trips_via_synisense_helpers
-    lineno: 96
-    cluster_f_sub_sprint: "Cluster-G (post-F)"
-    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
-
-  - file: backend/tests/test_solva_v2_llm_adapter.py
-    func: test_synisense_runs_before_llm
-    lineno: 81
-    cluster_f_sub_sprint: "Cluster-G (post-F)"
-    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
-
-  - file: backend/tests/test_solva_v2_llm_adapter.py
-    func: test_adapter_refuses_when_synisense_fails
-    lineno: 125
-    cluster_f_sub_sprint: "Cluster-G (post-F)"
-    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
 
   - file: backend/tests/test_synisense_surface_validation.py
     func: test_real_pipeline_run_rejects_bad_subsurface

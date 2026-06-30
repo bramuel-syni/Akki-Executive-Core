@@ -26,7 +26,8 @@ load_dotenv("/app/backend/.env")
 from services.solva_v2 import llm_adapter  # noqa: E402
 
 
-def test_synisense_runs_before_llm(monkeypatch):
+@pytest.mark.asyncio
+async def test_synisense_runs_before_llm(monkeypatch):
     call_order = []
 
     async def fake_syn_run(**kwargs):
@@ -78,7 +79,7 @@ def test_synisense_runs_before_llm(monkeypatch):
             session_id="sess-1",
         )
 
-    result = asyncio.run(_runner())
+    result = await _runner()
 
     event_types = [e[0] for e in call_order]
     assert event_types[0] == "synisense", f"First call must be Synisense, got {event_types}"
@@ -102,7 +103,8 @@ def test_synisense_runs_before_llm(monkeypatch):
     assert len(result.reasoning_audit_entry["input_hash"]) == 64
 
 
-def test_adapter_refuses_when_synisense_fails(monkeypatch):
+@pytest.mark.asyncio
+async def test_adapter_refuses_when_synisense_fails(monkeypatch):
     async def boom(**kwargs):
         raise RuntimeError("synisense exploded")
 
@@ -122,4 +124,4 @@ def test_adapter_refuses_when_synisense_fails(monkeypatch):
         )
 
     with pytest.raises(RuntimeError, match="Synisense unavailable"):
-        asyncio.run(_runner())
+        await _runner()

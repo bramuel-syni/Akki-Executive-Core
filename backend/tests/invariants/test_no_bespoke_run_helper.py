@@ -352,7 +352,7 @@ def test_grandfather_list_does_not_drift():
 # ship. The ceiling LOCKS the trajectory; a new addition to either
 # YAML section pushes the count past the ceiling and fails the build.
 M1_CEILING = 0
-M2_CEILING = 7
+M2_CEILING = 2
 
 
 def test_grandfather_count_below_ceiling():

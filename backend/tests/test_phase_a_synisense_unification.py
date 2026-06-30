@@ -47,7 +47,8 @@ def test_llm_service_no_longer_exposes_legacy_shield_symbols():
 # 2) The Synisense adapter shape — async tuple (str, dict) — and the
 #    tokens are pipeline-shaped, not regex-shaped.
 # ---------------------------------------------------------------------------
-def test_synisense_adapter_returns_pipeline_shaped_tokens():
+@pytest.mark.asyncio
+async def test_synisense_adapter_returns_pipeline_shaped_tokens():
     from services.synisense import shield_payload_async
 
     async def _run():
@@ -55,7 +56,7 @@ def test_synisense_adapter_returns_pipeline_shaped_tokens():
             SAMPLE_PROMPT, surface="chat", context_id="phase-a-test",
         )
 
-    redacted, shield_map = asyncio.run(_run())
+    redacted, shield_map = await _run()
     # Returned tuple shape contract — same as the legacy function.
     assert isinstance(redacted, str), type(redacted)
     assert isinstance(shield_map, dict), type(shield_map)
@@ -82,7 +83,8 @@ def test_synisense_adapter_returns_pipeline_shaped_tokens():
 #    `PHONE`, `EMAIL`), and the tokens must round-trip via the new
 #    `rehydrate(...)` helper from `services.synisense`.
 # ---------------------------------------------------------------------------
-def test_rehydrate_round_trips_via_synisense_helpers():
+@pytest.mark.asyncio
+async def test_rehydrate_round_trips_via_synisense_helpers():
     from services.synisense import (
         shield_payload_async,
         rehydrate,
@@ -93,7 +95,7 @@ def test_rehydrate_round_trips_via_synisense_helpers():
             SAMPLE_PROMPT, surface="chat", context_id="phase-a-test",
         )
 
-    redacted, shield_map = asyncio.run(_run())
+    redacted, shield_map = await _run()
     # rehydrate is idempotent on raw text + the round-trip restores all
     # known tokens.
     restored = rehydrate(redacted, shield_map)
