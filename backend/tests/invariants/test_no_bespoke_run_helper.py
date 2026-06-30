@@ -351,7 +351,7 @@ def test_grandfather_list_does_not_drift():
 # ceilings will only ratchet down from here as Cluster-G sub-sprints
 # ship. The ceiling LOCKS the trajectory; a new addition to either
 # YAML section pushes the count past the ceiling and fails the build.
-M1_CEILING = 5
+M1_CEILING = 0
 M2_CEILING = 26
 
 

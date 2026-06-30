@@ -1,7 +1,12 @@
-"""Phase P5 corrections + OAuth-mode consume."""
+"""Phase P5 corrections + OAuth-mode consume.
+
+Cluster-G.1 (2026-06-27): converted from module-level `_run` helper
+to `@pytest.mark.asyncio + async def` so async-touching tests bind
+to the session-scoped event loop instead of binding the policy loop
+to a sync-test-local loop (same root cause as Cluster-E + Cluster-F).
+"""
 from __future__ import annotations
 
-import asyncio
 import os
 import sys
 import uuid
@@ -19,10 +24,6 @@ load_dotenv(REPO / "backend" / ".env")
 
 from httpx import ASGITransport, AsyncClient  # noqa: E402
 from server import app  # noqa: E402
-
-
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
 
 
 def _client():
@@ -47,42 +48,37 @@ def _seed_application(prefix: str = "p5") -> dict:
     return row
 
 
-def _admin_login_token() -> str:
-    async def _do():
-        async with _client() as ac:
-            r = await ac.post("/api/auth/login",
-                              json={"email": "admin@akki.ai", "password": "AkkiAdmin2026!"})
-            return r.json()["access_token"]
-    return _run(_do())
+async def _admin_login_token() -> str:
+    async with _client() as ac:
+        r = await ac.post("/api/auth/login",
+                          json={"email": "admin@akki.ai", "password": "AkkiAdmin2026!"})
+        return r.json()["access_token"]
 
 
-def _issue_magic_link(application_id: str) -> str:
+async def _issue_magic_link(application_id: str) -> str:
     """Approve to mint a fresh single-use token."""
-    tok = _admin_login_token()
-    async def _do():
-        async with _client() as ac:
-            r = await ac.post(
-                f"/api/admin/cohort/applications/{application_id}/approve",
-                headers={"Authorization": f"Bearer {tok}"},
-                json={"note": "p5 test"},
-            )
-            return r.json()["magic_url"].rsplit("/", 1)[-1]
-    return _run(_do())
+    tok = await _admin_login_token()
+    async with _client() as ac:
+        r = await ac.post(
+            f"/api/admin/cohort/applications/{application_id}/approve",
+            headers={"Authorization": f"Bearer {tok}"},
+            json={"note": "p5 test"},
+        )
+        return r.json()["magic_url"].rsplit("/", 1)[-1]
 
 
 # ─── P5.3 — OAuth state JWT carries magic_link_token ─────────────────
-def test_p5_3_ms_start_packs_magic_link_token_in_state():
+@pytest.mark.asyncio
+async def test_p5_3_ms_start_packs_magic_link_token_in_state():
     """`/microsoft/start?magic_link_token=X` puts the token into the
     state JWT under the `mlt` claim."""
     from routers.auth_oauth import _ms_verify_state
     from urllib.parse import urlparse, parse_qs
 
-    async def _do():
-        async with _client() as ac:
-            return await ac.get(
-                "/api/auth/oauth/microsoft/start?magic_link_token=p5-3-token-abc"
-            )
-    r = _run(_do())
+    async with _client() as ac:
+        r = await ac.get(
+            "/api/auth/oauth/microsoft/start?magic_link_token=p5-3-token-abc"
+        )
     assert r.status_code == 200, r.text
     url = r.json()["authorize_url"]
     state = parse_qs(urlparse(url).query).get("state", [""])[0]
@@ -91,28 +87,28 @@ def test_p5_3_ms_start_packs_magic_link_token_in_state():
     assert decoded.get("mlt") == "p5-3-token-abc"
 
 
-def test_p5_3_ms_start_without_magic_link_omits_mlt_claim():
+@pytest.mark.asyncio
+async def test_p5_3_ms_start_without_magic_link_omits_mlt_claim():
     """When no magic_link_token is supplied, the state JWT must NOT
     carry an mlt claim — keep the claim absent rather than empty so
     accidental empty-string consumption can't slip through."""
     from routers.auth_oauth import _ms_verify_state
     from urllib.parse import urlparse, parse_qs
 
-    async def _do():
-        async with _client() as ac:
-            return await ac.get("/api/auth/oauth/microsoft/start")
-    r = _run(_do())
+    async with _client() as ac:
+        r = await ac.get("/api/auth/oauth/microsoft/start")
     state = parse_qs(urlparse(r.json()["authorize_url"]).query)["state"][0]
     decoded = _ms_verify_state(state)
     assert "mlt" not in decoded or not decoded.get("mlt")
 
 
-def test_p5_3_google_finish_consumes_magic_link():
+@pytest.mark.asyncio
+async def test_p5_3_google_finish_consumes_magic_link():
     """A Google /finish request carrying `magic_link_token` consumes
     the link + links the account to the application. We mock the
     Emergent session-data fetch to avoid hitting the network."""
     app_row = _seed_application("p5-3-google")
-    raw = _issue_magic_link(app_row["id"])
+    raw = await _issue_magic_link(app_row["id"])
 
     from unittest.mock import patch
 
@@ -125,14 +121,12 @@ def test_p5_3_google_finish_consumes_magic_link():
         return fake_profile
 
     with patch("routers.auth_oauth._fetch_emergent_session_data", _fake_fetch):
-        async def _do():
-            async with _client() as ac:
-                return await ac.post(
-                    "/api/auth/oauth/google/finish",
-                    json={"session_id": "fake-session-id",
-                          "magic_link_token": raw},
-                )
-        r = _run(_do())
+        async with _client() as ac:
+            r = await ac.post(
+                "/api/auth/oauth/google/finish",
+                json={"session_id": "fake-session-id",
+                      "magic_link_token": raw},
+            )
 
     assert r.status_code == 200, r.text
     data = r.json()
@@ -148,10 +142,11 @@ def test_p5_3_google_finish_consumes_magic_link():
     assert acc and acc.get("cohort_application_id") == app_row["id"]
 
 
-def test_p5_3_google_finish_rejects_consumed_token():
+@pytest.mark.asyncio
+async def test_p5_3_google_finish_rejects_consumed_token():
     """Second use of a token via Google /finish must return 410."""
     app_row = _seed_application("p5-3-google-twice")
-    raw = _issue_magic_link(app_row["id"])
+    raw = await _issue_magic_link(app_row["id"])
 
     from unittest.mock import patch
     fake_profile = {"email": app_row["email"], "name": "x", "picture": None}
@@ -159,24 +154,22 @@ def test_p5_3_google_finish_rejects_consumed_token():
         return fake_profile
 
     with patch("routers.auth_oauth._fetch_emergent_session_data", _fake_fetch):
-        async def _twice():
-            async with _client() as ac:
-                r1 = await ac.post(
-                    "/api/auth/oauth/google/finish",
-                    json={"session_id": "fake-1", "magic_link_token": raw},
-                )
-                r2 = await ac.post(
-                    "/api/auth/oauth/google/finish",
-                    json={"session_id": "fake-2", "magic_link_token": raw},
-                )
-                return r1, r2
-        r1, r2 = _run(_twice())
+        async with _client() as ac:
+            r1 = await ac.post(
+                "/api/auth/oauth/google/finish",
+                json={"session_id": "fake-1", "magic_link_token": raw},
+            )
+            r2 = await ac.post(
+                "/api/auth/oauth/google/finish",
+                json={"session_id": "fake-2", "magic_link_token": raw},
+            )
     assert r1.status_code == 200, r1.text
     assert r2.status_code == 410, r2.text
     assert r2.json()["detail"]["code"] == "magic_link_invalid_or_consumed"
 
 
-def test_p5_3_google_finish_without_mlt_is_unchanged():
+@pytest.mark.asyncio
+async def test_p5_3_google_finish_without_mlt_is_unchanged():
     """Existing Google sign-in (no magic_link_token) still works
     end-to-end with `magic_link_consumed: false`."""
     from unittest.mock import patch
@@ -186,20 +179,22 @@ def test_p5_3_google_finish_without_mlt_is_unchanged():
         return fake_profile
 
     with patch("routers.auth_oauth._fetch_emergent_session_data", _fake_fetch):
-        async def _do():
-            async with _client() as ac:
-                return await ac.post(
-                    "/api/auth/oauth/google/finish",
-                    json={"session_id": "fake-no-mlt"},
-                )
-        r = _run(_do())
+        async with _client() as ac:
+            r = await ac.post(
+                "/api/auth/oauth/google/finish",
+                json={"session_id": "fake-no-mlt"},
+            )
     assert r.status_code == 200, r.text
     assert r.json().get("magic_link_consumed") in (False, None)
 
 
 def test_p5_3_ms_state_carries_mlt_when_provided():
     """Explicit assertion separate from the urllib parse path —
-    verifies _ms_sign_state + _ms_verify_state round trip on the mlt claim."""
+    verifies _ms_sign_state + _ms_verify_state round trip on the mlt claim.
+
+    Pure-Python helper test — no asyncio surface. STAYS SYNC per
+    Cluster-F.2 heuristic.
+    """
     from routers.auth_oauth import _ms_sign_state, _ms_verify_state
     state = _ms_sign_state({"sid": "abc", "kind": "ms_signin", "mlt": "token-xyz"})
     decoded = _ms_verify_state(state)
@@ -207,17 +202,16 @@ def test_p5_3_ms_state_carries_mlt_when_provided():
 
 
 # ─── P5.2 — backend contract for consume returns the redirect ────────
-def test_p5_2_consume_returns_redirect_target():
+@pytest.mark.asyncio
+async def test_p5_2_consume_returns_redirect_target():
     """`/consume` must include `redirect` so the frontend can hand off
     to the correct landing without reaching for a hardcoded fallback."""
     app_row = _seed_application("p5-2-redirect")
-    raw = _issue_magic_link(app_row["id"])
-    async def _do():
-        async with _client() as ac:
-            return await ac.post(
-                "/api/auth/magic-link/consume",
-                json={"token": raw, "mode": "password", "password": "P5RedirectPass1234!"},
-            )
-    r = _run(_do())
+    raw = await _issue_magic_link(app_row["id"])
+    async with _client() as ac:
+        r = await ac.post(
+            "/api/auth/magic-link/consume",
+            json={"token": raw, "mode": "password", "password": "P5RedirectPass1234!"},
+        )
     assert r.status_code == 200, r.text
     assert r.json()["redirect"] == "/app/work-studio"

@@ -1,7 +1,12 @@
-"""Phase P3.3 — MFA enrolment, verification, lockout, recovery codes."""
+"""Phase P3.3 — MFA enrolment, verification, lockout, recovery codes.
+
+Cluster-G.1 (2026-06-27): converted from module-level `_run` helper
+to `@pytest.mark.asyncio + async def` so async-touching tests bind
+to the session-scoped event loop instead of binding the policy loop
+to a sync-test-local loop (same root cause as Cluster-E + Cluster-F).
+"""
 from __future__ import annotations
 
-import asyncio
 import os
 import sys
 import uuid
@@ -22,10 +27,6 @@ from httpx import ASGITransport, AsyncClient  # noqa: E402
 from server import app  # noqa: E402
 
 
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
-
-
 def _make_account(prefix: str, password: str = "TestPass1234!", is_superadmin: bool = False) -> dict:
     import pymongo
     db = pymongo.MongoClient(os.environ["MONGO_URL"])[os.environ["DB_NAME"]]
@@ -41,30 +42,27 @@ def _make_account(prefix: str, password: str = "TestPass1234!", is_superadmin: b
     return doc
 
 
-def _login_token(email: str, password: str) -> str:
-    async def _do():
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-            r = await ac.post("/api/auth/login", json={"email": email, "password": password})
-            return r.json()["access_token"]
-    return _run(_do())
+async def _login_token(email: str, password: str) -> str:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r = await ac.post("/api/auth/login", json={"email": email, "password": password})
+        return r.json()["access_token"]
 
 
-def test_p3_3_enroll_start_returns_otpauth_and_qr():
+@pytest.mark.asyncio
+async def test_p3_3_enroll_start_returns_otpauth_and_qr():
     acc = _make_account("p3-3-enroll")
-    tok = _login_token(acc["email"], "TestPass1234!")
-    async def _do():
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-            r = await ac.post(
-                "/api/auth/mfa/enroll/start",
-                headers={"Authorization": f"Bearer {tok}"},
-            )
-            assert r.status_code == 200, r.text
-            data = r.json()
-            assert data["otpauth_url"].startswith("otpauth://totp/")
-            assert data["qr_data_url"].startswith("data:image/png;base64,")
-            assert len(data["secret"]) >= 16
-            return data["secret"]
-    secret = _run(_do())
+    tok = await _login_token(acc["email"], "TestPass1234!")
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r = await ac.post(
+            "/api/auth/mfa/enroll/start",
+            headers={"Authorization": f"Bearer {tok}"},
+        )
+        assert r.status_code == 200, r.text
+        data = r.json()
+        assert data["otpauth_url"].startswith("otpauth://totp/")
+        assert data["qr_data_url"].startswith("data:image/png;base64,")
+        assert len(data["secret"]) >= 16
+        secret = data["secret"]
     # Verify pending secret was persisted.
     import pymongo
     db = pymongo.MongoClient(os.environ["MONGO_URL"])[os.environ["DB_NAME"]]
@@ -72,23 +70,19 @@ def test_p3_3_enroll_start_returns_otpauth_and_qr():
     assert fresh["mfa_secret_pending"] == secret
 
 
-def test_p3_3_enroll_confirm_returns_recovery_codes_once():
+@pytest.mark.asyncio
+async def test_p3_3_enroll_confirm_returns_recovery_codes_once():
     acc = _make_account("p3-3-confirm")
-    tok = _login_token(acc["email"], "TestPass1234!")
-    async def _start():
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-            r = await ac.post("/api/auth/mfa/enroll/start",
-                              headers={"Authorization": f"Bearer {tok}"})
-            return r.json()["secret"]
-    secret = _run(_start())
+    tok = await _login_token(acc["email"], "TestPass1234!")
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r = await ac.post("/api/auth/mfa/enroll/start",
+                          headers={"Authorization": f"Bearer {tok}"})
+        secret = r.json()["secret"]
     code = pyotp.TOTP(secret).now()
-    async def _confirm():
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-            r = await ac.post("/api/auth/mfa/enroll/confirm",
-                              headers={"Authorization": f"Bearer {tok}"},
-                              json={"code": code})
-            return r
-    r = _run(_confirm())
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r = await ac.post("/api/auth/mfa/enroll/confirm",
+                          headers={"Authorization": f"Bearer {tok}"},
+                          json={"code": code})
     assert r.status_code == 200, r.text
     data = r.json()
     assert data["mfa_enabled"] is True
@@ -108,91 +102,82 @@ def test_p3_3_enroll_confirm_returns_recovery_codes_once():
     assert fresh.get("mfa_secret_pending") is None
 
 
-def test_p3_3_verify_with_recovery_code_burns_it():
+@pytest.mark.asyncio
+async def test_p3_3_verify_with_recovery_code_burns_it():
     """A recovery code used once cannot be used twice."""
     acc = _make_account("p3-3-recovery")
-    tok = _login_token(acc["email"], "TestPass1234!")
-    async def _setup():
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-            r1 = await ac.post("/api/auth/mfa/enroll/start",
-                               headers={"Authorization": f"Bearer {tok}"})
-            secret = r1.json()["secret"]
-            r2 = await ac.post("/api/auth/mfa/enroll/confirm",
-                               headers={"Authorization": f"Bearer {tok}"},
-                               json={"code": pyotp.TOTP(secret).now()})
-            return r2.json()["recovery_codes"]
-    codes = _run(_setup())
+    tok = await _login_token(acc["email"], "TestPass1234!")
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r1 = await ac.post("/api/auth/mfa/enroll/start",
+                           headers={"Authorization": f"Bearer {tok}"})
+        secret = r1.json()["secret"]
+        r2 = await ac.post("/api/auth/mfa/enroll/confirm",
+                           headers={"Authorization": f"Bearer {tok}"},
+                           json={"code": pyotp.TOTP(secret).now()})
+        codes = r2.json()["recovery_codes"]
     one = codes[0]
-    async def _use_once():
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-            r = await ac.post("/api/auth/mfa/verify",
-                              headers={"Authorization": f"Bearer {tok}"},
-                              json={"code": one})
-            return r
-    r = _run(_use_once())
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r = await ac.post("/api/auth/mfa/verify",
+                          headers={"Authorization": f"Bearer {tok}"},
+                          json={"code": one})
     assert r.status_code == 200, r.text
     assert r.json()["mfa_verified"] is True
     # Use again — should now fail.
-    r2 = _run(_use_once())
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r2 = await ac.post("/api/auth/mfa/verify",
+                           headers={"Authorization": f"Bearer {tok}"},
+                           json={"code": one})
     assert r2.status_code == 401
     assert r2.json()["detail"]["code"] == "MFA_CODE_INVALID"
 
 
-def test_p3_3_disable_requires_password():
+@pytest.mark.asyncio
+async def test_p3_3_disable_requires_password():
     acc = _make_account("p3-3-disable")
-    tok = _login_token(acc["email"], "TestPass1234!")
-    async def _enrol():
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-            r1 = await ac.post("/api/auth/mfa/enroll/start",
-                               headers={"Authorization": f"Bearer {tok}"})
-            secret = r1.json()["secret"]
-            await ac.post("/api/auth/mfa/enroll/confirm",
+    tok = await _login_token(acc["email"], "TestPass1234!")
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r1 = await ac.post("/api/auth/mfa/enroll/start",
+                           headers={"Authorization": f"Bearer {tok}"})
+        secret = r1.json()["secret"]
+        await ac.post("/api/auth/mfa/enroll/confirm",
+                      headers={"Authorization": f"Bearer {tok}"},
+                      json={"code": pyotp.TOTP(secret).now()})
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r = await ac.post("/api/auth/mfa/disable",
                           headers={"Authorization": f"Bearer {tok}"},
-                          json={"code": pyotp.TOTP(secret).now()})
-    _run(_enrol())
-    async def _bad_pw():
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-            return await ac.post("/api/auth/mfa/disable",
-                                 headers={"Authorization": f"Bearer {tok}"},
-                                 json={"password": "WrongPass"})
-    r = _run(_bad_pw())
+                          json={"password": "WrongPass"})
     assert r.status_code == 401
-    async def _good_pw():
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-            return await ac.post("/api/auth/mfa/disable",
-                                 headers={"Authorization": f"Bearer {tok}"},
-                                 json={"password": "TestPass1234!"})
-    r2 = _run(_good_pw())
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r2 = await ac.post("/api/auth/mfa/disable",
+                           headers={"Authorization": f"Bearer {tok}"},
+                           json={"password": "TestPass1234!"})
     assert r2.status_code == 200
     assert r2.json()["mfa_enabled"] is False
 
 
-def test_p3_3_admin_force_enrol_blocks_non_enrolled_superadmin():
+@pytest.mark.asyncio
+async def test_p3_3_admin_force_enrol_blocks_non_enrolled_superadmin():
     """Phase P3.3 — non-enrolled superadmin (not on grace list) gets
     428 Precondition Required when hitting /api/admin/*."""
     acc = _make_account("p3-3-new-admin", is_superadmin=True)
     # Ensure this email is NOT on the grace list.
     grace = (os.environ.get("MFA_ADMIN_GRACE_EMAILS", "admin@akki.ai")).split(",")
     assert acc["email"].lower() not in [e.strip().lower() for e in grace]
-    tok = _login_token(acc["email"], "TestPass1234!")
-    async def _hit_admin():
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-            return await ac.get("/api/admin/users",
-                                headers={"Authorization": f"Bearer {tok}"})
-    r = _run(_hit_admin())
+    tok = await _login_token(acc["email"], "TestPass1234!")
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r = await ac.get("/api/admin/users",
+                         headers={"Authorization": f"Bearer {tok}"})
     assert r.status_code == 428
     assert r.json()["detail"]["code"] == "mfa_enrolment_required"
 
 
-def test_p3_3_grace_admin_bypasses_force_enrol():
+@pytest.mark.asyncio
+async def test_p3_3_grace_admin_bypasses_force_enrol():
     """The seeded admin@akki.ai is grace-bypassed for this phase."""
-    async def _do():
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
-            r1 = await ac.post("/api/auth/login",
-                               json={"email": "admin@akki.ai", "password": "AkkiAdmin2026!"})
-            tok = r1.json()["access_token"]
-            r2 = await ac.get("/api/admin/users",
-                              headers={"Authorization": f"Bearer {tok}"})
-            return r2
-    r = _run(_do())
-    assert r.status_code == 200, r.text
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+        r1 = await ac.post("/api/auth/login",
+                           json={"email": "admin@akki.ai", "password": "AkkiAdmin2026!"})
+        tok = r1.json()["access_token"]
+        r2 = await ac.get("/api/admin/users",
+                          headers={"Authorization": f"Bearer {tok}"})
+    assert r2.status_code == 200, r2.text

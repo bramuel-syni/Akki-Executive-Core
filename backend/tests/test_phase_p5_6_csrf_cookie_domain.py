@@ -21,13 +21,19 @@ Two backend-side invariants we lock here:
      double-submit pattern: `Path=/`, `SameSite=Lax`, `Secure`,
      non-HttpOnly (so the SPA JS can read it for the X-CSRF-Token
      header).
+
+Cluster-G.1 (2026-06-27): converted from module-level `_run` helper
+to `@pytest.mark.asyncio + async def` so async-touching tests bind
+to the session-scoped event loop instead of binding the policy loop
+to a sync-test-local loop (same root cause as Cluster-E + Cluster-F).
 """
 from __future__ import annotations
 
-import asyncio
 import os
 import sys
 from pathlib import Path
+
+import pytest
 
 REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO / "backend"))
@@ -39,35 +45,30 @@ from httpx import ASGITransport, AsyncClient  # noqa: E402
 from server import app  # noqa: E402
 
 
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
-
-
-def _csrf_setcookie_header(scheme: str = "http") -> str:
+async def _csrf_setcookie_header(scheme: str = "http") -> str:
     """Fetch the /api/csrf Set-Cookie header. Pass scheme='https' to
     drive the request-scheme conditional that controls the Secure
     flag (matches what the ingress sends in preview / production via
     x-forwarded-proto)."""
-    async def _do():
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-        ) as ac:
-            headers = {}
-            if scheme == "https":
-                headers["x-forwarded-proto"] = "https"
-            r = await ac.get("/api/csrf", headers=headers)
-            assert r.status_code == 200, r.text
-            return r.headers.get("set-cookie", "")
-    return _run(_do())
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        headers = {}
+        if scheme == "https":
+            headers["x-forwarded-proto"] = "https"
+        r = await ac.get("/api/csrf", headers=headers)
+        assert r.status_code == 200, r.text
+        return r.headers.get("set-cookie", "")
 
 
-def test_p5_6_csrf_cookie_has_no_pinned_domain():
+@pytest.mark.asyncio
+async def test_p5_6_csrf_cookie_has_no_pinned_domain():
     """Set-Cookie MUST NOT carry a `Domain=` attribute. A pinned
     domain (e.g. Domain=.preview.emergentagent.com) would prevent
     the cookie from following the request to production / custom
     domains, making the CSRF double-submit unrecoverable there."""
-    header = _csrf_setcookie_header().lower()
+    header = (await _csrf_setcookie_header()).lower()
     # Iterate every attribute; assert none is `domain=...`. (Cookie
     # values may legitimately CONTAIN the word "domain" but the
     # attribute syntax is `; domain=...`.)
@@ -79,11 +80,12 @@ def test_p5_6_csrf_cookie_has_no_pinned_domain():
     )
 
 
-def test_p5_6_csrf_cookie_is_double_submit_shape():
+@pytest.mark.asyncio
+async def test_p5_6_csrf_cookie_is_double_submit_shape():
     """Cookie must be Path=/, SameSite=Lax (or stricter on local-only
     deploys), Secure (when served over HTTPS — the prod / preview
     contract), and NOT HttpOnly so the SPA can read it."""
-    header = _csrf_setcookie_header(scheme="https").lower()
+    header = (await _csrf_setcookie_header(scheme="https")).lower()
     parts = [p.strip() for p in header.split(";")]
     assert "path=/" in parts, f"missing Path=/: {header}"
     samesite = next((p for p in parts if p.startswith("samesite=")), None)
@@ -100,12 +102,13 @@ def test_p5_6_csrf_cookie_is_double_submit_shape():
     )
 
 
-def test_p5_6_csrf_cookie_drops_secure_on_plain_http():
+@pytest.mark.asyncio
+async def test_p5_6_csrf_cookie_drops_secure_on_plain_http():
     """Loopback dev / health-check probes hit the endpoint over HTTP.
     The Secure flag must NOT be set in that case, otherwise the
     cookie won't be persisted by the client and the SPA breaks on
     `npm start` or any non-TLS environment."""
-    header = _csrf_setcookie_header(scheme="http").lower()
+    header = (await _csrf_setcookie_header(scheme="http")).lower()
     parts = [p.strip() for p in header.split(";")]
     assert "secure" not in parts, (
         f"Secure flag must not be set on plain HTTP responses; "
@@ -113,17 +116,16 @@ def test_p5_6_csrf_cookie_drops_secure_on_plain_http():
     )
 
 
-def test_p5_6_csrf_cookie_name_and_value_present():
+@pytest.mark.asyncio
+async def test_p5_6_csrf_cookie_name_and_value_present():
     """The cookie is named `csrf_token` and the same value appears
     in the JSON body, so the SPA can compare cookie ↔ header
     (the double-submit invariant)."""
-    async def _do():
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-        ) as ac:
-            return await ac.get("/api/csrf")
-    r = _run(_do())
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        r = await ac.get("/api/csrf")
     assert r.status_code == 200
     setcookie = r.headers.get("set-cookie", "")
     # The cookie name is the first key=value pair before the ; attrs.

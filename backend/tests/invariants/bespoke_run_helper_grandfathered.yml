@@ -53,31 +53,7 @@
 # ─────────────────────────────────────────────────────────────────────
 
 # M1 entries — module-level `def _run` helper
-m1_entries:
-  - file: backend/tests/test_phase_p2_b2_rate_limits.py
-    lineno: 24
-    cluster_f_sub_sprint: "Cluster-G (post-F)"
-    reason: Discovered by 2026-06-27 invariant baseline scan; missed by Cluster-F scope memo §0 survey
-
-  - file: backend/tests/test_phase_p3_3_mfa.py
-    lineno: 25
-    cluster_f_sub_sprint: "Cluster-G (post-F)"
-    reason: Discovered by 2026-06-27 invariant baseline scan; missed by Cluster-F scope memo §0 survey
-
-  - file: backend/tests/test_phase_p4_cohort_funnel.py
-    lineno: 31
-    cluster_f_sub_sprint: "Cluster-G (post-F)"
-    reason: Discovered by 2026-06-27 invariant baseline scan; missed by Cluster-F scope memo §0 survey
-
-  - file: backend/tests/test_phase_p5_6_csrf_cookie_domain.py
-    lineno: 42
-    cluster_f_sub_sprint: "Cluster-G (post-F)"
-    reason: Discovered by 2026-06-27 invariant baseline scan; missed by Cluster-F scope memo §0 survey
-
-  - file: backend/tests/test_phase_p5_corrections.py
-    lineno: 24
-    cluster_f_sub_sprint: "Cluster-G (post-F)"
-    reason: Discovered by 2026-06-27 invariant baseline scan; missed by Cluster-F scope memo §0 survey
+m1_entries: []
 
 # M2 entries — asyncio.run(...) inside a test_* function body
 m2_entries:

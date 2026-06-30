@@ -4,10 +4,15 @@ Tests the rate-limit primitives directly — the bucket lookup, the
 per-IP/per-user keying, and the 429 trip via the strategy — without
 reloading the server module (which would reinit Motor against a
 closed event loop and fight pytest-asyncio).
+
+Cluster-G.1 (2026-06-27): converted from module-level `_run` helper
+to `@pytest.mark.asyncio + async def` so async-touching tests bind
+to the session-scoped event loop instead of binding the policy loop
+to a sync-test-local loop (same root cause as Cluster-E + Cluster-F).
+4 pure-Python helper tests stay sync per Cluster-F.2 heuristic.
 """
 from __future__ import annotations
 
-import asyncio
 import os
 import sys
 from pathlib import Path
@@ -19,10 +24,6 @@ sys.path.insert(0, str(REPO / "backend"))
 
 from dotenv import load_dotenv  # noqa: E402
 load_dotenv(REPO / "backend" / ".env")
-
-
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
 
 
 def test_b2_limits_table_carries_expected_buckets():
@@ -92,7 +93,8 @@ def test_b2_strategy_trips_429_after_threshold():
     assert strategy.hit(limit, bucket, key) is False
 
 
-def test_b2_dependency_raises_429_when_bucket_exhausted(monkeypatch):
+@pytest.mark.asyncio
+async def test_b2_dependency_raises_429_when_bucket_exhausted(monkeypatch):
     """Drive the rate_limit() dependency directly and assert the
     HTTPException it raises carries the documented 429 shape."""
     import services.rate_limit as rl
@@ -117,10 +119,10 @@ def test_b2_dependency_raises_429_when_bucket_exhausted(monkeypatch):
 
     dep = rl.rate_limit("__b2_test")
     # First call passes.
-    _run(dep(req))
+    await dep(req)
     # Second call must raise 429.
     with pytest.raises(HTTPException) as ei:
-        _run(dep(req))
+        await dep(req)
     exc = ei.value
     assert exc.status_code == 429
     assert exc.detail["code"] == "RATE_LIMIT_EXCEEDED"
@@ -128,7 +130,8 @@ def test_b2_dependency_raises_429_when_bucket_exhausted(monkeypatch):
     assert "Retry-After" in exc.headers
 
 
-def test_b2_dependency_noop_when_disabled(monkeypatch):
+@pytest.mark.asyncio
+async def test_b2_dependency_noop_when_disabled(monkeypatch):
     """When RATE_LIMIT_DISABLED=1 the dependency must be a no-op."""
     import services.rate_limit as rl
     from fastapi import Request
@@ -146,4 +149,4 @@ def test_b2_dependency_noop_when_disabled(monkeypatch):
     dep = rl.rate_limit("auth_login")
     # Even calling many times must never raise.
     for _ in range(50):
-        _run(dep(req))
+        await dep(req)
