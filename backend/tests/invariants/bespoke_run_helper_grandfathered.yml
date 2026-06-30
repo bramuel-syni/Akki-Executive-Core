@@ -62,9 +62,3 @@ m2_entries:
     lineno: 254
     cluster_f_sub_sprint: "A+D fix preserves this asyncio.run with snapshot/restore"
     reason: A+D fix wrapped this asyncio.run with env + loop-policy snapshot/restore; this M2 site is THE polluter that A+D's surgical fix neutralized. Pattern preserved as-is.
-
-  - file: backend/tests/test_synisense_surface_validation.py
-    func: test_real_pipeline_run_rejects_bad_subsurface
-    lineno: 78
-    cluster_f_sub_sprint: "Cluster-G (post-F)"
-    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)

@@ -60,7 +60,8 @@ def test_invalid_surfaces_are_rejected(bad):
     assert _is_valid_surface(bad) is False
 
 
-def test_real_pipeline_run_rejects_bad_subsurface(monkeypatch):
+@pytest.mark.asyncio
+async def test_real_pipeline_run_rejects_bad_subsurface(monkeypatch):
     """End-to-end: pipeline.run raises ValueError on a malformed sub-surface."""
     import asyncio
     from services.synisense.pipeline import run
@@ -75,4 +76,4 @@ def test_real_pipeline_run_rejects_bad_subsurface(monkeypatch):
                 account_id="acct-test",
             )
 
-    asyncio.run(_runner())
+    await _runner()
