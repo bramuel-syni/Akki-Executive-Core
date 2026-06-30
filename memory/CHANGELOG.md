@@ -2,6 +2,12 @@
 
 > Append-only history of shipped work. Newest first.
 
+## 2026-06-30 — JC-LLM-MODELS-REFRESH-EVALUATION · BOTH .2 + .3 classified BACKLOG (USER-DEPENDENT)
+
+**JC-LLM-MODELS-REFRESH-EVALUATION — READ-ONLY evaluation of LLM_MODELS_REFRESH .2 + .3 sub-sprints** (SHIPPED · evaluation memo only · HARD STOP at evaluation surface).
+Located canonical scope at `sprints/LLM_MODELS_REFRESH_MATRIX.md` (Feb 2026 matrix; .1 ALREADY SHIPPED 2026-06-26 via `sprints/LLM_REFRESH_1.md` with 10/10 GREEN picker+cascade+governance+pricing). **.2 scope (Work Studio drafting)**: 7 live model-string sites in `routers/work_studio_export.py` (live count differs from matrix doc's 6 due to file modifications during BUG-ANL-UPLOAD-GRIDFS; additive drift documented). **.3 scope-doc inaccuracy SURFACED via lesson #6 disk cross-validation**: `services/solva_v2/` contains 0 hardcoded model strings (matrix doc claimed 3 files); ACTUAL stale-model surface lives in `llm_service.py` (LLM_MODEL_FAST/DEEP/STANDARD + validator_model) + Shield's `llm_router.py` (analytical + balanced tier defaults) + `ideas_engine/synthesizer.py` = 8 sites across 3 files. **User-dependency audit**: BOTH .2 + .3 are USER-DEPENDENT on quality gates (matrix doc HALT clause on "forward-to-a-board" subjective sign-off for .2 + 4 separate per-surface sign-offs for .3). Emergent LLM Key access NOT a blocker; code changes mechanical; gate is purely human subjective. **F.6 Shield-contract discipline-pay APPLIES** at fix dispatches (3-row template reusable from G.4/G.5). Pattern transferability HIGH per retro §6.2 (third mechanical family: model-string version-bump; distinct from F+G sync→async and Cluster-C fixture-isolation). All 6 banked lessons applied. Per autonomous mandate "If ALL sub-tasks user-dependent → STOP, surface, add to user-dep backlog, move to queue item 8" — both sub-sprints added to backlog with explicit reasoning + dispatch shape recommendations for when/if user authorizes; HARD STOP at evaluation surface.
+- `sprints/JC_LLM_MODELS_REFRESH_EVALUATION.md` NEW · `DEV_PIPELINE.md` §9 row added BEFORE memo
+
 ## 2026-06-30 — JC-POLLUTION-CLUSTER-C-FIX · NEW mechanical family (fixture-isolation refactor) · 6 FTT IDs closed
 
 **JC-POLLUTION-CLUSTER-C-FIX — Cluster-C intra-file refactor** (SHIPPED · proving slice 13/13 GREEN · HARD STOP at slice close).
