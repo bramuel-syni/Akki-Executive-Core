@@ -1,4 +1,4 @@
-# Polluter Inventory — 2026-06-27T11:13:13.063815+00:00
+# Polluter Inventory — 2026-06-30T17:09:04.331866+00:00
 
 READ-ONLY observability snapshot of bespoke-`_run` / `asyncio.run` polluter landscape.
 

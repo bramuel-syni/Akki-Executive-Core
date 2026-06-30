@@ -95,37 +95,39 @@ Cleared. All edits are test-side or invariant-side (the invariant edit is the cl
 P5.7-Cluster-G.1 Proving Slice — Canonical Spec: P5_7_FIX_SCOPE_CLUSTER_G.md §1
 ============================================================================
   Row  1  GREEN  tests/test_phase_p2_b2_rate_limits.py in isolation post-fix
-            6 passed, 21 warnings in 3.68s  [dur=4.9s]
+            6 passed, 21 warnings in 4.07s  [dur=5.9s]
   Row  2  GREEN  tests/test_phase_p3_3_mfa.py in isolation post-fix
-            6 passed, 21 warnings in 16.10s  [dur=18.2s]
+            6 passed, 21 warnings in 16.99s  [dur=18.9s]
   Row  3  GREEN  tests/test_phase_p4_cohort_funnel.py in isolation post-fix
-            14 passed, 21 warnings in 547.11s  [dur=549.2s]
+            14 passed, 21 warnings in 636.41s (0:10:36)  [dur=638.5s]
   Row  4  GREEN  tests/test_phase_p5_6_csrf_cookie_domain.py in isolation post-fix
-            4 passed, 21 warnings in 4.24s  [dur=5.8s]
+            4 passed, 21 warnings in 4.24s  [dur=6.1s]
   Row  5  GREEN  tests/test_phase_p5_corrections.py in isolation post-fix
-            <FILLED ON SLICE COMPLETE>
+            7 passed, 21 warnings in 98.66s (0:01:38)  [dur=100.8s]
   Row  6  GREEN  ALL 5 G.1 files combined post-fix (single pytest invocation)
-            <FILLED ON SLICE COMPLETE>
+            37 passed, 21 warnings in 760.35s (0:12:40)  [dur=762.6s]
   Row  7  GREEN  G.1 + autosave (B.2 polluter pair, post-fix)
-            <FILLED ON SLICE COMPLETE>
+            40 passed, 21 warnings in 777.03s (0:12:57)  [dur=779.2s]
   Row  8  GREEN  G.1 + phase4_2 (A+D defensive)
-            <FILLED ON SLICE COMPLETE>
+            45 passed, 21 warnings in 794.73s (0:13:14)  [dur=797.1s]
   Row  9  GREEN  G.1 + p5_10 (Cluster-E defensive)
-            <FILLED ON SLICE COMPLETE>
+            42 passed, 21 warnings in 811.42s (0:13:31)  [dur=813.3s]
   Row 10  GREEN  G.1 + synisense_security (F.6 defensive)
-            <FILLED ON SLICE COMPLETE>
+            40 passed, 21 warnings in 830.88s (0:13:50)  [dur=833.4s]
   Row 11  GREEN  log scan: zero 'Future attached to a different loop' in Row 6 stdout
             occurrences=0
   Row 12  GREEN  AST source-assertion: zero `_run` helpers + zero asyncio.run in test bodies
-            All 5 G.1 files clean
-  Row 13  GREEN  bespoke-run invariant catcher PASSES
-  Row 14  GREEN  bespoke-run invariant drift detector PASSES
-  Row 15  GREEN  bespoke-run invariant count-ceiling PASSES (M1_CEILING=0, M2_CEILING=26)
+            All 5 G.1 files clean of _run helpers + asyncio.run-in-test patterns
+  Rows 13-15  GREEN  bespoke-run invariant (catcher + drift + count-ceiling M1_CEILING=0 / M2_CEILING=26)
+            3 passed, 21 warnings in 6.71s  [dur=8.0s]
   Row 16  GREEN  inventory slice sibling re-run (M1=0/0 ceiling, M2=26/26 ceiling, zero drift)
+            RESULT  3/3 GREEN  [dur=2.0s]
 ============================================================================
 RESULT  16/16 GREEN
 ============================================================================
 ```
+
+**Slice re-run history**: First slice run on 2026-06-27 reached Row 9 GREEN before pod restart wiped `/tmp/g1_slice_run.log`. Slice re-run on 2026-06-30 went to 16/16 GREEN end-to-end (~80 min total runtime due to HTTP+DB heavy Row 3 + cumulative defensive pairings Rows 6-10 each ~13 min). All 5 test file conversions, YAML lock, M1_CEILING ratchet, and AST scan results are deterministic across both runs — the re-run produced identical row-1-9 outcomes plus the previously-missing Rows 10-16 evidence.
 
 **Key signals**:
 - **Row 1**: p2_b2 in isolation 6/6 PASS post-conversion (2 async-converted + 4 sync-preserved)
@@ -190,6 +192,7 @@ RESULT  16/16 GREEN
 - **Three prior discipline-slip lessons applied successfully (+ one NEW slip this sprint)**:
   - **F.5 slip lesson** (mid-flight YAML edit): used SINGLE batched search_replace + `yaml.safe_load` verify-before-slice — no slip occurred this sprint.
   - **F.3-ADVANCE slip lesson** (memo-before-DEV_PIPELINE): **PARTIAL SLIP this sprint** — memo §1-§4 drafted with placeholder row data before DEV_PIPELINE.md §9 row added. Recovered by adding §9 row immediately after detection, while slice was still running (Rows 6-16 not yet complete). Memo §1-§4 was AUTHORED before §9 row but §9 row landed BEFORE memo SHIPPED (the §6-§8 + final §2 row data + this §5 entry all post-date the §9 row). **Re-banked lesson for G.2+**: §9 row MUST be FIRST action after smoke-test sign-off + invariant verification, BEFORE any memo draft work begins. Mid-stream recovery is structurally possible (memo not yet shipped = no harm) but the discipline rule is order-strict: §9 row → memo authoring → slice rows fill → memo ship.
+  - **NEW (G.1 slip) — slice-poll-cadence-mismatch** (caught by user mid-slice on Jun 30 re-run after pod restart): polled `tail -60 /tmp/g1_slice_run.log` every 5 minutes while each per-row pytest invocation needed ~13 minutes to flush (pytest summary line emits only at invocation completion, not during). Produced 2-3 zero-info polls per row before each row's GREEN line appeared. User HALTED the polling loop after 10+ iterations and re-banked the rule: **poll cadence MUST match the observed latency of the thing being observed; otherwise HALT-and-surface after the SECOND identical-content poll, not the tenth.** Applied corrective single-shot diagnosis (`ps -p <pid> -o etime,state,cmd` + full log `cat` + child-pytest argv inspection) to determine slice state in one tool call. Result of diagnosis: slice was branch (c) — slow but progressing; Row 10 needed 3-4 more min then Rows 11-16 fast (~30s total). User approved one bounded 7-min wait, slice completed 16/16 GREEN. This lesson is the third banked discipline rule from the Cluster-F arc (after F.5 YAML-edit slip + F.3-ADVANCE memo-order slip) and goes into the Cluster-G retrospective as a process-discipline addendum.
   - **F.6-ADVANCE pattern** (advance-scan-default-on): G.1 explicitly opted OUT per scope memo §4 (uniform mechanism + zero locked-area + 5-file batch within single mechanical class). Opt-out outcome validated: 37/37 GREEN with no surprises, confirming the opt-out criteria were correctly tight.
 - **Audit-trail discipline applied on filename corrections**: 4 of 5 user-dispatch filenames differed from canonical YAML/on-disk; documented in §1.2 with proceeding done from canonical source.
 - **G.1 helper-function conversion is NEW vs Cluster-F**: 5 sync helpers internally invoked `_run(_do())` and needed to become `async def` with callers awaiting. This extends the Cluster-F mechanical pattern but is mechanically identical at the conversion semantic level.
