@@ -394,24 +394,39 @@ Row 15   Audit trail — workbook.upload.sas_issued + sas_completed + sas_failed
 
 ---
 
-## §11 — Open questions (surfaced for user direction)
+## §11 — Resolved decisions (LOCKED 2026-06-30 per `JC-STORAGE-PIVOT-AZURE-SAS-DECISIONS-LOCK` dispatch)
 
-These need user input BEFORE build dispatch can proceed:
+User confirmed all 8 open questions. Reasoning preserved verbatim per decision below. Build dispatch remains GATED on Azure credentials per user call #2.
 
-| # | Question | Default if no answer |
+| # | Decision | User reasoning (verbatim where supplied) |
 |---|---|---|
-| **Q1** | Confirm X = 16 MB raw? Override to 8 MB (more conservative) or 50 MB (more permissive)? | X = 16 MB (per §1.3 recommendation) |
-| **Q2** | Azure auth: managed identity (preferred — no key in env) vs account-key SAS (fallback for local dev)? | Managed identity in prod; account key in preview/dev (matches Emergent platform convention) |
-| **Q3** | Multi-region: single storage account global, or per-region (e.g., West US 2 + West Europe)? | Single storage account; cross-region latency acceptable for upload-once workload |
-| **Q4** | Retention on `temp-staging` container: 24h, 7d, or 30d auto-delete? | 24h (matches "in-flight upload" semantic; sufficient for the largest realistic upload + complete-webhook lag) |
-| **Q5** | Archive container scope: only failed uploads, or all uploads post-analysis completion? | Only failed uploads in this arc; full archival is a separate future dispatch |
-| **Q6** | FE SDK: `@azure/storage-blob` browser bundle (~50 KB gzipped), or hand-rolled XHR multi-part? | `@azure/storage-blob` (lower maintenance burden; well-documented retry semantics) |
-| **Q7** | SAS signing: user-delegation key (`get_user_delegation_key`) vs account-key signing? | User-delegation (requires managed identity; tightest security model) |
-| **Q8** | Storage account region: prod akki.syni.ai serving region match? | West US 2 (default Emergent platform region; user override if prod runs elsewhere) |
+| **D1** | **X = 16 MB raw** | "Mathematical inline-base64 ceiling; 99.9% historical traffic stays on GridFS; env-overridable via `STORAGE_X_THRESHOLD_MB`." Anchored to BSON 16 MB cap per §1.3 recommendation. |
+| **D2 + D7** *(folded)* | **Managed identity → user-delegation SAS** | "No long-lived account key on the signing path; SAS bounded to managed identity; fits governed-identity security posture." Q2 (auth method) and Q7 (SAS signing key source) collapse into the same answer: managed identity is the auth method AND the signing-key source via `get_user_delegation_key()`. Account-key SAS code path is NOT shipped; local dev uses the same managed-identity path against a dev Azure storage account (no per-env divergence). |
+| **D3** | **Single storage account** | "No residency requirement stated by user; if one surfaces later, structure can pivot to per-region — flag this as a known pivot vector in §12." Pivot vector documented at §12 (new). |
+| **D4** | **`temp-staging` retention = 24h** | "Staging tier, not store; 24h covers upload-to-ingest window without orphan accumulation." Lifecycle policy applied at storage-account provisioning time. |
+| **D5** | **Archive container = provisioned-not-populated** | "Create the container in the storage structure; wire nothing into it. Archive workflow is a separate later sprint (out of scope here)." Container exists in CORS + lifecycle policy scope but the build dispatch ships ZERO writes to it. |
+| **D6** | **`@azure/storage-blob` JS SDK for frontend** | "No hand-rolled multipart. SDK handles chunking, retry, block-commit, SAS-refresh." Resolves the §4.2 frontend implementation path; XHR fallback NOT shipped. |
+| **D7** | *(folded into D2 — see above)* | — |
+| **D8** | **Region = app-region by default** | "Co-locate storage with app; override only if user states a residency requirement. User to supply explicit region value with credentials." Region is part of the credential payload, not hard-coded. |
+
+**Cross-section impacts of locked decisions on the rest of the memo**:
+- **§2.1 containers**: 4 containers per env confirmed (`workbook-uploads`, `analysis-uploads`, `temp-staging`, `archive`); `archive` provisioned-not-populated per D5; `temp-staging` 24h lifecycle policy per D4
+- **§3.1 `/presigned-url` endpoint**: SAS signing path is user-delegation only per D2+D7 (single code path; no account-key branch)
+- **§5 security model**: account-key threats (rotation, leakage) become N/A per D2+D7; managed-identity threat model becomes primary (identity binding, identity rotation, identity-scope creep)
+- **§6.3 env vars**: `AZURE_STORAGE_KEY` becomes UNUSED in build dispatch per D2+D7 (drop from manifest); `AZURE_USE_MANAGED_IDENTITY` becomes UNUSED (managed identity is the only path)
+- **§10 test strategy**: local mock retains its shape; the "real Azure auth via account key" alternative is dropped per D2+D7 — local dev tests against the dev Azure storage account using managed identity
+
+**Build dispatch dependency on decisions**: 100% of §11 decisions are now LOCKED. Only credentials (storage account name + region + managed-identity binding) gate the build per user call #2.
 
 ---
 
-## §12 — Discipline notes
+## §12 — Known pivot vector: per-region storage if residency requirement surfaces
+
+D3 locked the architecture to a **single storage account** because no data-residency requirement has been stated. If a residency requirement surfaces later (e.g., GDPR-driven EU-resident customer data must remain in EU storage; HIPAA-driven US-resident workbook isolation; SOC-2 multi-region attestation requirements), the architecture pivots cleanly without product-code rewrites: the `AZURE_STORAGE_ACCOUNT` env var becomes `AZURE_STORAGE_ACCOUNTS_BY_REGION` (a dict like `{"us-west-2": "akkistorage-usw2", "eu-west-1": "akkistorage-euw1"}`); the container provisioning matrix multiplies by region (4 containers × N regions); the SAS issuer at `POST /api/workbook/upload/presigned-url` picks the storage account based on either the request origin's geo-route or a user-residency tag stored on the account record (latter preferred for explicit policy compliance); the backend's triple-read `read_workbook_bytes` becomes region-aware on the `azure_blob_id` URL host segment (already encodes the storage account name, so dispatch logic is `urlparse(azure_blob_id).hostname → lookup account → connect to that account's blob client`); the FE picker behaviour stays IDENTICAL (region routing is server-side); the proving slice grows by 2 rows (region-routing-by-tenant + cross-region-deny-via-policy). Migration of pre-existing single-account blobs would be a separate dispatch (analogous to the BUG-ANL-UPLOAD-GRIDFS backfill script but scoped to azure_blob_id host-rewriting). This pivot is REVERSIBLE if the residency requirement is later relaxed (collapse back to single account). The pivot cost is concentrated at the storage-account provisioning + SAS-issuer-routing layer; everything downstream stays additive.
+
+---
+
+## §13 — Discipline notes
 
 - **READ-ONLY scope honoured**: 0 LOC mutated outside this memo file
 - **Canonical spec cited on line 1**: explicit cross-references to BUG_ANALYZE_UPLOAD.md + runbook + JC_WS_CANONICAL_SPEC.md + the user's 5 locked calls
@@ -427,7 +442,7 @@ These need user input BEFORE build dispatch can proceed:
 
 ---
 
-## §13 — User-direction surface (HARD STOP)
+## §14 — User-direction surface (HARD STOP)
 
 Per user dispatch: **HARD STOP at memo surface; surface to user; build dispatch awaits user-supplied Azure credentials per user call #2.**
 
@@ -441,16 +456,23 @@ Per user dispatch: **HARD STOP at memo surface; surface to user; build dispatch 
 - ✅ 11 sections delivered per dispatch shape (§1 X · §2 architecture · §3 endpoints · §4 FE · §5 security · §6 dependencies · §7 locked-area sweep · §8 migration policy · §9 ingress disposition · §10 test strategy · §11 open questions)
 - ✅ 0 LOC mutated outside memo file
 
+**Update 2026-06-30 18:48 UTC — `JC-STORAGE-PIVOT-AZURE-SAS-DECISIONS-LOCK` dispatch shipped**:
+- ✅ §11 transformed from "8 open questions" to "8 resolved decisions" (D1-D8; D2+D7 folded into single auth model)
+- ✅ §12 NEW "Known pivot vector: per-region storage" added (single paragraph; reversible pivot if residency requirement surfaces)
+- ✅ Downstream renumbered: §12 Discipline → §13 · §13 User-direction → §14 · §14 Forward look → §15
+- ✅ Build manifest `JC_STORAGE_PIVOT_AZURE_SAS_BUILD_MANIFEST.md` authored as separate artifact (canonical spec line 1 cites this memo's §11 resolved)
+- ✅ 0 LOC mutated outside memo files (this edit + manifest creation)
+
 **Awaiting next dispatch from user**:
-1. Confirmation on §11 open questions (Q1-Q8)
-2. Azure credentials supplied (storage account name + auth method + region)
+1. ~~Confirmation on §11 open questions (Q1-Q8)~~ → **RESOLVED 2026-06-30** via `JC-STORAGE-PIVOT-AZURE-SAS-DECISIONS-LOCK` dispatch; all 8 LOCKED at §11; build manifest authored at `sprints/JC_STORAGE_PIVOT_AZURE_SAS_BUILD_MANIFEST.md`
+2. Azure credentials supplied (storage account name + region + managed-identity binding)
 3. Build dispatch trigger after credentials land
 
 Standing rules unchanged. Time-gate status: no active time-gate. Cluster-G arc PAUSED at G.3 close; will resume after storage arc proves end-to-end in prod per sequence ii.
 
 ---
 
-## §14 — Forward look
+## §15 — Forward look
 
 After this scope memo:
 1. **User provides Azure credentials** (gating step per call #2)
