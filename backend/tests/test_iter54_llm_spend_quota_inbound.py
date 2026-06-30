@@ -107,7 +107,8 @@ class TestRaceSafeDeepQuota:
     """Exhaust llm_deep_usage[brief] to 10, then fire 5 parallel check_and_consume.
     Confirm count NEVER exceeds 10 (race-safe)."""
 
-    def test_unique_index_exists(self):
+    @pytest.mark.asyncio
+    async def test_unique_index_exists(self):
         async def _check():
             client = AsyncIOMotorClient(os.environ["MONGO_URL"])
             db = client[os.environ["DB_NAME"]]
@@ -123,9 +124,10 @@ class TestRaceSafeDeepQuota:
                 assert found, f"unique index missing over (account_id, surface, day_utc); have: {idx}"
             finally:
                 client.close()
-        asyncio.run(_check())
+        await _check()
 
-    def test_at_cap_and_under_cap_combined(self):
+    @pytest.mark.asyncio
+    async def test_at_cap_and_under_cap_combined(self):
         """Both race-safety scenarios in one event loop (motor client is module-level
         and its event-loop binding is fragile across multiple asyncio.run calls)."""
         async def _run():
@@ -167,7 +169,7 @@ class TestRaceSafeDeepQuota:
             assert row_b["count"] == 10, f"final count != 10: {row_b['count']}"
             await db.llm_deep_usage.delete_many({"account_id": aid_b})
             client.close()
-        asyncio.run(_run())
+        await _run()
 
     def _disabled_test_at_cap_no_overage(self):
         async def _run():
@@ -233,7 +235,8 @@ class TestRaceSafeDeepQuota:
 
 # ---------- 3. Postmark inbound virus rejection audit ----------
 class TestInboundVirusRejected:
-    def test_eicar_attachment_rejected_and_audited(self):
+    @pytest.mark.asyncio
+    async def test_eicar_attachment_rejected_and_audited(self):
         # Find Bramuel's account_token + a valid context inbound_token
         async def _setup():
             client = AsyncIOMotorClient(os.environ["MONGO_URL"])
@@ -254,7 +257,7 @@ class TestInboundVirusRejected:
                 return account, ctx
             finally:
                 client.close()
-        account, ctx = asyncio.run(_setup())
+        account, ctx = await _setup()
         if not account or not account.get("inbound_token"):
             pytest.skip("bramuel inbound_token not minted; skipping (run /api/inbound/address first)")
 
@@ -295,7 +298,7 @@ class TestInboundVirusRejected:
                 return row
             finally:
                 client.close()
-        audit = asyncio.run(_check_audit())
+        audit = await _check_audit()
         assert audit is not None, "no audit_log row written for inbound_email.rejected"
         assert audit.get("action") == "inbound_email.rejected"
         meta = audit.get("metadata") or audit.get("meta") or audit.get("details") or {}

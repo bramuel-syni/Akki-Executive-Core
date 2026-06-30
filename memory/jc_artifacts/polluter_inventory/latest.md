@@ -1,14 +1,14 @@
-# Polluter Inventory — 2026-06-30T17:46:35.898084+00:00
+# Polluter Inventory — 2026-06-30T18:27:59.876350+00:00
 
 READ-ONLY observability snapshot of bespoke-`_run` / `asyncio.run` polluter landscape.
 
 ## Live tree counts
 - M1 (`_run` helper) files: **0**
-- M2 (`asyncio.run` in test body) sites: **11** across **6** files
+- M2 (`asyncio.run` in test body) sites: **7** across **5** files
 
 ## Grandfather YAML state
 - M1 entries: **0** / ceiling 0
-- M2 entries: **11** / ceiling 11
+- M2 entries: **7** / ceiling 7
 
 ## Drift report
 - ✅ No new M1 polluters
@@ -18,7 +18,7 @@ READ-ONLY observability snapshot of bespoke-`_run` / `asyncio.run` polluter land
 
 ## Per-sub-sprint roll-up
 - **A+D fix preserves this asyncio.run with snapshot/restore** — M1: 0 · M2: 1
-- **Cluster-G (post-F)** — M1: 0 · M2: 10
+- **Cluster-G (post-F)** — M1: 0 · M2: 6
 
 ## Closure status
 ✅ All grandfather entries match the live tree. No drift.

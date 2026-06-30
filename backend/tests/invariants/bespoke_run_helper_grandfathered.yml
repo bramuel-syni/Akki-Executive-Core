@@ -57,30 +57,6 @@ m1_entries: []
 
 # M2 entries — asyncio.run(...) inside a test_* function body
 m2_entries:
-  - file: backend/tests/test_iter54_llm_spend_quota_inbound.py
-    func: test_unique_index_exists
-    lineno: 126
-    cluster_f_sub_sprint: "Cluster-G (post-F)"
-    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
-
-  - file: backend/tests/test_iter54_llm_spend_quota_inbound.py
-    func: test_at_cap_and_under_cap_combined
-    lineno: 170
-    cluster_f_sub_sprint: "Cluster-G (post-F)"
-    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
-
-  - file: backend/tests/test_iter54_llm_spend_quota_inbound.py
-    func: test_eicar_attachment_rejected_and_audited
-    lineno: 257
-    cluster_f_sub_sprint: "Cluster-G (post-F)"
-    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
-
-  - file: backend/tests/test_iter54_llm_spend_quota_inbound.py
-    func: test_eicar_attachment_rejected_and_audited
-    lineno: 298
-    cluster_f_sub_sprint: "Cluster-G (post-F)"
-    reason: M2 site discovered by 2026-06-27 invariant baseline scan; needs per-file investigation (not in Cluster-F scope)
-
   - file: backend/tests/test_phase12_2_surfaces.py
     func: test_paragraph_anchors_stable_through_redaction
     lineno: 61
