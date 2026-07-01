@@ -285,6 +285,8 @@ metadata:
 
 This pending action governs the WRITE path (large uploads); sunset only touches the READ path. **NOT a sunset-blocking gate** but worth surfacing for completeness. Independent dispatch sequencing.
 
+**Update 2026-06-30 (Tigris storage pivot rescope)**: user's platform-side direction to "drop the ingress ticket" (issued during Tigris pivot dispatch on assumption that Emergent Object Store supports browser-direct-presigned uploads) is HELD PENDING because integration playbook retrieved 2026-06-30 revealed built-in Tigris is BACKEND-MEDIATED (playbook: "No presigned URLs — all access must go through your backend"). Under Path A' (built-in Tigris) the ingress annotation dependency FLIPS from FALLBACK back to LOAD-BEARING for all files > 8 MB. Ticket NOT closed; disposition depends on user's Path A'/B'/C' choice per `sprints/JC_STORAGE_PIVOT_TIGRIS_RESCOPE.md §3` + updated recontextualization at `user_actions/K8S_INGRESS_STATUS.md`. **Still NOT sunset-blocking** — the sunset only removes the legacy READ fallback for `data_b64` rows; the ingress annotation issue governs the storage-pivot WRITE flow which is independent. Gate B stays CARRYOVER status; escalation on the ingress side is tracked in the storage rescope arc, not this sunset arc.
+
 ---
 
 ## §9 — Discipline notes
