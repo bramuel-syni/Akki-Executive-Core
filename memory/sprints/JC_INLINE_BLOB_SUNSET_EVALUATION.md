@@ -268,6 +268,8 @@ When timer expires on 2026-07-03 AND Gate A (CRITICAL) is cleared, fix dispatch 
 
 Without this confirmation, sunset MUST NOT proceed even when timer expires.
 
+**Update 2026-06-30 (follow-on dispatch `JC-INLINE-BLOB-SUNSET-PROD-COUNT`)**: User picked option (b) — run motor count query against prod Atlas. Credential-probe (step 1) HALTED: prod Atlas connection string NOT present in current pod env (`backend/.env` `MONGO_URL` is local-dev only; no `MONGODB_PROD_URI`/`ATLAS_URI`/`PROD_MONGO_URL` env vars set; k8s standard secret mount paths `/var/run/secrets`+`/etc/secrets`+`/run/secrets` all absent; `.env.example` mentions prod-shape as commented template only). Motor query (step 2) NOT executed. **Gate A remains OPEN**; sub-gate added: **user creds injection required before count query can run**. Injection paths: (a) inject `MONGODB_PROD_URI` env var into pod session (agent reads once + disconnects; agent MUST NOT log raw value at any point); (b) mount k8s secret to `/var/run/secrets/prod-mongo`; (c) supply connection string inline to a one-shot script invocation. Sunset fix dispatch still gated on timer 2026-07-03 + Gate A cleared.
+
 ### §8.2 — Gate B (CARRYOVER · NOT sunset-blocking)
 
 **K8s ingress annotations** on `akki.syni.ai` per BUG memo USER_ACTION_CHECKLIST item 🔴 #1 (lines 116-134):

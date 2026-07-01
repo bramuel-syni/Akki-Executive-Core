@@ -31,6 +31,19 @@
 # assertion (and the test should then ALSO carry the in-source
 # `@pytest.mark.acceptable_thin_assertion` + `# reason:` marker so
 # the invariant double-confirms the exemption).
+#
+# **P2 OPPORTUNISTIC-ONLY BACKLOG STATUS (codified 2026-06-30 per
+# user directive in JC-INLINE-BLOB-SUNSET-PROD-COUNT dispatch)**:
+# Threshold enforcement stays automatic — the invariant catcher
+# (`tests/invariants/test_no_thin_assertions.py`) + drift detector
+# remain active. Retirement of these 9 entries is OPPORTUNISTIC:
+# take one down when someone is already inside these files for
+# real product/test work, rewrite/delete with a real assertion,
+# and remove the corresponding YAML entry in the same commit.
+# **NOT to be scheduled as a dedicated sprint dispatch.** The
+# machine-enforced ceiling (list-count = 9 at ship time; must not
+# grow) is the discipline pay; individual entry closures are P2
+# opportunistic work only.
 
 entries:
   - file: backend/tests/test_iter12_shares_home.py

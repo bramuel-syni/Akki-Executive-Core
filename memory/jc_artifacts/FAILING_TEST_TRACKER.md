@@ -83,6 +83,8 @@ Slice: `backend/scripts/jc_test_pollution_per_file_capture_slice.py` · evidence
 
 These 9 entries are the pre-existing thin-assertion test bodies that the new build-breaking invariant `tests/invariants/test_no_thin_assertions.py` surfaced at ship time. They are exempted by the file-based grandfather list at `backend/tests/invariants/thin_assertions_grandfathered.yml`. Each is queued for individual rewrite (real assertion that exercises the documented branch) OR deletion (if the test is truly redundant). Removing an entry from this section MUST coincide with removing it from the grandfather YAML.
 
+**P2 OPPORTUNISTIC-ONLY BACKLOG STATUS (codified 2026-06-30 per user directive in `sprints/JC_INLINE_BLOB_SUNSET_EVALUATION.md` follow-on dispatch JC-INLINE-BLOB-SUNSET-PROD-COUNT)**: Threshold enforcement stays automatic — the invariant catcher + drift detector remain active at the 9-entry ceiling. Retirement of FTT-027..035 is OPPORTUNISTIC: take one down when someone is already inside these files for real product/test work, rewrite/delete with a real assertion, and remove the corresponding YAML + tracker rows in the same commit. **NOT to be scheduled as a dedicated sprint dispatch.** The machine-enforced ceiling is the discipline pay; individual closures are P2 opportunistic work only.
+
 | ID | Node | Pattern | Disposition target |
 |----|------|---------|---------------------|
 | FTT-027 | `tests/test_iter12_shares_home.py::test_comment_on_share_via_comments_router` | T2 (`pass`-only) | Legacy share-home test stub; rewrite with real comments-router assertion or delete |
