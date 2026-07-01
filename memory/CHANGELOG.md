@@ -2,6 +2,12 @@
 
 > Append-only history of shipped work. Newest first.
 
+## 2026-06-30 — JC-INLINE-BLOB-SUNSET-PROD-COUNT-RESUME · mount not present · single-check HALT
+
+**JC-INLINE-BLOB-SUNSET-PROD-COUNT-RESUME — READ-ONLY mount-presence check per user injection path (2)** (SHIPPED · single `test -e` filesystem primitive · HARD STOP at mount-absent surface · motor query NOT executed · 0 connection string touched · 0 raw file reads · 0 credential material processed).
+Per user Gate A resolution option (b) via injection path (2) k8s secret mount at `/var/run/secrets/prod-mongo`. Single-check result: mount NOT present; parent directory `/var/run/secrets` also absent; alternate `/run/secrets` also absent. Per user dispatch step 1 mandate ("HARD STOP immediately, surface to me: 'mount not present.' Do NOT poll in a loop. Do NOT attempt to create the mount. Do NOT wait beyond one check") — HARD STOP fired cleanly. Zero-touch discipline honoured: 0 attempts to create the mount; 0 poll loops; 0 wait beyond single check; 0 motor connection attempts. **Timer backstop preserved** per user direction: sunset dispatch remains gated on (i) 2026-07-03 timer expiry (3 days remaining) + (ii) Gate A cleared with prod-verified count = 0. If mount not restored before/at timer expiry, sunset falls back to timer + dual-read fallback — dual-read helper continues to handle any legacy `data_b64` rows in prod transparently until prod verification lands. Locked-area sweep clean; 0 mutation in Shield/Track-2/Monitor/OAuth/WS Doc/product code/storage arc/M1+M2 ceilings/FTT registry/thin-assertions grandfather (already codified). Documentation-only edits: `sprints/JC_INLINE_BLOB_SUNSET_EVALUATION.md §8.1 Gate A` cross-referenced with mount-absent finding · DEV_PIPELINE.md §9 row added BEFORE memo edit. Unblocking action for user/platform: provision k8s secret at `/var/run/secrets/prod-mongo` containing prod Atlas connection string; next dispatch can then execute the motor query.
+- `sprints/JC_INLINE_BLOB_SUNSET_EVALUATION.md §Gate A` extended · `DEV_PIPELINE.md` §9 row added BEFORE evaluation memo edit
+
 ## 2026-06-30 — JC-INLINE-BLOB-SUNSET-PROD-COUNT · credential-probe HALT · Gate A creds injection required · FTT-027..035 P2 codified
 
 **JC-INLINE-BLOB-SUNSET-PROD-COUNT — READ-ONLY diagnostic dispatch to resolve Gate A option (b)** (SHIPPED · READ-ONLY · HARD STOP at credential-probe surface · motor query NOT executed · Gate A sub-gate added: user creds injection required).
