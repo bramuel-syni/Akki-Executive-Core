@@ -2,6 +2,8 @@
 
 # Azure engineer request — addendum
 
+> **🅾️ WITHDRAWN 2026-06-30 · Tigris pivot placed ON-HOLD pending Emergent support clarification on presigned-URL wrapper support.** Tasks 1, 2, 4 of `user_actions/AZURE_ENGINEER_REQUEST.md` are **NOT dropped** — Azure path is primary again. Task 3 (prod Atlas mount at `/var/run/secrets/prod-mongo`) also still stands unchanged. **The original `user_actions/AZURE_ENGINEER_REQUEST.md` is fully authoritative.** This addendum file is preserved for audit trail only; do NOT act on it.
+
 **Purpose**: single-page follow-up note for the Azure/DevOps engineer who received the earlier `AZURE_ENGINEER_REQUEST.md` brief. Storage architecture has pivoted from Azure Blob presigned → Emergent Object Store (Tigris, built-in). **3 of 4 tasks are DROPPED**. Only Task 3 (prod Atlas mount) remains.
 
 ---

@@ -2,6 +2,8 @@
 
 # JC_STORAGE_PIVOT_TIGRIS_RESCOPE — Emergent Object Store rescope + escalation
 
+> **🅾️ ON-HOLD 2026-06-30 · pending Emergent support clarification on browser-direct-presigned URL support in the Object Store integration.** If support confirms presigned works via their wrapper, this pivot resumes (Tigris becomes primary again — cheaper path). If support confirms no presigned, this pivot stays on-hold and Azure path stays primary. **Azure path (see `sprints/JC_STORAGE_PIVOT_AZURE_SAS_ADVANCE.md`) is primary meanwhile.** This memo is preserved for audit trail + potential resume; do NOT delete.
+
 **Status**: SHIPPED (rescope memo only) · READ-ONLY · HARD STOP at rescope surface · **1 CRITICAL escalation surfaced** (architectural mismatch between user's dispatch assumption and integration playbook reality) · 3-path decomposition surfaced for user decision · quota check GREEN
 **Date**: 2026-06-30
 **Predecessor**: `sprints/JC_STORAGE_PIVOT_AZURE_SAS_ADVANCE.md` (Azure Blob scope) · `sprints/JC_STORAGE_PIVOT_AZURE_SAS_BUILD_MANIFEST.md` (Azure manifest — now SUPERSEDED by this pivot; retained for audit history)

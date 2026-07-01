@@ -2,6 +2,8 @@
 
 # JC_STORAGE_PIVOT_AZURE_SAS_BUILD_MANIFEST — Ready-to-fire build dispatch plan
 
+> **⚠️ 2026-06-30 UPDATE — Tigris pivot attempted, ON-HOLD**: A Tigris rescope was attempted on 2026-06-30 (see `sprints/JC_STORAGE_PIVOT_TIGRIS_RESCOPE.md`). Emergent Object Store playbook returned "No presigned URLs — all access must go through your backend", contradicting the browser-direct-presigned architecture that made Tigris attractive. **Tigris rescope is ON-HOLD pending Emergent support clarification on presigned-URL support in the Object Store wrapper.** This Azure Blob manifest is authoritative again until support returns a definitive answer. If support confirms presigned works via their wrapper, Tigris resume becomes eligible and this manifest re-enters SUPERSEDED status. Until then, Azure is primary — proceed on user-supplied Azure credentials.
+
 **Status**: SHIPPED (manifest only) · READ-ONLY · HARD STOP at manifest surface · build dispatch credential-gated (awaiting user-supplied Azure credentials per locked user call #2)
 **Date**: 2026-06-30
 **Fires when**: (a) Azure credentials in hand (storage account name + region + managed-identity binding) AND (b) user dispatches the build slug

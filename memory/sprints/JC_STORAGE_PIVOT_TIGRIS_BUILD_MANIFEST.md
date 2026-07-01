@@ -2,6 +2,8 @@
 
 # JC_STORAGE_PIVOT_TIGRIS_BUILD_MANIFEST — Path A' pre-staged manifest
 
+> **🅾️ ON-HOLD 2026-06-30 · pending Emergent support clarification on browser-direct-presigned URL support in the Object Store integration.** If support confirms presigned works via their wrapper, this manifest resumes (with likely rewrites depending on the presigned shape support returns). If support confirms no presigned, this manifest stays on-hold and the Azure manifest (`sprints/JC_STORAGE_PIVOT_AZURE_SAS_BUILD_MANIFEST.md`) is primary. This manifest is preserved for audit trail + potential resume; do NOT delete.
+
 **Status**: PRE-STAGED (manifest only) · READ-ONLY · HARD STOP at manifest surface · assumes Path A' (built-in Tigris backend-mediated) per rescope memo §4 · pivots to `boto3` + `@aws-sdk/client-s3` shape if user chooses B'/C'
 **Date**: 2026-06-30
 **Predecessor**: `sprints/JC_STORAGE_PIVOT_TIGRIS_RESCOPE.md` (rescope with 3-path decomposition)

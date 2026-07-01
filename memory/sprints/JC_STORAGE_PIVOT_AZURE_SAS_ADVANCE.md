@@ -489,4 +489,14 @@ After this scope memo:
 8. **Cluster-C intra-file refactor** (FTT-004..009)
 9. **LLM_MODELS_REFRESH .2/.3** future ship
 
+---
+
+## §13 — Tigris rescope attempt + reinstatement note (2026-06-30)
+
+**Tigris pivot attempted 2026-06-30**; on-hold pending Emergent support clarification on presigned-URL support in the Emergent Object Store wrapper. Integration playbook returned via `integration_playbook_expert_v2` said "No presigned URLs — all access must go through your backend" — user's platform-side pursuing support clarification whether this is a wrapper limitation or a documentation gap.
+
+**This memo is authoritative until further notice.** Azure Blob presigned is the primary storage path. Tigris memos (`sprints/JC_STORAGE_PIVOT_TIGRIS_RESCOPE.md` + `sprints/JC_STORAGE_PIVOT_TIGRIS_BUILD_MANIFEST.md`) are preserved on ON-HOLD banners for audit trail + potential resume if support confirms presigned works via their wrapper.
+
+**Resume condition**: Emergent support confirms presigned works via their Object Store wrapper → Tigris rescope resumes (cheaper path). Otherwise this Azure scope stays primary and proceeds to build dispatch on user-supplied Azure credentials (Tasks 1+2 of `user_actions/AZURE_ENGINEER_REQUEST.md`).
+
 End of memo.
