@@ -161,14 +161,45 @@ def row8_pollution_ceilings() -> Tuple[bool, str]:
     chat_delta_ok = 2262 <= chat_loc <= 2282
     pill_exists = PILL_JSX.exists()
     pill_loc = len(_text(PILL_JSX).splitlines()) if pill_exists else 0
-    pill_bounded_ok = 100 <= pill_loc <= 320  # reasonable pill+modal bounded envelope
+    # Loosened upper bound to accommodate SWR-cache MOD (~50 LOC added).
+    pill_bounded_ok = 100 <= pill_loc <= 400
     badge_ok = _sha16(BADGE_JSX) == BADGE_SHA_PRE_MOD
     aggregate_absent = not AGGREGATE_JSX.exists()
     ok = chat_delta_ok and pill_exists and pill_bounded_ok and badge_ok and aggregate_absent
     return ok, (
         f"chat_loc={chat_loc}(2262<=x<=2282: {chat_delta_ok}) "
-        f"pill_loc={pill_loc}(100<=x<=320: {pill_bounded_ok}) "
+        f"pill_loc={pill_loc}(100<=x<=400: {pill_bounded_ok}) "
         f"badge_byte_identical={badge_ok} aggregate_absent={aggregate_absent}"
+    )
+
+
+def row9_swr_cache_present() -> Tuple[bool, str]:
+    """JC-CHAT-SHIELD-PILL-SWR-CACHE — module-scoped audit cache present with TTL + getters/setters."""
+    src = _text(PILL_JSX)
+    has_cache_map = "const auditCache = new Map()" in src
+    has_ttl = "CACHE_TTL_MS" in src
+    has_getter = "_getCachedAudit" in src
+    has_setter = "_setCachedAudit" in src
+    has_dedupe = "servedFromCache" in src or "Promise.all" in src
+    ok = has_cache_map and has_ttl and has_getter and has_setter and has_dedupe
+    return ok, (
+        f"cache_map={has_cache_map} ttl={has_ttl} getter={has_getter} "
+        f"setter={has_setter} dedupe_or_cachehit_state={has_dedupe}"
+    )
+
+
+def row10_invalidation_sentinel_wired() -> Tuple[bool, str]:
+    """New-message invalidation — pill's useEffect observes m.id and evicts stale cache entries."""
+    src = _text(PILL_JSX)
+    has_observer = "_observeMessageId" in src
+    # Observer must be called from a useEffect keyed on chatId + m?.id
+    calls_from_effect = "if (chatId && m?.id) _observeMessageId(chatId, m.id)" in src
+    # And the observer must implement max-msg-id eviction
+    has_eviction = "auditCache.delete(chatId)" in src and "maxMsgId" in src
+    ok = has_observer and calls_from_effect and has_eviction
+    return ok, (
+        f"observer_defined={has_observer} called_from_pill_effect={calls_from_effect} "
+        f"eviction_logic={has_eviction}"
     )
 
 
@@ -181,6 +212,8 @@ ROWS: List[Tuple[str, Callable[[], Tuple[bool, str]]]] = [
     ("R6 JC-CHAT invariant suite GREEN post-mod", row6_jc_chat_invariants_green),
     ("R7 F.6 Shield-contract discipline-pay GREEN", row7_f6_shield_contract_green),
     ("R8 pollution ceilings (Chat.jsx bounded, pill bounded, badge unchanged, AggregateStrip absent)", row8_pollution_ceilings),
+    ("R9 SWR-style audit cache (Map + TTL + getters + setters)", row9_swr_cache_present),
+    ("R10 new-message invalidation sentinel wired (observer + eviction)", row10_invalidation_sentinel_wired),
 ]
 
 

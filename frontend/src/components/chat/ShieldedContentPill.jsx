@@ -53,6 +53,15 @@ function formatBreakdown(byType) {
 export default function ShieldedContentPill({ m, chatId }) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  // Cache-invalidation sentinel — whenever this pill mounts for a
+  // message.id that's newer than the cached max for this chat, evict
+  // the audit cache entry so the next modal-open re-fetches. This
+  // gives us new-message invalidation without any Chat.jsx wiring
+  // (JC-CHAT-SHIELD-PILL-SWR-CACHE 2026-07-02).
+  useEffect(() => {
+    if (chatId && m?.id) _observeMessageId(chatId, m.id);
+  }, [chatId, m?.id]);
+
   const stats = m?.synisense_stats;
   const spans = stats?.spans_redacted ?? 0;
   if (m?.role === "user" || spans <= 0) return null;
@@ -113,24 +122,97 @@ export default function ShieldedContentPill({ m, chatId }) {
  *   - GET /api/chats/{cid}/audit/export.zip (ZIP with verify.py)
  * Cross-link:
  *   - `akki:open-trust-panel` event → AppShell Trust Panel.
+ *
+ * SWR-style cache (JC-CHAT-SHIELD-PILL-SWR-CACHE 2026-07-02):
+ * Module-scoped Map keyed by chatId. Two invalidation paths:
+ *   1. Age > CACHE_TTL_MS (30s) — coarse safety net for slow-drift.
+ *   2. Sentinel — pill for a NEWER message.id than the cached max
+ *      mounts and calls `invalidateAuditCacheForChat(chatId)` (see
+ *      pill effect below). Guarantees invalidation on every new
+ *      Shield-processed assistant turn without touching Chat.jsx.
+ * 2nd modal-open on the same chat with no new message = synchronous
+ * cache hit (< 5 ms, zero network).
  */
+const CACHE_TTL_MS = 30_000;
+const auditCache = new Map(); // chatId -> {rows, metrics, fetchedAt, maxMsgId}
+
+function _getCachedAudit(chatId) {
+  const entry = auditCache.get(chatId);
+  if (!entry) return null;
+  if (Date.now() - entry.fetchedAt > CACHE_TTL_MS) {
+    auditCache.delete(chatId);
+    return null;
+  }
+  return entry;
+}
+
+function _setCachedAudit(chatId, rows, metrics, maxMsgId) {
+  auditCache.set(chatId, {
+    rows,
+    metrics,
+    fetchedAt: Date.now(),
+    maxMsgId: maxMsgId || null,
+  });
+}
+
+/** Invalidate the cache for a chat when a newer message arrives.
+ * Called from the pill mount effect when its own m.id > cached maxMsgId. */
+function _observeMessageId(chatId, msgId) {
+  if (!chatId || !msgId) return;
+  const entry = auditCache.get(chatId);
+  if (!entry) return;
+  if (!entry.maxMsgId || msgId > entry.maxMsgId) {
+    auditCache.delete(chatId);
+  }
+}
+
 function ChatAuditDialog({ open, onClose, chatId }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [metrics, setMetrics] = useState(null);
+  const [servedFromCache, setServedFromCache] = useState(false);
 
   useEffect(() => {
     if (!open || !chatId) return;
+    const cached = _getCachedAudit(chatId);
+    if (cached) {
+      // Synchronous cache hit — no fetch, no spinner.
+      setRows(cached.rows);
+      setMetrics(cached.metrics);
+      setLoading(false);
+      setServedFromCache(true);
+      return;
+    }
+    setServedFromCache(false);
     setLoading(true);
-    api
-      .get(`/chats/${chatId}/audit`)
-      .then(({ data }) => setRows(data?.rows || []))
-      .catch(() => setRows([]))
+    let liveRows = [];
+    let liveMetrics = null;
+    Promise.all([
+      api
+        .get(`/chats/${chatId}/audit`)
+        .then(({ data }) => {
+          liveRows = data?.rows || [];
+          setRows(liveRows);
+        })
+        .catch(() => {
+          liveRows = [];
+          setRows([]);
+        }),
+      api
+        .get(`/chats/${chatId}/synisense-metrics`)
+        .then(({ data }) => {
+          liveMetrics = data;
+          setMetrics(data);
+        })
+        .catch(() => {
+          liveMetrics = null;
+          setMetrics(null);
+        }),
+    ])
+      .then(() => {
+        _setCachedAudit(chatId, liveRows, liveMetrics, null);
+      })
       .finally(() => setLoading(false));
-    api
-      .get(`/chats/${chatId}/synisense-metrics`)
-      .then(({ data }) => setMetrics(data))
-      .catch(() => setMetrics(null));
   }, [open, chatId]);
 
   const onDownload = async () => {

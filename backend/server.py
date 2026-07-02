@@ -51,6 +51,7 @@ from routers import signals_ask as signals_ask_router  # noqa: E402
 from routers import lens as lens_router  # noqa: E402
 from routers import pipeline as pipeline_router  # noqa: E402
 from routers import audit as audit_router  # noqa: E402
+from routers import audits as audits_router  # noqa: E402  # AUDITS-BACKEND-ROUTE 2026-07-02
 from routers import synisense as synisense_router  # noqa: E402
 from routers import shares as shares_router  # noqa: E402
 from routers import sandbox as sandbox_router  # noqa: E402
@@ -226,6 +227,11 @@ app.include_router(make_context_healthz_router("akki"))
 app.include_router(make_context_healthz_router("synisense"))
 app.include_router(make_context_healthz_router("solva"))
 app.include_router(make_composite_healthz_router())
+
+# AUDITS-BACKEND-ROUTE (2026-07-02) — public read-only audit markdown
+# server at `/api/audits/{name}`. Strict allowlist; non-sensitive
+# planning documentation. See routers/audits.py.
+app.include_router(audits_router.router)
 
 
 # -----------------------------------------------------------------------------
