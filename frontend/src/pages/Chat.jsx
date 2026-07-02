@@ -48,6 +48,7 @@ import remarkGfm from "remark-gfm";
 import ProtectiveInterventionCard from "@/components/chat/ProtectiveInterventionCard";
 import { useMessagesSynisense } from "@/hooks/useMessagesSynisense";
 import PerMessageSynisenseBadge from "@/components/chat/PerMessageSynisenseBadge";
+import ShieldedContentPill from "@/components/chat/ShieldedContentPill";
 import { useTrackRecentView } from "@/lib/recentViews";
 import ProviderLine from "@/components/chat/ProviderLine";
 import WorkspaceEntryGate from "@/components/transitions/WorkspaceEntryGate";
@@ -1854,16 +1855,14 @@ function Message({ m, activeModel, models, synisense, chatId, onEdit, onRegenera
             ))}
           </ul>
         )}
-        {/* JC-CHAT Stage A (2026-06-25) — inline "Content screened"
-            class chip removed. The per-message badge already shows
-            "N IDENTIFIERS PROTECTED · RESTORED ON YOUR VIEW" with a
-            hover tooltip for the layer breakdown — the chip restated
-            the same signal one row down. One marker survives. */}
-        {/* JC-CHAT Stage A (2026-06-25) — AuditPanel auto-mount
-            removed from the chat surface. The component itself is
-            UNTOUCHED (Solva voice audit + Solva Phase D still mount
-            it per R4 lock). Per-turn audit access lives on the
-            surviving per-message badge expansion. */}
+        {/* JC-CHAT Stage A amendment (2026-07-02) — "Content screened · N"
+            pill reinstated with a new "See more" affordance that opens a
+            modal replicating the removed header AUDIT button's content.
+            Pill coexists with the meta-row PerMessageSynisenseBadge (line
+            1757 above) — see
+            /app/memory/sprints/JC_CHAT_STAGE_A_AMENDMENT.md.
+            Dispatch: JC-CHAT-STAGE-A-AMENDMENT-SHIELD-PILL-PLUS-SEE-MORE. */}
+        {!isUser && <ShieldedContentPill m={m} chatId={chatId} />}
         {/* Phase C — protective layer intervention card (Mode A
             hypothesis-test framing or Mode C Solva handoff offer).
             Mode B annotations are inline footnotes; rendered above
