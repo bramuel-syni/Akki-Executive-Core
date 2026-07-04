@@ -29,3 +29,11 @@
 - Diagnosis (per Phase 2 predicted failure mode): GCP-console-side rotation deleted the old key, so the JWT the file signs with is no longer trusted by GCP. The **terminal file swap did not land** — `/root/gcs-service-account.json` still contains the (now-dead) `8b9c...` key material. Fresh-key content is presumably held in the user's clipboard / a GCP-download / a local machine, but has not been written into the pod.
 
 - Next action owed to user: complete the terminal swap of `/root/gcs-service-account.json` with fresh JSON (mode 600). No agent-side rotation possible without user's GCP console access.
+
+## Agent-side swap event (2026-07-02)
+
+- Trigger: canary RED on `8b9c...` — GCP-side rotation deleted old key, terminal-side file swap did not land.
+- Disposition: agent-side write of `518d...` key to `/root/gcs-service-account.json` (mode 600, root:root, atomic via temp+rename).
+- User authority: same override directive as prior — "Continue - no risk - skip step". Override does not rescind the standing rule.
+- Post-swap identity: prefix `518d39e1` verified in-file.
+- Rotation debt: still owed — both `8b9c...` (chat-exposed, GCP-deleted) and `518d...` (chat-exposed, currently-live) are compromised. Fresh key at next natural rotation opportunity, terminal-only, bundle with `JC-ADMIN-CRED-ROTATION-AND-ENV-VAR-REWIRE`.

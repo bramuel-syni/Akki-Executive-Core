@@ -29,6 +29,95 @@ function fmtRel(iso) {
   } catch { return "—"; }
 }
 
+// ─────────────────────────────────────────────────────────────
+// JC-STORAGE-STAGE-1B-CEILING-AND-RESUMABLE (2026-07-02)
+// Chunked resumable PUT to a GCS session URI, with commit-state
+// query on network drop so uploads resume from the last committed
+// byte rather than restart from zero. See:
+//   https://cloud.google.com/storage/docs/performing-resumable-uploads
+// ─────────────────────────────────────────────────────────────
+async function putFileViaResumableSession({
+  file, sessionUri, contentType, chunkBytes, onProgress, maxRetriesPerChunk = 3,
+}) {
+  const total = file.size;
+  let offset = 0;
+
+  const queryCommittedOffset = async () => {
+    // Zero-length PUT with `Content-Range: bytes */TOTAL` asks GCS
+    // to report the highest committed byte via the Range response
+    // header. GCS returns 308 Resume Incomplete on partial upload
+    // or 200/201 on completion. We interpret Range: bytes=0-N and
+    // resume from N+1.
+    const resp = await fetch(sessionUri, {
+      method: "PUT",
+      headers: { "Content-Range": `bytes */${total}` },
+    });
+    if (resp.status === 200 || resp.status === 201) {
+      return total;   // fully uploaded already
+    }
+    if (resp.status !== 308) {
+      throw new Error(`resumable state-query status=${resp.status}`);
+    }
+    const rangeHeader = resp.headers.get("Range");
+    if (!rangeHeader) return 0;   // nothing committed yet
+    const m = rangeHeader.match(/bytes=0-(\d+)/);
+    if (!m) return 0;
+    return parseInt(m[1], 10) + 1;
+  };
+
+  while (offset < total) {
+    const end = Math.min(offset + chunkBytes, total) - 1;
+    const chunk = file.slice(offset, end + 1);
+
+    let attempt = 0;
+    let uploaded = false;
+    let lastError = null;
+    while (attempt < maxRetriesPerChunk && !uploaded) {
+      attempt += 1;
+      try {
+        // Per GCS resumable-upload contract: single-chunk PUTs must
+        // carry `Content-Range: bytes START-END/TOTAL`. On success
+        // GCS returns 308 (partial) or 200/201 (final chunk).
+        const resp = await fetch(sessionUri, {
+          method: "PUT",
+          headers: {
+            "Content-Type": contentType,
+            "Content-Range": `bytes ${offset}-${end}/${total}`,
+          },
+          body: chunk,
+        });
+        if (resp.status === 200 || resp.status === 201 || resp.status === 308) {
+          uploaded = true;
+          offset = end + 1;
+          if (typeof onProgress === "function") onProgress(offset, total);
+        } else {
+          lastError = new Error(`chunk PUT status=${resp.status}`);
+        }
+      } catch (netErr) {
+        lastError = netErr;
+      }
+      if (!uploaded && attempt < maxRetriesPerChunk) {
+        // Query commit state — the chunk may have partially landed
+        // even on a network drop; resume from GCS's authoritative
+        // last-committed byte.
+        try {
+          const committed = await queryCommittedOffset();
+          if (committed > offset) {
+            offset = committed;
+            uploaded = true;
+            if (typeof onProgress === "function") onProgress(offset, total);
+          }
+        } catch (queryErr) {
+          // fall through to next attempt
+        }
+      }
+    }
+    if (!uploaded) {
+      throw lastError || new Error("chunk upload failed after retries");
+    }
+  }
+}
+
 export default function AnalyzeJournal() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -120,23 +209,24 @@ export default function AnalyzeJournal() {
     }
     setCreating(true);
     try {
-      // JC-STORAGE-PIVOT-GCS-BUILD (2026-07-02) — 3-tier size-branched
-      // routing (amended in-flight 2026-07-02 per Truth-in-capability
-      // discipline + STORAGE_MAX_UPLOAD_MB=500 ceiling):
-      //   ≤16 MB   → existing GridFS in-band multipart route (unchanged)
-      //   16-100MB → single-PUT V4 presigned URL (60 min TTL)
-      //   >100 MB  → GCS resumable upload session (session URI valid ~1 week;
-      //              browser PUTs full body or chunks with Content-Range)
-      //   >500 MB  → ceiling enforcement — presigned/resumable endpoints
-      //              reject with 413 before this FE code runs.
+      // JC-STORAGE-STAGE-1B-CEILING-AND-RESUMABLE (2026-07-02) — 2-tier
+      // size-branched routing (resumable-default above the 16 MB gate;
+      // 100 MB intermediate tier from the compaction-dropped mid-flight
+      // amendment is DISCARDED per user directive):
+      //   ≤16 MB  → existing GridFS in-band multipart route (unchanged)
+      //   16MB<size≤500MB → GCS resumable upload session (chunked PUT
+      //                     with `Content-Range: bytes X-Y/total`;
+      //                     8 MiB chunks; retry-on-drop via commit-state
+      //                     query on the session URI)
+      //   >500 MB → server-side 413 ceiling_exceeded (we surface early
+      //             from this FE for a tidy UX)
       // The FE routes at file-selection time; we NEVER mix large files
       // into the multipart body (ingress would 413 the whole request).
-      const IN_BAND_BYTES   = 16  * 1024 * 1024;
-      const RESUMABLE_BYTES = 100 * 1024 * 1024;
-      const MAX_BYTES       = 500 * 1024 * 1024;
+      const IN_BAND_BYTES  = 16  * 1024 * 1024;
+      const MAX_BYTES      = 500 * 1024 * 1024;
+      const CHUNK_BYTES    = 8   * 1024 * 1024;   // 8 MiB · GCS-recommended
       const smallFiles = [];
-      const singlePutFiles = [];
-      const resumableFiles = [];
+      const largeFiles = [];
       for (const f of filesList) {
         const sz = f?.size || 0;
         if (sz > MAX_BYTES) {
@@ -144,8 +234,7 @@ export default function AnalyzeJournal() {
           continue;
         }
         if (sz <= IN_BAND_BYTES) smallFiles.push(f);
-        else if (sz <= RESUMABLE_BYTES) singlePutFiles.push(f);
-        else resumableFiles.push(f);
+        else                     largeFiles.push(f);
       }
 
       let lastCreatedId = null;
@@ -166,24 +255,32 @@ export default function AnalyzeJournal() {
         lastCreatedId = data?.id || null;
       }
 
-      // Path A — 16-100 MB via presigned direct-to-GCS PUT + complete.
-      for (const f of singlePutFiles) {
+      // Path A — >16 MB via GCS resumable session (chunked PUT).
+      for (const f of largeFiles) {
+        // Ask backend for a resumable session URI. Backend enforces
+        // the 500 MB ceiling and the ≤16 MB use-in-band gate — this FE
+        // only pre-screens to keep the UX tight; the server is truth.
         const { data: pre } = await api.post("/uploads/presigned", {
           filename: f.name,
           content_type: f.type || "application/octet-stream",
           size_bytes: f.size,
           context_id: effectiveContextId,
           kind: "workbook",
+          origin: window.location.origin,
         });
-        // Browser-direct PUT to GCS — bypasses k8s ingress entirely.
-        const putResp = await fetch(pre.upload_url, {
-          method: "PUT",
-          headers: { "Content-Type": pre.content_type },
-          body: f,
+        // pre.method === "RESUMABLE" · pre.upload_session_uri holds the URI.
+        await putFileViaResumableSession({
+          file: f,
+          sessionUri: pre.upload_session_uri,
+          contentType: pre.content_type,
+          chunkBytes: CHUNK_BYTES,
+          onProgress: (loaded, total) => {
+            // Non-blocking progress surface; upgrade to a progress bar
+            // component in a follow-up. Kept in console for now.
+            // eslint-disable-next-line no-console
+            console.log(`[resumable] ${f.name} · ${Math.round((loaded/total)*100)}%`);
+          },
         });
-        if (!putResp.ok) {
-          throw new Error(`GCS PUT failed (${putResp.status}) for ${f.name}`);
-        }
         const { data: done } = await api.post("/uploads/complete", {
           gcs_object_name: pre.gcs_object_name,
           filename: f.name,
@@ -195,57 +292,9 @@ export default function AnalyzeJournal() {
         lastCreatedId = done?.id || lastCreatedId;
       }
 
-      // Path A' — >100 MB via GCS resumable upload session.
-      // Session URI is single-body (entire file in one PUT) — chunked
-      // resume is a follow-up nice-to-have; the resumable URI *itself*
-      // gives us the ability to retry the PUT on network drop without
-      // re-signing.
-      for (const f of resumableFiles) {
-        const { data: sess } = await api.post("/uploads/resumable-session", {
-          filename: f.name,
-          content_type: f.type || "application/octet-stream",
-          size_bytes: f.size,
-          context_id: effectiveContextId,
-          kind: "workbook",
-          origin: window.location.origin,
-        });
-        // XHR (not fetch) for upload-progress reporting — fetch API
-        // has no `xhr.upload.onprogress` equivalent as of writing.
-        await new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open("PUT", sess.session_uri, true);
-          xhr.setRequestHeader("Content-Type", sess.content_type);
-          xhr.upload.onprogress = (ev) => {
-            if (ev.lengthComputable) {
-              const pct = Math.round((ev.loaded / ev.total) * 100);
-              // Progress surfaced via toast; upgrade to a proper
-              // progress bar in a follow-up. Non-blocking.
-              // eslint-disable-next-line no-console
-              console.log(`[resumable] ${f.name} · ${pct}%`);
-            }
-          };
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) resolve();
-            else reject(new Error(`resumable PUT status=${xhr.status}`));
-          };
-          xhr.onerror = () => reject(new Error("resumable PUT network error"));
-          xhr.send(f);
-        });
-        const { data: done } = await api.post("/uploads/complete", {
-          gcs_object_name: sess.gcs_object_name,
-          filename: f.name,
-          context_id: effectiveContextId,
-          kind: "workbook",
-          size_bytes: f.size,
-          objective: objective.trim() || undefined,
-        });
-        lastCreatedId = done?.id || lastCreatedId;
-      }
-
       const parts = [
-        smallFiles.length      ? `${smallFiles.length} small`    : null,
-        singlePutFiles.length  ? `${singlePutFiles.length} large` : null,
-        resumableFiles.length  ? `${resumableFiles.length} XL`    : null,
+        smallFiles.length ? `${smallFiles.length} small`  : null,
+        largeFiles.length ? `${largeFiles.length} large`  : null,
       ].filter(Boolean).join(" + ");
       toast.success(`Analysis created (${parts || filesList.length + " files"})`);
       setObjective("");

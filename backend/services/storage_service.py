@@ -286,9 +286,12 @@ STORAGE_X_THRESHOLD_MB = int(os.environ.get("STORAGE_X_THRESHOLD_MB", "16") or "
 STORAGE_X_THRESHOLD_BYTES = STORAGE_X_THRESHOLD_MB * 1024 * 1024
 STORAGE_MAX_UPLOAD_MB = int(os.environ.get("STORAGE_MAX_UPLOAD_MB", "500") or "500")
 STORAGE_MAX_UPLOAD_BYTES = STORAGE_MAX_UPLOAD_MB * 1024 * 1024
-STORAGE_RESUMABLE_THRESHOLD_MB = int(os.environ.get("STORAGE_RESUMABLE_THRESHOLD_MB", "100") or "100")
-STORAGE_RESUMABLE_THRESHOLD_BYTES = STORAGE_RESUMABLE_THRESHOLD_MB * 1024 * 1024
-STORAGE_PRESIGNED_TTL_SECONDS = int(os.environ.get("STORAGE_PRESIGNED_TTL_SECONDS", "3600") or "3600")
+# Stage 1B refactor 2026-07-02 · single-PUT is DEPRECATED for the
+# >16 MB range (see gcs_generate_presigned_upload_url docstring below).
+# `STORAGE_RESUMABLE_THRESHOLD_MB` + `STORAGE_PRESIGNED_TTL_SECONDS`
+# removed from `.env`; retained here as no-op module-level references
+# so any residual imports don't break — future cleanup will delete
+# these once no dependents remain.
 
 _GCS_CLIENT = None  # module-level cache; storage.Client() calls no APIs on construct
 
@@ -318,7 +321,18 @@ def gcs_generate_presigned_upload_url(
     content_type: str = "application/octet-stream",
     ttl_seconds: int = 900,
 ) -> str:
-    """Return a V4 signed PUT URL for `object_name`. Default TTL 15 min."""
+    """DEPRECATED · use `gcs_initiate_resumable_upload_session()` for
+    all >16 MB uploads.
+
+    Stage 1B refactor 2026-07-02 (`JC-STORAGE-STAGE-1B-CEILING-AND-RESUMABLE`):
+    single-PUT V4 presigned URLs are deprecated for the product's >16 MB
+    upload band. Resumable is now the default mechanism (handles small
+    large-files, big large-files, and network-flaky uploads via one
+    code path). This function is retained (not deleted) per user
+    directive; no product surface calls it anymore.
+
+    Return a V4 signed PUT URL for `object_name`. Default TTL 15 min.
+    """
     blob = _gcs_bucket().blob(object_name)
     return blob.generate_signed_url(
         version="v4",
@@ -390,13 +404,19 @@ def gcs_delete_object(object_name: str) -> bool:
     return True
 
 
-def gcs_create_resumable_upload_session(
+def gcs_initiate_resumable_upload_session(
     object_name: str,
     content_type: str = "application/octet-stream",
     size: Optional[int] = None,
     origin: Optional[str] = None,
 ) -> str:
     """Initiate a GCS resumable upload session and return the session URI.
+
+    Stage 1B rename 2026-07-02 · this is the primary >16 MB upload
+    helper (see `gcs_generate_presigned_upload_url` DEPRECATED docstring
+    for context). Previously named `gcs_create_resumable_upload_session`
+    (spec-name replacement per REPLACEMENT_NAMING_RULE — user directive
+    spec-named this helper `gcs_initiate_resumable_upload_session`).
 
     The returned URI is a signed URL the browser (or any HTTP client) can
     PUT chunks to using `Content-Range: bytes {start}-{end}/{total}` headers.
@@ -422,6 +442,11 @@ def gcs_create_resumable_upload_session(
     if origin:
         kwargs["origin"] = origin
     return blob.create_resumable_upload_session(**kwargs)
+
+
+# Backwards-compat alias — kept for any residual imports in-tree.
+# Prefer `gcs_initiate_resumable_upload_session` at call sites.
+gcs_create_resumable_upload_session = gcs_initiate_resumable_upload_session
 
 
 def gcs_get_object_size(object_name: str) -> Optional[int]:

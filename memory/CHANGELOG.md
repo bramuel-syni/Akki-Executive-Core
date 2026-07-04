@@ -2,6 +2,59 @@
 
 > Append-only history of shipped work. Newest first.
 
+## 2026-07-02 — JC-STORAGE-STAGE-1B-CEILING-AND-RESUMABLE · resumable-default refactor · 16/16 GREEN
+
+**Received-scope amendments** (per `AMENDMENT_ECHO_RULE.md` banked 2026-07-02 · line-1 echo):
+1. `STORAGE_MAX_UPLOAD_MB=500` (pre-provisioned in `.env`, verified present).
+2. Resumable is DEFAULT for ALL files >16 MB — single-PUT DEPRECATED for the >16 MB range; the ">100 MB tier" from the compaction-dropped Stage 1 mid-flight amendment was builder-invented and is DISCARDED.
+3. R-500MB-transport proving row (synthetic /dev/urandom via resumable · size + SHA-256 verified · labeled TRANSPORT-ONLY per Truth-in-capability rule).
+4. R-Ceiling-enforcement (501 MB request → 413 `ceiling_exceeded`).
+5. Stage 2 stub `sprints/JC_STORAGE_STAGE_2_INGEST_PROFILING.md` present with `STATUS: QUEUED` and per-format profiling spec.
+6. Original Stage 1 24.4 MB Path A test regressed onto resumable mechanism (full E2E: chunked PUT → complete → parse → signed GET round-trip).
+7. Truth-in-capability applied — closure claims transport up to 500 MB proven; xlsx/CSV ingest at 500 MB explicitly NOT claimed (Stage 2 territory).
+8. Partially-landed 100 MB-tier scope refactored: `STORAGE_RESUMABLE_THRESHOLD_MB` + `STORAGE_PRESIGNED_TTL_SECONDS` env vars REMOVED; `/api/uploads/resumable-session` endpoint COLLAPSED into content-length-dispatching `/api/uploads/presigned`; FE 3-tier routing REFACTORED to 2-tier; R13-R15 partial rows REBUILT under locked design.
+
+**Design lock** (encoded to prevent re-litigation): resumable is a superset over single-PUT — handles small-large (~17 MB), big-large (~500 MB), and network-flaky uploads via one mechanism. Dual-path would have left the 24-100 MB band on single-PUT with TTL/flaky exposure unproven. Session URIs have GCS-managed ~1-week validity — no artificial time pressure. One code path is simpler than two.
+
+**Backend surface (post-refactor)**:
+
+- `POST /api/uploads/presigned` — content-length dispatch:
+  - ≤ 16 MB → 400 `use_in_band_route`
+  - 16 MB < size ≤ 500 MB → 200 `{gcs_object_name, upload_session_uri, method:"RESUMABLE", expires_at, content_type, max_upload_mb}`
+  - > 500 MB → 413 `ceiling_exceeded`
+- `POST /api/uploads/complete` unchanged.
+- `GET /api/uploads/{artefact_id}/download` unchanged.
+- `POST /api/uploads/resumable-session` **DELETED** (collapsed into `/presigned`).
+
+**Storage helpers**:
+
+- `gcs_generate_presigned_upload_url` marked **DEPRECATED** (docstring; kept per user directive — not deleted).
+- `gcs_create_resumable_upload_session` renamed → `gcs_initiate_resumable_upload_session` (Replacement-naming rule: user spec-name match; backwards-compat alias retained).
+
+**Frontend** (`AnalyzeJournal.jsx`):
+
+- 2-tier size routing (≤16 MB in-band multipart; >16 MB resumable session).
+- `putFileViaResumableSession` helper — chunked PUT (8 MiB chunks) with `Content-Range: bytes X-Y/total` headers.
+- Retry-on-network-drop via `Content-Range: bytes */total` commit-state query on GCS session URI; resumes from GCS-authoritative last-committed byte.
+
+**Slice** `backend/scripts/jc_storage_stage_1b_proving_slice.py` — **16/16 GREEN**:
+
+- R1 env sanity (deprecated env vars ABSENT) · R2 canary GREEN on rotated `518d39e1` · R3 archive marker · R4 S3/local preserved byte-for-byte · R5 resumable-default response shape · R6 single-PUT DEPRECATED docstring + `/resumable-session` endpoint collapsed · R7 24.4 MB Path A regressed onto resumable (full E2E) · R8 Path B GridFS untouched · R9 threshold gate · R10 ceiling 501MB→413 · **R11 TRANSPORT-ONLY 500 MB round-tripped** (synthetic /dev/urandom · SHA-256 verified · TRANSPORT-ONLY marker preserved) · **R12 retry-on-drop resume-from-commit-state** (initial 8 MiB chunk landed · simulated drop · probe returned `Range: bytes=0-8388607` · resumed from committed offset · completed) · R13 no project-scope GCS calls (AST) · R14 split-literal (tokenize) · R15 rename arc P4 hash invariant · R16 Stage 2 stub QUEUED.
+
+**Truth-in-capability closure claims**:
+
+- **TRANSPORT proven up to 500 MB** via GCS resumable session (chunked PUT).
+- **xlsx ingest proven at ~17 MB** (24.4 MB payload) via full E2E.
+- **xlsx INGEST at 500 MB NOT PROVEN.** Stage 2 territory.
+- **CSV INGEST at any size NOT PROVEN** by this dispatch. Stage 2 territory.
+
+**Rotation debt banked**: both SA JSON keys `8b9c...` (GCP-deleted) and `518d...` (currently-live) are chat-exposed. Fresh key owed at next natural rotation opportunity — terminal-only, bundle with `JC-ADMIN-CRED-ROTATION-AND-ENV-VAR-REWIRE`. Tracked in `/app/memory/user_actions/GCS_KEY_ROTATION_OWED.md`. Per `CREDENTIALS_NEVER_IN_CHANNEL_RULE.md` (banked 2026-07-02) — this-incident override does not rescind the standing rule.
+
+**Rules preserved**: `TRUTH_IN_CAPABILITY_RULE.md` + `AMENDMENT_ECHO_RULE.md` + `CREDENTIALS_NEVER_IN_CHANNEL_RULE.md` + `REPLACEMENT_NAMING_RULE.md` + `TAB_HONESTY_RULE.md`. Testing sub-agents BANNED throughout. Split-literal `"thin"+"klab"` / `"Sol"+"va"` enforced. Zero-Handoff-Loss (§9 row landed BEFORE code refactor).
+
+Files: `sprints/JC_STORAGE_STAGE_1B_CEILING_AND_RESUMABLE.md` NEW · `routers/uploads.py` REFACTOR (collapsed 4→3 endpoints · ~-70 LOC net) · `services/storage_service.py` (rename + DEPRECATED docstring + backwards-compat alias · +25 LOC) · `pages/AnalyzeJournal.jsx` (2-tier + chunked-PUT + retry helper · +80 LOC net after 3-tier removal) · `backend/.env` (-2 deprecated env vars) · `scripts/jc_storage_stage_1b_proving_slice.py` NEW (~810 LOC · 16 rows) · `rules/CREDENTIALS_NEVER_IN_CHANNEL_RULE.md` NEW · `rules/AMENDMENT_ECHO_RULE.md` NEW · `rules/TRUTH_IN_CAPABILITY_RULE.md` (born mid-Stage-1, preserved) · `user_actions/GCS_KEY_ROTATION_OWED.md` NEW · DEV_PIPELINE §9 row landed BEFORE code + updated to SHIPPED on GREEN.
+
+
 ## 2026-07-02 — JC-STORAGE-PIVOT-GCS-BUILD · >16 MB uploads pivot direct-to-GCS · 12/12 GREEN
 
 **P0 · Storage pivot for >16 MB uploads via GCS V4 presigned PUT.**
