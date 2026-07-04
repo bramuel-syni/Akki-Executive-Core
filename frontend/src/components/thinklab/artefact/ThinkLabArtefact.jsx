@@ -12,6 +12,7 @@
  * The session prop is the dict returned by
  * GET /api/solva/v2/sessions/{sid} — same shape as the orchestrator stores.
  */
+import { MODULE_LABELS } from "@/lib/moduleLabels";
 import React, { useMemo, useState, useEffect } from "react";
 import PerSectionSynisenseBadge from "@/components/thinklab/artefact/PerSectionSynisenseBadge";
 import { Download, FileText, MessageSquare, RefreshCw, Workflow } from "lucide-react";
@@ -90,7 +91,7 @@ function scenariosFromClaims(claims = []) {
 
 function frameOneLine(intent) {
   const text = (intent || "").trim();
-  if (!text) return "Solva session";
+  if (!text) return "ThinkLab session";
   const first = text.split(/(?<=[.!?])\s+/)[0] || text;
   const words = first.split(/\s+/);
   if (words.length > 18) return words.slice(0, 18).join(" ").replace(/[,.;:]$/, "") + "…";
@@ -154,7 +155,7 @@ function tensionsFromSession(session) {
   return [];
 }
 
-export default function SolvaArtefact({ session, onStartReflection, savedToast = false }) {
+export default function ThinkLabArtefact({ session, onStartReflection, savedToast = false }) {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const sessionId = session?.id;
 
@@ -195,7 +196,7 @@ export default function SolvaArtefact({ session, onStartReflection, savedToast =
   const tensions = useMemo(() => tensionsFromSession(session), [session]);
   const recommendations = synthesis.recommendations || [];
 
-  const submoduleLabel = SUBMODULE_LABELS[session?.submodule] || "Solva";
+  const submoduleLabel = SUBMODULE_LABELS[session?.submodule] || "ThinkLab";
   const persona = session?.persona;
 
   const downloadHref = (kind) =>
@@ -500,7 +501,7 @@ export default function SolvaArtefact({ session, onStartReflection, savedToast =
           Take to Cycle → REAL endpoint (POST /solva/v2/sessions/{sid}/take-to-cycle).
           Phase H4 verified this is fully wired — no stub remains. */}
       {(session?.status === "complete" || session?.status === "refused") && (
-        <SolvaArtefactHandoffBar session={session} sessionId={sessionId} />
+        <ThinkLabArtefactHandoffBar session={session} sessionId={sessionId} />
       )}
 
       {/* Continue to reflection — muted CTA, only when reflection not yet started */}
@@ -631,7 +632,7 @@ const menuItem = {
 //   - Use as input — opens picker with seed_kind=solva_artefact pre-loaded.
 //   - Take to Cycle — Wave 3 stretch; today renders a "coming soon" toast.
 
-function SolvaArtefactHandoffBar({ session, sessionId }) {
+function ThinkLabArtefactHandoffBar({ session, sessionId }) {
   const navigate = useNavigate();
   const [continuing, setContinuing] = useState(false);
 
@@ -700,7 +701,7 @@ function SolvaArtefactHandoffBar({ session, sessionId }) {
       const diagnosis = (session?.synthesis?.primary_diagnosis ||
                          session?.synthesis?.diagnosis ||
                          "").toString().slice(0, 600);
-      const submoduleLabel = SUBMODULE_LABELS[session?.submodule] || "Solva";
+      const submoduleLabel = SUBMODULE_LABELS[session?.submodule] || "ThinkLab";
       const status = session?.status || "completed";
       const sensitivity = (session?.synthesis?.sensitivity_drivers || [])
         .slice(0, 4)
@@ -724,7 +725,7 @@ function SolvaArtefactHandoffBar({ session, sessionId }) {
 
       const objective = framingTxt
         ? `Brief the board on the reasoning + finding for: ${framingTxt}`
-        : `Brief the board on the Solva ${submoduleLabel} session.`;
+        : `Brief the board on the ThinkLab ${submoduleLabel} session.`;
 
       const scope = [
         `Open with the framing in 1-2 lines so the reader understands the question.`,
@@ -841,7 +842,7 @@ function SolvaArtefactHandoffBar({ session, sessionId }) {
             fontFamily: FONT.CALIBRI, fontSize: 13,
             display: "inline-flex", alignItems: "center", gap: 6,
           }}
-          title="Compose an executive brief from this Solva session's reasoning audit"
+          title={`Compose an executive brief from this ${MODULE_LABELS.thinklab} session's reasoning audit`}
         >
           <FileText width={14} height={14} />
           {briefing ? "Starting brief…" : "Brief this session"}

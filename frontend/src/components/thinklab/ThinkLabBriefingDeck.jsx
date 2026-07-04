@@ -1,5 +1,5 @@
 /**
- * SolvaBriefingDeck — Phase D.1 (2026-05-26).
+ * ThinkLabBriefingDeck — Phase D.1 (2026-05-26).
  *
  * 4-slide modal that shows ahead of every Solva conversation entry
  * (per area), persisted via `/api/solva/briefing/state`.
@@ -103,7 +103,7 @@ function SlideBody({ markdown }) {
   );
 }
 
-export default function SolvaBriefingDeck({ area, open, onClose, force = false }) {
+export default function ThinkLabBriefingDeck({ area, open, onClose, force = false }) {
   const [slideIdx, setSlideIdx] = useState(0);
   const [state, setState] = useState({ visit_count: 0, suppressed: false, loaded: false });
   const [suppressChecked, setSuppressChecked] = useState(false);

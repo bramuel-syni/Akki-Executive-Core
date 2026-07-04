@@ -1,9 +1,9 @@
 /**
- * SolvaSessions.jsx — Wave 3.3 (UAT pack 2026-05-10).
+ * ThinkLabSessions.jsx — Wave 3.3 (UAT pack 2026-05-10).
  *
  * Full sessions-list page. Mounted at `/app/solva/sessions`. Reads
  * `GET /api/solva/v2/sessions?q=&status=` and renders:
- *   - Header: "Your Solva sessions in <Company>"
+ *   - Header: "Your ThinkLab sessions in <Company>"
  *   - Search input  (debounced; q-substring match against `intent`)
  *   - Filter chips: All / Active / Complete / Refused / Paused
  *   - List with task-tag, intent snippet, status, dates, and Open
@@ -48,7 +48,7 @@ function useDebouncedValue(value, delay = 280) {
   return debounced;
 }
 
-export default function SolvaSessions() {
+export default function ThinkLabSessions() {
   const { activeContext } = useAuth();
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
@@ -120,7 +120,7 @@ export default function SolvaSessions() {
           }}
         >
           <ChevronLeft width={14} height={14} />
-          Back to Solva
+          Back to ThinkLab
         </Link>
         <h1
           style={{
@@ -129,7 +129,7 @@ export default function SolvaSessions() {
             margin: "0 0 4px 0", fontWeight: 600,
           }}
         >
-          Your Solva sessions
+          Your ThinkLab sessions
         </h1>
         <p
           style={{
@@ -225,7 +225,7 @@ export default function SolvaSessions() {
             {debouncedQ.trim()
               ? `No sessions found for "${debouncedQ.trim()}". Try a different word or phrase.`
               : (!status
-                  ? "No sessions saved yet. Complete a Solva session and it will appear here."
+                  ? "No sessions saved yet. Complete a ThinkLab session and it will appear here."
                   : "No sessions match.")}
           </p>
         ) : (
@@ -253,7 +253,7 @@ export default function SolvaSessions() {
                         textTransform: "uppercase", color: "var(--oxblood)", fontWeight: 600,
                       }}
                     >
-                      {SUBMODULE_LABEL[s.submodule] || s.submodule || "Solva"}
+                      {SUBMODULE_LABEL[s.submodule] || s.submodule || "ThinkLab"}
                     </span>
                     <StatusPill status={s.display_status || s.status} />
                   </div>

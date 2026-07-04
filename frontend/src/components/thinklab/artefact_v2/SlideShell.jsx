@@ -2,7 +2,7 @@
  * Solva v2 — SlideShell (Slice 3b, 2026-05-29).
  *
  * Wraps every slide with the per-slide header (slide number + section
- * tag) and footer ("Solva Session Output · Confidential · {ctx} ·
+ * tag) and footer ("ThinkLab Session Output · Confidential · {ctx} ·
  * {n} / {total}").
  *
  * Locked DOM contract — e1_tester selectors:
@@ -96,7 +96,7 @@ export default function SlideShell({
         className="absolute bottom-4 left-10 right-10 flex items-baseline justify-between gap-4 border-t border-[var(--rule)] pt-3 font-mono text-[10.5px] tracking-[0.14em] text-[var(--muted)]"
       >
         <span className="truncate pr-4">
-          Solva Session Output&nbsp;·&nbsp;Confidential&nbsp;·&nbsp;{contextName}
+          ThinkLab Session Output&nbsp;·&nbsp;Confidential&nbsp;·&nbsp;{contextName}
         </span>
         <span className="flex-shrink-0">
           {String(number).padStart(2, "0")}&nbsp;/&nbsp;{String(total).padStart(2, "0")}

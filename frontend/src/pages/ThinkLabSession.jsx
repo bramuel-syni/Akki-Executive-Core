@@ -5,12 +5,12 @@
  *
  * Renders the Guided Flow state machine and stitches together every
  * Phase I component:
- *   - LANDING is owned by SolvaApp / SolvaLanding (not this page)
+ *   - LANDING is owned by ThinkLabApp / ThinkLabLanding (not this page)
  *   - FRAMING → POST /api/solva/v2/sessions (auto_cluster=true)
  *   - Q1..DEPTH_Q3 → POST /api/solva/v2/sessions/{sid}/turn
  *   - PREPARING is the synthesis-running interstitial; we wait on the
  *     final turn's response which carries either synthesis or refusal
- *   - ARTEFACT / ARTEFACT_REFUSAL → SolvaArtefact / SolvaRefusalArtefact
+ *   - ARTEFACT / ARTEFACT_REFUSAL → ThinkLabArtefact / ThinkLabRefusalArtefact
  *   - REFLECT_1..REFLECT_3 → POST /api/solva/v2/sessions/{sid}/turn (layer=reflection)
  *   - COMPLETE → return to artefact with a "Session saved" toast
  */
@@ -32,17 +32,17 @@ import {
   resumePoint,
 } from "@/lib/thinkLabFlow";
 
-import SolvaShell from "@/components/thinklab/flow/Shell";
+import ThinkLabShell from "@/components/thinklab/flow/Shell";
 import FramingScreen from "@/components/thinklab/flow/FramingScreen";
 import QuestionScreen from "@/components/thinklab/flow/QuestionScreen";
 import PreparingInterstitial from "@/components/thinklab/flow/PreparingInterstitial";
 import ReflectionScreen from "@/components/thinklab/flow/ReflectionScreen";
-import SolvaArtefact from "@/components/thinklab/artefact/ThinkLabArtefact";
-import SolvaArtefactV2 from "@/components/thinklab/artefact_v2/ThinkLabArtefactV2";
+import ThinkLabArtefact from "@/components/thinklab/artefact/ThinkLabArtefact";
+import ThinkLabArtefactV2 from "@/components/thinklab/artefact_v2/ThinkLabArtefactV2";
 import { solvaV2EnabledFor } from "@/lib/solvaV2FeatureFlag";
-import SolvaRefusalArtefact from "@/components/thinklab/artefact/ThinkLabRefusalArtefact";
+import ThinkLabRefusalArtefact from "@/components/thinklab/artefact/ThinkLabRefusalArtefact";
 // Wave 1.6 / 1.8 / 2.1 (UAT pack 2026-05-10)
-import SolvaHeader from "@/components/thinklab/flow/ThinkLabHeader";
+import ThinkLabHeader from "@/components/thinklab/flow/ThinkLabHeader";
 import TransitionMessage from "@/components/thinklab/flow/TransitionMessage";
 import FrameAuditScreen from "@/components/thinklab/flow/FrameAuditScreen";
 import { TOKEN, FONT } from "@/components/thinklab/flow/tokens";
@@ -62,7 +62,7 @@ function backgroundForState(state) {
   return TOKEN.PAPER;
 }
 
-export default function SolvaSession() {
+export default function ThinkLabSession() {
   const { sessionId: sidParam } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -72,7 +72,7 @@ export default function SolvaSession() {
   // active Solva session for the Portfolio Landing resume card.
   useTrackRecentView({
     surfacePath: sidParam ? `/app/solva/session/${sidParam}` : null,
-    label: sidParam ? "Solva session" : null,
+    label: sidParam ? "ThinkLab session" : null,
     contextId: activeContext?.id,
     artefactId: sidParam || null,
     artefactKind: "solva_session",
@@ -84,7 +84,7 @@ export default function SolvaSession() {
   const submoduleQuery = searchParams.get("submodule");
   const personaQuery = searchParams.get("persona");
   // Wave 1.1 (UAT pack 2026-05-10) — intake_seed forwarded by the
-  // SolvaApp picker via URL params. Captured once on mount; sent
+  // ThinkLabApp picker via URL params. Captured once on mount; sent
   // with the framing POST when the user submits.
   //
   // Phase D.3 post-test fix (2026-05-26) — accept `?ctx_type=…&ctx_id=…`
@@ -449,9 +449,9 @@ export default function SolvaSession() {
       break;
     case "ARTEFACT":
       body = solvaV2EnabledFor(account) ? (
-        <SolvaArtefactV2 sessionId={session?.id} />
+        <ThinkLabArtefactV2 sessionId={session?.id} />
       ) : (
-        <SolvaArtefact
+        <ThinkLabArtefact
           session={session}
           onStartReflection={Object.keys(flow.reflections).length < 3 ? handleStartReflection : undefined}
           savedToast={savedToast}
@@ -460,7 +460,7 @@ export default function SolvaSession() {
       break;
     case "ARTEFACT_REFUSAL":
       body = (
-        <SolvaRefusalArtefact
+        <ThinkLabRefusalArtefact
           session={session}
           onStartReflection={Object.keys(flow.reflections).length < 3 ? handleStartReflection : undefined}
         />
@@ -483,9 +483,9 @@ export default function SolvaSession() {
     case "COMPLETE":
     default:
       body = solvaV2EnabledFor(account) ? (
-        <SolvaArtefactV2 sessionId={session?.id} />
+        <ThinkLabArtefactV2 sessionId={session?.id} />
       ) : (
-        <SolvaArtefact
+        <ThinkLabArtefact
           session={session}
           savedToast={savedToast}
         />
@@ -500,8 +500,8 @@ export default function SolvaSession() {
       {/* Wave 1.6 (UAT pack 2026-05-10) — Solva header on every screen
           inside the session shell. Stays out of LANDING because that's
           the picker, which has its own page chrome. */}
-      <SolvaHeader />
-      <SolvaShell
+      <ThinkLabHeader />
+      <ThinkLabShell
         background={backgroundForState(flow.state)}
         topPadding={isFlowState(flow.state) ? 80 : 60}
         maxWidth={widthForState(flow.state)}
@@ -538,7 +538,7 @@ export default function SolvaSession() {
             Resumed session · {(flow.sessionId || "").slice(0, 8)}
           </div>
         )}
-      </SolvaShell>
+      </ThinkLabShell>
       {/* Wave 1.8 (UAT pack 2026-05-10) — peer-voiced transition copy
           when the layer changes. Reads `flow.history` to detect the
           last layer crossed. The component fades itself out after

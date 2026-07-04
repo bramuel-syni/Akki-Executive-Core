@@ -69,7 +69,7 @@ export default function FramingScreen({
           marginBottom: 12,
         }}
       >
-        {SUBMODULE_LABELS[submodule] || "Solva session"}
+        {SUBMODULE_LABELS[submodule] || "ThinkLab session"}
       </div>
       <h1
         style={{
@@ -269,7 +269,7 @@ export default function FramingScreen({
         <PrimaryButton
           onClick={onSubmit}
           busy={busy}
-          ariaLabel="Begin Solva session"
+          ariaLabel="Begin ThinkLab session"
           testId="solva-framing-begin"
           disabled={!framingDraft || framingDraft.trim().length < 20}
         >
@@ -288,7 +288,7 @@ function seedKindLabel(kind) {
     case "document":            return "an attached document";
     case "cycle_question":      return "a cycle question";
     case "cycle_contribution":  return "a cycle contribution";
-    case "solva_artefact":      return "an earlier Solva artefact";
+    case "solva_artefact":      return "an earlier ThinkLab artefact";
     case "pulse_signal":        return "a Pulse signal";
     default:                    return "the source you brought in";
   }

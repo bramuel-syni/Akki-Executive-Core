@@ -13,7 +13,7 @@
  *   - 4 picker cards stacked vertically, ~140px desktop / ~120px mobile.
  *   - Below the fold:
  *       - Recent Sessions collapsible (collapsed by default).
- *       - "How Solva reasons →" link to /solva/how-it-reasons.
+ *       - "How ThinkLab reasons →" link to /solva/how-it-reasons.
  *
  * Card anatomy (brief §3.2):
  *   - Name top-left  (Georgia 22px bold INK).
@@ -34,12 +34,13 @@
  * No clusters, no architectural visibility, no toggles. Brief §3.4
  * deprecation list strictly applied.
  */
+import { MODULE_LABELS } from "@/lib/moduleLabels";
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import api from "@/lib/api/apiV2";
 // Phase D.1 (2026-05-26) — pre-conversation briefing deck.
-import SolvaBriefingDeck from "@/components/thinklab/ThinkLabBriefingDeck";
+import ThinkLabBriefingDeck from "@/components/thinklab/ThinkLabBriefingDeck";
 import { SUBMODULE_TO_AREA } from "@/data/solva-briefings";
 
 // Tokens (brief §7.1) — kept inline so the component is portable.
@@ -61,19 +62,19 @@ const CARDS = [
     n: "01",
     key: "seek_clarity",
     title: "Seek Clarity",
-    when: "When you don't know what's actually going on. Solva runs the diagnostic that narrows possible causes and surfaces what's underneath your framing.",
+    when: "When you don't know what's actually going on. ThinkLab runs the diagnostic that narrows possible causes and surfaces what's underneath your framing.",
   },
   {
     n: "02",
     key: "develop_strategy",
     title: "Develop Strategy",
-    when: "When you need a direction and want to test your thinking. Solva produces probability-weighted options with sensitivity analysis.",
+    when: "When you need a direction and want to test your thinking. ThinkLab produces probability-weighted options with sensitivity analysis.",
   },
   {
     n: "03",
     key: "simulate_hypothesis",
     title: "Simulate Hypothesis",
-    when: "When you want to stress-test an assumption before you commit. Solva runs the simulation and flags tensions before they become decisions.",
+    when: "When you want to stress-test an assumption before you commit. ThinkLab runs the simulation and flags tensions before they become decisions.",
   },
   {
     n: "04",
@@ -226,7 +227,7 @@ function RecentSessionsCollapsible({ sessions, onResume, onDiscard, onStartGuide
                   margin: "0 0 12px 0",
                 }}
               >
-                Solva is structured reasoning for situations that don&apos;t fit a
+                ThinkLab is structured reasoning for situations that don&apos;t fit a
                 quick chat. We work through five layers — framing, surface,
                 depth, synthesis, reflection — to produce a defensible
                 artefact you can revisit or share.
@@ -347,7 +348,7 @@ function RecentSessionsCollapsible({ sessions, onResume, onDiscard, onStartGuide
 }
 
 
-export default function SolvaLanding({ variant = "auth", intakeSeed = null, intakeStarter = null }) {
+export default function ThinkLabLanding({ variant = "auth", intakeSeed = null, intakeStarter = null }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [recent, setRecent] = useState([]);
@@ -514,7 +515,7 @@ export default function SolvaLanding({ variant = "auth", intakeSeed = null, inta
             textAlign: "center",
           }}
         >
-          Solva
+          {MODULE_LABELS.thinklab}
         </h1>
         <p
           style={{
@@ -540,7 +541,7 @@ export default function SolvaLanding({ variant = "auth", intakeSeed = null, inta
         <div
           className="solva-picker-grid"
           role="list"
-          aria-label="Solva sub-modules"
+          aria-label={`${MODULE_LABELS.thinklab} sub-modules`}
           data-testid="solva-picker-grid"
         >
           {CARDS.map((c, i) => (
@@ -631,7 +632,7 @@ export default function SolvaLanding({ variant = "auth", intakeSeed = null, inta
               textDecoration: "none",
             }}
           >
-            How Solva reasons →
+            How ThinkLab reasons →
           </Link>
         </div>
 
@@ -655,12 +656,12 @@ export default function SolvaLanding({ variant = "auth", intakeSeed = null, inta
       </div>
 
       {/* Phase D.1 (2026-05-26) — pre-conversation briefing deck.
-          Lives in the SolvaLanding scope (not inside DisambiguatorDialog)
+          Lives in the ThinkLabLanding scope (not inside DisambiguatorDialog)
           so it can access briefingArea / briefingOpen / onBriefingClose.
           Suppression logic owned by the deck itself; we pass `force=false`
           (default) — only the (i) icon on the session page forces. */}
       {briefingArea && (
-        <SolvaBriefingDeck
+        <ThinkLabBriefingDeck
           area={briefingArea}
           open={briefingOpen}
           onClose={onBriefingClose}

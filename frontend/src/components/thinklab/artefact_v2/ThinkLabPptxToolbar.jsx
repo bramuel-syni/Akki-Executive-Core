@@ -23,7 +23,7 @@ function _filenameFromContentDisposition(headerValue) {
 }
 
 
-export default function SolvaPptxToolbar({ sessionId, isComplete, notesOn, onToggleNotes }) {
+export default function ThinkLabPptxToolbar({ sessionId, isComplete, notesOn, onToggleNotes }) {
   const [downloading, setDownloading] = useState(false);
 
   const onDownload = async () => {

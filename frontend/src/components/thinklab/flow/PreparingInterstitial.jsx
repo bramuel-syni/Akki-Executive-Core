@@ -6,7 +6,7 @@
  * locked Claude-reference `<StreamingLogScene>` driven by real
  * backend SSE events flowing from the synthesis turn POST.
  *
- * The parent (`SolvaSession.jsx`) owns the `useStreamingProgress`
+ * The parent (`ThinkLabSession.jsx`) owns the `useStreamingProgress`
  * driver — it fires the synthesis turn through the streaming
  * endpoint and passes the resulting `state` down via the `state`
  * prop. When `state.status === "complete"` the parent dispatches

@@ -42,7 +42,7 @@ export const SUBMODULE_LABELS = Object.freeze({
  * implementation rendered the same generic h1 + placeholder for every
  * submodule, which violates the spec's "render strategy-specific copy
  * at each layer" requirement (PRODUCT_SPEC.md §5.1). FT-toned framings
- * derived from the SolvaLanding card prompts; the underlying state
+ * derived from the ThinkLabLanding card prompts; the underlying state
  * machine, scoring, and refusal templates are unchanged.
  */
 export const SUBMODULE_FRAMING_COPY = Object.freeze({

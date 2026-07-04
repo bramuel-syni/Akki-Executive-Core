@@ -1,5 +1,5 @@
 /**
- * SolvaHeader — Wave 1.6 (UAT pack 2026-05-10).
+ * ThinkLabHeader — Wave 1.6 (UAT pack 2026-05-10).
  *
  * Solva sessions previously had no header. This adds:
  *   - Active company context name ("in <company>") so the user is
@@ -11,14 +11,15 @@
  *     Chat). The (i) is informational so users know shielding is
  *     active.
  *
- * No state. Pure presentational. Pulled into SolvaSession.jsx as
+ * No state. Pure presentational. Pulled into ThinkLabSession.jsx as
  * the top of every screen swap.
  */
+import { MODULE_LABELS } from "@/lib/moduleLabels";
 import React from "react";
 import { Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-export default function SolvaHeader() {
+export default function ThinkLabHeader() {
   const { activeContext } = useAuth();
 
   return (
@@ -41,7 +42,7 @@ export default function SolvaHeader() {
           letterSpacing: 0.3,
         }}
       >
-        Solva
+        {MODULE_LABELS.thinklab}
         {activeContext?.name && (
           <>
             <span style={{ margin: "0 6px", opacity: 0.6 }}>·</span>
@@ -91,7 +92,7 @@ export default function SolvaHeader() {
           <span style={{ display: "block" }}><b>Always</b> — redact every message.</span>
           <span style={{ display: "block" }}><b>Off</b> — send raw (use sparingly).</span>
           <span style={{ display: "block", marginTop: 6, opacity: 0.7 }}>
-            Solva runs Auto-Shield by default on every layer.
+            ThinkLab runs Auto-Shield by default on every layer.
           </span>
         </span>
         <style>{`.akki-solva-tt-hover .akki-solva-tt { display: block !important; }`}</style>

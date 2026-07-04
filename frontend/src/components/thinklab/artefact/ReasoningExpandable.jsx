@@ -1,9 +1,9 @@
 /**
- * "How Solva reasoned this" — collapsed by default. Brief §5.4. Four
+ * "How ThinkLab reasoned this" — collapsed by default. Brief §5.4. Four
  * sub-sections rendered from the shaped data returned by
  * GET /api/solva/v2/sessions/{sid}/artefact-reasoning:
  *
- *   1. The candidates Solva considered.
+ *   1. The candidates ThinkLab considered.
  *   2. What the triangulation found.
  *   3. How the probabilities were weighted.
  *   4. The full reasoning audit log.
@@ -63,7 +63,7 @@ export default function ReasoningExpandable({ sessionId, testId = "solva-reasoni
         }}
       >
         {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-        How Solva reasoned this
+        How ThinkLab reasoned this
       </button>
 
       {open && (
@@ -82,7 +82,7 @@ export default function ReasoningExpandable({ sessionId, testId = "solva-reasoni
           {error && <div role="alert" style={{ color: TOKEN.ACCENT }}>{error}</div>}
           {!loading && !error && data && (
             <>
-              <Section heading="The candidates Solva considered">
+              <Section heading="The candidates ThinkLab considered">
                 {data.candidates?.length ? (
                   <ul style={ulStyle}>
                     {data.candidates.map((c, i) => (

@@ -1,7 +1,7 @@
 /*
- * SolvaApp.jsx — authenticated /app/solva landing.
+ * ThinkLabApp.jsx — authenticated /app/solva landing.
  *
- * Renders the picker (`<SolvaLanding variant="auth">`) and forwards
+ * Renders the picker (`<ThinkLabLanding variant="auth">`) and forwards
  * any `?seed_kind=&seed_id=` query params to the picker. Wave 1.1
  * (UAT pack) added the seed plumbing: when a sibling surface
  * (Document Journal, Pulse, Cycle Manager, an existing Solva
@@ -15,10 +15,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
-import SolvaLanding from "@/components/thinklab/ThinkLabLanding";
+import ThinkLabLanding from "@/components/thinklab/ThinkLabLanding";
 import WorkspaceEntryGate from "@/components/transitions/WorkspaceEntryGate";
 
-export default function SolvaApp() {
+export default function ThinkLabApp() {
   const [params, setParams] = useSearchParams();
   // Capture once on mount so we don't keep re-reading after the URL
   // is cleaned. The seed flows through state, not URL.
@@ -40,7 +40,7 @@ export default function SolvaApp() {
   // J4 (2026-05-25, G30 ratified spec §3 Stage 6) — capture the
   // de-identified Q3 intake "starter" once on mount. Used by Phase D
   // framing to pre-populate the composer. Flows through state so a
-  // URL refresh doesn't re-seed; SolvaLanding propagates it onto the
+  // URL refresh doesn't re-seed; ThinkLabLanding propagates it onto the
   // phase-d/session/new URL when the user picks a card.
   const initialStarter = useMemo(() => {
     return (params.get("starter") || "").trim() || null;
@@ -69,7 +69,7 @@ export default function SolvaApp() {
             land above the 1280×800 fold. Pre-fix carried `mb-six mt-four`
             outer margins and `px-four py-two text-sm` inner padding
             (≈50 px tall + 40 px outer margin = 90 px of vertical real estate
-            before SolvaLanding's own 120 px top padding). Now `mt-2 mb-3 ... px-3 py-1.5 text-xs`
+            before ThinkLabLanding's own 120 px top padding). Now `mt-2 mb-3 ... px-3 py-1.5 text-xs`
             (≈30 px + 20 px = 50 px). Copy + testids + audit-timeline anchor preserved. */}
         <div
           data-testid="solva-trust-banner"
@@ -88,7 +88,7 @@ export default function SolvaApp() {
             View audit timeline →
           </a>
         </div>
-        <SolvaLanding variant="auth" intakeSeed={seed} intakeStarter={starter} />
+        <ThinkLabLanding variant="auth" intakeSeed={seed} intakeStarter={starter} />
       </WorkspaceEntryGate>
     </AppShell>
   );

@@ -18,6 +18,7 @@
  * Sub-1024 viewport behaviour: the drawer collapses to a 90vw width
  * so the founder can still close it from the right edge.
  */
+import { MODULE_LABELS } from "@/lib/moduleLabels";
 import React from "react";
 import { X, History, CheckCircle2 } from "lucide-react";
 
@@ -71,7 +72,7 @@ export default function SessionLogPanel({ open, onClose, stream }) {
         data-testid="solva-v2-session-log-panel"
         data-solva-v2-session-log-open="true"
         role="dialog"
-        aria-label="Solva session log"
+        aria-label={`${MODULE_LABELS.thinklab} session log`}
       >
         {/* Header */}
         <header className="flex items-center justify-between px-5 py-4 border-b border-[var(--rule)]">

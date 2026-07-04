@@ -6,7 +6,7 @@
 import React from "react";
 import { TOKEN } from "./tokens";
 
-export default function SolvaShell({
+export default function ThinkLabShell({
   children,
   background = TOKEN.PAPER,
   topPadding = 80,

@@ -73,7 +73,7 @@ export default function StrategyMemo({ scenarios, sensitivity, tensions, recomme
       ) : (
         <p style={italicMuted}>
           We don&rsquo;t see a clear failure mode in the current evidence.
-          Stress-test in a separate Solva session if you want one.
+          Stress-test in a separate ThinkLab session if you want one.
         </p>
       )}
 

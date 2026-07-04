@@ -8,6 +8,7 @@
  *
  * Same download dropdown.
  */
+import { MODULE_LABELS } from "@/lib/moduleLabels";
 import React, { useEffect, useMemo, useState } from "react";
 import { Download, AlertTriangle } from "lucide-react";
 import { TOKEN, FONT, SUBMODULE_LABELS } from "../flow/tokens";
@@ -16,7 +17,7 @@ import ReasoningExpandable from "./ReasoningExpandable";
 function stripTier(s) { return (s || "").replace(/\[T:[a-zA-Z_]+\]/g, "").trim(); }
 function frameOneLine(intent) {
   const text = (intent || "").trim();
-  if (!text) return "Solva session";
+  if (!text) return "ThinkLab session";
   const first = text.split(/(?<=[.!?])\s+/)[0] || text;
   const words = first.split(/\s+/);
   if (words.length > 18) return words.slice(0, 18).join(" ").replace(/[,.;:]$/, "") + "…";
@@ -28,11 +29,11 @@ function formatDate(iso) {
   catch (_e) { return iso; }
 }
 
-export default function SolvaRefusalArtefact({ session, onStartReflection }) {
+export default function ThinkLabRefusalArtefact({ session, onStartReflection }) {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const sessionId = session?.id;
 
-  const submoduleLabel = SUBMODULE_LABELS[session?.submodule] || "Solva";
+  const submoduleLabel = SUBMODULE_LABELS[session?.submodule] || "ThinkLab";
   const persona = session?.persona;
 
   const refusalContent = useMemo(() => {
@@ -41,7 +42,7 @@ export default function SolvaRefusalArtefact({ session, onStartReflection }) {
     const last = refs.length ? refs[refs.length - 1] : null;
     const out = (last && last.output) || {};
     let whatsMissing = out.missing_evidence || out.reason ||
-      "Solva does not have enough grounded evidence to weight scenarios honestly for this question.";
+      "ThinkLab does not have enough grounded evidence to weight scenarios honestly for this question.";
     if (Array.isArray(whatsMissing)) whatsMissing = whatsMissing.join(" ");
     let candidates = out.candidates_for_user || out.candidate_set || [];
     if (!candidates.length) {
@@ -57,7 +58,7 @@ export default function SolvaRefusalArtefact({ session, onStartReflection }) {
     let nextActions = out.next_actions || out.user_next_steps || [];
     if (!nextActions.length) {
       nextActions = [
-        "Pull the source records that would let Solva weight scenarios.",
+        "Pull the source records that would let ThinkLab weight scenarios.",
         "Return for a full synthesis once the evidence gap is closed.",
       ];
     }
@@ -172,7 +173,7 @@ export default function SolvaRefusalArtefact({ session, onStartReflection }) {
 
       {refusalContent.candidates.length > 0 && (
         <section style={{ marginBottom: 56 }}>
-          <Kicker>What Solva can offer</Kicker>
+          <Kicker>What {MODULE_LABELS.thinklab} can offer</Kicker>
           <p style={{ fontFamily: FONT.GEORGIA, fontStyle: "italic", color: TOKEN.DEEP, fontSize: 14, margin: "0 0 12px 0" }}>
             Here are the framings worth examining, without weighting.
           </p>

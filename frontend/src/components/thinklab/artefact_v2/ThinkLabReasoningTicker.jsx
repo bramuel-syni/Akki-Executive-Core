@@ -15,6 +15,7 @@
  * utilities (`bg-ned-purple/N`, `border-ned-purple/N`); no
  * opacity-modifier-on-hex-CSS-var traps.
  */
+import { MODULE_LABELS } from "@/lib/moduleLabels";
 import React, { useEffect, useState } from "react";
 import { Loader2, CheckCircle2, History } from "lucide-react";
 
@@ -28,7 +29,7 @@ const LAYER_DISPLAY_NAMES = {
 };
 
 
-export default function SolvaReasoningTicker({
+export default function ThinkLabReasoningTicker({
   currentLayer,
   currentLayerName,
   currentStep,
@@ -66,7 +67,7 @@ export default function SolvaReasoningTicker({
         data-solva-v2-ticker-stage="icon"
         onClick={onLogIconClick}
         className="fixed top-4 right-4 z-40 flex items-center gap-1.5 rounded-full border border-ned-purple/30 bg-[var(--parchment)] px-2.5 py-1.5 text-[var(--ned-purple)] hover:bg-ned-purple/10 transition-colors shadow-sm cursor-pointer"
-        aria-label="Open Solva session log"
+        aria-label={`Open ${MODULE_LABELS.thinklab} session log`}
       >
         <History className="w-3.5 h-3.5" />
         <span className="font-mono text-[10.5px] uppercase tracking-[0.14em]">
@@ -85,7 +86,7 @@ export default function SolvaReasoningTicker({
         data-solva-v2-ticker-stage="pill"
         onClick={onLogIconClick}
         className="fixed top-4 right-4 z-40 flex items-center gap-2 rounded-full border border-ned-purple/30 bg-[var(--parchment)] px-3.5 py-2 shadow-sm cursor-pointer hover:bg-ned-purple/10 transition-colors"
-        aria-label="Open Solva session log"
+        aria-label={`Open ${MODULE_LABELS.thinklab} session log`}
       >
         <CheckCircle2 className="w-3.5 h-3.5 text-[var(--ned-purple)]" />
         <span
@@ -123,7 +124,7 @@ export default function SolvaReasoningTicker({
                 {currentLayer}&nbsp;·&nbsp;{layerLabel}
               </>
             ) : (
-              <>Solva — connecting</>
+              <>{MODULE_LABELS.thinklab} — connecting</>
             )}
           </span>
         </div>

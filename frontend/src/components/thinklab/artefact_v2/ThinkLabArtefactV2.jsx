@@ -1,5 +1,5 @@
 /**
- * Solva v2 — SolvaArtefactV2 orchestrator (Slice 2b correction, 2026-05-29).
+ * Solva v2 — ThinkLabArtefactV2 orchestrator (Slice 2b correction, 2026-05-29).
  *
  * CORRECTION FROM PRIOR CLOSE-OUT (tester contract verification):
  *  - Locked enum has EXACTLY 16 kinds (Slice 4 added bias_inventory;
@@ -31,7 +31,7 @@ import api from "@/lib/api/apiV2";
 import { apiErrorMessage } from "@/lib/api";
 import { Loader2, AlertCircle } from "lucide-react";
 import SectionDivider from "./SectionDivider";
-import SolvaReasoningTicker from "./ThinkLabReasoningTicker";
+import ThinkLabReasoningTicker from "./ThinkLabReasoningTicker";
 import useSolvaReasoningStream from "@/hooks/useSolvaReasoningStream";
 import CoverSlide from "./slides/CoverSlide";
 import HeadlineSlide from "./slides/HeadlineSlide";
@@ -55,7 +55,7 @@ import SessionLogPanel from "./SessionLogPanel";
 import ChairNotesStrip from "./ChairNotesStrip";
 // PPTX export (queue position 4, 2026-05-29) — toolbar pinned above
 // the first slide; `print:hidden` keeps it out of the paper artefact.
-import SolvaPptxToolbar from "./ThinkLabPptxToolbar";
+import ThinkLabPptxToolbar from "./ThinkLabPptxToolbar";
 import InClosingSlide from "./slides/InClosingSlide";
 
 
@@ -302,7 +302,7 @@ function composeSlides(payload) {
 }
 
 
-export default function SolvaArtefactV2({ sessionId }) {
+export default function ThinkLabArtefactV2({ sessionId }) {
   const [state, setState] = useState({ status: "loading", payload: null, error: null });
   // Slice 7 (2026-05-29) — session-log side-panel open state. Hooked
   // up to the topbar Session-Log icon stub (was previously dead).
@@ -403,7 +403,7 @@ export default function SolvaArtefactV2({ sessionId }) {
         className="text-[12.5px] text-[var(--oxblood)] py-12"
         data-testid="solva-v2-error"
       >
-        {state.error || "Unable to load Solva session output."}
+        {state.error || "Unable to load ThinkLab session output."}
       </div>
     );
   }
@@ -445,7 +445,7 @@ export default function SolvaArtefactV2({ sessionId }) {
       >
         {stream.currentStep || ""}
       </div>
-      <SolvaReasoningTicker
+      <ThinkLabReasoningTicker
         currentLayer={stream.currentLayer}
         currentLayerName={stream.currentLayerName}
         currentStep={stream.currentStep}
@@ -460,7 +460,7 @@ export default function SolvaArtefactV2({ sessionId }) {
           paper artefact. Disabled while the stream is still in
           flight — the binary mirrors whatever's on screen, so we
           only allow export after the run is complete. */}
-      <SolvaPptxToolbar
+      <ThinkLabPptxToolbar
         sessionId={sessionId} isComplete={!!stream.isComplete}
         notesOn={notesOn} onToggleNotes={() => setNotesOn((v) => !v)}
       />

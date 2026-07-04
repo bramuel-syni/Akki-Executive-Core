@@ -12,8 +12,9 @@
  *     → DONE
  *
  * Phase E Sub-task A delivery (2026-05-16). Replaces the legacy
- * `SolvaSession.jsx` flow for context-bound sessions.
+ * `ThinkLabSession.jsx` flow for context-bound sessions.
  */
+import { MODULE_LABELS } from "@/lib/moduleLabels";
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
@@ -26,7 +27,7 @@ import { Loader2, ArrowRight, ShieldCheck, Paperclip, FileText, X, Info } from "
 import { toast } from "sonner";
 import api from "@/lib/api/apiV2";
 // Phase D.1 (2026-05-26) — briefing deck reopen via (i) icon.
-import SolvaBriefingDeck from "@/components/thinklab/ThinkLabBriefingDeck";
+import ThinkLabBriefingDeck from "@/components/thinklab/ThinkLabBriefingDeck";
 import { SUBMODULE_TO_AREA } from "@/data/solva-briefings";
 import {
   createPhaseDSession,
@@ -93,7 +94,7 @@ const REFLECTION_QUESTIONS = [
 ];
 
 
-export default function SolvaPhaseDSession() {
+export default function ThinkLabPhaseDSession() {
   const navigate = useNavigate();
   const { sessionId: paramSid } = useParams();
   const [searchParams] = useSearchParams();
@@ -147,7 +148,7 @@ export default function SolvaPhaseDSession() {
   //
   // J4 (2026-05-25, G30 ratified spec §3 Stage 6) — when the URL
   // carries `?starter=<text>` (forwarded by FirstSession Door C via
-  // SolvaApp+SolvaLanding) the framing composer pre-populates with
+  // ThinkLabApp+ThinkLabLanding) the framing composer pre-populates with
   // that string. Falls back to fetching `accounts.first_session.
   // intake.top_of_mind` (the Shield-redacted Q3 answer persisted by
   // J1's G18 wiring) when the URL is bare but the user hasn't yet
@@ -294,7 +295,7 @@ export default function SolvaPhaseDSession() {
     return (
       <AppShell>
         <div className="mx-auto max-w-2xl p-8" data-testid="solva-phase-d-no-context">
-          <h1 className="text-2xl font-semibold">Solva</h1>
+          <h1 className="text-2xl font-semibold">{MODULE_LABELS.thinklab}</h1>
           <p className="mt-3 text-slate-600">Pick a workspace from the top bar to begin.</p>
         </div>
       </AppShell>
@@ -328,10 +329,10 @@ export default function SolvaPhaseDSession() {
           </div>
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-semibold text-slate-900">
-              Solva · {SUB_MODULES.find(s => s.id === session.subModule)?.label || session.subModule}
+              ThinkLab · {SUB_MODULES.find(s => s.id === session.subModule)?.label || session.subModule}
             </h1>
             {/* Phase D.1 (2026-05-26) — (i) info icon next to the
-                Solva header reopens the briefing deck on demand,
+                ThinkLab header reopens the briefing deck on demand,
                 bypassing any "Don't show me again" suppression. */}
             {SUBMODULE_TO_AREA[session.subModule] && (
               <button
@@ -477,7 +478,7 @@ export default function SolvaPhaseDSession() {
         {/* Phase D.1 (2026-05-26) — briefing deck reopened from the
             (i) icon. `force` bypasses the user's suppression flag. */}
         {SUBMODULE_TO_AREA[session.subModule] && (
-          <SolvaBriefingDeck
+          <ThinkLabBriefingDeck
             area={SUBMODULE_TO_AREA[session.subModule]}
             open={briefingOpen}
             onClose={() => setBriefingOpen(false)}

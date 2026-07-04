@@ -7,7 +7,7 @@
  * 27) and offers three CTAs.
  *
  * The audit POST has already fired in the background when the user
- * submitted FRAMING (`SolvaSession.handleFramingSubmit` calls it
+ * submitted FRAMING (`ThinkLabSession.handleFramingSubmit` calls it
  * fire-and-forget). This component refreshes it via a GET-on-mount,
  * so the data is there before the user sees the screen.
  *

@@ -39,6 +39,14 @@
 export const MODULE_LABELS = Object.freeze({
   thinklab: "ThinkLab",
   solvaEngine: "Solva engine",
+  // P3 expansion (2026-07-02) — user-visible surface strings that route through the module label.
+  thinklabSession: "ThinkLab session",
+  thinklabSessions: "ThinkLab sessions",
+  thinklabSessionLog: "ThinkLab session log",
+  thinklabSubmodules: "ThinkLab sub-modules",
+  thinklabConnecting: "ThinkLab \u2014 connecting",
+  whatThinkLabCanOffer: "What ThinkLab can offer",
+  thinklabSessionReasoningAudit: "ThinkLab session's reasoning audit",
 });
 
 // Convenience helpers so callers don't have to know the shape.
