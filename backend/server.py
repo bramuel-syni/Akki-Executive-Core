@@ -233,6 +233,13 @@ app.include_router(make_composite_healthz_router())
 # planning documentation. See routers/audits.py.
 app.include_router(audits_router.router)
 
+# JC-WS-DECK-A8-BACKEND-PERSISTENCE (2026-07-02) — account-scoped
+# deck notes CRUD. Tab Honesty Rule enforcement — replaces the A8 MVP
+# localStorage backing with account-persisted storage. F.6 N/A (user
+# authored content, no LLM path). See routers/deck_notes.py.
+from routers import deck_notes as _deck_notes_router  # noqa: E402
+app.include_router(_deck_notes_router.router)
+
 
 # -----------------------------------------------------------------------------
 # Phase 4.4 — Dual-mount versioned surface (`/v1/<context>/*`).
@@ -596,6 +603,12 @@ async def on_startup():
     # Patch 3 — Home v2.
     await db.user_recent_views.create_index([("account_id", 1), ("surface_path", 1)], unique=True)
     await db.user_recent_views.create_index([("account_id", 1), ("last_visited_at", -1)])
+    # JC-WS-DECK-A8-BACKEND-PERSISTENCE (2026-07-02) — deck notes
+    # account-scoped CRUD; unique compound key gates upsert semantics
+    # and enforces one-note-per-(account, document).
+    await db.deck_notes.create_index(
+        [("account_id", 1), ("document_id", 1)], unique=True,
+    )
     # Phase I.4.a (2026-05-27) — events collection for the new manual
     # entry surface. Compound index keys list-by-context queries
     # sorted by start_at (used by /api/contexts/{cid}/events).

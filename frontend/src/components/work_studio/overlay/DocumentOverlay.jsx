@@ -45,6 +45,9 @@ import {
 import DeckNotes from "./DeckNotes";
 import SignalsPanel from "./SignalsPanel";
 import RelatedDocuments from "./RelatedDocuments";
+import DetailFooter from "./DetailFooter";
+import DocumentOutline from "./DocumentOutline";
+import IntelligencePanelExpanded from "./IntelligencePanelExpanded";
 
 // ─────────────────────────────────────────────────────────────────────
 // RAG band helper (Phase 5 2026-06-04 — flipped from the Chunk 8
@@ -159,6 +162,45 @@ export default function DocumentOverlay({ contextId, artefactId, open, onClose }
     }
   }, [contextId, artefactId]);
 
+  // JC-WS-DECK-A5-HEADER-FOOTER-PARITY-SHARE (2026-07-02) — shared
+  // download handler. Extracted from the Toolbar inline callback so
+  // both Toolbar (T4.1 T2.3 rule affordances) and DetailFooter (A5
+  // footer parity) reuse the same rendering pipeline. Hits the
+  // server-produced render endpoint via authenticated axios and
+  // streams the binary back through a blob URL.
+  const handleDownload = useCallback(async (fmt) => {
+    if (!doc) return;
+    const format = (fmt || "docx").toLowerCase();
+    try {
+      const resp = await api.get(
+        `/contexts/${contextId}/work-studio/documents/${artefactId}/render`,
+        { params: { format }, responseType: "blob" },
+      );
+      const blob = new Blob([resp.data], {
+        type: resp.headers["content-type"] || "application/octet-stream",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const cd = resp.headers["content-disposition"] || "";
+      const match = cd.match(/filename="?([^";]+)"?/);
+      a.download = match ? match[1] : `${doc.title || "document"}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      const status = e?.response?.status;
+      if (status === 409) {
+        toast.error("This artefact has no compiled content yet.");
+      } else {
+        toast.error(
+          apiErrorMessage(e, `Couldn't download ${format.toUpperCase()} file.`),
+        );
+      }
+    }
+  }, [doc, contextId, artefactId]);
+
   useEffect(() => {
     if (open) loadDoc();
     else { setDoc(null); setEditMode(false); setRevising(false); }
@@ -261,46 +303,7 @@ export default function DocumentOverlay({ contextId, artefactId, open, onClose }
                   toast.error(apiErrorMessage(e, "Couldn't update title."));
                 }
               }}
-              onDownload={async (fmt) => {
-                /* T4.1 (2026-05-25) — G6 ratified server-produced
-                 * downloads in DOCX / PDF / PPTX. Hits the on-the-fly
-                 * render endpoint and triggers a browser download via
-                 * a blob URL. We use the same axios `api` client so
-                 * the auth header is attached automatically; using
-                 * `window.open` directly would lose the bearer token
-                 * for cross-origin previews. */
-                const format = (fmt || "docx").toLowerCase();
-                try {
-                  const resp = await api.get(
-                    `/contexts/${contextId}/work-studio/documents/${artefactId}/render`,
-                    { params: { format }, responseType: "blob" },
-                  );
-                  const blob = new Blob([resp.data], {
-                    type: resp.headers["content-type"] || "application/octet-stream",
-                  });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  // Filename comes from Content-Disposition; fall back
-                  // to a synthetic name if the header isn't set.
-                  const cd = resp.headers["content-disposition"] || "";
-                  const match = cd.match(/filename="?([^";]+)"?/);
-                  a.download = match ? match[1] : `${doc.title || "document"}.${format}`;
-                  document.body.appendChild(a);
-                  a.click();
-                  a.remove();
-                  URL.revokeObjectURL(url);
-                } catch (e) {
-                  const status = e?.response?.status;
-                  if (status === 409) {
-                    toast.error("This artefact has no compiled content yet.");
-                  } else {
-                    toast.error(
-                      apiErrorMessage(e, `Couldn't download ${format.toUpperCase()} file.`),
-                    );
-                  }
-                }
-              }}
+              onDownload={handleDownload}
             />
             {/* JC-WS-DECK-A4 (2026-07-02) — 5-tab shell foundation.
                 Toolbar stays OUTSIDE Tabs (chrome pattern preservation).
@@ -364,6 +367,12 @@ export default function DocumentOverlay({ contextId, artefactId, open, onClose }
 
               <TabsContent value="document" className="flex-1 overflow-auto mt-2">
                 {/* Document tab — hosts DocumentSurface (previously Layer 3) */}
+                {/* A6 (2026-07-02) — DocumentOutline above DocumentSurface:
+                    DECK-040 structured outline + DECK-043 source-context pointer. */}
+                <DocumentOutline
+                  doc={doc}
+                  onOpenRelatedTab={() => setActiveTab("related")}
+                />
                 <DocumentSurface
                   key={`${artefactId}-${doc.lifecycle_state}`}
                   doc={doc}
@@ -386,6 +395,13 @@ export default function DocumentOverlay({ contextId, artefactId, open, onClose }
                   confidenceScoredAt={doc.confidence_scored_at}
                   confidenceRecomputedAt={doc.confidence_recomputed_at}
                   onOpenFullReport={() => setIntelOpen(true)}
+                />
+                {/* A7 (2026-07-02) — expanded panel below the card:
+                    DECK-045/046/047/049. Refresh is a pure re-fetch
+                    (loadDoc) with no LLM path — F.6 discipline-pay N/A. */}
+                <IntelligencePanelExpanded
+                  doc={doc}
+                  onRefresh={loadDoc}
                 />
               </TabsContent>
 
@@ -410,6 +426,17 @@ export default function DocumentOverlay({ contextId, artefactId, open, onClose }
                 </TabsContent>
               )}
             </Tabs>
+
+            {/* JC-WS-DECK-A5-HEADER-FOOTER-PARITY-SHARE (2026-07-02) —
+                DetailFooter mounts BELOW the Tabs primitive (chrome
+                hard line R7 preserved: footer is overlay chrome, NOT
+                a tab shell child). Reachable from ANY active tab. */}
+            <DetailFooter
+              contextId={contextId}
+              artefactId={artefactId}
+              activeTab={activeTab}
+              onDownload={handleDownload}
+            />
 
             {/* AI Revision side panel — slides in alongside (-034).
                 A4 note: stays as sidebar; NOT tab-migrated (Shield-routed code

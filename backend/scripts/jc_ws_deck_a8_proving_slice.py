@@ -67,33 +67,47 @@ def row1_deck_notes_component_exists() -> Tuple[bool, str]:
 
 
 def row2_localstorage_key_contract() -> Tuple[bool, str]:
-    """R2 — localStorage key contract present + JSON serialization + updated_at ISO field."""
+    """R2 — After A8-BACKEND upgrade (2026-07-02): backend API contract present +
+    legacy localStorage key prefix acknowledged for one-way migration import.
+
+    Post-Tab-Honesty-Rule this row asserts:
+      - The FE now goes through the backend API (`api.get/put/delete /deck-notes/{...}`).
+      - The legacy localStorage key prefix is still referenced (for migration read-only).
+      - No new localStorage.setItem calls exist (writes go to backend only).
+    """
     src = _text(DECK_NOTES)
-    key_prefix = "akki:deck-notes:" in src
-    localstorage_setitem = "window.localStorage.setItem" in src
-    localstorage_getitem = "window.localStorage.getItem" in src
-    updated_at_iso = "updated_at" in src and "toISOString" in src
-    json_stringify = "JSON.stringify" in src
-    json_parse = "JSON.parse" in src
-    ok = all([key_prefix, localstorage_setitem, localstorage_getitem, updated_at_iso, json_stringify, json_parse])
+    api_import = 'from "@/lib/api/apiV2"' in src
+    api_get = "api.get(`/deck-notes/" in src
+    api_put = "api.put(`/deck-notes/" in src
+    api_delete = "api.delete(`/deck-notes/" in src
+    legacy_key_prefix = "akki:deck-notes:" in src  # for migration import (read-only)
+    # No new writes to localStorage — only removal (migration finalizer) allowed.
+    has_setitem = "localStorage.setItem" in src
+    ok = api_import and api_get and api_put and api_delete and legacy_key_prefix and (not has_setitem)
     return ok, (
-        f"key-prefix={key_prefix} setItem={localstorage_setitem} getItem={localstorage_getitem} "
-        f"updated_at-iso={updated_at_iso} JSON.stringify={json_stringify} JSON.parse={json_parse}"
+        f"api-import={api_import} api.get={api_get} api.put={api_put} api.delete={api_delete} "
+        f"legacy-key-for-migration={legacy_key_prefix} no-new-setitem={not has_setitem}"
     )
 
 
 def row3_debounced_autosave_and_saved_indicator() -> Tuple[bool, str]:
-    """R3 — Debounced autosave hook + saved-timestamp state present (real content acquisition)."""
+    """R3 — Debounced autosave hook + saved-timestamp state present (real content acquisition).
+
+    Post-Tab-Honesty-Rule: debounce now dispatches `api.put` (server-authoritative).
+    Server response supplies `updated_at`. UI still uses debounceRef+setTimeout pattern.
+    """
     src = _text(DECK_NOTES)
-    debounce_500 = "AUTOSAVE_DEBOUNCE_MS = 500" in src or "500" in src
+    debounce_500 = "AUTOSAVE_DEBOUNCE_MS = 500" in src
     settimeout = "setTimeout" in src
-    saved_state = "setSavedAt" in src or "setSavedIndicator" in src
-    saved_relative_time = "Saved just now" in src or "Saved" in src
-    debounce_ref = "debounceRef" in src or "clearTimeout" in src
-    ok = all([debounce_500, settimeout, saved_state, saved_relative_time, debounce_ref])
+    saved_state = "setSavedAt" in src and "setSavedIndicator" in src
+    saved_relative_time = "Saved just now" in src
+    debounce_ref = "debounceRef" in src and "clearTimeout" in src
+    put_in_debounce = "api.put(" in src
+    ok = all([debounce_500, settimeout, saved_state, saved_relative_time, debounce_ref, put_in_debounce])
     return ok, (
         f"debounce-500ms={debounce_500} setTimeout={settimeout} "
-        f"saved-state={saved_state} saved-string={saved_relative_time} debounce-clear={debounce_ref}"
+        f"saved-state={saved_state} saved-string={saved_relative_time} "
+        f"debounce-ref+clear={debounce_ref} api.put-in-hook={put_in_debounce}"
     )
 
 
@@ -144,17 +158,17 @@ def row6_five_stable_testids_on_deck_notes() -> Tuple[bool, str]:
 
 
 def row7_clear_notes_affordance_and_confirm() -> Tuple[bool, str]:
-    """R7 — Clear-notes affordance + confirm flow: Clear button opens confirm; confirm removes localStorage key + clears textarea."""
+    """R7 — Clear-notes affordance + confirm flow: Clear button opens confirm; confirm removes via backend DELETE (post-Tab-Honesty-Rule)."""
     src = _text(DECK_NOTES)
     clear_button = "deck-notes-clear-button" in src
     confirm_dialog = "confirmClearOpen" in src
-    remove_item = "window.localStorage.removeItem" in src or "localStorage.removeItem" in src
-    clear_handler = "handleClearConfirmed" in src or "setContent(\"\")" in src
+    api_delete = "api.delete(`/deck-notes/" in src
+    clear_handler = "handleClearConfirmed" in src
     confirm_button = "deck-notes-clear-confirm-button" in src
-    ok = all([clear_button, confirm_dialog, remove_item, clear_handler, confirm_button])
+    ok = all([clear_button, confirm_dialog, api_delete, clear_handler, confirm_button])
     return ok, (
         f"clear-button={clear_button} confirm-dialog-state={confirm_dialog} "
-        f"removeItem={remove_item} clear-handler={clear_handler} confirm-button={confirm_button}"
+        f"api.delete={api_delete} clear-handler={clear_handler} confirm-button={confirm_button}"
     )
 
 
