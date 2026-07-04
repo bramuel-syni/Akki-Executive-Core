@@ -1,0 +1,19 @@
+{
+  "ship_paths_from_submodules_py": [
+    "seek_clarity",
+    "develop_strategy",
+    "simulate_hypothesis",
+    "get_perspective"
+  ],
+  "user_directive_paths": [
+    "develop_strategy",
+    "seek_clarity",
+    "simulate_hypothesis",
+    "get_perspective"
+  ],
+  "missing_from_ship": [],
+  "extras_in_ship_but_not_directive": [],
+  "all_4_paths_shipped_and_named_exactly": true,
+  "julius_existing_solva_sessions": 0,
+  "total_solva_sessions_in_db": 0
+}

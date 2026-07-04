@@ -1,0 +1,50 @@
+{
+  "shared_endpoint": "POST /api/contexts/{context_id}/work-studio/export/brief",
+  "origin_kind_field_annotation": "typing.Optional[typing.Literal['monitor_objective', 'monitor_signal', 'solva_session', 'task_manager_task']]",
+  "origin_kind_accepted_literals": [
+    "monitor_objective",
+    "monitor_signal",
+    "solva_session",
+    "task_manager_task"
+  ],
+  "origin_id_field_annotation": "typing.Optional[str]",
+  "shipped_via": "jc_wave3_origin_briefs_solva_tm_fanout_slice.py (12/12 GREEN 2026-06-26)",
+  "existing_exports_with_origin_stamp": [
+    {
+      "id": "0e9b8326-6f24-4f13-a1e7-41d1fcdffe5c",
+      "context_id": "ctx-jc-w3-fanout-3dacf8",
+      "account_id": "jc-w3-fanout-94cc9039",
+      "kind": "brief",
+      "created_at": "2026-06-26T17:05:13.163883+00:00",
+      "origin_kind": "task_manager_task",
+      "origin_id": "task-fanout-1"
+    },
+    {
+      "id": "7e991ec1-7edf-4a33-989a-a48bf15d3b84",
+      "context_id": "ctx-jc-w3-fanout-570cc0",
+      "account_id": "jc-w3-fanout-2aea679c",
+      "kind": "brief",
+      "created_at": "2026-06-26T17:05:13.120547+00:00",
+      "origin_kind": "solva_session",
+      "origin_id": "solva-fanout-1"
+    },
+    {
+      "id": "b849df00-e456-42f8-b77c-9dc5231ceea5",
+      "context_id": "ctx-jc-w3-fanout-dd15fa",
+      "account_id": "jc-w3-fanout-cdb5315a",
+      "kind": "brief",
+      "created_at": "2026-06-26T16:49:04.614953+00:00",
+      "origin_kind": "task_manager_task",
+      "origin_id": "task-fanout-1"
+    },
+    {
+      "id": "242fe5a2-2b42-4e93-bb6c-9d6b127965fa",
+      "context_id": "ctx-jc-w3-fanout-a3de70",
+      "account_id": "jc-w3-fanout-8c2f9560",
+      "kind": "brief",
+      "created_at": "2026-06-26T16:49:04.580436+00:00",
+      "origin_kind": "solva_session",
+      "origin_id": "solva-fanout-1"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 **Canonical Spec**: user in-flight amendment 2026-07-02 during `JC-STORAGE-PIVOT-GCS-BUILD` Stage 1 dispatch (§"STAGE 2 (queued, does NOT fire in this dispatch)") + `/app/memory/rules/TRUTH_IN_CAPABILITY_RULE.md` (Truth-in-capability discipline birthed alongside this stub).
 
-**STATUS: IN-FLIGHT · fired from Interim Guard GREEN 2026-07-02.**
+**STATUS: CLOSED 2026-07-04 · 11/11 GREEN · both CSV + xlsx PROVEN at 500 MB streaming/read-only · interim guard revert eligible (NOT auto-flipped per user directive — surface only).**
 
 # JC-STORAGE-STAGE-2-INGEST-PROFILING
 
@@ -69,11 +69,11 @@ Stage 2 report says exactly what was proven, exactly what wasn't. Example accept
 | Format | Source size | Peak RSS delta | tracemalloc peak | Pod ceiling | Ratio | Status |
 |---|---|---|---|---|---|---|
 | csv | 524.4 MB | 2.2 MB | 33.2 MB | 8590 MB | 0.0% | **PROVEN** |
-| xlsx | 0.0 MB | 0.0 MB | 0.0 MB | 8590 MB | 0.0% | **?** |
+| xlsx | 682.5 MB | 0.0 MB | 42.9 MB | 8590 MB | 0.0% | **PROVEN** |
 
 ## Truth-in-capability closure
 
 No format BLOCKED. Findings above are the honest measurement — do NOT infer capability outside these tested points (500 MB / streaming-read-only mode). Interim guard revert eligibility per user directive:
-- Not both PROVEN (CSV=PROVEN · xlsx=?) → interim guard **holds at 32 MB** · user directs any changes.
+- BOTH formats PROVEN at 500 MB → **auto-revert eligible** · `STORAGE_MAX_UPLOAD_MB` may return to 500.
 
-_Written by `jc_storage_stage_2_ingest_profiling_slice.py` at 2026-07-04T17:41:37.313805+00:00_
+_Written by `jc_storage_stage_2_ingest_profiling_slice.py` at 2026-07-04T18:00:25.660840+00:00_

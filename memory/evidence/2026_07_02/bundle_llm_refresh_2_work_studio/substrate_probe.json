@@ -1,0 +1,27 @@
+{
+  "ned_docs": 3,
+  "govt_docs": 3,
+  "existing_exports_count": 2,
+  "existing_exports_sample": [
+    {
+      "id": "d130c799-2be0-4940-ab36-fac6ce2809b7",
+      "context_id": "f954d5d0-50d9-47d5-a64f-3be89cee8296",
+      "kind": "minutes",
+      "title": "Strategic Capital Allocation Framework",
+      "source_document_ids": [
+        "cc84e6be-f1dc-4f5c-899b-2ec70ea4efd3"
+      ],
+      "created_at": "2026-05-25T07:01:41.523919+00:00"
+    },
+    {
+      "id": "8ac47e2e-d9d8-46e0-afd2-356603d81e8e",
+      "context_id": "f954d5d0-50d9-47d5-a64f-3be89cee8296",
+      "kind": "board_pack",
+      "title": "Digital Transformation Strategy \u2014 Strategic Refresh",
+      "source_document_ids": [
+        "790f6a60-2204-41bd-a5d9-f10af99fb1a3"
+      ],
+      "created_at": "2026-05-25T07:01:14.086603+00:00"
+    }
+  ]
+}

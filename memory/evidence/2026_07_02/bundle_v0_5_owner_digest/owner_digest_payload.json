@@ -1,0 +1,14 @@
+{
+  "week_label": "2026-W27",
+  "context_id": "f954d5d0-50d9-47d5-a64f-3be89cee8296",
+  "owner_account_id": "f23cd1fe-bbb8-40ea-baa1-73945ca0fcd2",
+  "rows": [],
+  "rows_count": 0,
+  "rows_off_track": 0,
+  "rows_at_risk": 0,
+  "rows_on_track": 0,
+  "rows_achieved": 0,
+  "generated_at": "2026-07-04T18:06:11.817623+00:00",
+  "surface": "owner_digest_v0",
+  "delta_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+}

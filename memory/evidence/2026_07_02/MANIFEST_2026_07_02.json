@@ -1,0 +1,62 @@
+{
+  "generated_at": "2026-07-04T18:06:11.488315+00:00",
+  "canonical_spec": "JC_STORAGE_STAGE_2_INGEST_PROFILING.md (parallel-with-Stage-2 dispatch)",
+  "capture_discipline": "TRUTH_IN_CAPABILITY_RULE.md",
+  "dispatch_dispositions_applied": true,
+  "bundles": [
+    {
+      "bundle": "B4",
+      "status": "CAPTURED-devmode",
+      "artifacts": [
+        "/app/memory/evidence/2026_07_02/bundle_v0_5_owner_digest/owner_digest_devmode.eml",
+        "/app/memory/evidence/2026_07_02/bundle_v0_5_owner_digest/owner_digest_payload.json"
+      ],
+      "gaps": [
+        "sendgrid_outbound",
+        "reply_inbound_loop",
+        "journal_accept_rail"
+      ],
+      "substrate_note": "strategic_goals=0 \u2192 empty rows payload"
+    },
+    {
+      "bundle": "B3",
+      "status": "GAP-DECLARED",
+      "artifacts": [
+        "/app/memory/evidence/2026_07_02/bundle_v0_5_monitor_reassessment/substrate_probe.json"
+      ],
+      "reason": "julius has 0 monitor_background_items; no substrate to reassess"
+    },
+    {
+      "bundle": "B1",
+      "status": "PARTIAL",
+      "artifacts": [
+        "/app/memory/evidence/2026_07_02/bundle_llm_refresh_2_work_studio/substrate_probe.json",
+        "/app/memory/evidence/2026_07_02/bundle_llm_refresh_2_work_studio/existing_export_rosters.json"
+      ],
+      "reason": "substrate thin (3 docs); fresh generation would demonstrate degrade, not roster refresh quality"
+    },
+    {
+      "bundle": "B2",
+      "status": "GAP-DECLARED (paths verified)",
+      "artifacts": [
+        "/app/memory/evidence/2026_07_02/bundle_llm_refresh_3_solva_v2/path_verification.json"
+      ],
+      "drift": [],
+      "reason": "4 paths verified in submodules.py (no drift). Session captures not run \u2014 0 existing sessions on julius, would require ~8-16 min LLM streaming budget on thin substrate."
+    },
+    {
+      "bundle": "B5",
+      "status": "PARTIAL (contract verified)",
+      "artifacts": [
+        "/app/memory/evidence/2026_07_02/bundle_v0_5_origin_briefs/contract_verification.json"
+      ],
+      "origin_kind_literals": [
+        "monitor_objective",
+        "monitor_signal",
+        "solva_session",
+        "task_manager_task"
+      ],
+      "reason": "shipped contract verified; live emit for julius deferred (no solva session, tm tasks exist but LLM budget out-of-scope)"
+    }
+  ]
+}

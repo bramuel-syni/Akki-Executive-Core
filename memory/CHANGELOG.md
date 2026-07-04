@@ -1,6 +1,11 @@
 # AKKI Sandbox — Changelog
 
 > Append-only history of shipped work. Newest first.
+## 2026-07-04 — JC-STORAGE-STAGE-2-INGEST-PROFILING · both formats PROVEN at 500 MB · 11/11 GREEN
+
+Slice `scripts/jc_storage_stage_2_ingest_profiling_slice.py` (751 LOC · 11 rows) — Stage 2 per-format ingest profiling at 500 MB streaming/read-only mode, plus Evidence Bundle capture folded in as parallel dispatch. **Findings:** CSV 524.4 MB → rss_delta 2.2 MB, tracemalloc peak 33.2 MB, pod ceiling 8590 MB, ratio 0.0% → PROVEN · xlsx 682.5 MB → rss_delta 0.0 MB, tracemalloc peak 42.9 MB, ratio 0.0% → PROVEN. **Interim guard disposition:** both PROVEN → auto-revert to 500 MB eligible; NOT auto-flipped per user directive (surface only, awaiting green-light). Guard remains at 32 MB. **Generator patch history:** xlsxwriter constant_memory compressed 5M-row synthetic data to 55 MB (first attempt) and 348 MB (retry with 400K/600K rows) because pool-cycling 256 blobs of 96 bytes zipped too aggressively; final patch bumped blob entropy to 300 bytes (400-char base64) with 250K rows → 682.5 MB reliably. **Reader-mode discipline honoured**: streaming/read-only was tested FIRST for both formats (no silent full-load fallback). **Evidence Bundles (parallel-with-Stage-2 dispatch):** 5 bundles converted HALTED.md → README.md under `memory/evidence/2026_07_02/` — B4 owner-digest CAPTURED-devmode (.eml + payload, SendGrid loop NOT verified) · B3 monitor-reassessment GAP-DECLARED (0 monitor items on julius all 5 ctxs) · B1 work-studio PARTIAL (thin substrate 3 docs, existing exports rostered) · B2 solva-v2 GAP-DECLARED (4 paths verified ZERO drift, sessions not run) · B5 origin-briefs PARTIAL (contract verified, live emit deferred). Manifest at `memory/evidence/2026_07_02/MANIFEST_2026_07_02.json`. Bundle capture script `scripts/jc_bundle_capture_2026_07_02.py` NEW (~500 LOC · 5 bundles). All READMEs cite exact-captured vs exact-not-verified per TRUTH_IN_CAPABILITY_RULE. No project-scope GCS calls. Split-literal `_TL / _OLD` discipline. Testing sub-agents BANNED.
+
+
 
 ## 2026-07-02 — JC-STORAGE-STAGE-1B-CEILING-AND-RESUMABLE · resumable-default refactor · 16/16 GREEN
 

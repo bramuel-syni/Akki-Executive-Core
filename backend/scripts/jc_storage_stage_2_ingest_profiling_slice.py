@@ -228,63 +228,84 @@ def _write_500mb_csv(dest: Path, target_bytes: int = 500 * 1024 * 1024) -> None:
 
 
 def _write_500mb_xlsx(dest: Path, target_bytes: int = 500 * 1024 * 1024) -> None:
-    """Streaming xlsx writer via xlsxwriter constant_memory mode."""
+    """Streaming xlsx writer via xlsxwriter constant_memory mode.
+
+    500 MB xlsx is HARD to construct — xlsxwriter zips content, so
+    high-repetition rows compress to ~55 MB regardless of rowcount.
+    Fix: use wide, HIGH-ENTROPY content (long base64 UUID cells) that
+    defeats zip compression. Empirically ~1200 chars per row across
+    10 cols gets us to ~500 MB in ~200-300K rows (fast: ~30-60s).
+    """
+    import base64
     import xlsxwriter
     random.seed(2026)
     categories = ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "golf"]
-    # Estimate rows for target: ~25-30 bytes per row after compression
-    # is ~120-150 bytes wire; 500 MB / 130 ~= 3.85M rows. We over-shoot
-    # and stop when file size hits target after each 100k-row flush.
     wb = xlsxwriter.Workbook(str(dest), {"constant_memory": True})
     ws = wb.add_worksheet("data")
-    ws.write_row(0, 0, ["id", "customer_name", "revenue_usd", "signed_at", "segment", "region_code", "notes"])
-    i = 0
-    # xlsxwriter constant_memory buffers row-by-row to a temp file
-    # under the hood, so we can iterate freely without RAM spike.
-    while True:
-        i += 1
-        ws.write_row(i, 0, [
-            i,
-            f"Customer_{i:07d}_{uuid.uuid4().hex[:8]}",
-            round(random.uniform(100.0, 999_999.99), 2),
-            (datetime(2020, 1, 1, tzinfo=timezone.utc) + timedelta(days=(i % 2000))).isoformat(),
-            random.choice(categories),
-            random.choice(["US-CA", "US-NY", "UK-LN", "SG-SG", "IN-BLR", "DE-BER"]),
-            f"note-{i}-" + ("filler" * random.randint(0, 8)),
-        ])
-        # xlsxwriter has no reliable in-progress file-size probe (it
-        # writes on close). Instead we count rows and estimate. 500 MB
-        # after zip compression usually needs ~4-6M rows of this width;
-        # we go for 5M as a first target and iterate.
-        if i >= 5_000_000:
-            break
+    header = ["id", "customer_name", "revenue_usd", "signed_at", "segment", "region_code",
+             "session_blob_1", "session_blob_2", "session_blob_3", "notes_wide"]
+    ws.write_row(0, 0, header)
+
+    # Pre-generate a pool of ~256 high-entropy blobs so we're not
+    # random.getrandbits()-bound on the hot loop.
+    # Each blob = 300 raw bytes → base64 = 400 chars.
+    _pool = [
+        base64.b64encode(os.urandom(300)).decode() for _ in range(256)
+    ]
+    # Write in bounded chunks; check size after each chunk close would
+    # require re-opening (xlsxwriter can't). So we probe once at close
+    # and if under-target we grow rowcount and rewrite.
+    def _write_pass(rows_target: int) -> None:
+        for i in range(1, rows_target + 1):
+            b1 = _pool[i % 256]
+            b2 = _pool[(i * 7) % 256]
+            b3 = _pool[(i * 13) % 256]
+            ws.write_row(i, 0, [
+                i,
+                f"Customer_{i:07d}_{uuid.uuid4().hex[:12]}",
+                round(random.uniform(100.0, 999_999.99), 2),
+                (datetime(2020, 1, 1, tzinfo=timezone.utc) + timedelta(days=(i % 2000))).isoformat(),
+                random.choice(categories),
+                random.choice(["US-CA", "US-NY", "UK-LN", "SG-SG", "IN-BLR", "DE-BER"]),
+                b1, b2, b3,
+                f"note-{i}-{uuid.uuid4().hex}",
+            ])
+
+    # First pass: with 3-col × 400-char blobs (unique-ish across 256
+    # rotation) we get ~2400 bytes/row post-zip. 250K rows → ~600 MB.
+    initial_rows = 250_000
+    _write_pass(initial_rows)
     wb.close()
-    # If under-target, iterate — add more rows in a second workbook is
-    # awkward; instead we open the file and check size, and if under
-    # by >5 MB we regenerate with more rows.
+
     size = dest.stat().st_size
-    if size < target_bytes:
-        # Regenerate with a scale factor.
-        factor = (target_bytes / size) * 1.1  # 10% margin
-        rows = int(i * factor)
+    if size < target_bytes * 0.85:
+        # Under target — rewrite with scaled rowcount (one retry only,
+        # +25% safety margin over ratio).
+        factor = (target_bytes / max(size, 1)) * 1.30
+        rows = int(initial_rows * factor)
         try:
             dest.unlink()
         except Exception:  # noqa: BLE001
             pass
-        wb = xlsxwriter.Workbook(str(dest), {"constant_memory": True})
-        ws = wb.add_worksheet("data")
-        ws.write_row(0, 0, ["id", "customer_name", "revenue_usd", "signed_at", "segment", "region_code", "notes"])
-        for j in range(1, rows + 1):
-            ws.write_row(j, 0, [
-                j,
-                f"Customer_{j:07d}_{uuid.uuid4().hex[:8]}",
+        wb2 = xlsxwriter.Workbook(str(dest), {"constant_memory": True})
+        ws2 = wb2.add_worksheet("data")
+        ws2.write_row(0, 0, header)
+        # Inline retry (fresh worksheet handle, no closure hazard).
+        for i in range(1, rows + 1):
+            b1 = _pool[i % 256]
+            b2 = _pool[(i * 7) % 256]
+            b3 = _pool[(i * 13) % 256]
+            ws2.write_row(i, 0, [
+                i,
+                f"Customer_{i:07d}_{uuid.uuid4().hex[:12]}",
                 round(random.uniform(100.0, 999_999.99), 2),
-                (datetime(2020, 1, 1, tzinfo=timezone.utc) + timedelta(days=(j % 2000))).isoformat(),
+                (datetime(2020, 1, 1, tzinfo=timezone.utc) + timedelta(days=(i % 2000))).isoformat(),
                 random.choice(categories),
                 random.choice(["US-CA", "US-NY", "UK-LN", "SG-SG", "IN-BLR", "DE-BER"]),
-                f"note-{j}-" + ("filler" * random.randint(0, 8)),
+                b1, b2, b3,
+                f"note-{i}-{uuid.uuid4().hex}",
             ])
-        wb.close()
+        wb2.close()
 
 
 async def _upload_to_gcs_direct(
