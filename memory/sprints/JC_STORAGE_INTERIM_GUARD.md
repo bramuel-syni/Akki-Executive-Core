@@ -72,3 +72,29 @@ Parked (auxiliary per user directive "STAY ON THE JOB · ship product · no auxi
 - Chrome hard line + engine surfaces + rename hash invariants + Tab Honesty Rule + Replacement-naming Rule + Credentials-never-in-channel Rule (rotation parked, rule intact) + Amendment-echo Rule + Truth-in-capability Rule all preserved.
 
 ## Closure report (populated on GREEN)
+
+Guard shipped 7/7 GREEN 2026-07-02; Stage 2 profiling ran 2026-07-04 and closed 11/11 GREEN with both CSV + xlsx **PROVEN at 500 MB streaming/read-only** (ratio ~0.03% vs pod ceiling 8590 MB — massive headroom).
+
+## REVERT · 2026-07-04
+
+**Guard-purpose satisfied. Reverted per Stage 2 both-PROVEN close (banked auto-revert authorization).**
+
+Actions applied:
+- `backend/.env` · `STORAGE_MAX_UPLOAD_MB` flipped 32 → 500
+- `routers/uploads.py` · 413 payload error code reverted `ceiling_exceeded_interim_guard` → `ceiling_exceeded`; "Temporary ceiling pending per-format ingest profiling" `note` removed; comment block updated to cite Stage 2 close (`JC-STORAGE-STAGE-2-INGEST-PROFILING` 11/11 GREEN) as revert authority
+- Backend restart completed (env pickup verified; supervisor: `backend RUNNING pid 20481`)
+- `DEV_PIPELINE.md §9` · close entry appended
+
+Post-revert probes (live backend via preview URL):
+- 501 MB → 413 `ceiling_exceeded` (NO `_interim_guard` suffix, no gap-note) ✓
+- 400 MB → 200 `method: "RESUMABLE"` + `upload_session_uri` (was 413 under guard) ✓
+- 24 MB → 200 `method: "RESUMABLE"` + `max_upload_mb: 500` (env pickup confirmed) ✓
+- 15 MB → 400 `use_in_band_route` (in-band threshold unchanged at 16 MB) ✓
+
+Proof references:
+- Stage 2 slice: `backend/scripts/jc_storage_stage_2_ingest_profiling_slice.py` GREEN 11/11 at 2026-07-04T18:00Z
+- Stage 2 findings memo: `sprints/JC_STORAGE_STAGE_2_INGEST_PROFILING.md` §Findings
+- CSV @ 500 MB · rss_delta 2.2 MB · tracemalloc 33.2 MB · pod ceiling 8590 MB · ratio 0.0% · **PROVEN**
+- xlsx @ 500 MB · rss_delta 0.0 MB · tracemalloc 42.9 MB · ratio 0.0% · **PROVEN**
+
+Truth-in-capability discipline maintained: memo `sprints/JC_STORAGE_STAGE_2_INGEST_PROFILING.md` continues to declare measurement bounds (500 MB source-size / streaming-read-only mode only). Ceiling revert reflects proven capacity within those bounds; capability outside them is NOT claimed.
