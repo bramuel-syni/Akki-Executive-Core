@@ -1584,14 +1584,16 @@ async def _create_continue_chat(
         ),
         "contributor_count": 1,
         "confidence_pct": None,
-        # JC-WS-DECK-PATH-A-A1-DECK-LIST (2026-07-02) — DECK-005
-        # lifecycle-chip surfacing on Deck List. Mirror `lifecycle_state`
-        # from the parent `work_studio_exports` row (which starts life
-        # at "draft" and flips to "in_review"/"committed" downstream).
-        # The doc row is created at the export-complete moment when
-        # the parent row is still "draft" — an update-mirror on
-        # subsequent lifecycle flips is a natural follow-on for A5.
-        "lifecycle_state": "draft",
+        # JC-WS-DECK-PATH-A-A3-GENERATION-FLOW (2026-07-02) — DECK-030
+        # auto Draft → In Review on LLM-generation completion. This
+        # write path fires from `/work-studio/export/{kind}/stream`
+        # completion (compile / enhance / brief flows), which is the
+        # *generation completion moment* per the audit's DECK-030 fix
+        # pointer. A1 landed this at `"draft"`; A3 flips to
+        # `"in_review"` because compile/enhance/brief outputs are LLM-
+        # generated content ready for the user to REVIEW — not a shell
+        # they still need to draft. Surface A (`db.decks`) untouched.
+        "lifecycle_state": "in_review",
         "created_at": created_at,
         "updated_at": created_at,
         # Phase C.3 marker so the journal can group "Continue in chat" docs.

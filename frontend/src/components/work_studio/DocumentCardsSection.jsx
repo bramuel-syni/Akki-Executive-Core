@@ -25,7 +25,8 @@
  *     READ `lifecycle_state` here.
  *   - NO new third-party libraries.
  */
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Download, Lock, FileText, Loader2, MoreHorizontal, Share2, Trash2 } from "lucide-react";
 import api from "@/lib/api/apiV2";
 import { apiErrorMessage, resolveBackendOrigin } from "@/lib/api";
@@ -79,6 +80,15 @@ export default function DocumentCardsSection({ contextId, onOpenDocument }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [downloading, setDownloading] = useState(null);
+  // JC-WS-DECK-PATH-A-A3-GENERATION-FLOW (2026-07-02) — pulse polish.
+  // Reads the existing `?pulse=<work_studio_exports_id>` query param
+  // emitted by `create_work_studio_from_document` (BE line 715) and
+  // ExportModal / LoadingChecklistModal completion handlers.
+  // Reuses the existing plumbing (event bus `akki:document-card-pulse`
+  // + query param) — zero new mechanism per the A3 dispatch condition.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const pulseId = searchParams.get("pulse") || null;
+  const pulsedRowRef = useRef(null);
 
   useEffect(() => {
     if (!contextId) return undefined;
@@ -108,6 +118,36 @@ export default function DocumentCardsSection({ contextId, onOpenDocument }) {
       }
     };
   }, [contextId]);
+
+  // JC-WS-DECK-PATH-A-A3-GENERATION-FLOW (2026-07-02) — pulse polish.
+  // When items refetch, if `?pulse=<id>` matches an item, scroll it
+  // into view. The CSS `data-pulse="true"` attribute on the matching
+  // <li> triggers the glow animation (defined in DocumentCardsSection
+  // CSS-in-Tailwind block below). After the animation completes (~2s)
+  // the URL param is stripped so a page refresh doesn't re-glow the
+  // same row indefinitely. Chrome conformance: reuses `data-pulse`
+  // attribute pattern already present in `CycleCard.jsx:78`.
+  useEffect(() => {
+    if (!pulseId || loading || items.length === 0) return undefined;
+    const match = items.some((it) => it.id === pulseId);
+    if (!match) return undefined;
+    // Scroll after a tick so the DOM has painted the item.
+    const timer = window.setTimeout(() => {
+      if (pulsedRowRef.current) {
+        pulsedRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 50);
+    // Strip the param after the glow finishes (~2s) so refresh doesn't re-play.
+    const stripTimer = window.setTimeout(() => {
+      const sp = new URLSearchParams(searchParams);
+      sp.delete("pulse");
+      setSearchParams(sp, { replace: true });
+    }, 2200);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(stripTimer);
+    };
+  }, [pulseId, loading, items, searchParams, setSearchParams]);
 
   const onShare = useCallback((item) => {
     // Track A Phase 5 — emit the Share modal open event handled by the
@@ -222,7 +262,7 @@ export default function DocumentCardsSection({ contextId, onOpenDocument }) {
 }
 
 
-function DocumentCardRow({ item, onOpen, onDownload, onShare, onDelete, downloading }) {
+function DocumentCardRow({ item, onOpen, onDownload, onShare, onDelete, downloading, pulsed, pulseRef }) {
   const ls = (item.lifecycle_state || "draft").toLowerCase();
   const badge = BADGES[ls] || BADGES.draft;
   const isCommitted = ls === "committed";
@@ -239,10 +279,21 @@ function DocumentCardRow({ item, onOpen, onDownload, onShare, onDelete, download
 
   return (
     <li
+      ref={pulseRef}
       data-testid={`ws-document-card-${item.id}`}
       data-lifecycle={ls}
       data-akki-generated={akkiGenerated}
-      className="group relative flex items-center gap-3 border border-[var(--rule)] bg-white px-3 py-3 rounded-sm hover:border-slate-300 transition-colors"
+      // JC-WS-DECK-PATH-A-A3-GENERATION-FLOW (2026-07-02) — pulse
+      // polish. `data-pulse="true"` triggers the `.pulse-glow`
+      // CSS animation (~2s ambient glow + subtle scale) that draws
+      // the user's eye to the freshly-generated card. Chrome
+      // conformance: reuses the same `data-pulse` attribute pattern
+      // already present in `CycleCard.jsx:78`.
+      data-pulse={pulsed ? "true" : undefined}
+      className={
+        "group relative flex items-center gap-3 border border-[var(--rule)] bg-white px-3 py-3 rounded-sm hover:border-slate-300 transition-colors"
+        + (pulsed ? " ws-doc-card-pulse-glow" : "")
+      }
     >
       {/* Document icon + QA-038 lock overlay */}
       <div className="relative shrink-0">

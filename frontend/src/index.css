@@ -522,6 +522,30 @@ body {
 
 
 /* ---------------------------------------------------------------------
+ * JC-WS-DECK-PATH-A-A3-GENERATION-FLOW (2026-07-02) — Deck List
+ * pulse-glow on freshly-generated cards.
+ *
+ * Reuses the same box-shadow-pulse pattern as `cycle-card-pulse-kf`
+ * for chrome conformance. When `DocumentCardsSection` sees a
+ * `?pulse=<id>` query param whose id matches an item, that <li>
+ * gets `data-pulse="true"` + the `.ws-doc-card-pulse-glow` class,
+ * which runs the keyframe below (0.6s × 3 = 1.8s total). The
+ * component then strips the URL param at t≈2.2s so refresh /
+ * back-navigation doesn't re-play the glow.
+ *
+ * The keyframe uses `--accent` (platform accent token) so the glow
+ * matches the rest of the Work Studio accent language.
+ * ------------------------------------------------------------------- */
+@keyframes ws-doc-card-pulse-glow-kf {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }
+  50%      { box-shadow: 0 0 0 4px var(--accent); }
+}
+.ws-doc-card-pulse-glow {
+  animation: ws-doc-card-pulse-glow-kf 0.6s ease-in-out 3;
+}
+
+
+/* ---------------------------------------------------------------------
  * Solva v2 — Print stylesheet (Slice 2b correction, 2026-05-29).
  *
  * Replaced `body:has(.solva-v2-print-root)` with the simpler

@@ -45,22 +45,32 @@ export default function HandoffActions({ kind, id, contextId, title, className =
   const [cycleModalOpen, setCycleModalOpen] = useState(false);
   const seed = kind && id ? `${kind}:${id}` : null;
 
-  // Workstream B.6 (2026-05-10) — Ask in Chat handoff. Only meaningful
-  // when the seed is a `document`; the chat surface needs a doc id to
-  // pre-attach for grounded conversation.
+  // Workstream B.6 (2026-05-10) — Ask in Chat handoff. Originally
+  // gated to `kind === "document"` only. JC-WS-DECK-PATH-A-A3-
+  // GENERATION-FLOW (2026-07-02) — DECK-027 + DECK-069 expand the
+  // gate to include `kind === "deck"` so a user can jump into Chat
+  // with the deck as the tethered context immediately after
+  // generation completes. Chat receiver already understands the
+  // canonical `?ctx_type=<kind>&ctx_id=<id>` URL contract for all
+  // artefact kinds (`chat_ctx_resolver.py` §2).
   //
   // Phase D.3 post-test fix (2026-05-26) — emit the canonical
-  // `?ctx_type=document&ctx_id=…` URL pair (NOT the legacy `?doc=…`
+  // `?ctx_type=<kind>&ctx_id=…` URL pair (NOT the legacy `?doc=…`
   // form). The new URL makes the chat thread persist a
   // `linked_context` row + render the "Reading: <title>" chip above
   // the composer. The legacy `?doc=…` form still works on the Chat
   // receiver for backwards compat, but no NEW handoff button should
   // emit it. See HOME_CLEANUP_LOG.md → "Phase D — post-test fixes".
+  const askInChatEligible = (kind === "document" || kind === "deck") && !!id;
   const onAskInChat = useCallback(() => {
-    if (kind !== "document" || !id) return;
-    navigate(`/app/chat?ctx_type=document&ctx_id=${encodeURIComponent(id)}`);
-    toast.success("Opened a chat tethered to this document.");
-  }, [kind, id, navigate]);
+    if (!askInChatEligible) return;
+    navigate(`/app/chat?ctx_type=${encodeURIComponent(kind)}&ctx_id=${encodeURIComponent(id)}`);
+    toast.success(
+      kind === "deck"
+        ? "Opened a chat tethered to this deck."
+        : "Opened a chat tethered to this document.",
+    );
+  }, [askInChatEligible, kind, id, navigate]);
 
   const onSolva = useCallback(() => {
     if (!seed) {
@@ -119,14 +129,17 @@ export default function HandoffActions({ kind, id, contextId, title, className =
       data-solva-seed={seed || undefined}
       data-testid="handoff-actions"
     >
-      {/* Workstream B.6 — Ask in Chat. Document-only for now; the
-          chat surface needs a doc id to pre-attach. */}
-      {kind === "document" && id && (
+      {/* Workstream B.6 — Ask in Chat. JC-WS-DECK-PATH-A-A3 (2026-07-02)
+          extended the gate to include `kind === "deck"` (DECK-027 +
+          DECK-069). The chat surface accepts the canonical
+          `?ctx_type=<kind>&ctx_id=<id>` URL pair for both. */}
+      {askInChatEligible && (
         <Button
           type="button" size="sm" variant="outline"
           onClick={onAskInChat}
           className="rounded-sm border-[var(--rule)] text-[12.5px] hover:bg-[var(--cream-deep)]"
           data-testid="handoff-ask-in-chat"
+          data-ask-in-chat-kind={kind}
         >
           <MessageSquare className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.7} />
           Ask in Chat
