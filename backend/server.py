@@ -258,6 +258,14 @@ from routers import deck_signals as _deck_signals_router  # noqa: E402
 app.include_router(_deck_signals_router.router)
 
 
+# JC-WS-DECK-A10-BACKEND-RETRIEVAL-LINEAGE-REGENERATE (2026-07-04) — 3 endpoints:
+# GET /decks/{id}/related (F.6 N/A · metadata) · GET /decks/{id}/lineage
+# (F.6 N/A · graph) · POST /decks/{id}/regenerate (F.6 SHIELD-ROUTED via
+# canonical chokepoint · commit-lock enforced with compile-bridge-shape 409).
+from routers import deck_related_lineage_regen as _deck_a10_router  # noqa: E402
+app.include_router(_deck_a10_router.router)
+
+
 # JC-STORAGE-PIVOT-GCS-BUILD (2026-07-02) — >16 MB uploads bypass the
 # k8s ingress proxy-body-size limit via V4 signed direct-to-GCS PUT.
 # Files <= 16 MB continue on the existing GridFS in-band routes. F.6
