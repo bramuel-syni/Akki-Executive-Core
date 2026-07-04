@@ -180,13 +180,23 @@ async def uploads_presigned(
             },
         )
     if body.size_bytes > STORAGE_MAX_UPLOAD_BYTES:
-        # >500 MB · Truth-in-capability ceiling enforcement.
+        # >ceiling · Truth-in-capability ceiling enforcement.
+        # Interim guard 2026-07-02 (`JC-STORAGE-INTERIM-GUARD`):
+        # ceiling temporarily lowered to 32 MB pending Stage 2
+        # per-format ingest profiling. Error code carries the
+        # `_interim_guard` suffix + a `note` naming the gap so
+        # frontends can surface honest guidance to end-users.
         raise HTTPException(
             status_code=413,
             detail={
-                "error": "ceiling_exceeded",
+                "error": "ceiling_exceeded_interim_guard",
                 "reason": f"files > {STORAGE_MAX_UPLOAD_MB} MB are rejected",
                 "max_mb": STORAGE_MAX_UPLOAD_MB,
+                "note": (
+                    "Temporary ceiling pending per-format ingest profiling (Stage 2). "
+                    "Transport up to 500MB proven via GCS resumable; per-format ingest "
+                    "capacity not yet measured at that scale."
+                ),
             },
         )
 

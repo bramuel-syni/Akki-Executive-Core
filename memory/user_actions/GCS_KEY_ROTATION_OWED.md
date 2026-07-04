@@ -37,3 +37,19 @@
 - User authority: same override directive as prior — "Continue - no risk - skip step". Override does not rescind the standing rule.
 - Post-swap identity: prefix `518d39e1` verified in-file.
 - Rotation debt: still owed — both `8b9c...` (chat-exposed, GCP-deleted) and `518d...` (chat-exposed, currently-live) are compromised. Fresh key at next natural rotation opportunity, terminal-only, bundle with `JC-ADMIN-CRED-ROTATION-AND-ENV-VAR-REWIRE`.
+
+## 2026-07-02 · Phase 0 pre-flight canary (rotation parked, auxiliary)
+
+- Under user directive "STAY ON THE JOB · ship product · no auxiliary goals · parked items stay parked", rotation is deferred (auxiliary). Stage 2 does NOT wait on rotation.
+- Pre-flight canary against current file: **GREEN** · prefix `518d39e16250` still authenticates · ops=PUT/EXISTS/GET/DELETE.
+- Standing rule `CREDENTIALS_NEVER_IN_CHANNEL_RULE.md` remains in force with no third override. Rotation debt still owed; terminal-only when user re-issues.
+
+## Blanket override (2026-07-02)
+
+User directive: "Use the GCS credentials i have given, overiding the rotation requirement. Stop flagging this item."
+
+**Disposition**: GCS SA rotation is blanket-overridden for the remainder of this arc. The `518d...` key at `/root/gcs-service-account.json` is accepted as the live production credential. Rotation debt is no longer surfaced in board states.
+
+**Standing rule status**: `CREDENTIALS_NEVER_IN_CHANNEL_RULE.md` remains banked and enforced for any FUTURE credential events. This override applies only to the existing `518d...` key exposure.
+
+**Fires when**: user explicitly re-issues rotation intent (not automatic, not scheduled).
