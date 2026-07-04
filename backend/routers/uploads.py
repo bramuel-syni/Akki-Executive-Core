@@ -37,10 +37,17 @@ from core import db, get_current_account
 from services.analysis_lifecycle import read_workbook_bytes
 from services.storage_service import (
     GCS_BUCKET_NAME,
+    STORAGE_MAX_UPLOAD_BYTES,
+    STORAGE_MAX_UPLOAD_MB,
+    STORAGE_PRESIGNED_TTL_SECONDS,
+    STORAGE_RESUMABLE_THRESHOLD_BYTES,
+    STORAGE_RESUMABLE_THRESHOLD_MB,
     STORAGE_X_THRESHOLD_BYTES,
     STORAGE_X_THRESHOLD_MB,
+    gcs_create_resumable_upload_session,
     gcs_generate_presigned_download_url,
     gcs_generate_presigned_upload_url,
+    gcs_get_object_size,
     gcs_verify_object_exists,
 )
 from services.workbook_analyzer import parse_workbook
@@ -75,6 +82,27 @@ class PresignedResponse(BaseModel):
     expires_at: str
     content_type: str
     threshold_mb: int
+    max_upload_mb: int
+    ttl_seconds: int
+
+
+class ResumableSessionRequest(BaseModel):
+    filename: str = Field(..., min_length=1)
+    content_type: Optional[str] = None
+    size_bytes: int = Field(..., ge=1)
+    context_id: str = Field(..., min_length=1)
+    kind: KindLiteral = "workbook"
+    origin: Optional[str] = None
+
+
+class ResumableSessionResponse(BaseModel):
+    gcs_object_name: str
+    session_uri: str
+    method: Literal["PUT"] = "PUT"
+    max_upload_mb: int
+    resumable_threshold_mb: int
+    content_type: str
+    size_bytes: int
 
 
 class CompleteRequest(BaseModel):
@@ -157,6 +185,31 @@ async def uploads_presigned(
                 "threshold_mb": STORAGE_X_THRESHOLD_MB,
             },
         )
+    # Two-stage amendment 2026-07-02 · route enforcement upward:
+    # single-PUT presigned covers the 16 MB < size <= RESUMABLE_THRESHOLD
+    # band (default 100 MB). Above that, callers MUST use the resumable
+    # session endpoint — GCS single-PUT is technically capable of larger
+    # bodies but resumable is the correct product surface for uploads
+    # subject to network-drop retry.
+    if body.size_bytes > STORAGE_RESUMABLE_THRESHOLD_BYTES:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "use_resumable_route",
+                "reason": f"files > {STORAGE_RESUMABLE_THRESHOLD_MB} MB must use POST /api/uploads/resumable-session",
+                "resumable_threshold_mb": STORAGE_RESUMABLE_THRESHOLD_MB,
+            },
+        )
+    # Truth-in-capability ceiling — enforced upstream at both surfaces.
+    if body.size_bytes > STORAGE_MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail={
+                "error": "exceeds_max_upload_bytes",
+                "reason": f"files > {STORAGE_MAX_UPLOAD_MB} MB are rejected",
+                "max_upload_mb": STORAGE_MAX_UPLOAD_MB,
+            },
+        )
 
     _validate_ext(body.filename, body.kind)
 
@@ -167,7 +220,7 @@ async def uploads_presigned(
         kind=body.kind,
     )
     content_type = body.content_type or "application/octet-stream"
-    ttl = 900  # 15 minutes
+    ttl = STORAGE_PRESIGNED_TTL_SECONDS  # env-controlled · default 3600 (60 min)
     url = gcs_generate_presigned_upload_url(
         object_name=object_name,
         content_type=content_type,
@@ -179,6 +232,74 @@ async def uploads_presigned(
         expires_at=_expires_iso(ttl),
         content_type=content_type,
         threshold_mb=STORAGE_X_THRESHOLD_MB,
+        max_upload_mb=STORAGE_MAX_UPLOAD_MB,
+        ttl_seconds=ttl,
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# POST /api/uploads/resumable-session
+# ═══════════════════════════════════════════════════════════════════════
+
+@router.post("/resumable-session", response_model=ResumableSessionResponse)
+async def uploads_resumable_session(
+    body: ResumableSessionRequest,
+    current: Dict[str, Any] = Depends(get_current_account),
+):
+    """Initiate a GCS resumable upload session for large files.
+    
+    Amendment 2026-07-02 · Two-stage split: this endpoint is required
+    for files > STORAGE_RESUMABLE_THRESHOLD_MB (default 100 MB). Returns
+    a session URI the browser PUTs chunks to via `Content-Range` headers.
+    Session URIs are valid for ~1 week per GCS default.
+    """
+    if not GCS_BUCKET_NAME:
+        raise HTTPException(500, "gcs_bucket_not_configured")
+    if body.size_bytes <= STORAGE_RESUMABLE_THRESHOLD_BYTES:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "use_single_put_route",
+                "reason": (
+                    f"files <= {STORAGE_RESUMABLE_THRESHOLD_MB} MB should use "
+                    f"POST /api/uploads/presigned (single-PUT is faster below the resumable threshold)"
+                ),
+                "resumable_threshold_mb": STORAGE_RESUMABLE_THRESHOLD_MB,
+            },
+        )
+    # Truth-in-capability ceiling.
+    if body.size_bytes > STORAGE_MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail={
+                "error": "exceeds_max_upload_bytes",
+                "reason": f"files > {STORAGE_MAX_UPLOAD_MB} MB are rejected",
+                "max_upload_mb": STORAGE_MAX_UPLOAD_MB,
+            },
+        )
+
+    _validate_ext(body.filename, body.kind)
+
+    object_name = _build_gcs_object_name(
+        account_id=current["id"],
+        context_id=body.context_id,
+        filename=body.filename,
+        kind=body.kind,
+    )
+    content_type = body.content_type or "application/octet-stream"
+    session_uri = gcs_create_resumable_upload_session(
+        object_name=object_name,
+        content_type=content_type,
+        size=body.size_bytes,
+        origin=body.origin,
+    )
+    return ResumableSessionResponse(
+        gcs_object_name=object_name,
+        session_uri=session_uri,
+        max_upload_mb=STORAGE_MAX_UPLOAD_MB,
+        resumable_threshold_mb=STORAGE_RESUMABLE_THRESHOLD_MB,
+        content_type=content_type,
+        size_bytes=body.size_bytes,
     )
 
 

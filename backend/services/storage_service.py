@@ -284,6 +284,11 @@ GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "").strip()
 GCS_ARCHIVE_PREFIX = os.environ.get("GCS_ARCHIVE_PREFIX", "_archive/")
 STORAGE_X_THRESHOLD_MB = int(os.environ.get("STORAGE_X_THRESHOLD_MB", "16") or "16")
 STORAGE_X_THRESHOLD_BYTES = STORAGE_X_THRESHOLD_MB * 1024 * 1024
+STORAGE_MAX_UPLOAD_MB = int(os.environ.get("STORAGE_MAX_UPLOAD_MB", "500") or "500")
+STORAGE_MAX_UPLOAD_BYTES = STORAGE_MAX_UPLOAD_MB * 1024 * 1024
+STORAGE_RESUMABLE_THRESHOLD_MB = int(os.environ.get("STORAGE_RESUMABLE_THRESHOLD_MB", "100") or "100")
+STORAGE_RESUMABLE_THRESHOLD_BYTES = STORAGE_RESUMABLE_THRESHOLD_MB * 1024 * 1024
+STORAGE_PRESIGNED_TTL_SECONDS = int(os.environ.get("STORAGE_PRESIGNED_TTL_SECONDS", "3600") or "3600")
 
 _GCS_CLIENT = None  # module-level cache; storage.Client() calls no APIs on construct
 
@@ -383,3 +388,44 @@ def gcs_delete_object(object_name: str) -> bool:
         return False
     blob.delete()
     return True
+
+
+def gcs_create_resumable_upload_session(
+    object_name: str,
+    content_type: str = "application/octet-stream",
+    size: Optional[int] = None,
+    origin: Optional[str] = None,
+) -> str:
+    """Initiate a GCS resumable upload session and return the session URI.
+
+    The returned URI is a signed URL the browser (or any HTTP client) can
+    PUT chunks to using `Content-Range: bytes {start}-{end}/{total}` headers.
+    Session URIs are valid for ~1 week per GCS default. Chunks may be as
+    small as 256 KiB (except final) and as large as the full remaining
+    payload.
+
+    Requires the SA to have `storage.objects.create` on the bucket — which
+    our bound SA has. This method uses per-object `blob.create_resumable_upload_session`
+    ONLY; no project-scope calls.
+
+    Args:
+        object_name: GCS blob path.
+        content_type: Content-Type for the eventual object.
+        size: Total upload size in bytes (highly recommended; GCS pre-allocates).
+        origin: Frontend origin for CORS on the resumable session (e.g.
+            'https://akki.syni.ai'). If unset, no Origin header is sent.
+    """
+    blob = _gcs_bucket().blob(object_name)
+    kwargs: Dict[str, Any] = {"content_type": content_type}
+    if size is not None:
+        kwargs["size"] = int(size)
+    if origin:
+        kwargs["origin"] = origin
+    return blob.create_resumable_upload_session(**kwargs)
+
+
+def gcs_get_object_size(object_name: str) -> Optional[int]:
+    """Return the size in bytes for an existing blob, or None if absent."""
+    blob = _gcs_bucket().blob(object_name)
+    blob.reload()  # refreshes metadata from GCS (per-object; no project call)
+    return int(blob.size) if blob.size is not None else None

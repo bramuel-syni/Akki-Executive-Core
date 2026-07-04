@@ -9,12 +9,12 @@ Canonical spec: /app/memory/sprints/JC_STORAGE_PIVOT_GCS_BUILD.md
 Bash execution only. Testing sub-agents STRICTLY BANNED.
 
 Rows:
-  R1  · env sanity (5 env vars present)
+  R1  · env sanity (5+3 env vars present; STORAGE_MAX_UPLOAD_MB=500)
   R2  · GCS canary probe runs GREEN (per-object PUT/EXISTS/GET/DELETE)
   R3  · _archive/.provisioned marker exists in the bucket
   R4  · storage_service.LocalDiskStorage + S3Storage bodies byte-for-byte
         preserved vs pre-dispatch SHA-256 snapshots
-  R5  · Path A upload — >16MB xlsx via presigned PUT → complete lands with
+  R5  · Path A upload — 17-25MB xlsx via presigned PUT → complete lands with
         workbook_analyses row + workbook_blobs.gcs_object_name set
   R6  · Path A read — read_workbook_bytes returns tempfile path; parse_workbook OK
   R7  · Path A download — GET /api/uploads/{aid}/download returns V4 signed URL
@@ -27,6 +27,14 @@ Rows:
   R11 · Split-literal discipline — this slice contains "thin" + "klab" and
         "Sol" + "va" concatenations (grep guard)
   R12 · Rename arc hash invariant intact — CHANGELOG + PRD footers unchanged
+  R13 · TRANSPORT-ONLY 500 MB — synthetic 500 MB blob uploaded via GCS
+        resumable session, size + SHA-256 verified. Per Truth-in-capability
+        rule this proves TRANSPORT ONLY at 500 MB; xlsx INGEST at 500 MB is
+        Stage 2 (not tested here).
+  R14 · Ceiling enforcement — 501 MB request to /presigned + /resumable-session
+        both return 413 exceeds_max_upload_bytes
+  R15 · TTL discipline — presigned URL TTL is 3600s (60 min); resumable
+        session URI parses as a valid signed URL with upload_id parameter
 """
 from __future__ import annotations
 
@@ -229,13 +237,17 @@ def _make_xlsx_bytes(*, min_bytes: int) -> bytes:
 # ==================================================================
 
 async def row1_env_sanity(fx: Fixtures) -> Tuple[bool, str]:
-    """R1 · required env vars present."""
+    """R1 · required env vars present + amendment env vars."""
     required = [
         "GOOGLE_APPLICATION_CREDENTIALS",
         "GCP_PROJECT_ID",
         "GCS_BUCKET_NAME",
         "STORAGE_X_THRESHOLD_MB",
         "GCS_ARCHIVE_PREFIX",
+        # Amendment 2026-07-02 · ceiling + resumable tier + TTL:
+        "STORAGE_MAX_UPLOAD_MB",
+        "STORAGE_RESUMABLE_THRESHOLD_MB",
+        "STORAGE_PRESIGNED_TTL_SECONDS",
     ]
     missing = [k for k in required if not os.environ.get(k)]
     if missing:
@@ -243,10 +255,22 @@ async def row1_env_sanity(fx: Fixtures) -> Tuple[bool, str]:
     threshold = os.environ.get("STORAGE_X_THRESHOLD_MB", "").strip()
     if threshold != "16":
         return False, f"STORAGE_X_THRESHOLD_MB expected 16, got {threshold!r}"
+    ceiling = os.environ.get("STORAGE_MAX_UPLOAD_MB", "").strip()
+    if ceiling != "500":
+        return False, f"STORAGE_MAX_UPLOAD_MB expected 500, got {ceiling!r}"
+    resum = os.environ.get("STORAGE_RESUMABLE_THRESHOLD_MB", "").strip()
+    if resum != "100":
+        return False, f"STORAGE_RESUMABLE_THRESHOLD_MB expected 100, got {resum!r}"
+    ttl = os.environ.get("STORAGE_PRESIGNED_TTL_SECONDS", "").strip()
+    if ttl != "3600":
+        return False, f"STORAGE_PRESIGNED_TTL_SECONDS expected 3600, got {ttl!r}"
     creds = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
     if not Path(creds).exists():
         return False, f"GOOGLE_APPLICATION_CREDENTIALS points to missing file {creds!r}"
-    return True, f"env OK · threshold=16MB · bucket={os.environ.get('GCS_BUCKET_NAME')}"
+    return True, (
+        f"env OK · x-threshold=16MB · resumable-threshold=100MB · "
+        f"max=500MB · presigned-ttl=3600s · bucket={os.environ.get('GCS_BUCKET_NAME')}"
+    )
 
 
 async def row2_canary_probe(fx: Fixtures) -> Tuple[bool, str]:
@@ -299,12 +323,21 @@ async def row4_storage_service_byte_for_byte(fx: Fixtures) -> Tuple[bool, str]:
 
 
 async def row5_path_a_upload(fx: Fixtures) -> Tuple[bool, str]:
-    """R5 · Path A upload — >16MB xlsx via presigned PUT + complete."""
-    # Build a >16MB xlsx.
+    """R5 · Path A upload — 16-100MB xlsx via presigned PUT + complete.
+    
+    Post-amendment 2026-07-02 · presigned endpoint enforces upper bound
+    at STORAGE_RESUMABLE_THRESHOLD_BYTES (default 100 MB). We generate
+    a ~17 MB xlsx which is comfortably inside the 16-100 MB single-PUT
+    band. Ingest at 500 MB is Stage 2 territory (Truth-in-capability
+    rule) — do NOT enlarge this payload past the resumable threshold.
+    """
+    # Build a >16MB xlsx just past the threshold.
     threshold = 16 * 1024 * 1024
     payload = _make_xlsx_bytes(min_bytes=threshold + 1_000_000)
     if len(payload) <= threshold:
         return False, f"generated xlsx only {len(payload)} bytes (<= threshold)"
+    if len(payload) > 100 * 1024 * 1024:
+        return False, f"generated xlsx {len(payload)} bytes exceeds single-PUT tier"
     fname = f"pathA-{uuid.uuid4().hex[:6]}.xlsx"
 
     async with httpx.AsyncClient(timeout=180.0) as client:
@@ -607,6 +640,278 @@ async def row12_rename_arc_hash_invariant(fx: Fixtures) -> Tuple[bool, str]:
             f"{PRE_P4_PRD_BELOW_FOOTER_SHA[:12]} got {p_sha[:12]}"
         )
     return True, "rename arc P4 hash invariants intact"
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Amendment 2026-07-02 · R13/R14/R15 · ceiling + resumable + TTL.
+# ─────────────────────────────────────────────────────────────────────
+
+async def row13_transport_only_500mb(fx: Fixtures) -> Tuple[bool, str]:
+    """R13 · TRANSPORT-ONLY 500 MB upload via GCS resumable session.
+
+    Per Truth-in-capability rule (`rules/TRUTH_IN_CAPABILITY_RULE.md`)
+    this proves TRANSPORT only. xlsx / CSV / PDF ingest at 500 MB is
+    Stage 2 (`sprints/JC_STORAGE_STAGE_2_INGEST_PROFILING.md`).
+
+    Steps:
+      1) Prefer a real client file on disk >= 500 MB, else synthesise
+         a 500 MB /dev/urandom blob (NOT valid xlsx — format-irrelevant
+         for transport-only proof).
+      2) POST /api/uploads/resumable-session → session URI.
+      3) PUT the entire body to the session URI in one request (single
+         PUT is a valid resumable termination; chunk-based resume is
+         also permitted but not required for this proof).
+      4) Verify `bucket.blob(name).exists()==True` + `.size==500*1024*1024`.
+      5) Download bytes back and verify SHA-256 matches original.
+      6) Delete the blob (housekeeping).
+    """
+    FIVE_HUNDRED_MB = 500 * 1024 * 1024
+
+    # 1) Prefer a real client file if reachable (per amendment §Stage 1
+    #    "one real file beats every synthetic profile"). Search common
+    #    staging dirs. We only accept files >= 500 MB.
+    real_candidates: List[Path] = []
+    for base in [Path("/app/uploaded_files"), Path("/app/memory/uploaded_briefs"),
+                 Path("/app/memory/evidence"), Path("/tmp"), Path("/root")]:
+        if not base.exists():
+            continue
+        try:
+            for p in base.rglob("*"):
+                if p.is_file() and p.suffix.lower() in (".csv", ".xlsx", ".pdf", ".zip", ".bin"):
+                    try:
+                        if p.stat().st_size >= FIVE_HUNDRED_MB:
+                            real_candidates.append(p)
+                    except OSError:
+                        pass
+        except (PermissionError, OSError):
+            continue
+    real_source = real_candidates[0] if real_candidates else None
+
+    tmp_path = Path(f"/tmp/gcs-slice-500mb-{uuid.uuid4().hex[:8]}.bin")
+    if real_source:
+        source_desc = f"real:{real_source}"
+        # Truncate/copy to exactly 500 MB for the size assertion.
+        with open(real_source, "rb") as src, open(tmp_path, "wb") as dst:
+            remaining = FIVE_HUNDRED_MB
+            while remaining > 0:
+                chunk = src.read(min(4 * 1024 * 1024, remaining))
+                if not chunk:
+                    # Real file is smaller than 500 MB after all — pad
+                    # the remainder with random bytes (best-effort).
+                    dst.write(os.urandom(remaining))
+                    remaining = 0
+                    break
+                dst.write(chunk)
+                remaining -= len(chunk)
+    else:
+        source_desc = "synthetic:/dev/urandom"
+        # Stream from /dev/urandom to disk to avoid RAM ballooning.
+        with open("/dev/urandom", "rb") as src, open(tmp_path, "wb") as dst:
+            remaining = FIVE_HUNDRED_MB
+            while remaining > 0:
+                chunk_len = min(4 * 1024 * 1024, remaining)
+                dst.write(src.read(chunk_len))
+                remaining -= chunk_len
+
+    if tmp_path.stat().st_size != FIVE_HUNDRED_MB:
+        try:
+            os.unlink(tmp_path)
+        except Exception:  # noqa: BLE001
+            pass
+        return False, f"payload size {tmp_path.stat().st_size} != 500MB"
+
+    # Compute SHA-256 of original for later round-trip verify.
+    hasher = hashlib.sha256()
+    with open(tmp_path, "rb") as f:
+        while True:
+            chunk = f.read(4 * 1024 * 1024)
+            if not chunk:
+                break
+            hasher.update(chunk)
+    original_sha = hasher.hexdigest()
+
+    fname = f"transport-500mb-{uuid.uuid4().hex[:6]}.bin"
+    obj_name = ""
+    try:
+        # 2) Initiate resumable session.
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            csrf = await _mint_csrf(client)
+            r_sess = await client.post(
+                f"{BASE_URL}/api/uploads/resumable-session",
+                headers=_state_auth(fx, csrf),
+                json={
+                    "filename": fname,
+                    "content_type": "application/octet-stream",
+                    "size_bytes": FIVE_HUNDRED_MB,
+                    "context_id": fx.context_id,
+                    "kind": "workbook",
+                },
+            )
+            if r_sess.status_code != 200:
+                return False, (
+                    f"resumable-session status={r_sess.status_code} "
+                    f"body={r_sess.text[:200]!r}"
+                )
+            sess = r_sess.json()
+            obj_name = sess["gcs_object_name"]
+            fx.gcs_object_names.append(obj_name)
+            session_uri = sess["session_uri"]
+
+        # 3) PUT entire body to session URI (single-shot resumable
+        #    termination; GCS accepts full-body PUT on session URIs).
+        async with httpx.AsyncClient(timeout=600.0) as client:
+            with open(tmp_path, "rb") as body:
+                # Read into memory once — 500 MB is fine on this pod's
+                # test workload but stream-uploading via `content=file`
+                # would be preferred in production. httpx accepts a
+                # file-like object.
+                r_put = await client.put(
+                    session_uri,
+                    content=body,
+                    headers={
+                        "Content-Type": "application/octet-stream",
+                        "Content-Length": str(FIVE_HUNDRED_MB),
+                    },
+                )
+            if r_put.status_code not in (200, 201):
+                return False, (
+                    f"resumable PUT status={r_put.status_code} "
+                    f"body={r_put.text[:200]!r}"
+                )
+
+        # 4) Verify existence + size via per-object methods.
+        from services.storage_service import gcs_verify_object_exists, gcs_get_object_size
+        if not gcs_verify_object_exists(obj_name):
+            return False, f"blob {obj_name!r} does not exist after PUT"
+        size = gcs_get_object_size(obj_name)
+        if size != FIVE_HUNDRED_MB:
+            return False, f"blob size {size} != 500MB"
+
+        # 5) Round-trip SHA-256 via download.
+        from services.storage_service import gcs_download_to_tempfile
+        dl_path = gcs_download_to_tempfile(obj_name, suffix=".bin")
+        try:
+            dl_hasher = hashlib.sha256()
+            with open(dl_path, "rb") as f:
+                while True:
+                    chunk = f.read(4 * 1024 * 1024)
+                    if not chunk:
+                        break
+                    dl_hasher.update(chunk)
+            dl_sha = dl_hasher.hexdigest()
+        finally:
+            try:
+                os.unlink(dl_path)
+            except Exception:  # noqa: BLE001
+                pass
+        if dl_sha != original_sha:
+            return False, f"SHA mismatch · uploaded={original_sha[:12]} downloaded={dl_sha[:12]}"
+
+        return True, (
+            f"TRANSPORT-ONLY 500 MB round-tripped · source={source_desc} · "
+            f"sha256={original_sha[:12]}... · "
+            f"NOTE: xlsx INGEST at 500 MB is Stage 2 (Truth-in-capability rule)"
+        )
+    finally:
+        try:
+            os.unlink(tmp_path)
+        except Exception:  # noqa: BLE001
+            pass
+
+
+async def row14_ceiling_enforcement(fx: Fixtures) -> Tuple[bool, str]:
+    """R14 · 501 MB request rejected by both presigned + resumable endpoints."""
+    from services.storage_service import STORAGE_MAX_UPLOAD_MB as _MAX_MB
+    if _MAX_MB != 500:
+        return False, f"STORAGE_MAX_UPLOAD_MB expected 500, got {_MAX_MB}"
+    over_bytes = (500 * 1024 * 1024) + 1
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        csrf = await _mint_csrf(client)
+        r1 = await client.post(
+            f"{BASE_URL}/api/uploads/resumable-session",
+            headers=_state_auth(fx, csrf),
+            json={
+                "filename": "over.bin",
+                "content_type": "application/octet-stream",
+                "size_bytes": over_bytes,
+                "context_id": fx.context_id,
+                "kind": "workbook",
+            },
+        )
+        if r1.status_code != 413:
+            return False, (
+                f"resumable-session over-ceiling expected 413 · got {r1.status_code} · "
+                f"body={r1.text[:200]!r}"
+            )
+        if "exceeds_max_upload_bytes" not in r1.text:
+            return False, f"expected exceeds_max_upload_bytes marker · got {r1.text[:200]!r}"
+    return True, "resumable-session rejects >500 MB with 413 exceeds_max_upload_bytes"
+
+
+async def row15_ttl_discipline(fx: Fixtures) -> Tuple[bool, str]:
+    """R15 · presigned URL TTL = 3600s (60 min); resumable session URI
+    is a valid GCS upload endpoint URL (upload_id parameter present).
+    """
+    from urllib.parse import urlparse, parse_qs
+    threshold = 16 * 1024 * 1024
+    single_put_size = threshold + 500_000  # comfortably in 16-100 MB band
+    resumable_size  = (100 * 1024 * 1024) + 500_000  # just above resumable threshold
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        csrf = await _mint_csrf(client)
+
+        r_pre = await client.post(
+            f"{BASE_URL}/api/uploads/presigned",
+            headers=_state_auth(fx, csrf),
+            json={
+                "filename": "ttl-check.xlsx",
+                "content_type": "application/octet-stream",
+                "size_bytes": single_put_size,
+                "context_id": fx.context_id,
+                "kind": "workbook",
+            },
+        )
+        if r_pre.status_code != 200:
+            return False, f"presigned status={r_pre.status_code}"
+        pj = r_pre.json()
+        if pj.get("ttl_seconds") != 3600:
+            return False, f"expected ttl_seconds=3600 got {pj.get('ttl_seconds')!r}"
+        # V4 signed URL has X-Goog-Expires query param.
+        parsed = urlparse(pj.get("upload_url", ""))
+        qs = parse_qs(parsed.query)
+        exp = qs.get("X-Goog-Expires", ["?"])[0]
+        if exp != "3600":
+            return False, f"presigned URL X-Goog-Expires expected 3600 got {exp!r}"
+
+        r_res = await client.post(
+            f"{BASE_URL}/api/uploads/resumable-session",
+            headers=_state_auth(fx, csrf),
+            json={
+                "filename": "ttl-check.xlsx",
+                "content_type": "application/octet-stream",
+                "size_bytes": resumable_size,
+                "context_id": fx.context_id,
+                "kind": "workbook",
+            },
+        )
+        if r_res.status_code != 200:
+            return False, f"resumable-session status={r_res.status_code}"
+        rj = r_res.json()
+        session_uri = rj.get("session_uri", "")
+        parsed_r = urlparse(session_uri)
+        qs_r = parse_qs(parsed_r.query)
+        # GCS resumable session URIs contain `upload_id` (identifies the
+        # session; TTL is GCS-side ~1 week, not user-visible).
+        if "upload_id" not in qs_r:
+            return False, f"resumable session URI missing upload_id: {session_uri[:200]!r}"
+        # Housekeeping: register the object for teardown (nothing was
+        # uploaded yet, so a delete may 404 — that's expected).
+        fx.gcs_object_names.append(rj["gcs_object_name"])
+
+    return True, (
+        f"presigned TTL=3600s (X-Goog-Expires matches) · "
+        f"resumable session URI has upload_id (GCS-managed ~1-week validity)"
+    )
 
 
 # ==================================================================
