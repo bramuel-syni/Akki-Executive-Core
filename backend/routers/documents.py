@@ -115,6 +115,15 @@ def sanitize_doc(d: Dict[str, Any]) -> Dict[str, Any]:
         # NOT churn on unrelated edits (title/category/audience).
         "notes":              d.get("notes"),
         "notes_updated_at":   d.get("notes_updated_at"),
+        # JC-WS-DECK-A6-BACKEND-SOURCE-CONTEXT-PATCH (2026-07-04) — DECK-044.
+        # `source_context` is user-authored plain text (F.6 N/A) surfaced
+        # in the Document tab's outline component. Per-source-context
+        # timestamp does NOT churn on unrelated PATCHes (matches
+        # `notes_updated_at` discipline). `source_context_updated_by`
+        # tracks the last saver's account_id for provenance.
+        "source_context":              d.get("source_context"),
+        "source_context_updated_at":   d.get("source_context_updated_at"),
+        "source_context_updated_by":   d.get("source_context_updated_by"),
         # Track A Phase 5 iter-2 (2026-06-04) — fig-53 row 2 additive
         # fields. The universal documents listing surface
         # (pages/WorkStudio.jsx:DocumentRow) reads these directly off

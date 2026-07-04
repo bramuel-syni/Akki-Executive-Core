@@ -241,6 +241,14 @@ from routers import deck_notes as _deck_notes_router  # noqa: E402
 app.include_router(_deck_notes_router.router)
 
 
+# JC-WS-DECK-A6-BACKEND-SOURCE-CONTEXT-PATCH (2026-07-04) — source_context
+# CRUD on Deck documents. Complements the A6-MVP DocumentOutline
+# frontend by unblocking DECK-044 (edit source-context). F.6 N/A
+# (user-authored content, no LLM path). See routers/deck_source_context.py.
+from routers import deck_source_context as _deck_source_context_router  # noqa: E402
+app.include_router(_deck_source_context_router.router)
+
+
 # JC-STORAGE-PIVOT-GCS-BUILD (2026-07-02) — >16 MB uploads bypass the
 # k8s ingress proxy-body-size limit via V4 signed direct-to-GCS PUT.
 # Files <= 16 MB continue on the existing GridFS in-band routes. F.6
