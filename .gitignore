@@ -168,3 +168,8 @@ credentials.json
 # — production deploy reads these from the bundle).
 !backend/.env
 !frontend/.env
+
+# GCS service account credentials
+/root/gcs-service-account.json
+*service-account*.json
+gcs-*.json
