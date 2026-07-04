@@ -249,6 +249,15 @@ from routers import deck_source_context as _deck_source_context_router  # noqa: 
 app.include_router(_deck_source_context_router.router)
 
 
+# JC-WS-DECK-A9-BACKEND-DECK-SIGNAL-EXTRACTION (2026-07-04) — deck_signals
+# CRUD + extract. Complements the A9-MVP SignalsPanel frontend by unblocking
+# DECK-060/063 backend extraction engine. F.6 FULL discipline-pay (Shield
+# routing via canonical chokepoint). See routers/deck_signals.py + services/
+# synisense/deck_signal_extraction.py.
+from routers import deck_signals as _deck_signals_router  # noqa: E402
+app.include_router(_deck_signals_router.router)
+
+
 # JC-STORAGE-PIVOT-GCS-BUILD (2026-07-02) — >16 MB uploads bypass the
 # k8s ingress proxy-body-size limit via V4 signed direct-to-GCS PUT.
 # Files <= 16 MB continue on the existing GridFS in-band routes. F.6
