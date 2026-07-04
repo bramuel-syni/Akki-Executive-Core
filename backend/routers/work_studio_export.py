@@ -1064,11 +1064,20 @@ async def _run_export(
     # final updates land + the export row flips to status=complete.
     await _set_export_phase(export_id, 6, "Almost there.")
     # ── C.3 — mint Continue-in-chat (chat row + artefact doc row)
+    #
+    # JC-WS-DECK-PATH-A-A1-DECK-LIST (2026-07-02) — DECK-007 threads
+    # the REAL source-document count through so the Deck List row's
+    # "N sources" chip renders accurately. Prefers explicit selection;
+    # falls back to citations-manifest length.
     cont_chat_id, cont_doc_id = await _create_continue_chat(
         account_id=account_id, context_id=context_id, kind=kind,
         source="export", export_id=export_id,
         file_name=fname, file_path=str(fpath), output_format=output_format,
         extracted_text=file_text, sensitivity_band=sensitivity_band,
+        source_count=(
+            len(explicit_doc_ids) if explicit_doc_ids
+            else len(citations_manifest)
+        ),
     )
     await db.work_studio_exports.update_one(
         {"id": export_id, "context_id": context_id},
@@ -1479,6 +1488,7 @@ async def _create_continue_chat(
     *, account_id: str, context_id: str, kind: str, source: str,
     export_id: str, file_name: str, file_path: str, output_format: str,
     extracted_text: str, sensitivity_band: str,
+    source_count: Optional[int] = None,
 ) -> Tuple[str, str]:
     chat_id = str(uuid.uuid4())
     doc_id = str(uuid.uuid4())
@@ -1562,9 +1572,26 @@ async def _create_continue_chat(
         "category": doc_category,
         "origin": "akki_generated",
         "akki_generated": True,
-        "source_count": 1 if source == "enhance" else 0,
+        # JC-WS-DECK-PATH-A-A1-DECK-LIST (2026-07-02) — DECK-007
+        # source_count backfill. When the caller (compile flow at
+        # ~L1067) threads through the real source-document count via
+        # the new `source_count` kwarg, use it; else fall back to the
+        # pre-A1 heuristic (1 for enhance, 0 otherwise). This is what
+        # the Deck List row's "N sources" chip renders from.
+        "source_count": (
+            source_count if source_count is not None
+            else (1 if source == "enhance" else 0)
+        ),
         "contributor_count": 1,
         "confidence_pct": None,
+        # JC-WS-DECK-PATH-A-A1-DECK-LIST (2026-07-02) — DECK-005
+        # lifecycle-chip surfacing on Deck List. Mirror `lifecycle_state`
+        # from the parent `work_studio_exports` row (which starts life
+        # at "draft" and flips to "in_review"/"committed" downstream).
+        # The doc row is created at the export-complete moment when
+        # the parent row is still "draft" — an update-mirror on
+        # subsequent lifecycle flips is a natural follow-on for A5.
+        "lifecycle_state": "draft",
         "created_at": created_at,
         "updated_at": created_at,
         # Phase C.3 marker so the journal can group "Continue in chat" docs.

@@ -126,6 +126,15 @@ def sanitize_doc(d: Dict[str, Any]) -> Dict[str, Any]:
         "source_count":       d.get("source_count"),
         "contributor_count":  d.get("contributor_count"),
         "confidence_pct":     d.get("confidence_pct"),
+        # JC-WS-DECK-PATH-A-A1-DECK-LIST (2026-07-02) — DECK-005
+        # lifecycle-chip surfacing on the Deck List row. Mirrors the
+        # `lifecycle_state` field written by _create_continue_chat +
+        # every other WS-artefact insert path (Draft / In Review /
+        # Committed vocabulary). Legacy rows without the field surface
+        # as null; the FE DocumentRow renders a "Draft" fallback chip
+        # on any row with `category="deck"` to close the DECK-005 gap
+        # for pre-A1 rows without a backend migration.
+        "lifecycle_state":    d.get("lifecycle_state"),
         # Track A Phase 5 iter-2 — the drawer auto-open after compile
         # needs to find the source export id for the Review surface.
         # We mirror it on the documents row at insert time

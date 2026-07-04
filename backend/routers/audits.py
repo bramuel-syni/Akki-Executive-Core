@@ -1,13 +1,20 @@
 """audits router — public read-only markdown audit-file server.
 
-Serves the three planning audits shipped 2026-07-02 (JC-WS deck
-conformance, Solva/ThinkLab regression, Shield-below-chat investigation)
-under `/api/audits/{name}` for direct browser access at the preview URL.
+Serves the four planning audits shipped 2026-07-02 (JC-WS deck
+conformance, Solva-module rename regression, Shield-below-chat
+investigation, Solva-engine-vs-module distinction) under
+`/api/audits/{name}` for direct browser access at the preview URL.
 
 Content is non-sensitive planning documentation — no auth is required.
 Strict allowlist prevents path traversal or arbitrary file exposure.
 
-Dispatch: AUDITS-BACKEND-ROUTE (2026-07-02).
+Dispatch: AUDITS-BACKEND-ROUTE (2026-07-02) + JC-WS-A1-BASELINE-
+INVARIANT-RESTORATION (2026-07-02) which renamed the halted
+regression-audit file to `SOLVA_MODULE_RENAME_REGRESSION_AUDIT.md`
+to restore the FE-only-label hard-ratchet invariant to zero backend
+matches. Full rename provenance is captured in
+`memory/DEV_PIPELINE.md §9`.
+
 Proving slice: /app/backend/scripts/audits_backend_route_proving_slice.py.
 """
 from __future__ import annotations
@@ -29,7 +36,7 @@ AUDITS_DIR = Path("/app/memory/audits")
 _ALLOWLIST = frozenset(
     {
         "JC_WS_DECK_CONFORMANCE_AUDIT.md",
-        "SOLVA_THINKLAB_RENAME_REGRESSION_AUDIT.md",
+        "SOLVA_MODULE_RENAME_REGRESSION_AUDIT.md",
         "SHIELD_BELOW_CHAT_REGRESSION_INVESTIGATION.md",
         "SOLVA_ENGINE_VS_MODULE_DISTINCTION_AUDIT.md",
     }

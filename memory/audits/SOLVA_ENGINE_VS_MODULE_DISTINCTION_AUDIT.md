@@ -1,4 +1,4 @@
-**Canonical Spec:** User directive **2026-07-02** — "Solva" has TWO distinct meanings; the **engine** (`services/solva_v2/`, backend internals, LLM adapters, service classes, prompts, DB collections, config vars, log channels) KEEPS the name "Solva". The **module** (user-visible product surface — nav labels, page titles, headers, button copy, emails, PDF/PPTX headers, Doc Journal copy, any external user-facing string) RENAMES to "ThinkLab". This audit is orthogonal to and does NOT reuse the halted `SOLVA_THINKLAB_RENAME_REGRESSION_AUDIT.md` conclusion (which was written under the reverse premise).
+**Canonical Spec:** User directive **2026-07-02** — "Solva" has TWO distinct meanings; the **engine** (`services/solva_v2/`, backend internals, LLM adapters, service classes, prompts, DB collections, config vars, log channels) KEEPS the name "Solva". The **module** (user-visible product surface — nav labels, page titles, headers, button copy, emails, PDF/PPTX headers, Doc Journal copy, any external user-facing string) RENAMES to "ThinkLab". This audit is orthogonal to and does NOT reuse the halted `SOLVA_MODULE_RENAME_REGRESSION_AUDIT.md` conclusion (which was written under the reverse premise; renamed from `SOLVA_THINKLAB_RENAME_REGRESSION_AUDIT.md` at 2026-07-02 baseline restoration).
 
 # SOLVA-ENGINE-VS-MODULE-DISTINCTION-AUDIT
 
@@ -452,7 +452,7 @@ Each of the 4 phased dispatches ships with its own proving slice, matching the d
 * 0 sprint memos edited outside this memo + the `DEV_PIPELINE.md §9` row entered BEFORE this file.
 * Zero-Handoff-Loss discipline honoured.
 * Six banked lessons in play.
-* Prior halted audit `SOLVA_THINKLAB_RENAME_REGRESSION_AUDIT.md` NOT reused (inverted premise — that audit assumed Solva stays everywhere; this audit distinguishes engine vs module).
+* Prior halted audit `SOLVA_MODULE_RENAME_REGRESSION_AUDIT.md` (renamed from `SOLVA_THINKLAB_RENAME_REGRESSION_AUDIT.md` at 2026-07-02 baseline restoration) NOT reused (inverted premise — that audit assumed Solva stays everywhere; this audit distinguishes engine vs module).
 
 ## 12. HARD STOP
 

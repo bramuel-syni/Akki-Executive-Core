@@ -310,7 +310,47 @@ function BriefRow({ row, onOpen }) {
 //
 // Per the locked Z-slice-2 spec: origin badge is the primary visual
 // affordance — user must instantly see "where this doc came from".
+//
+// JC-WS-DECK-PATH-A-A1-DECK-LIST (2026-07-02):
+//   • DECK-005 lifecycle chip added — reuses the exact vocabulary
+//     `LIFECYCLE_LABEL` from `DocumentOverlay.jsx:70-74` (Draft / In
+//     Review / Committed) + `LIFECYCLE_DOT` color map. Chrome
+//     conformance: chip uses the SAME chip primitive shape as the
+//     category/origin chips already on this row — no new variant.
+//   • DECK-002 card-visual refinement — hover shadow lift + slightly
+//     larger padding. Applied uniformly (chrome conformance HARD
+//     rule: same treatment for every category, not a parallel
+//     `DeckCard` component).
+//   • DECK-007 source_count backfill lands in the Deck List chip
+//     via BE change in _create_continue_chat — no FE change needed
+//     here (the "N sources" chip was already wired).
+//   • DECK-008 document-type badge already renders "Deck" via
+//     `displayCategoryChip("deck")` — no FE change needed here.
+//   • DECK-009 confidence chip already wired — no FE change.
+//   • DECK-034 "Akki Generated" badge already wired on this row —
+//     no FE change.
 // =============================================================================
+
+// Mirror of the vocabulary in `components/work_studio/overlay/DocumentOverlay.jsx:70-74`.
+// Kept inline here to avoid a new cross-import; chip vocabulary is
+// locked to these 3 states and the two files stay in lockstep. If
+// the vocabulary ever changes, update both places.
+const LIFECYCLE_LABEL = {
+  draft: "Draft",
+  in_review: "In Review",
+  committed: "Committed",
+};
+
+// Chrome conformance: reuses the same 3-color signal as DocumentOverlay
+// (amber for draft, sky for in-review, emerald for committed) but
+// applies them inline on the chip's border+text rather than a
+// separate dot. Keeps the row's visual density unchanged.
+const LIFECYCLE_CHIP_CLASSES = {
+  draft:     "bg-amber-50 text-amber-800 border-amber-200",
+  in_review: "bg-sky-50 text-sky-800 border-sky-200",
+  committed: "bg-emerald-50 text-emerald-800 border-emerald-200",
+};
+
 function DocumentRow({ row, onOpen }) {
   const origin = row.origin || null;
   const category = row.category || null;
@@ -332,6 +372,18 @@ function DocumentRow({ row, onOpen }) {
   const contribCount  = typeof row.contributor_count === "number" ? row.contributor_count : null;
   const akkiGenerated = row.akki_generated === true;
   const confPct       = typeof row.confidence_pct === "number" ? row.confidence_pct : null;
+  // JC-WS-DECK-PATH-A-A1-DECK-LIST (2026-07-02) — DECK-005 lifecycle
+  // state. Legacy rows without the field render as null; for deck-
+  // category rows a "draft" fallback closes the gap for pre-A1 rows
+  // without a backend migration (matches the DocumentOverlay's
+  // implicit "draft on absence" behaviour). Non-deck rows leave the
+  // chip hidden when the field is null.
+  const rawLifecycle = row.lifecycle_state || null;
+  const lifecycleState = rawLifecycle || (category === "deck" ? "draft" : null);
+  const lifecycleLabel = lifecycleState ? LIFECYCLE_LABEL[lifecycleState] : null;
+  const lifecycleChipClass = lifecycleState
+    ? (LIFECYCLE_CHIP_CLASSES[lifecycleState] || "bg-white text-[var(--muted)] border-[var(--rule)]")
+    : "";
   // QA-doc 75/50 thresholds (mirrors services.work_studio_overlay.rag_band).
   let confClass = "";
   if (confPct !== null) {
@@ -343,11 +395,21 @@ function DocumentRow({ row, onOpen }) {
     <button
       type="button"
       onClick={() => onOpen(row)}
-      className="w-full text-left border border-[var(--rule)] rounded-md bg-white px-4 py-3 flex items-start sm:items-center gap-3 flex-col sm:flex-row hover:border-[var(--ink)] hover:bg-[var(--parchment)] transition-colors"
+      // JC-WS-DECK-PATH-A-A1-DECK-LIST (2026-07-02) — DECK-002 card
+      // visual refinement of the SAME row primitive. Chrome
+      // conformance HARD rule: NOT a parallel `DeckCard`; this is
+      // the identical DocumentRow shape with subtle padding lift
+      // (py-3 → py-3.5) + hover-shadow to feel card-like. Applied
+      // uniformly across ALL categories (deck, minutes, board_pack,
+      // reports, briefing) — a "second way of doing the same thing"
+      // would be a per-category branch, which the user explicitly
+      // prohibited in the A1 dispatch.
+      className="w-full text-left border border-[var(--rule)] rounded-md bg-white px-4 py-3.5 flex items-start sm:items-center gap-3 flex-col sm:flex-row hover:border-[var(--ink)] hover:bg-[var(--parchment)] hover:shadow-sm transition-[colors,box-shadow]"
       data-testid="work-studio-document-row"
       data-origin={origin || "unknown"}
       data-category={category || "uncategorized"}
       data-akki-generated={akkiGenerated}
+      data-lifecycle-state={lifecycleState || "unset"}
     >
       <Files className="w-4 h-4 text-[var(--ink)] shrink-0 mt-1 sm:mt-0" strokeWidth={1.7} />
       <div className="min-w-0 flex-1">
@@ -369,6 +431,20 @@ function DocumentRow({ row, onOpen }) {
               data-category={category}
             >
               {displayCategoryChip(category)}
+            </span>
+          )}
+          {/* JC-WS-DECK-PATH-A-A1-DECK-LIST (2026-07-02) — DECK-005
+              lifecycle chip. Same chip primitive as origin/category;
+              chrome conformance HARD rule preserved. Colored per the
+              draft/in_review/committed 3-color signal already used by
+              DocumentOverlay's LIFECYCLE_DOT map. */}
+          {lifecycleLabel && (
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-medium uppercase tracking-wider border ${lifecycleChipClass}`}
+              data-testid="work-studio-document-row-lifecycle-chip"
+              data-lifecycle={lifecycleState}
+            >
+              {lifecycleLabel}
             </span>
           )}
           <span
