@@ -1,23 +1,24 @@
-"""AUDIT_P2.4 — Invariant: `thinklab` must NEVER appear in backend code.
+"""AUDIT_P2.4 — Invariant: `thinklab` must NEVER appear in backend code
+except in the single allowlisted user-visible-label constants file.
 
-The engine is Solva v2. ThinkLab is a *UI surface* over it. There is
-ZERO reason for backend modules, routes, classes, collection names,
-import paths, configuration keys, log channels, or any other server-
-side construct to contain the literal `thinklab` (case-insensitive).
+The engine is Solva v2. The UI module rendered over it is ThinkLab.
+There is ZERO reason for backend modules, routes, classes, collection
+names, import paths, configuration keys, log channels, or any other
+server-side construct to contain the literal `thinklab` (case-
+insensitive).
 
-This invariant is a HARD RATCHET with no allowlist. The current
-codebase ships at zero `thinklab` references in `backend/` (verified
-via case-insensitive recursive grep on 2026-06-24). This test locks
-that state in. The first `thinklab` symbol that appears in backend
-code fails the build.
+**Allowlist (single-file exception):**
+* `backend/services/module_labels.py` — the BE analog of the FE
+  `frontend/src/lib/moduleLabels.js` constants file. Carries the
+  user-visible module label strings that PDF/PPTX renderers +
+  jinja template fallbacks need. Added 2026-07-02 by
+  `JC-SOLVA-MODULE-RENAME-PHASE-1-ROUTES-AND-NAV` per Case 6 override.
+  Every other BE `.py` file continues to hard-ratchet at zero
+  `thinklab` matches — the invariant remains a HARD gate.
 
 Frontend usage (UI labels, route copy, i18n strings, etc.) is
 INTENTIONALLY ALLOWED — the surface IS called ThinkLab. This invariant
 deliberately does not scan `frontend/`.
-
-Per the dispatch (Stage 1, item 4):
-  "Add the one-line `thinklab` UI-label-only invariant (backend
-   contains zero `thinklab` references; build-breaking)."
 """
 from __future__ import annotations
 
@@ -35,19 +36,26 @@ BACKEND = REPO / "backend"
 THINKLAB_REGEX = re.compile(r"thinklab", re.IGNORECASE)
 
 
+# Single-file allowlist. Analog of how ESLint whitelists a single
+# constants file. Every other BE `.py` file continues to hard-ratchet.
+_ALLOWLIST_FILENAMES = frozenset({
+    "module_labels.py",  # backend/services/module_labels.py — Phase 1
+})
+
+
 def _scan_backend_for_thinklab() -> List[Tuple[str, int, str]]:
     """Return (file_relpath, line_no, snippet) for every line in backend/
     that mentions `thinklab` case-insensitively. Skips __pycache__ and
-    test fixtures dirs (no tests today reference thinklab; if they ever
-    do, that's actually OK since tests can document the rename and shouldn't
-    fail the invariant — but at present, the invariant scans ALL backend
-    Python files for a hard ratchet)."""
+    the single-file allowlist entry (see `_ALLOWLIST_FILENAMES`)."""
     hits: List[Tuple[str, int, str]] = []
     for f in sorted(BACKEND.rglob("*.py")):
         if "__pycache__" in f.parts:
             continue
         # Skip this invariant file itself (the regex literal would self-trigger).
         if f.name == "test_thinklab_uilabel_only.py":
+            continue
+        # Single-file allowlist for the user-visible-label constants file.
+        if f.name in _ALLOWLIST_FILENAMES:
             continue
         try:
             src = f.read_text(encoding="utf-8")

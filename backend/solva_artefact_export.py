@@ -35,6 +35,14 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+# JC-SOLVA-MODULE-RENAME-PHASE-1-ROUTES-AND-NAV (2026-07-02) — Case 6
+# override. User-visible module labels come from the BE constants
+# file `services/module_labels.py` (analog of the FE `moduleLabels.js`
+# from A1). The FE-only-label invariant allowlists that single
+# constants file so this module can import the labels without
+# tripping the hard ratchet.
+from services.module_labels import MODULE_UI_SESSION_LABEL
+
 logger = logging.getLogger("akki.solva.export")
 
 _TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
@@ -271,7 +279,10 @@ def _format_duration(session: Dict[str, Any]) -> Optional[str]:
 def _framing_one_liner(session: Dict[str, Any]) -> str:
     text = (session.get("intent") or "").strip()
     if not text:
-        return "Solva session"
+        # JC-SOLVA-MODULE-RENAME-PHASE-1-ROUTES-AND-NAV (2026-07-02)
+        # Case 6 override: user-visible module label routes through
+        # the BE constants file (analog to FE moduleLabels.js).
+        return MODULE_UI_SESSION_LABEL
     # Take up to first sentence or 18 words, whichever is shorter.
     first = re.split(r"(?<=[.!?])\s+", text, maxsplit=1)[0]
     words = first.split()
@@ -308,7 +319,12 @@ def build_artefact_context(session: Dict[str, Any]) -> Dict[str, Any]:
     submodule = session.get("submodule") or "seek_clarity"
     persona = (session.get("persona") or "").strip() or None
 
-    title = SUBMODULE_LABELS.get(submodule, "Solva session")
+    # JC-SOLVA-MODULE-RENAME-PHASE-1-ROUTES-AND-NAV (2026-07-02) —
+    # Case 6 override: fallback title routes through the BE constants
+    # file. (The `SUBMODULE_LABELS` map is Phase 3 scope — it still
+    # carries "Solva"-prefixed submodule names because those are
+    # deferred to the widespread copy-edit phase.)
+    title = SUBMODULE_LABELS.get(submodule, MODULE_UI_SESSION_LABEL)
     if persona:
         title = f"{title} — {persona}"
 

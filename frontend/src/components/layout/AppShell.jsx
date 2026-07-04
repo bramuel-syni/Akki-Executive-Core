@@ -26,6 +26,11 @@ import {
 // Phase P3.4 (2026-02) — idle warning + re-auth modal + expired surface.
 import SessionTimeoutGuard from "@/components/SessionTimeoutGuard";
 import MentionInbox from "@/components/collab/MentionInbox";
+// JC-SOLVA-MODULE-RENAME-PHASE-1-ROUTES-AND-NAV (2026-07-02) — module
+// nav label routes through the constants file (post-A1). Phase 1
+// touches only nav strings + route paths. The FE constants file is
+// the single-point-of-change for module label rebrands.
+import { MODULE_LABELS } from "@/lib/moduleLabels";
 // QA-2026-05-16-009 (Chunk 15) — ReviewBadge import removed; the
 // top-bar bell affordance was deleted. Component file kept at
 // `@/components/layout/ReviewBadge.jsx` for forensic reference and
@@ -81,7 +86,7 @@ const TOP_NAV = [
   // `AllDocumentsButton` instead. Route /app/workspace still works
   // and renders the new journal listing + drawer pattern.
   { to: "/app/chat",          label: "Chat" },
-  { to: "/app/solva",         label: "Solva" },
+  { to: "/app/thinklab",      label: MODULE_LABELS.thinklab },
   { to: "/app/work-studio",   label: "Work Studio" },
   { to: "/app/task-manager",  label: "Task Manager" },   // Phase F.1 (2026-05-26): renamed from "Cycle Manager"
   { to: "/app/monitor",       label: "Monitor" },
@@ -111,7 +116,7 @@ const NAV = [
   { to: "/app", label: "Home", icon: Home, end: true, ready: true },
   { to: "/app/workspace", label: "Document Journal", icon: BookOpenCheck, module: "M3", ready: true },
   { to: "/app/chat", label: "Chat", icon: MessageCircle, module: "§15", ready: true },
-  { to: "/app/solva", label: "Solva", icon: Layers, module: "§18", ready: true,
+  { to: "/app/thinklab", label: MODULE_LABELS.thinklab, icon: Layers, module: "§18", ready: true,
     badge: "Preview" },
   // M.4: /app/prepare and /app/decks redirect-aliases retired. Direct
   // links to the canonical surfaces (Cycle Manager + Work Studio).

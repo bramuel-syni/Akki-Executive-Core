@@ -26,7 +26,29 @@ import OnboardingBriefsModal from "@/components/onboarding/OnboardingBriefsModal
 import SpecialAskModal from "@/components/cohort/SpecialAskModal";
 import useTrialStatus from "@/hooks/useTrialStatus";
 
-// -- Lazy: marketing deeper routes (rarely visited from cold start) ----------
+// JC-SOLVA-MODULE-RENAME-PHASE-1-ROUTES-AND-NAV (2026-07-02) —
+// Phase 1 of the Solva-module → ThinkLab rename. Legacy `/app/solva*`
+// + `/solva` + `/product/solva` routes redirect to `/app/thinklab*`
+// + `/thinklab` + `/product/thinklab` mirrors. Query params are
+// preserved via `useLocation().search`. The <SolvaRedirect> wrapper
+// keeps the `<Navigate>` primitive stateless — a purpose-built
+// wrapper (not a new chrome pattern) because raw `<Navigate to>`
+// discards the location's search string. See A1 memo §4 for the 8
+// locked §9 defaults driving this rename arc.
+function SolvaRedirect({ to }) {
+  const location = useLocation();
+  const params = useParams();
+  // Support parameterised targets like "/app/thinklab/session/:sessionId"
+  // by substituting the resolved param values back into the pathname.
+  let resolved = to;
+  Object.entries(params || {}).forEach(([k, v]) => {
+    resolved = resolved.replace(`:${k}`, encodeURIComponent(v || ""));
+  });
+  return <Navigate to={{ pathname: resolved, search: location.search }} replace />;
+}
+
+
+
 const Landing = lazy(() => import("@/pages/Landing"));
 const About = lazy(() => import("@/pages/marketing/About"));
 const Features = lazy(() => import("@/pages/marketing/Features"));
@@ -337,8 +359,12 @@ function App() {
           <Route path="/__throw" element={<ThrowDiagnostic />} />{/* Phase P2.1-4 — error boundary diagnostic */}
           <Route path="/welcome/:token" element={<WelcomePage />} />{/* Phase P4.D — magic-link landing */}
           <Route path="/exco360" element={<WebsiteExco360 />} />
-          {/* v7 (2026-05-12): per-product pages move to top-level routes. */}
-          <Route path="/solva" element={<WebsiteProductSolva />} />
+          {/* v7 (2026-05-12): per-product pages move to top-level routes.
+              JC-SOLVA-MODULE-RENAME-PHASE-1 (2026-07-02) — module top-
+              level marketing route flips /solva → /thinklab; legacy
+              /solva URL SolvaRedirects to /thinklab (query preserved). */}
+          <Route path="/thinklab" element={<WebsiteProductSolva />} />
+          <Route path="/solva" element={<SolvaRedirect to="/thinklab" />} />
           <Route path="/akki-chat" element={<WebsiteProductChat />} />
           <Route path="/work-studio" element={<WebsiteProductWorkStudio />} />
           <Route path="/cycle-manager" element={<WebsiteProductCycle />} />
@@ -348,7 +374,7 @@ function App() {
           {/* Back-compat: legacy /product and /product/<x> routes
               redirect to v7 top-level surfaces via Navigate. */}
           <Route path="/product" element={<Navigate to="/what-akki-does" replace />} />
-          <Route path="/product/solva" element={<Navigate to="/solva" replace />} />
+          <Route path="/product/solva" element={<SolvaRedirect to="/thinklab" />} />
           <Route path="/product/akki-chat" element={<Navigate to="/akki-chat" replace />} />
           <Route path="/product/work-studio" element={<Navigate to="/work-studio" replace />} />
           <Route path="/product/cycle-manager" element={<Navigate to="/cycle-manager" replace />} />
@@ -515,13 +541,26 @@ function App() {
           {/* Phase F0 — Universal Search full results page. */}
           <Route path="/app/search" element={<Gated><SearchResults /></Gated>} />
           <Route path="/app/studio/composer/:kind/:artefactId" element={<Gated><StudioComposerPage /></Gated>} />
-          <Route path="/app/solva" element={<Gated><SolvaApp /></Gated>} />
-          <Route path="/app/solva/sessions" element={<Gated><SolvaSessions /></Gated>} />
-          <Route path="/app/solva/session/new" element={<Gated><SolvaSession /></Gated>} />
-          <Route path="/app/solva/session/:sessionId" element={<Gated><SolvaSession /></Gated>} />
+          {/* JC-SOLVA-MODULE-RENAME-PHASE-1 (2026-07-02) — app-side
+              module routes flip `/app/solva*` → `/app/thinklab*`.
+              Legacy `/app/solva*` URLs SolvaRedirect to the new
+              paths, preserving query params. React Router matches
+              nested params (`:sessionId`) → the redirect substitutes
+              them back into the target pathname. */}
+          <Route path="/app/thinklab" element={<Gated><SolvaApp /></Gated>} />
+          <Route path="/app/thinklab/sessions" element={<Gated><SolvaSessions /></Gated>} />
+          <Route path="/app/thinklab/session/new" element={<Gated><SolvaSession /></Gated>} />
+          <Route path="/app/thinklab/session/:sessionId" element={<Gated><SolvaSession /></Gated>} />
           {/* Phase E Sub-task A — Phase D engine surface. */}
-          <Route path="/app/solva/phase-d/session/new" element={<Gated><SolvaPhaseDSession /></Gated>} />
-          <Route path="/app/solva/phase-d/session/:sessionId" element={<Gated><SolvaPhaseDSession /></Gated>} />
+          <Route path="/app/thinklab/phase-d/session/new" element={<Gated><SolvaPhaseDSession /></Gated>} />
+          <Route path="/app/thinklab/phase-d/session/:sessionId" element={<Gated><SolvaPhaseDSession /></Gated>} />
+          {/* Legacy /app/solva* redirects. Keep for one release then remove. */}
+          <Route path="/app/solva" element={<SolvaRedirect to="/app/thinklab" />} />
+          <Route path="/app/solva/sessions" element={<SolvaRedirect to="/app/thinklab/sessions" />} />
+          <Route path="/app/solva/session/new" element={<SolvaRedirect to="/app/thinklab/session/new" />} />
+          <Route path="/app/solva/session/:sessionId" element={<SolvaRedirect to="/app/thinklab/session/:sessionId" />} />
+          <Route path="/app/solva/phase-d/session/new" element={<SolvaRedirect to="/app/thinklab/phase-d/session/new" />} />
+          <Route path="/app/solva/phase-d/session/:sessionId" element={<SolvaRedirect to="/app/thinklab/phase-d/session/:sessionId" />} />
           <Route path="/app/admin/synisense-observability" element={<SuperadminRoute><Gated><SynisenseObservability /></Gated></SuperadminRoute>} />
           <Route path="/app/documents/:id" element={<Gated><DocumentRouteSwitch /></Gated>} />
           {/* Phase H.5 (2026-05-27) — /app/contexts and /app/companies
