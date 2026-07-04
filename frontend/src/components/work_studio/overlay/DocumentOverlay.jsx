@@ -42,6 +42,9 @@ import {
 import {
   Tabs, TabsContent, TabsList, TabsTrigger,
 } from "@/components/ui/tabs";
+import DeckNotes from "./DeckNotes";
+import SignalsPanel from "./SignalsPanel";
+import RelatedDocuments from "./RelatedDocuments";
 
 // ─────────────────────────────────────────────────────────────────────
 // RAG band helper (Phase 5 2026-06-04 — flipped from the Chunk 8
@@ -105,13 +108,29 @@ export default function DocumentOverlay({ contextId, artefactId, open, onClose }
   // opened via prop `open`, not via routing — URL round-trip would
   // pollute the shell owner's URL bar). Valid values are the 5 tab
   // trigger values; anything else falls back to "document".
+  //
+  // JC-WS-DECK-POPULATE-CHAIN (2026-07-02) — per-tab visibility flag.
+  // Additive gate: a tab renders (trigger AND content) ONLY if flag is
+  // true. Flips to true when the tab's real content ships. Placeholder
+  // affordances are hidden until content lands.
+  const TAB_VISIBILITY = {
+    document: true,
+    intelligence: true,
+    notes: true,       // A8 MVP shipped 2026-07-02 · localStorage
+    signals: true,     // A9 MVP shipped 2026-07-02 · reads intelligence_report.recommendations
+    related: true,     // A10 MVP shipped 2026-07-02 · reads source_document_ids
+  };
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window === "undefined") return "document";
     try {
       const search = new URLSearchParams(window.location.search);
       const raw = search.get("tab");
       const valid = ["document", "intelligence", "notes", "signals", "related"];
-      return valid.includes(raw) ? raw : "document";
+      const visible = ["document", "intelligence", "notes", "signals", "related"].filter(
+        (name) => TAB_VISIBILITY[name],
+      );
+      if (valid.includes(raw) && visible.includes(raw)) return raw;
+      return "document";
     } catch {
       return "document";
     }
@@ -314,27 +333,33 @@ export default function DocumentOverlay({ contextId, artefactId, open, onClose }
                 >
                   Intelligence
                 </TabsTrigger>
-                <TabsTrigger
-                  value="notes"
-                  className="text-[12px] px-3 py-1 h-7 data-[state=active]:bg-[var(--parchment)] data-[state=active]:border data-[state=active]:border-[var(--rule)]"
-                  data-testid="document-overlay-tab-notes"
-                >
-                  Your Notes
-                </TabsTrigger>
-                <TabsTrigger
-                  value="signals"
-                  className="text-[12px] px-3 py-1 h-7 data-[state=active]:bg-[var(--parchment)] data-[state=active]:border data-[state=active]:border-[var(--rule)]"
-                  data-testid="document-overlay-tab-signals"
-                >
-                  Signals
-                </TabsTrigger>
-                <TabsTrigger
-                  value="related"
-                  className="text-[12px] px-3 py-1 h-7 data-[state=active]:bg-[var(--parchment)] data-[state=active]:border data-[state=active]:border-[var(--rule)]"
-                  data-testid="document-overlay-tab-related"
-                >
-                  Related Documents
-                </TabsTrigger>
+                {TAB_VISIBILITY.notes && (
+                  <TabsTrigger
+                    value="notes"
+                    className="text-[12px] px-3 py-1 h-7 data-[state=active]:bg-[var(--parchment)] data-[state=active]:border data-[state=active]:border-[var(--rule)]"
+                    data-testid="document-overlay-tab-notes"
+                  >
+                    Your Notes
+                  </TabsTrigger>
+                )}
+                {TAB_VISIBILITY.signals && (
+                  <TabsTrigger
+                    value="signals"
+                    className="text-[12px] px-3 py-1 h-7 data-[state=active]:bg-[var(--parchment)] data-[state=active]:border data-[state=active]:border-[var(--rule)]"
+                    data-testid="document-overlay-tab-signals"
+                  >
+                    Signals
+                  </TabsTrigger>
+                )}
+                {TAB_VISIBILITY.related && (
+                  <TabsTrigger
+                    value="related"
+                    className="text-[12px] px-3 py-1 h-7 data-[state=active]:bg-[var(--parchment)] data-[state=active]:border data-[state=active]:border-[var(--rule)]"
+                    data-testid="document-overlay-tab-related"
+                  >
+                    Related Documents
+                  </TabsTrigger>
+                )}
               </TabsList>
 
               <TabsContent value="document" className="flex-1 overflow-auto mt-2">
@@ -364,32 +389,26 @@ export default function DocumentOverlay({ contextId, artefactId, open, onClose }
                 />
               </TabsContent>
 
-              <TabsContent value="notes" className="flex-1 overflow-auto mt-2">
-                <div
-                  data-testid="document-overlay-tab-content-notes-placeholder"
-                  className="mx-4 my-8 py-16 px-6 text-center text-[var(--muted)] italic text-[13px] border border-dashed border-[var(--rule)] rounded-md"
-                >
-                  Your Notes — coming soon. This tab will host private, deck-scoped notes with autosave, undo/redo, and offline-tolerant editing.
-                </div>
-              </TabsContent>
+              {TAB_VISIBILITY.notes && (
+                <TabsContent value="notes" className="flex-1 overflow-auto mt-2">
+                  {/* A8 MVP shipped 2026-07-02 · localStorage-based private notes */}
+                  <DeckNotes contextId={contextId} artefactId={artefactId} />
+                </TabsContent>
+              )}
 
-              <TabsContent value="signals" className="flex-1 overflow-auto mt-2">
-                <div
-                  data-testid="document-overlay-tab-content-signals-placeholder"
-                  className="mx-4 my-8 py-16 px-6 text-center text-[var(--muted)] italic text-[13px] border border-dashed border-[var(--rule)] rounded-md"
-                >
-                  Signals — coming soon. This tab will surface risks, opportunities, and recommendations extracted from the deck content.
-                </div>
-              </TabsContent>
+              {TAB_VISIBILITY.signals && (
+                <TabsContent value="signals" className="flex-1 overflow-auto mt-2">
+                  {/* A9 MVP shipped 2026-07-02 · reads intelligence_report.recommendations */}
+                  <SignalsPanel doc={doc} />
+                </TabsContent>
+              )}
 
-              <TabsContent value="related" className="flex-1 overflow-auto mt-2">
-                <div
-                  data-testid="document-overlay-tab-content-related-placeholder"
-                  className="mx-4 my-8 py-16 px-6 text-center text-[var(--muted)] italic text-[13px] border border-dashed border-[var(--rule)] rounded-md"
-                >
-                  Related Documents — coming soon. This tab will list documents linked via shared metadata, explicit attachments, or the same lineage.
-                </div>
-              </TabsContent>
+              {TAB_VISIBILITY.related && (
+                <TabsContent value="related" className="flex-1 overflow-auto mt-2">
+                  {/* A10 MVP shipped 2026-07-02 · reads source_document_ids */}
+                  <RelatedDocuments doc={doc} />
+                </TabsContent>
+              )}
             </Tabs>
 
             {/* AI Revision side panel — slides in alongside (-034).

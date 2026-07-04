@@ -121,16 +121,35 @@ def row4_intelligence_tab_hosts_intelligence_card() -> Tuple[bool, str]:
 
 
 def row5_placeholder_shells_for_notes_signals_related() -> Tuple[bool, str]:
-    """R5 — Notes / Signals / Related tabs render "Coming soon" placeholder shells."""
+    """R5 — Per-tab: placeholder present IFF visibility is false; real content present IFF visibility is true.
+
+    Populate-chain evolution: this row was originally "placeholder present for
+    all 3 hidden tabs". As each panel ships (populate chain), its placeholder
+    is REMOVED and real content is mounted. R5 now enforces the invariant that
+    each tab's rendered content matches its visibility flag state.
+    """
     src = _text(DOCUMENT_OVERLAY)
-    expected_placeholders = [
-        "document-overlay-tab-content-notes-placeholder",
-        "document-overlay-tab-content-signals-placeholder",
-        "document-overlay-tab-content-related-placeholder",
-    ]
-    missing = [t for t in expected_placeholders if t not in src]
-    ok = not missing
-    return ok, f"placeholder-testids-missing={missing or 'none'}"
+    checks = []
+    for name, placeholder_testid, real_content_marker in [
+        ("notes", "document-overlay-tab-content-notes-placeholder", "<DeckNotes"),
+        ("signals", "document-overlay-tab-content-signals-placeholder", "<SignalsPanel"),
+        ("related", "document-overlay-tab-content-related-placeholder", "<RelatedDocuments"),
+    ]:
+        flag_true = f"{name}: true" in src
+        flag_false = f"{name}: false" in src
+        placeholder_present = placeholder_testid in src
+        real_present = real_content_marker in src
+        if flag_true:
+            row_ok = (not placeholder_present) and real_present
+            checks.append(f"{name}(SHIPPED: no-placeholder={not placeholder_present}, real={real_present}, pass={row_ok})")
+        elif flag_false:
+            row_ok = placeholder_present and (not real_present)
+            checks.append(f"{name}(PENDING: placeholder={placeholder_present}, no-real={not real_present}, pass={row_ok})")
+        else:
+            row_ok = False
+            checks.append(f"{name}(flag-not-found: pass=False)")
+    all_ok = all("pass=True" in c for c in checks)
+    return all_ok, " · ".join(checks)
 
 
 def row6_url_param_tab_sync() -> Tuple[bool, str]:
@@ -205,6 +224,34 @@ def row10_testid_preservation() -> Tuple[bool, str]:
     return ok, f"preserved-testids-missing={missing or 'none'} baseline-count={len(PRE_A4_PRESERVED_TESTIDS)}"
 
 
+def row11_tab_visibility_gate_structure() -> Tuple[bool, str]:
+    """R11 — POPULATE-CHAIN STEP 0 · TAB_VISIBILITY constant + gating conditionals.
+
+    Structural assertion (stable across flag flips per-panel):
+      - `TAB_VISIBILITY` constant exists with 5 keys (document/intelligence/notes/signals/related).
+      - Gating conditional `{TAB_VISIBILITY.<name> && (` present for each of the
+        3 non-Document/Intelligence tabs (notes/signals/related) — both trigger AND content.
+      - `document: true` + `intelligence: true` locked (never gated).
+    """
+    src = _text(DOCUMENT_OVERLAY)
+    has_tab_vis_const = "const TAB_VISIBILITY" in src
+    doc_locked = "document: true" in src
+    intel_locked = "intelligence: true" in src
+    # Count gating conditionals for the 3 non-locked tabs.
+    gates = {
+        "notes": src.count("TAB_VISIBILITY.notes && ("),
+        "signals": src.count("TAB_VISIBILITY.signals && ("),
+        "related": src.count("TAB_VISIBILITY.related && ("),
+    }
+    # Each of the 3 tabs must have BOTH trigger AND content gated => 2 gates each.
+    all_gates_ok = all(count >= 2 for count in gates.values())
+    ok = has_tab_vis_const and doc_locked and intel_locked and all_gates_ok
+    return ok, (
+        f"tab-vis-const={has_tab_vis_const} document-locked={doc_locked} "
+        f"intelligence-locked={intel_locked} gate-counts={gates} (each need >=2)"
+    )
+
+
 ROWS: List[Tuple[str, Callable[[], Tuple[bool, str]]]] = [
     ("R1 <Tabs> primitive imported from @/components/ui/tabs + mounted", row1_tabs_primitive_imported_and_mounted),
     ("R2 5 tab-triggers with expected data-testids (document/intelligence/notes/signals/related)", row2_five_tab_triggers_rendered),
@@ -216,6 +263,7 @@ ROWS: List[Tuple[str, Callable[[], Tuple[bool, str]]]] = [
     ("R8 AIRevisionPanel still sidebar (not tab-migrated)", row8_ai_revision_panel_still_sidebar),
     ("R9 Modals (IntelligenceModal / VersionHistoryModal / CommitConfirmationModal) stay overlay-level", row9_modals_stay_overlay_level),
     ("R10 Data-testid preservation regression check", row10_testid_preservation),
+    ("R11 POPULATE-CHAIN STEP 0 — TAB_VISIBILITY constant + gating conditionals present", row11_tab_visibility_gate_structure),
 ]
 
 
