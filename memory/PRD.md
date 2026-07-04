@@ -1,5 +1,7 @@
 # AKKI Sandbox — Product Requirements Document (PRD)
 
+> **Naming note (rename arc close · 2026-07-02):** The frontend module described below as "ThinkLab" was previously named "Solva". A 4-phase rename arc closed on 2026-07-02, updating routes, file tree, component-body copy, and this document. The underlying **engine** (`services/solva_v2/`, Solva v2 sessions, Solva Phase A–E state machine) retains the Solva name — that is an intentional engine/module distinction, not a rename oversight. When reading this document, "ThinkLab" refers to the user-facing module (UI, routes, product surface) and "Solva" refers to the engine (backend service, sessions, state machine, API paths).
+
 
 
 > **2026-06-30 20:07 UTC — JC-POLLUTION-CLUSTER-C-ADVANCE-SCAN shipped · READ-ONLY advance scan on Cluster-C intra-file refactor (FTT-004..009; 1 file × 6 tests) · single Cluster-C dispatch shape RECOMMENDED · all 5 escalation triggers NOT TRIPPED · autonomous run-to-close item 6 of 9 closed.**
