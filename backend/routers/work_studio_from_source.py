@@ -62,7 +62,7 @@ from contracts.responses import (
 )
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from core import db, require_context_membership, write_audit
 from work_studio import (
@@ -370,13 +370,43 @@ class CreateArtefactRequest(BaseModel):
     kind: Literal["deck", "report"]
     title: str = Field(..., min_length=1, max_length=200)
     source: Literal["blank", "brief", "external_document"]
-    # Raw uuid from db.work_studio_briefs.id (Chunk 5 — we also
-    # gracefully accept the aggregate-id form `briefing::<uuid>` that
-    # the Work Studio listing emits, so future UI calls that forget to
-    # strip the prefix don't silently 404).
+    # JC-WS-DECK-PATH-A-A2-FROM-SOURCE-CREATE (2026-07-02) — DECK-018 +
+    # DECK-022 multi-select briefs / documents. The new plural fields
+    # are the primary contract. The singular fields (below) are kept
+    # for BACKWARD COMPAT for one release — the `model_validator`
+    # coerces singular → plural pre-flight and logs a deprecation
+    # WARNING every time a client sends the singular form (visible in
+    # aggregated log grep so we know when to remove).
+    #
+    # Aggregate-id form (`briefing::<uuid>`) still tolerated per Chunk 5.
+    source_brief_ids: List[str] = Field(default_factory=list, max_length=25)
+    source_document_ids: List[str] = Field(default_factory=list, max_length=25)
+    # DEPRECATED: singular forms. Kept for backward-compat only.
     source_brief_id: Optional[str] = Field(None, max_length=128)
-    # Raw uuid from db.documents.id.
     source_document_id: Optional[str] = Field(None, max_length=128)
+
+    @model_validator(mode="after")
+    def _coerce_singular_to_plural(self) -> "CreateArtefactRequest":
+        """Coerce legacy singular fields into the plural arrays.
+
+        Emits a WARNING log so ops can grep for `create_artefact.deprecated_singular_field`
+        and know when the last client migrated off the singular form.
+        """
+        if self.source_brief_id and not self.source_brief_ids:
+            self.source_brief_ids = [self.source_brief_id]
+            logger.warning(
+                "create_artefact.deprecated_singular_field field=source_brief_id "
+                "kind=%s source=%s — migrate client to source_brief_ids plural.",
+                self.kind, self.source,
+            )
+        if self.source_document_id and not self.source_document_ids:
+            self.source_document_ids = [self.source_document_id]
+            logger.warning(
+                "create_artefact.deprecated_singular_field field=source_document_id "
+                "kind=%s source=%s — migrate client to source_document_ids plural.",
+                self.kind, self.source,
+            )
+        return self
 
 
 def _strip_agg_prefix(raw: str, expected_kind: str) -> str:
@@ -441,84 +471,109 @@ async def create_work_studio_artefact(
 
     description: Optional[str] = None
     body_text: str = ""
-    brief_id: Optional[str] = None
-    document_id: Optional[str] = None
+    brief_ids: List[str] = []
+    document_ids: List[str] = []
 
     # ── Source-specific resolution ────────────────────────────────────
     if body.source == "brief":
-        if not body.source_brief_id:
+        if not body.source_brief_ids:
             raise HTTPException(
                 status_code=422,
-                detail="`source_brief_id` is required when source=brief.",
-            )
-        raw_bid = _strip_agg_prefix(body.source_brief_id, "briefing")
-        brief = await db.work_studio_briefs.find_one(
-            {"id": raw_bid, "context_id": context_id, "account_id": account_id},
-            {"_id": 0},
-        )
-        if not brief:
-            raise HTTPException(
-                status_code=404,
                 detail=(
-                    f"Brief `{raw_bid}` not found in this workspace "
-                    f"(or you don't have access)."
+                    "`source_brief_ids` is required when source=brief "
+                    "(or the deprecated singular `source_brief_id`)."
                 ),
             )
-        brief_id = brief["id"]
-        # Seed body from the active revision's snapshot prose, so the
-        # composer renders something useful on first open.
-        revision = await db.work_studio_brief_revisions.find_one(
-            {"id": brief.get("active_revision_id"), "brief_id": brief_id},
-            {"_id": 0, "snapshot": 1},
-        )
-        snapshot = (revision or {}).get("snapshot") or {}
-        if snapshot:
-            prose = _assemble_prose(snapshot)
-            body_text = prose["body"]
-            if prose.get("opening_paragraph"):
-                # Front-load the opening paragraph as the first
-                # composer paragraph (it survives the seeder's
-                # paragraph splitter).
-                body_text = (
-                    prose["opening_paragraph"].strip()
-                    + ("\n\n" + body_text if body_text else "")
+        # JC-WS-DECK-PATH-A-A2-FROM-SOURCE-CREATE (2026-07-02) — DECK-018
+        # multi-select briefs. Iterate the plural array; concatenate each
+        # brief's active-revision prose with a `\n\n---\n\n` divider so
+        # the composer opens with a coherent multi-brief seed the user
+        # can further edit.
+        prose_parts: List[str] = []
+        title_parts: List[str] = []
+        for raw_bid in body.source_brief_ids:
+            bid = _strip_agg_prefix(raw_bid, "briefing")
+            brief = await db.work_studio_briefs.find_one(
+                {"id": bid, "context_id": context_id, "account_id": account_id},
+                {"_id": 0},
+            )
+            if not brief:
+                raise HTTPException(
+                    status_code=404,
+                    detail=(
+                        f"Brief `{bid}` not found in this workspace "
+                        f"(or you don't have access)."
+                    ),
                 )
-        description = f"Composed from brief: {brief.get('title') or 'Untitled brief'}"
+            brief_ids.append(brief["id"])
+            title_parts.append(brief.get("title") or "Untitled brief")
+            revision = await db.work_studio_brief_revisions.find_one(
+                {"id": brief.get("active_revision_id"), "brief_id": brief["id"]},
+                {"_id": 0, "snapshot": 1},
+            )
+            snapshot = (revision or {}).get("snapshot") or {}
+            if snapshot:
+                prose = _assemble_prose(snapshot)
+                body_piece = prose["body"] or ""
+                if prose.get("opening_paragraph"):
+                    body_piece = (
+                        prose["opening_paragraph"].strip()
+                        + ("\n\n" + body_piece if body_piece else "")
+                    )
+                if body_piece:
+                    # Prepend a brief title header when combining multiple briefs.
+                    if len(body.source_brief_ids) > 1:
+                        body_piece = f"## {brief.get('title') or 'Untitled brief'}\n\n{body_piece}"
+                    prose_parts.append(body_piece)
+        body_text = "\n\n---\n\n".join(prose_parts) if prose_parts else ""
+        description = (
+            f"Composed from brief: {title_parts[0]}" if len(title_parts) == 1
+            else f"Composed from {len(title_parts)} briefs"
+        )
 
     elif body.source == "external_document":
-        if not body.source_document_id:
+        if not body.source_document_ids:
             raise HTTPException(
                 status_code=422,
                 detail=(
-                    "`source_document_id` is required when "
-                    "source=external_document."
+                    "`source_document_ids` is required when "
+                    "source=external_document (or the deprecated singular "
+                    "`source_document_id`)."
                 ),
             )
-        doc = await db.documents.find_one(
-            {"id": body.source_document_id, "context_id": context_id},
-            {
-                "_id": 0, "id": 1, "name": 1, "preview": 1,
-                "akki_summary": 1, "extracted_text": 1,
-            },
+        # JC-WS-DECK-PATH-A-A2-FROM-SOURCE-CREATE (2026-07-02) — DECK-022
+        # multi-select external documents. Iterate the plural array;
+        # seed body from each doc's akki_summary / preview / stub.
+        seed_parts: List[str] = []
+        doc_title_parts: List[str] = []
+        for did in body.source_document_ids:
+            doc = await db.documents.find_one(
+                {"id": did, "context_id": context_id},
+                {
+                    "_id": 0, "id": 1, "name": 1, "preview": 1,
+                    "akki_summary": 1, "extracted_text": 1,
+                },
+            )
+            if not doc:
+                raise HTTPException(
+                    status_code=404,
+                    detail=(
+                        f"Document `{did}` not found in this workspace."
+                    ),
+                )
+            document_ids.append(doc["id"])
+            doc_title_parts.append(doc.get("name") or "Untitled document")
+            seed_text = (doc.get("akki_summary") or doc.get("preview") or "").strip()
+            if not seed_text:
+                seed_text = f"Composed from document: {doc.get('name') or 'Untitled document'}."
+            if len(body.source_document_ids) > 1:
+                seed_text = f"## {doc.get('name') or 'Untitled document'}\n\n{seed_text}"
+            seed_parts.append(seed_text)
+        body_text = "\n\n---\n\n".join(seed_parts)
+        description = (
+            f"Composed from document: {doc_title_parts[0]}" if len(doc_title_parts) == 1
+            else f"Composed from {len(doc_title_parts)} documents"
         )
-        if not doc:
-            raise HTTPException(
-                status_code=404,
-                detail=(
-                    f"Document `{body.source_document_id}` not found in "
-                    f"this workspace."
-                ),
-            )
-        document_id = doc["id"]
-        # Seed body with a short stub the composer can render. Prefer
-        # the AKKI summary (richer); fall back to preview; finally a
-        # short stub naming the source so the user has a starting line.
-        seed_text = (doc.get("akki_summary") or doc.get("preview") or "").strip()
-        if seed_text:
-            body_text = seed_text
-        else:
-            body_text = f"Composed from document: {doc.get('name') or 'Untitled document'}."
-        description = f"Composed from document: {doc.get('name') or 'Untitled document'}"
 
     else:
         # blank — composer's seed renders title + a fallback paragraph;
@@ -528,6 +583,14 @@ async def create_work_studio_artefact(
     # ── Insert ─────────────────────────────────────────────────────────
     artefact_id = str(uuid.uuid4())
     now = _now_iso()
+    # JC-WS-DECK-PATH-A-A2-FROM-SOURCE-CREATE (2026-07-02) — plural
+    # arrays land on the DB row. Singular `brief_id` + `source_document_id`
+    # are kept as backward-compat mirrors of the FIRST element (so any
+    # downstream reader that still reads the singular field sees a
+    # sensible value); a future dispatch will drop them once the audit
+    # shows zero singular reads remain.
+    brief_id_singular = brief_ids[0] if brief_ids else None
+    document_id_singular = document_ids[0] if document_ids else None
     artefact_row: Dict[str, Any] = {
         "id": artefact_id,
         "context_id": context_id,
@@ -537,12 +600,20 @@ async def create_work_studio_artefact(
         "body": body_text,
         "status": "draft",
         "source": body.source,
-        "brief_id": brief_id,
-        "source_document_id": document_id,
+        # Plural (new primary contract, A2)
+        "brief_ids": brief_ids,
+        "source_document_ids": document_ids,
+        # Singular (backward-compat mirrors of first element, to be
+        # removed in a follow-on dispatch)
+        "brief_id": brief_id_singular,
+        "source_document_id": document_id_singular,
         "origin": {
             "source": body.source,
-            "brief_id": brief_id,
-            "document_id": document_id,
+            "brief_ids": brief_ids,
+            "document_ids": document_ids,
+            # Backward-compat mirrors
+            "brief_id": brief_id_singular,
+            "document_id": document_id_singular,
         },
         "created_at": now,
         "updated_at": now,
@@ -573,8 +644,11 @@ async def create_work_studio_artefact(
             metadata={
                 "kind": body.kind,
                 "source": body.source,
-                "brief_id": brief_id,
-                "document_id": document_id,
+                "brief_ids": brief_ids,
+                "document_ids": document_ids,
+                # Backward-compat mirrors.
+                "brief_id": brief_id_singular,
+                "document_id": document_id_singular,
                 "title": title,
             },
         )
@@ -584,8 +658,12 @@ async def create_work_studio_artefact(
     return {
         "kind": body.kind,
         "artefact_id": artefact_id,
-        "brief_id": brief_id,
-        "document_id": document_id,
+        "brief_ids": brief_ids,
+        "document_ids": document_ids,
+        # Backward-compat singular mirrors of the first element (removed
+        # in a follow-on dispatch once no client reads the singular).
+        "brief_id": brief_id_singular,
+        "document_id": document_id_singular,
         "redirect_url": f"/app/studio/composer/{body.kind}/{artefact_id}",
     }
 

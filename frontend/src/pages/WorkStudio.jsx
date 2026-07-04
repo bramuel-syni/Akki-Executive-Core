@@ -351,9 +351,22 @@ const LIFECYCLE_CHIP_CLASSES = {
   committed: "bg-emerald-50 text-emerald-800 border-emerald-200",
 };
 
-function DocumentRow({ row, onOpen }) {
+function DocumentRow({ row, onOpen, pulseId }) {
   const origin = row.origin || null;
   const category = row.category || null;
+  // JC-WS-DECK-PATH-A-A2-FROM-SOURCE-CREATE (2026-07-02) — pulse-mirror
+  // passenger from A3 dispatch. When `?pulse=<work_studio_exports_id>`
+  // is present on the URL and matches this row's `work_studio_export_id`
+  // (the canonical bridge from db.documents ↔ db.work_studio_exports)
+  // OR the row's own id, apply the shared `.ws-doc-card-pulse-glow`
+  // class + `data-pulse="true"` attribute. Chrome conformance: reuses
+  // the exact same CSS keyframe shipped by A3 (`ws-doc-card-pulse-glow-kf`);
+  // scrolling is intentionally deferred to `DocumentCardsSection` so
+  // two simultaneous scroll-into-view calls never race.
+  const pulsed = !!pulseId && (
+    pulseId === row.id
+    || pulseId === row.work_studio_export_id
+  );
   // Last-modified prefers `updated_at` → `committed_at` → `created_at`.
   const ts = row.updated_at || row.committed_at || row.created_at;
   let modifiedLabel = "—";
@@ -404,12 +417,16 @@ function DocumentRow({ row, onOpen }) {
       // reports, briefing) — a "second way of doing the same thing"
       // would be a per-category branch, which the user explicitly
       // prohibited in the A1 dispatch.
-      className="w-full text-left border border-[var(--rule)] rounded-md bg-white px-4 py-3.5 flex items-start sm:items-center gap-3 flex-col sm:flex-row hover:border-[var(--ink)] hover:bg-[var(--parchment)] hover:shadow-sm transition-[colors,box-shadow]"
+      className={
+        "w-full text-left border border-[var(--rule)] rounded-md bg-white px-4 py-3.5 flex items-start sm:items-center gap-3 flex-col sm:flex-row hover:border-[var(--ink)] hover:bg-[var(--parchment)] hover:shadow-sm transition-[colors,box-shadow]"
+        + (pulsed ? " ws-doc-card-pulse-glow" : "")
+      }
       data-testid="work-studio-document-row"
       data-origin={origin || "unknown"}
       data-category={category || "uncategorized"}
       data-akki-generated={akkiGenerated}
       data-lifecycle-state={lifecycleState || "unset"}
+      data-pulse={pulsed ? "true" : undefined}
     >
       <Files className="w-4 h-4 text-[var(--ink)] shrink-0 mt-1 sm:mt-0" strokeWidth={1.7} />
       <div className="min-w-0 flex-1">
@@ -1336,7 +1353,12 @@ export default function WorkStudio() {
                 ) : (
                   <ul className="space-y-2" data-testid="work-studio-agg-list">
                     {aggItems.map((row) => (
-                      <DocumentRow key={row.id} row={row} onOpen={onOpenBrief} />
+                      <DocumentRow
+                        key={row.id}
+                        row={row}
+                        onOpen={onOpenBrief}
+                        pulseId={searchParams.get("pulse") || null}
+                      />
                     ))}
                   </ul>
                 )}
