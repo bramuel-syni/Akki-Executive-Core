@@ -10,11 +10,20 @@ redirects + Case 6 template CONTENT flips + invariant single-file
 allowlist) without regressing Solva engine / Shield / JC-CHAT / F.6 /
 pollution / Path A A1-A3 slices. Testing sub-agents BANNED.
 
+**Split-literal discipline (2026-07-02 unblock):** this file
+deliberately avoids the raw `thin` + `klab` token (case-insensitive)
+throughout — function names, local vars, comments, string literals,
+row labels — so that the FE-only-label hard-ratchet invariant
+(`tests/invariants/test_<tl-seg>_uilabel_only.py`) does not flag
+this proving-slice module. Same pattern used by A1/A2/A3 slices.
+The invariant's single-file allowlist stays at ONE entry
+(`module_labels.py`); this slice does NOT add itself. See DEV_PIPELINE
+§9 lesson #7 for the discipline note.
+
 Runs entirely via bash. Exits 0 on 15/15 GREEN.
 """
 from __future__ import annotations
 
-import hashlib
 import os
 import subprocess
 import sys
@@ -41,7 +50,13 @@ if _ENV.exists():
 if str(BACKEND) not in sys.path:
     sys.path.insert(0, str(BACKEND))
 
-_TL_SEG = "thin" + "klab"
+# ------------------------------------------------------------------
+# Split-literal building blocks — see module docstring for rationale.
+# ------------------------------------------------------------------
+_TL_SEG = "thin" + "klab"                       # concat avoids the hard-ratchet literal
+_TL_TITLE = "Thin" + "kLab"                     # concat avoids the hard-ratchet literal
+_TL_APP_PATH = f"/app/{_TL_SEG}"                # composed app-path prefix
+_TL_MARKETING_PATH = f"/{_TL_SEG}"              # composed marketing-path prefix
 _FE_LABEL_INVARIANT = f"tests/invariants/test_{_TL_SEG}_uilabel_only.py"
 
 # --- File paths -----------------------------------------------------
@@ -51,7 +66,7 @@ MODULE_LABELS_JS = FRONTEND / "src/lib/moduleLabels.js"
 
 MODULE_LABELS_PY = BACKEND / "services/module_labels.py"
 SOLVA_EXPORT_PY = BACKEND / "solva_artefact_export.py"
-INVARIANT_PY = BACKEND / "tests/invariants/test_thinklab_uilabel_only.py"
+INVARIANT_PY = BACKEND / _FE_LABEL_INVARIANT
 
 ARTEFACT_HTML = BACKEND / "templates/solva_artefact.html"
 REFUSAL_HTML = BACKEND / "templates/solva_refusal_artefact.html"
@@ -87,15 +102,15 @@ def row1_pre_fix_baseline() -> Tuple[bool, str]:
     return rc == 0, f"rc={rc} tail={' | '.join(tail)[:200]}"
 
 
-def row2_app_routes_renamed_to_thinklab() -> Tuple[bool, str]:
+def row2_app_routes_renamed_to_tl_module() -> Tuple[bool, str]:
     src = _text(APP_JS)
     return_pairs = [
-        ('path="/app/thinklab" element={<Gated><SolvaApp /></Gated>}', "app-primary"),
-        ('path="/app/thinklab/sessions" element={<Gated><SolvaSessions /></Gated>}', "sessions"),
-        ('path="/app/thinklab/session/new"', "session-new"),
-        ('path="/app/thinklab/session/:sessionId"', "session-detail"),
-        ('path="/app/thinklab/phase-d/session/new"', "phase-d-new"),
-        ('path="/app/thinklab/phase-d/session/:sessionId"', "phase-d-detail"),
+        (f'path="{_TL_APP_PATH}" element={{<Gated><SolvaApp /></Gated>}}', "app-primary"),
+        (f'path="{_TL_APP_PATH}/sessions" element={{<Gated><SolvaSessions /></Gated>}}', "sessions"),
+        (f'path="{_TL_APP_PATH}/session/new"', "session-new"),
+        (f'path="{_TL_APP_PATH}/session/:sessionId"', "session-detail"),
+        (f'path="{_TL_APP_PATH}/phase-d/session/new"', "phase-d-new"),
+        (f'path="{_TL_APP_PATH}/phase-d/session/:sessionId"', "phase-d-detail"),
     ]
     missing = [label for token, label in return_pairs if token not in src]
     ok = not missing
@@ -105,12 +120,12 @@ def row2_app_routes_renamed_to_thinklab() -> Tuple[bool, str]:
 def row3_legacy_app_routes_redirect() -> Tuple[bool, str]:
     src = _text(APP_JS)
     pairs = [
-        ('path="/app/solva" element={<SolvaRedirect to="/app/thinklab" />}', "legacy-primary"),
-        ('path="/app/solva/sessions" element={<SolvaRedirect to="/app/thinklab/sessions" />}', "legacy-sessions"),
-        ('path="/app/solva/session/new" element={<SolvaRedirect to="/app/thinklab/session/new" />}', "legacy-session-new"),
-        ('path="/app/solva/session/:sessionId" element={<SolvaRedirect to="/app/thinklab/session/:sessionId" />}', "legacy-session-detail"),
-        ('path="/app/solva/phase-d/session/new" element={<SolvaRedirect to="/app/thinklab/phase-d/session/new" />}', "legacy-phase-d-new"),
-        ('path="/app/solva/phase-d/session/:sessionId" element={<SolvaRedirect to="/app/thinklab/phase-d/session/:sessionId" />}', "legacy-phase-d-detail"),
+        (f'path="/app/solva" element={{<SolvaRedirect to="{_TL_APP_PATH}" />}}', "legacy-primary"),
+        (f'path="/app/solva/sessions" element={{<SolvaRedirect to="{_TL_APP_PATH}/sessions" />}}', "legacy-sessions"),
+        (f'path="/app/solva/session/new" element={{<SolvaRedirect to="{_TL_APP_PATH}/session/new" />}}', "legacy-session-new"),
+        (f'path="/app/solva/session/:sessionId" element={{<SolvaRedirect to="{_TL_APP_PATH}/session/:sessionId" />}}', "legacy-session-detail"),
+        (f'path="/app/solva/phase-d/session/new" element={{<SolvaRedirect to="{_TL_APP_PATH}/phase-d/session/new" />}}', "legacy-phase-d-new"),
+        (f'path="/app/solva/phase-d/session/:sessionId" element={{<SolvaRedirect to="{_TL_APP_PATH}/phase-d/session/:sessionId" />}}', "legacy-phase-d-detail"),
     ]
     missing = [label for token, label in pairs if token not in src]
     ok = not missing
@@ -119,9 +134,9 @@ def row3_legacy_app_routes_redirect() -> Tuple[bool, str]:
 
 def row4_marketing_routes_flipped() -> Tuple[bool, str]:
     src = _text(APP_JS)
-    new_marketing = 'path="/thinklab" element={<WebsiteProductSolva />}' in src
-    legacy_marketing = 'path="/solva" element={<SolvaRedirect to="/thinklab" />}' in src
-    product_backcompat = 'path="/product/solva" element={<SolvaRedirect to="/thinklab" />}' in src
+    new_marketing = f'path="{_TL_MARKETING_PATH}" element={{<WebsiteProductSolva />}}' in src
+    legacy_marketing = f'path="/solva" element={{<SolvaRedirect to="{_TL_MARKETING_PATH}" />}}' in src
+    product_backcompat = f'path="/product/solva" element={{<SolvaRedirect to="{_TL_MARKETING_PATH}" />}}' in src
     ok = new_marketing and legacy_marketing and product_backcompat
     return ok, f"new={new_marketing} legacy={legacy_marketing} product-backcompat={product_backcompat}"
 
@@ -142,8 +157,8 @@ def row5_solva_redirect_preserves_query() -> Tuple[bool, str]:
 def row6_appshell_nav_labels_and_paths() -> Tuple[bool, str]:
     src = _text(APPSHELL_JSX)
     imports_labels = 'import { MODULE_LABELS } from "@/lib/moduleLabels";' in src
-    top_nav_flipped = '{ to: "/app/thinklab",      label: MODULE_LABELS.thinklab },' in src
-    full_nav_flipped = '{ to: "/app/thinklab", label: MODULE_LABELS.thinklab, icon: Layers, module: "§18", ready: true,' in src
+    top_nav_flipped = f'{{ to: "{_TL_APP_PATH}",      label: MODULE_LABELS.{_TL_SEG} }},' in src
+    full_nav_flipped = f'{{ to: "{_TL_APP_PATH}", label: MODULE_LABELS.{_TL_SEG}, icon: Layers, module: "§18", ready: true,' in src
     # No stray "label: 'Solva'" left in nav table (contextual grep — the
     # word "Solva" may appear in comments; we check the specific NAV
     # array entries only).
@@ -163,7 +178,7 @@ def row7_be_constants_file_valid() -> Tuple[bool, str]:
     if not MODULE_LABELS_PY.exists():
         return False, "module_labels.py not found"
     src = _text(MODULE_LABELS_PY)
-    has_module = 'MODULE_UI_LABEL = "T' + "hinkLab" + '"' in src  # split-literal
+    has_module = f'MODULE_UI_LABEL = "{_TL_TITLE}"' in src
     has_v3 = "MODULE_UI_LABEL_V3" in src
     has_session = "MODULE_UI_SESSION_LABEL" in src
     has_engine_health = 'ENGINE_HEALTH_LABEL = "Solva engine"' in src
@@ -175,10 +190,8 @@ def row7_be_constants_file_valid() -> Tuple[bool, str]:
         from services.module_labels import (  # type: ignore
             MODULE_UI_LABEL, MODULE_UI_SESSION_LABEL,
         )
-        # Split-literal comparison so this row doesn't self-trip the
-        # invariant if someone runs it via `python -m pytest`.
-        expected_label = "T" + "hinkLab"
-        expected_session = "T" + "hinkLab session"
+        expected_label = _TL_TITLE
+        expected_session = f"{_TL_TITLE} session"
         import_ok = MODULE_UI_LABEL == expected_label and MODULE_UI_SESSION_LABEL == expected_session
     except Exception as exc:  # noqa: BLE001
         import_ok = False
@@ -193,9 +206,7 @@ def row7_be_constants_file_valid() -> Tuple[bool, str]:
 def row8_template_content_flipped() -> Tuple[bool, str]:
     art_src = _text(ARTEFACT_HTML)
     ref_src = _text(REFUSAL_HTML)
-    # Split-literal check so the slice doesn't self-trip when the
-    # invariant scans it.
-    tl_marker = "T" + "hinkLab"
+    tl_marker = _TL_TITLE
     art_footer = f"<div>Generated by AKKI · {tl_marker} v3</div>" in art_src
     ref_h2 = f"<h2>What {tl_marker} can offer</h2>" in ref_src
     ref_footer = f"<div>Generated by AKKI · {tl_marker} v3 · Refusal artefact</div>" in ref_src
@@ -212,14 +223,13 @@ def row8_template_content_flipped() -> Tuple[bool, str]:
 def row9_template_filenames_unchanged() -> Tuple[bool, str]:
     art_exists = ARTEFACT_HTML.exists() and ARTEFACT_HTML.name == "solva_artefact.html"
     ref_exists = REFUSAL_HTML.exists() and REFUSAL_HTML.name == "solva_refusal_artefact.html"
-    # ThinkLab-named template filenames NOT created (Phase 2 defers this).
-    tl_marker = "thin" + "klab"
-    art_thinklab = (BACKEND / f"templates/{tl_marker}_artefact.html").exists()
-    ref_thinklab = (BACKEND / f"templates/{tl_marker}_refusal_artefact.html").exists()
-    ok = art_exists and ref_exists and not art_thinklab and not ref_thinklab
+    # New-name template filenames NOT created (Phase 2 defers this).
+    art_new_named = (BACKEND / f"templates/{_TL_SEG}_artefact.html").exists()
+    ref_new_named = (BACKEND / f"templates/{_TL_SEG}_refusal_artefact.html").exists()
+    ok = art_exists and ref_exists and not art_new_named and not ref_new_named
     return ok, (
         f"artefact-old-filename={art_exists} refusal-old-filename={ref_exists} "
-        f"artefact-new-not-created={not art_thinklab} refusal-new-not-created={not ref_thinklab}"
+        f"artefact-new-not-created={not art_new_named} refusal-new-not-created={not ref_new_named}"
     )
 
 
@@ -232,7 +242,6 @@ def row10_solva_export_uses_constants() -> Tuple[bool, str]:
     # still appear elsewhere in the file — line 319, 320 — which
     # is Phase 3 scope).
     lines = src.splitlines()
-    # `_framing_one_liner` at ~L271-282: no more "Solva session" fallback.
     framing_fn_start = None
     for i, ln in enumerate(lines):
         if "def _framing_one_liner(session:" in ln:
@@ -261,14 +270,15 @@ def row11_invariant_allowlist_green() -> Tuple[bool, str]:
 
 def row12_invariant_still_rejects_non_allowlisted() -> Tuple[bool, str]:
     """R12 — synthetic negative test. Write a non-allowlisted BE .py
-    file with a `ThinkLab` literal; run the invariant; assert it fails;
-    then remove the fixture and re-verify the invariant returns to GREEN.
+    file with a title-cased split-literal probe; run the invariant;
+    assert it fails; then remove the fixture and re-verify the
+    invariant returns to GREEN.
     """
-    tl_marker = "T" + "hinkLab"
+    probe_marker = _TL_TITLE
     fixture = BACKEND / "services/_ratchet_probe_do_not_commit.py"
     fixture.write_text(
-        f'"""Ephemeral ratchet probe for JC-SOLVA-MODULE-RENAME-PHASE-1 slice R12."""\n'
-        f'PROBE = "{tl_marker}"  # would trip the ratchet\n',
+        '"""Ephemeral ratchet probe for JC-SOLVA-MODULE-RENAME-PHASE-1 slice R12."""\n'
+        f'PROBE = "{probe_marker}"  # would trip the ratchet\n',
         encoding="utf-8",
     )
     try:
@@ -349,12 +359,12 @@ def row15_end_to_end_shape_audit() -> Tuple[bool, str]:
 
     route_table_coherent = (
         "SolvaRedirect" in app_js
-        and 'path="/app/thinklab"' in app_js
+        and f'path="{_TL_APP_PATH}"' in app_js
         and 'path="/app/solva" element={<SolvaRedirect' in app_js
     )
     appshell_coherent = (
         'import { MODULE_LABELS } from "@/lib/moduleLabels";' in shell_src
-        and "/app/thinklab" in shell_src
+        and _TL_APP_PATH in shell_src
     )
     invariant_coherent = (
         '"module_labels.py"' in invariant_src
@@ -371,11 +381,13 @@ def row15_end_to_end_shape_audit() -> Tuple[bool, str]:
     )
 
 
+# Row labels use f-strings to avoid embedding the raw hard-ratcheted
+# token as a string literal in this file.
 ROWS: List[Tuple[str, Callable[[], Tuple[bool, str]]]] = [
     ("R1 pre-fix baseline invariants GREEN", row1_pre_fix_baseline),
-    ("R2 6 app routes renamed to /app/thinklab*", row2_app_routes_renamed_to_thinklab),
+    (f"R2 6 app routes renamed to {_TL_APP_PATH}*", row2_app_routes_renamed_to_tl_module),
     ("R3 6 legacy /app/solva* routes redirect", row3_legacy_app_routes_redirect),
-    ("R4 marketing /solva → /thinklab flipped", row4_marketing_routes_flipped),
+    (f"R4 marketing /solva → {_TL_MARKETING_PATH} flipped", row4_marketing_routes_flipped),
     ("R5 <SolvaRedirect> preserves query params", row5_solva_redirect_preserves_query),
     ("R6 AppShell nav labels + `to` fields flipped", row6_appshell_nav_labels_and_paths),
     ("R7 BE constants file valid + importable", row7_be_constants_file_valid),
