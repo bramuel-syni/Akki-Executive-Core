@@ -18,7 +18,7 @@ slice close.
 
 WHAT THIS GUARDS:
   • backend/services/solva_v2/ — schemas, prompts, payload builder
-  • frontend/src/components/solva/artefact_v2/ — slide templates
+  • frontend/src/components/thinklab/artefact_v2/ — slide templates
   • backend/routers/solva_v2_artefact.py — artefact endpoint
 
 WHAT THIS DOES NOT GUARD:
@@ -42,7 +42,7 @@ REPO = Path(__file__).resolve().parents[2]
 # Scan scope — v2 code paths only.
 SCAN_PATHS = [
     REPO / "backend" / "services" / "solva_v2",
-    REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2",
+    REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2",
     REPO / "backend" / "routers" / "solva_v2_artefact.py",
 ]
 
@@ -187,7 +187,7 @@ def test_prompts_reference_solva_diagnostic_not_solve():
 def test_slide_shell_footer_jsx_carries_solva_brand():
     """The SlideShell footer JSX must render 'Solva Session Output',
     not 'Solve Session Output'."""
-    shell = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2" / "SlideShell.jsx"
+    shell = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2" / "SlideShell.jsx"
     src = shell.read_text(encoding="utf-8")
     assert "Solva Session Output" in src
     assert "Solve Session Output" not in src
@@ -195,7 +195,7 @@ def test_slide_shell_footer_jsx_carries_solva_brand():
 
 def test_section_divider_footer_jsx_carries_solva_brand():
     """The SectionDivider footer JSX must render 'Solva Session Output'."""
-    div = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2" / "SectionDivider.jsx"
+    div = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2" / "SectionDivider.jsx"
     src = div.read_text(encoding="utf-8")
     assert "Solva Session Output" in src
     assert "Solve Session Output" not in src

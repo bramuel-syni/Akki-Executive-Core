@@ -32,7 +32,7 @@ import {
   ArrowLeft, ShieldCheck, Pencil, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { takeToSolva } from "@/lib/takeToSolva";
+import { takeToSolva } from "@/lib/takeToThinkLab";
 
 const ACTS = [
   { id: "pre",  label: "Pre",  subtitle: "Read · ask · prepare" },

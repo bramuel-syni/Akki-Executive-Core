@@ -56,9 +56,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 FIRSTSESSION = REPO / "frontend/src/pages/FirstSession.jsx"
-SOLVA_APP = REPO / "frontend/src/pages/SolvaApp.jsx"
-SOLVA_LANDING = REPO / "frontend/src/components/solva/SolvaLanding.jsx"
-PHASE_D_SESSION = REPO / "frontend/src/pages/SolvaPhaseDSession.jsx"
+SOLVA_APP = REPO / "frontend/src/pages/ThinkLabApp.jsx"
+SOLVA_LANDING = REPO / "frontend/src/components/thinklab/ThinkLabLanding.jsx"
+PHASE_D_SESSION = REPO / "frontend/src/pages/ThinkLabPhaseDSession.jsx"
 APPSHELL = REPO / "frontend/src/components/layout/AppShell.jsx"
 
 

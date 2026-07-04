@@ -30,22 +30,22 @@ import {
   isFlowState,
   nextState,
   resumePoint,
-} from "@/lib/solvaFlow";
+} from "@/lib/thinkLabFlow";
 
-import SolvaShell from "@/components/solva/flow/Shell";
-import FramingScreen from "@/components/solva/flow/FramingScreen";
-import QuestionScreen from "@/components/solva/flow/QuestionScreen";
-import PreparingInterstitial from "@/components/solva/flow/PreparingInterstitial";
-import ReflectionScreen from "@/components/solva/flow/ReflectionScreen";
-import SolvaArtefact from "@/components/solva/artefact/SolvaArtefact";
-import SolvaArtefactV2 from "@/components/solva/artefact_v2/SolvaArtefactV2";
+import SolvaShell from "@/components/thinklab/flow/Shell";
+import FramingScreen from "@/components/thinklab/flow/FramingScreen";
+import QuestionScreen from "@/components/thinklab/flow/QuestionScreen";
+import PreparingInterstitial from "@/components/thinklab/flow/PreparingInterstitial";
+import ReflectionScreen from "@/components/thinklab/flow/ReflectionScreen";
+import SolvaArtefact from "@/components/thinklab/artefact/ThinkLabArtefact";
+import SolvaArtefactV2 from "@/components/thinklab/artefact_v2/ThinkLabArtefactV2";
 import { solvaV2EnabledFor } from "@/lib/solvaV2FeatureFlag";
-import SolvaRefusalArtefact from "@/components/solva/artefact/SolvaRefusalArtefact";
+import SolvaRefusalArtefact from "@/components/thinklab/artefact/ThinkLabRefusalArtefact";
 // Wave 1.6 / 1.8 / 2.1 (UAT pack 2026-05-10)
-import SolvaHeader from "@/components/solva/flow/SolvaHeader";
-import TransitionMessage from "@/components/solva/flow/TransitionMessage";
-import FrameAuditScreen from "@/components/solva/flow/FrameAuditScreen";
-import { TOKEN, FONT } from "@/components/solva/flow/tokens";
+import SolvaHeader from "@/components/thinklab/flow/ThinkLabHeader";
+import TransitionMessage from "@/components/thinklab/flow/TransitionMessage";
+import FrameAuditScreen from "@/components/thinklab/flow/FrameAuditScreen";
+import { TOKEN, FONT } from "@/components/thinklab/flow/tokens";
 // Phase D (2026-05-13) — Privacy provenance timeline. Renders a
 // vertical step-chart of every governed LLM call across the session.
 // Empty state ("no governed LLM calls yet") on legacy sessions; live

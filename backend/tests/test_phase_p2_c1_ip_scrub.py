@@ -42,7 +42,7 @@ def test_c1_public_velocity_tile_clean():
 
 
 def test_c1_solva_product_page_clean():
-    p = REPO / "frontend" / "src" / "website" / "pages" / "product" / "Solva.jsx"
+    p = REPO / "frontend" / "src" / "website" / "pages" / "product" / "ThinkLab.jsx"
     hits = _scan(p)
     assert hits == [], f"IP-reveal phrases still present in {p}: {hits}"
 

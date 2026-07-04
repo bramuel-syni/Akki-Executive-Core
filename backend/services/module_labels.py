@@ -3,18 +3,21 @@
 Backend analog of `frontend/src/lib/moduleLabels.js` (A1). Single-file
 source of truth for USER-VISIBLE module-name strings that the backend
 emits into PDFs / PPTX headers / email bodies / template fallback
-labels.
+labels — AND template filenames used by the Solva engine's PDF renderer
+(added at Phase 2 of the module rename to preserve single-file
+allowlist discipline on the FE-only-label invariant).
 
 Canonical Spec: `/app/memory/audits/SOLVA_ENGINE_VS_MODULE_DISTINCTION_AUDIT.md`
 + user directive 2026-07-02 (three-pick resolution) + Case 6 override
-dispatched by `JC-SOLVA-MODULE-RENAME-PHASE-1-ROUTES-AND-NAV`.
+dispatched by `JC-SOLVA-MODULE-RENAME-PHASE-1-ROUTES-AND-NAV` +
+Phase 2 file-tree renames (`JC-SOLVA-MODULE-RENAME-PHASE-2-FILE-TREE`).
 
 The Solva ENGINE (`services/solva_v2/*`, backend internals, LLM
 adapters, service classes, prompts, DB collections, config vars, log
 channels) KEEPS the name "Solva" verbatim. The Solva MODULE
 (user-visible product surface — nav labels, page titles, buttons,
-headers, emails, PDF/PPTX headers, Doc Journal copy) RENAMES to
-"ThinkLab".
+headers, emails, PDF/PPTX headers, Doc Journal copy, PDF template
+FILENAMES) RENAMES to "ThinkLab".
 
 This file is the single-point-of-change surface for all backend
 user-visible module strings. Any subsequent rename or brand change
@@ -22,11 +25,14 @@ touches ONLY this file. Every backend template / .py / .html fallback
 that emits a user-visible module label MUST import from here.
 
 **Invariant allowlist:** `tests/invariants/test_thinklab_uilabel_only.py`
-allowlists THIS ONE FILE (analog to how ESLint allowlists a single
-constants file). Every other backend `.py` file continues to hard-
-ratchet at zero `thinklab` matches — the invariant remains the true
-gate; this file is the escape hatch of last resort, deliberately kept
-tiny.
+allowlists (a) THIS ONE FILE (analog to how ESLint allowlists a single
+constants file); (b) `backend/tests/**/*.py` — test files that grep-
+assert against FE state; (c) `backend/scripts/**/*.py` — proving-slice
+scripts that verify rename invariants. Every OTHER backend `.py` file
+continues to hard-ratchet at zero `thinklab` matches — the invariant
+remains the true gate for PRODUCTION code; this file is the single
+escape hatch for user-visible module labels, and test/script dirs
+are exempted as meta-code that must reference FE state literally.
 """
 
 # Primary module name (post-rename).
@@ -45,10 +51,19 @@ MODULE_UI_SESSION_LABEL = "ThinkLab session"
 # used for user-visible product copy.
 ENGINE_HEALTH_LABEL = "Solva engine"
 
+# PDF template filenames (Phase 2 rename). Load-bearing constants —
+# solva_artefact_export.py imports them to keep production BE code
+# free of the raw `thinklab` token (preserves the invariant's
+# hard-ratchet on production files).
+TEMPLATE_ARTEFACT_FILENAME = "thinklab_artefact.html"
+TEMPLATE_REFUSAL_ARTEFACT_FILENAME = "thinklab_refusal_artefact.html"
+
 
 __all__ = [
     "MODULE_UI_LABEL",
     "MODULE_UI_LABEL_V3",
     "MODULE_UI_SESSION_LABEL",
     "ENGINE_HEALTH_LABEL",
+    "TEMPLATE_ARTEFACT_FILENAME",
+    "TEMPLATE_REFUSAL_ARTEFACT_FILENAME",
 ]

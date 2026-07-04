@@ -27,7 +27,7 @@
  */
 import React, { useEffect, useState } from "react";
 import { TOKEN, FONT } from "./tokens";
-import usePrefersReducedMotion from "@/components/solva/flow/usePrefersReducedMotion";
+import usePrefersReducedMotion from "@/components/thinklab/flow/usePrefersReducedMotion";
 
 const TITLE_FADE_MS = 800;
 const HOLD_MS = 400;

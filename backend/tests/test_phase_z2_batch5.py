@@ -35,9 +35,9 @@ BACKEND = REPO / "backend"
 CHAIR_NOTES_PY = BACKEND / "services" / "solva_v2" / "chair_notes.py"
 PPTX_PY = BACKEND / "services" / "solva_v2" / "pptx_exporter.py"
 ARTEFACT_ROUTER = BACKEND / "routers" / "solva_v2_artefact.py"
-TOOLBAR = FRONTEND / "components" / "solva" / "artefact_v2" / "SolvaPptxToolbar.jsx"
-STRIP = FRONTEND / "components" / "solva" / "artefact_v2" / "ChairNotesStrip.jsx"
-ARTEFACT_V2 = FRONTEND / "components" / "solva" / "artefact_v2" / "SolvaArtefactV2.jsx"
+TOOLBAR = FRONTEND / "components" / "thinklab" / "artefact_v2" / "ThinkLabPptxToolbar.jsx"
+STRIP = FRONTEND / "components" / "thinklab" / "artefact_v2" / "ChairNotesStrip.jsx"
+ARTEFACT_V2 = FRONTEND / "components" / "thinklab" / "artefact_v2" / "ThinkLabArtefactV2.jsx"
 
 
 BANNED = ["leverage", "empower", "AI-powered", "AI-driven", "insights",
@@ -119,9 +119,9 @@ def test_z2_8_loc_budget_under_120():
         ["git", "diff", "HEAD", "--shortstat", "--",
          "backend/services/solva_v2/chair_notes.py",
          "backend/routers/solva_v2_artefact.py",
-         "frontend/src/components/solva/artefact_v2/ChairNotesStrip.jsx",
-         "frontend/src/components/solva/artefact_v2/SolvaArtefactV2.jsx",
-         "frontend/src/components/solva/artefact_v2/SolvaPptxToolbar.jsx"],
+         "frontend/src/components/thinklab/artefact_v2/ChairNotesStrip.jsx",
+         "frontend/src/components/thinklab/artefact_v2/ThinkLabArtefactV2.jsx",
+         "frontend/src/components/thinklab/artefact_v2/ThinkLabPptxToolbar.jsx"],
         cwd=str(REPO), capture_output=True, text=True, check=False,
     )
     # Stat line like " 5 files changed, 118 insertions(+), 17 deletions(-)"

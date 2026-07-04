@@ -31,7 +31,7 @@ import {
   Zap, MessageCircle, Check,
 } from "lucide-react";
 import ListingShell from "@/components/common/ListingShell";
-import takeToSolva from "@/lib/takeToSolva";
+import takeToSolva from "@/lib/takeToThinkLab";
 
 
 function relTime(iso) {
@@ -164,7 +164,7 @@ function QuestionDrawer({ row, contextIdGetter, onClose, onAnswered, navigate })
   };
 
   // Q4Y P1-C1 (2026-02 fork-resume) — "Use in Solva" CTA. Reuses
-  // the canonical Pulse pattern via `lib/takeToSolva.js` →
+  // the canonical Pulse pattern via `lib/takeToThinkLab.js` →
   // `/app/solva/session/new?ctx_type=question&ctx_id={row.id}`.
   // The backend resolver lives at
   // `routers/solva_v2.py::fetch_take_to_solva_seed` (kind="question").

@@ -16,8 +16,8 @@ import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-PATHWAY = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2" / "slides" / "PathwaySlide.jsx"
-DECISION = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2" / "slides" / "DecisionLogicSlide.jsx"
+PATHWAY = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2" / "slides" / "PathwaySlide.jsx"
+DECISION = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2" / "slides" / "DecisionLogicSlide.jsx"
 
 
 def test_pathway_renders_adversarial_counter_callout():

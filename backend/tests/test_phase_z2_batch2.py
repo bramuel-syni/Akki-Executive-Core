@@ -23,7 +23,7 @@ Inventory of right-side drawers swept this batch (10 surfaces):
   4. components/monitor/ObjectivesProjectsPanel.jsx — `obj-drawer`
   5. components/monitor/StrategicGoalsPanel.jsx     — `goal-drawer`
   6. components/pulse/AcrossBoardsPanel.jsx         — `pulse-across-boards-drawer`
-  7. components/solva/artefact_v2/SessionLogPanel.jsx — `solva-v2-session-log-panel`
+  7. components/thinklab/artefact_v2/SessionLogPanel.jsx — `solva-v2-session-log-panel`
   8. pages/Questions.jsx (QuestionDrawer)           — `question-drawer`
   9. pages/WorkStudio.jsx (BriefDrawer)             — `work-studio-brief-drawer`
  10. pages/admin/CohortConsole.jsx (drilldown)      — `cohort-console-drilldown`
@@ -95,7 +95,7 @@ def test_z2_2_pulse_across_boards_drawer_scrollable():
 
 
 def test_z2_2_solva_v2_session_log_panel_scrollable():
-    src = _read(FRONTEND / "components" / "solva" / "artefact_v2" / "SessionLogPanel.jsx")
+    src = _read(FRONTEND / "components" / "thinklab" / "artefact_v2" / "SessionLogPanel.jsx")
     assert 'data-testid="solva-v2-session-log-panel"' in src
     # `<aside ... flex flex-col>` with `flex-1 overflow-y-auto` body.
     assert "flex-1 overflow-y-auto" in src

@@ -19,7 +19,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent.parent
 BADGE = REPO / "frontend" / "src" / "components" / "chat" / "PerMessageSynisenseBadge.jsx"
-SOLVA_V1_BADGE = REPO / "frontend" / "src" / "components" / "solva" / "artefact" / "PerSectionSynisenseBadge.jsx"
+SOLVA_V1_BADGE = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact" / "PerSectionSynisenseBadge.jsx"
 
 
 def test_zz_1_label_includes_restored_half():

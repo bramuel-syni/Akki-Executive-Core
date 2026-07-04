@@ -42,10 +42,10 @@ if str(BACKEND) not in sys.path:
 
 V1_FILES = (
     BACKEND / "solva_artefact_export.py",
-    BACKEND / "services" / "solva" / "voice" / "synthesis_renderer.py",
-    BACKEND / "services" / "solva" / "voice" / "question_bank.py",
-    BACKEND / "templates" / "solva_artefact.html",
-    BACKEND / "templates" / "solva_refusal_artefact.html",
+    BACKEND / "services" / "solva_voice_audit" / "voice" / "synthesis_renderer.py",
+    BACKEND / "services" / "solva_voice_audit" / "voice" / "question_bank.py",
+    BACKEND / "templates" / "thinklab_artefact.html",
+    BACKEND / "templates" / "thinklab_refusal_artefact.html",
     BACKEND / "services" / "solva_v2" / "__init__.py",
     BACKEND / "services" / "solva_v2" / "state_machine.py",
     BACKEND / "services" / "solva_v2" / "submodules.py",
@@ -63,7 +63,7 @@ def test_v1_files_do_not_import_solva_v2_artefact_modules():
     """Slice 1a/1b modules MUST NOT be imported by any v1 surface.
 
     The v1 path uses `solva_artefact_export.py` + `services.solva.voice.*`
-    + the Jinja template at `templates/solva_artefact.html`. None of
+    + the Jinja template at `templates/thinklab_artefact.html`. None of
     these should reference the new v2 schema/validators/builder/flag
     modules — that would couple v1 to v2 and break the feature-flag
     isolation contract."""

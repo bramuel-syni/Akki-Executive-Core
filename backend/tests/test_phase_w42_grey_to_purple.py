@@ -55,7 +55,7 @@ REPO = Path(__file__).resolve().parent.parent.parent
 STRATEGIC_GOALS = REPO / "frontend" / "src" / "components" / "monitor" / "StrategicGoalsPanel.jsx"
 TENANT_SETTINGS = REPO / "frontend" / "src" / "pages" / "TenantSettings.jsx"
 ACCOUNT_SECURITY = REPO / "frontend" / "src" / "pages" / "AccountSecurity.jsx"
-SOLVA_SESSIONS = REPO / "frontend" / "src" / "pages" / "SolvaSessions.jsx"
+SOLVA_SESSIONS = REPO / "frontend" / "src" / "pages" / "ThinkLabSessions.jsx"
 
 
 # Wave 4.2.followup.2 — accept either token form when asserting purple bg.

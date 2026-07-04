@@ -4,7 +4,7 @@
  */
 import React from "react";
 import { TOKEN, FONT } from "./tokens";
-import { questionProgress, isReflectionState } from "@/lib/solvaFlow";
+import { questionProgress, isReflectionState } from "@/lib/thinkLabFlow";
 
 export default function ProgressIndicator({ state }) {
   let label = null;

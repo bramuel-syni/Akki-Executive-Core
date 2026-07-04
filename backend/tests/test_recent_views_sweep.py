@@ -41,7 +41,7 @@ WS_DOC_PAGE       = FE / "pages" / "WorkStudioDocumentPage.jsx"
 DOC_DRAWER        = FE / "components" / "documents" / "DocumentDrawer.jsx"
 TASK_DRAWER       = FE / "components" / "tasks" / "TaskDrawer.jsx"
 CHAT_PAGE         = FE / "pages" / "Chat.jsx"
-SOLVA_SESSION     = FE / "pages" / "SolvaSession.jsx"
+SOLVA_SESSION     = FE / "pages" / "ThinkLabSession.jsx"
 PULSE_PAGE        = FE / "pages" / "Pulse.jsx"
 
 

@@ -42,7 +42,7 @@ def test_portfolio_vertical_divider_still_absolute():
 def test_solva_trust_banner_is_slim():
     """Banner was thinned to bring the picker grid above the fold.
     Lock the slim classes; explicitly forbid the thick pre-fix combo."""
-    src = _read("/app/frontend/src/pages/SolvaApp.jsx")
+    src = _read("/app/frontend/src/pages/ThinkLabApp.jsx")
     assert "mb-3 mt-2" in src, "trust banner outer margin should be mt-2 mb-3 (P5.14.2)"
     assert "px-3 py-1.5 text-xs" in src, "trust banner inner padding should be slim (P5.14.2)"
     # Forbid the pre-fix thick combo.
@@ -52,7 +52,7 @@ def test_solva_trust_banner_is_slim():
 
 def test_solva_landing_top_padding_trimmed():
     """SolvaLanding top padding was 120 → 40 (compact-like-Home)."""
-    src = _read("/app/frontend/src/components/solva/SolvaLanding.jsx")
+    src = _read("/app/frontend/src/components/thinklab/ThinkLabLanding.jsx")
     assert 'padding: "40px 24px 60px"' in src, (
         "SolvaLanding outer padding should be 40 top / 24 side / 60 bottom (P5.14.2)"
     )
@@ -63,7 +63,7 @@ def test_solva_landing_top_padding_trimmed():
 
 def test_solva_landing_subtitle_gap_trimmed():
     """Subtitle margin was 64 → 28; h1 margin trimmed 12 → 8; h1 size 44 → 40."""
-    src = _read("/app/frontend/src/components/solva/SolvaLanding.jsx")
+    src = _read("/app/frontend/src/components/thinklab/ThinkLabLanding.jsx")
     assert 'margin: "0 0 28px 0"' in src, "subtitle bottom margin must be 28 (P5.14.2)"
     assert 'margin: "0 0 64px 0"' not in src, "pre-fix 64 subtitle margin must not return"
     assert 'margin: "0 0 8px 0"' in src, "h1 bottom margin must be 8 (P5.14.2)"

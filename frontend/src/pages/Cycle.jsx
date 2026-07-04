@@ -54,7 +54,7 @@ import TeamCatalogueDialog from "@/components/cycle/TeamCatalogueDialog";
 // (QA-2026-05-16-017…-021). Inlined per dispatch decision #2.
 import ContributionAttachPicker from "@/components/cycle/ContributionAttachPicker";
 import { activateCycle, closeCycle, getCycle, listEligibleContributors } from "@/lib/cycleApi";
-import { takeToSolva } from "@/lib/takeToSolva";
+import { takeToSolva } from "@/lib/takeToThinkLab";
 import WorkspaceEntryGate from "@/components/transitions/WorkspaceEntryGate";
 
 /** Returns `?cycle_id=...` (or `&cycle_id=...`) when cycleId is set. */

@@ -21,9 +21,9 @@ from pathlib import Path
 
 
 REPO = Path(__file__).resolve().parents[2]
-SESSION_PAGE = REPO / "frontend" / "src" / "pages" / "SolvaSession.jsx"
+SESSION_PAGE = REPO / "frontend" / "src" / "pages" / "ThinkLabSession.jsx"
 FLAG_HELPER = REPO / "frontend" / "src" / "lib" / "solvaV2FeatureFlag.js"
-V1_ARTEFACT = REPO / "frontend" / "src" / "components" / "solva" / "artefact" / "SolvaArtefact.jsx"
+V1_ARTEFACT = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact" / "ThinkLabArtefact.jsx"
 BACKEND_FLAG = REPO / "backend" / "services" / "solva_v2" / "feature_flag.py"
 BACKEND_ROUTER = REPO / "backend" / "routers" / "solva_v2_artefact.py"
 BACKEND_SERVER = REPO / "backend" / "server.py"

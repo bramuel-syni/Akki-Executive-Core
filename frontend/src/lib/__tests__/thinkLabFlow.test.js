@@ -15,7 +15,7 @@ import {
   questionProgress,
   resumePoint,
   Actions,
-} from "../solvaFlow";
+} from "../thinkLabFlow";
 
 describe("STATES list (locked order)", () => {
   test("contains exactly the 14 states from the brief, in order", () => {

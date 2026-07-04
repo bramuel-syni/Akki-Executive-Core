@@ -44,8 +44,8 @@ import pytest
 
 
 REPO = Path(__file__).resolve().parents[2]
-V2_DIR = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2"
-ORCH = V2_DIR / "SolvaArtefactV2.jsx"
+V2_DIR = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2"
+ORCH = V2_DIR / "ThinkLabArtefactV2.jsx"
 SLIDES = V2_DIR / "slides"
 
 

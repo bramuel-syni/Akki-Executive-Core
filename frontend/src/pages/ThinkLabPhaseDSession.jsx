@@ -18,7 +18,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import AuditPanel from "@/components/chat/AuditPanel";
-import AttachDocumentModal from "@/components/solva/AttachDocumentModal";
+import AttachDocumentModal from "@/components/thinklab/AttachDocumentModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,14 +26,14 @@ import { Loader2, ArrowRight, ShieldCheck, Paperclip, FileText, X, Info } from "
 import { toast } from "sonner";
 import api from "@/lib/api/apiV2";
 // Phase D.1 (2026-05-26) — briefing deck reopen via (i) icon.
-import SolvaBriefingDeck from "@/components/solva/SolvaBriefingDeck";
+import SolvaBriefingDeck from "@/components/thinklab/ThinkLabBriefingDeck";
 import { SUBMODULE_TO_AREA } from "@/data/solva-briefings";
 import {
   createPhaseDSession,
   getPhaseDSession,
   submitFraming,
   submitAnswer,
-} from "@/lib/solvaPhaseDClient";
+} from "@/lib/thinkLabPhaseDClient";
 import { parseProseBlocks } from "@/lib/proseBlocks";
 
 

@@ -68,8 +68,8 @@ MODULE_LABELS_PY = BACKEND / "services/module_labels.py"
 SOLVA_EXPORT_PY = BACKEND / "solva_artefact_export.py"
 INVARIANT_PY = BACKEND / _FE_LABEL_INVARIANT
 
-ARTEFACT_HTML = BACKEND / "templates/solva_artefact.html"
-REFUSAL_HTML = BACKEND / "templates/solva_refusal_artefact.html"
+ARTEFACT_HTML = BACKEND / "templates/thinklab_artefact.html"
+REFUSAL_HTML = BACKEND / "templates/thinklab_refusal_artefact.html"
 
 SOLVA_V2_DIR = BACKEND / "services/solva_v2"
 
@@ -220,22 +220,37 @@ def row8_template_content_flipped() -> Tuple[bool, str]:
     )
 
 
-def row9_template_filenames_unchanged() -> Tuple[bool, str]:
-    art_exists = ARTEFACT_HTML.exists() and ARTEFACT_HTML.name == "solva_artefact.html"
-    ref_exists = REFUSAL_HTML.exists() and REFUSAL_HTML.name == "solva_refusal_artefact.html"
-    # New-name template filenames NOT created (Phase 2 defers this).
-    art_new_named = (BACKEND / f"templates/{_TL_SEG}_artefact.html").exists()
-    ref_new_named = (BACKEND / f"templates/{_TL_SEG}_refusal_artefact.html").exists()
-    ok = art_exists and ref_exists and not art_new_named and not ref_new_named
+def row9_template_filenames_renamed_by_phase_2() -> Tuple[bool, str]:
+    """R9 — post-Phase-2 polarity flip. Template filenames RENAMED by
+    Phase 2 (old `solva_*.html` names GONE, new `{_TL_SEG}_*.html`
+    names PRESENT). Was "unchanged, Phase 2 defers" until Phase 2 shipped
+    per user Option (a) confirmation 2026-07-02."""
+    new_art_path = BACKEND / f"templates/{_TL_SEG}_artefact.html"
+    new_ref_path = BACKEND / f"templates/{_TL_SEG}_refusal_artefact.html"
+    old_art_path = BACKEND / "templates/solva_artefact.html"
+    old_ref_path = BACKEND / "templates/solva_refusal_artefact.html"
+
+    new_art_exists = new_art_path.exists()
+    new_ref_exists = new_ref_path.exists()
+    old_art_absent = not old_art_path.exists()
+    old_ref_absent = not old_ref_path.exists()
+    ok = new_art_exists and new_ref_exists and old_art_absent and old_ref_absent
     return ok, (
-        f"artefact-old-filename={art_exists} refusal-old-filename={ref_exists} "
-        f"artefact-new-not-created={not art_new_named} refusal-new-not-created={not ref_new_named}"
+        f"new-artefact-exists={new_art_exists} new-refusal-exists={new_ref_exists} "
+        f"old-artefact-absent={old_art_absent} old-refusal-absent={old_ref_absent}"
     )
 
 
 def row10_solva_export_uses_constants() -> Tuple[bool, str]:
     src = _text(SOLVA_EXPORT_PY)
-    imports_constant = "from services.module_labels import MODULE_UI_SESSION_LABEL" in src
+    # Post-Phase-2, the import may be single-line OR multi-line
+    # (Phase 2 added TEMPLATE_ARTEFACT_FILENAME + TEMPLATE_REFUSAL_
+    # ARTEFACT_FILENAME). Check for the module + symbol independently
+    # to tolerate both forms.
+    imports_constant = (
+        "from services.module_labels import" in src
+        and "MODULE_UI_SESSION_LABEL" in src
+    )
     fallback_1 = "return MODULE_UI_SESSION_LABEL" in src
     fallback_2 = "SUBMODULE_LABELS.get(submodule, MODULE_UI_SESSION_LABEL)" in src
     # Raw "Solva session" literal is GONE from those two sites (may
@@ -338,12 +353,19 @@ def row13_solva_engine_untouched() -> Tuple[bool, str]:
 
 
 def row14_supporting_invariants_green() -> Tuple[bool, str]:
-    """R14 — JC-CHAT, F.6 Shield, pollution ceilings preserved."""
+    """R14 — JC-CHAT, F.6 Shield, pollution ceilings preserved.
+
+    `test_invariant_shield_no_leak.py` contains `@pytest.mark.integration`
+    tests that make real LLM round-trips; filter them out with
+    `-m "not integration"` so the invariant check completes in seconds
+    instead of minutes.
+    """
     rc, out, err = _run([
         "python", "-m", "pytest",
         "tests/invariants/test_invariant_chat_streaming_reidentify_present.py",
         "tests/invariants/test_invariant_shield_no_leak.py",
         "tests/invariants/test_no_bespoke_run_helper.py",
+        "-m", "not integration",
         "-q", "--tb=no",
     ])
     tail = (out + err).splitlines()[-3:] if (out or err) else []
@@ -392,7 +414,7 @@ ROWS: List[Tuple[str, Callable[[], Tuple[bool, str]]]] = [
     ("R6 AppShell nav labels + `to` fields flipped", row6_appshell_nav_labels_and_paths),
     ("R7 BE constants file valid + importable", row7_be_constants_file_valid),
     ("R8 template CONTENT flipped (module label surfaces)", row8_template_content_flipped),
-    ("R9 template FILENAMES unchanged (Phase 2 defers)", row9_template_filenames_unchanged),
+    ("R9 template FILENAMES renamed by Phase 2 (post-flip)", row9_template_filenames_renamed_by_phase_2),
     ("R10 solva_artefact_export.py uses constants", row10_solva_export_uses_constants),
     ("R11 FE-only-label invariant GREEN with allowlist", row11_invariant_allowlist_green),
     ("R12 invariant still rejects non-allowlisted (ratchet strength)", row12_invariant_still_rejects_non_allowlisted),

@@ -31,7 +31,7 @@ import api from "@/lib/api/apiV2";
 import { apiErrorMessage } from "@/lib/api";
 import { Loader2, AlertCircle } from "lucide-react";
 import SectionDivider from "./SectionDivider";
-import SolvaReasoningTicker from "./SolvaReasoningTicker";
+import SolvaReasoningTicker from "./ThinkLabReasoningTicker";
 import useSolvaReasoningStream from "@/hooks/useSolvaReasoningStream";
 import CoverSlide from "./slides/CoverSlide";
 import HeadlineSlide from "./slides/HeadlineSlide";
@@ -55,7 +55,7 @@ import SessionLogPanel from "./SessionLogPanel";
 import ChairNotesStrip from "./ChairNotesStrip";
 // PPTX export (queue position 4, 2026-05-29) — toolbar pinned above
 // the first slide; `print:hidden` keeps it out of the paper artefact.
-import SolvaPptxToolbar from "./SolvaPptxToolbar";
+import SolvaPptxToolbar from "./ThinkLabPptxToolbar";
 import InClosingSlide from "./slides/InClosingSlide";
 
 

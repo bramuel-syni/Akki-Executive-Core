@@ -46,7 +46,7 @@ PAGE_SUBTEXT_FILES = (
     # Chat — empty-state H1 ("Your private AI workspace.").
     "pages/Chat.jsx",
     # Solva — H1 lives in the picker component mounted under SolvaApp.
-    "components/solva/SolvaLanding.jsx",
+    "components/thinklab/ThinkLabLanding.jsx",
     "pages/WorkStudio.jsx",
     "pages/TaskManager.jsx",
     "pages/Monitor.jsx",

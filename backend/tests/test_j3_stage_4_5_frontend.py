@@ -201,8 +201,8 @@ def test_j3_f5_trust_center_tour_dom_unconditional():
 # ── J3.F6 — RETIRED at J4 ship ───────────────────────────────────────
 # The J3-era guard `test_j3_f6_no_j4_chat_starter_scope_pulled_forward`
 # was retired when J4 shipped (2026-05-25). The J4 chat-starter
-# seeding (G30) now lives in `pages/SolvaPhaseDSession.jsx` +
-# `pages/SolvaApp.jsx` + `pages/FirstSession.jsx`. The closure guard
+# seeding (G30) now lives in `pages/ThinkLabPhaseDSession.jsx` +
+# `pages/ThinkLabApp.jsx` + `pages/FirstSession.jsx`. The closure guard
 # `test_onboarding_sprint_j1_j4_complete` in
 # `test_j4_stage_6_backend.py` enforces the post-J4 invariants
 # (door allow-list pinned + all 5 J1/J2/J3/J4 status flags emitted

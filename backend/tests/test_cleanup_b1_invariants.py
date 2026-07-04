@@ -27,7 +27,7 @@ BE_TESTS_ARCHIVE = REPO / "backend" / "tests" / "_archived_coverage_loss"
 def test_b1_solva_landing_page_archived():
     """The unreachable pages/SolvaLanding.jsx is gone from the live tree
     and present in the archive."""
-    live = FE_SRC / "pages" / "SolvaLanding.jsx"
+    live = FE_SRC / "pages" / "ThinkLabLanding.jsx"
     archived = FE_ARCHIVE / "pages" / "SolvaLanding.jsx.archived"
     assert not live.exists(), f"live page must be archived: {live}"
     assert archived.exists(), f"archive missing: {archived}"

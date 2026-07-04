@@ -25,7 +25,7 @@
 import { useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { takeToSolva } from "@/lib/takeToSolva";
+import { takeToSolva } from "@/lib/takeToThinkLab";
 
 function isTypingTarget(el) {
   if (!el) return false;

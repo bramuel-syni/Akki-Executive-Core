@@ -2,7 +2,7 @@
  * Sandbox v2 design tokens — mirror Phase I tokens with the four
  * additional brand surfaces called out in the brief §8.1.
  */
-import { TOKEN as PHASE_I, FONT, SUBMODULE_LABELS } from "@/components/solva/flow/tokens";
+import { TOKEN as PHASE_I, FONT, SUBMODULE_LABELS } from "@/components/thinklab/flow/tokens";
 
 export const TOKEN = Object.freeze({
   ...PHASE_I,

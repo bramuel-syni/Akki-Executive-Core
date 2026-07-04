@@ -19,9 +19,9 @@ os.environ.setdefault("JWT_SECRET", "x" * 64)
 
 REPO = Path(__file__).resolve().parents[2]
 SLIDES_JS = REPO / "frontend" / "src" / "data" / "solva-briefings.js"
-DECK_JSX = REPO / "frontend" / "src" / "components" / "solva" / "SolvaBriefingDeck.jsx"
-SOLVA_LANDING = REPO / "frontend" / "src" / "components" / "solva" / "SolvaLanding.jsx"
-SOLVA_SESSION = REPO / "frontend" / "src" / "pages" / "SolvaPhaseDSession.jsx"
+DECK_JSX = REPO / "frontend" / "src" / "components" / "thinklab" / "ThinkLabBriefingDeck.jsx"
+SOLVA_LANDING = REPO / "frontend" / "src" / "components" / "thinklab" / "ThinkLabLanding.jsx"
+SOLVA_SESSION = REPO / "frontend" / "src" / "pages" / "ThinkLabPhaseDSession.jsx"
 CHAT = REPO / "frontend" / "src" / "pages" / "Chat.jsx"
 
 
@@ -418,7 +418,7 @@ def test_phase_d3_solva_context_passing_via_existing_helper():
     as seed_kind / seed_id query params. The brief said to MATCH
     existing patterns — verify the helper remains intact and is
     invoked from the document detail surface."""
-    helper = REPO / "frontend" / "src" / "lib" / "takeToSolva.js"
+    helper = REPO / "frontend" / "src" / "lib" / "takeToThinkLab.js"
     assert helper.exists()
     src = helper.read_text("utf-8")
     assert "seed_kind" in src
@@ -458,7 +458,7 @@ def test_phase_d3_solva_app_accepts_ctx_type_ctx_id_alias():
     """SolvaApp.jsx reads BOTH ctx_type/ctx_id (canonical) AND
     seed_kind/seed_id (legacy alias) on mount, with both resolving
     identically into the seed handoff plumbing."""
-    src = (REPO / "frontend" / "src" / "pages" / "SolvaApp.jsx").read_text("utf-8")
+    src = (REPO / "frontend" / "src" / "pages" / "ThinkLabApp.jsx").read_text("utf-8")
     assert 'params.get("ctx_type")' in src
     assert 'params.get("ctx_id")' in src
     assert 'params.get("seed_kind")' in src
@@ -669,9 +669,9 @@ def test_phase_d_handoff_ask_in_chat_emits_ctx_type_ctx_id():
 
 
 def test_phase_d_take_to_solva_helper_emits_ctx_type_ctx_id():
-    """lib/takeToSolva.js must emit `?ctx_type=…&ctx_id=…` (canonical)
+    """lib/takeToThinkLab.js must emit `?ctx_type=…&ctx_id=…` (canonical)
     in the URL — NOT `?seed_kind=…&seed_id=…` (legacy)."""
-    src = (REPO / "frontend" / "src" / "lib" / "takeToSolva.js").read_text("utf-8")
+    src = (REPO / "frontend" / "src" / "lib" / "takeToThinkLab.js").read_text("utf-8")
     # Locate the URLSearchParams construction inside takeToSolva().
     assert 'new URLSearchParams({ ctx_type: String(kind), ctx_id: String(id) })' in src, (
         "takeToSolva must build params with canonical {ctx_type, ctx_id}"
@@ -753,7 +753,7 @@ def test_phase_d_solva_session_accepts_ctx_type_ctx_id_alias():
     """SolvaSession.jsx must accept ctx_type/ctx_id as a canonical
     alias for the legacy seed_kind/seed_id pair. The takeToSolva
     helper now emits the canonical form."""
-    src = (REPO / "frontend" / "src" / "pages" / "SolvaSession.jsx").read_text("utf-8")
+    src = (REPO / "frontend" / "src" / "pages" / "ThinkLabSession.jsx").read_text("utf-8")
     # Both query-param forms must be read on mount.
     assert 'searchParams.get("ctx_type")' in src
     assert 'searchParams.get("ctx_id")' in src
@@ -836,7 +836,7 @@ def test_phase_d_no_legacy_solva_seed_url_emitted_in_active_code():
             # The takeToSolva helper itself must not emit the legacy
             # URL pattern (we already check this in a separate test,
             # but it's worth catching here to make the sweep complete).
-            if rel.endswith("takeToSolva.js") and "seed_kind: String(kind)" in cleaned:
+            if rel.endswith("takeToThinkLab.js") and "seed_kind: String(kind)" in cleaned:
                 offenders.append(f"{rel} (seed_kind in URLSearchParams)")
     assert not offenders, (
         f"Legacy Solva seed_kind/seed_id URLs still emitted in: {offenders}"
@@ -861,7 +861,11 @@ def test_phase_d_post_test_fixes_logged_in_home_cleanup_log():
     pattern."""
     log = (REPO / "memory" / "sprints" / "HOME_CLEANUP_LOG.md").read_text("utf-8")
     assert "Phase D — post-test fixes" in log
-    # Each updated surface must be enumerated.
+    # Each updated surface must be enumerated. NOTE: these strings are
+    # HISTORICAL — they reference the filenames as they existed at the
+    # time the log was authored (pre-Phase-2 rename). The log file is a
+    # historical document; assertions check its literal content, not
+    # current filenames.
     for surface in (
         "HandoffActions.jsx",
         "takeToSolva.js",

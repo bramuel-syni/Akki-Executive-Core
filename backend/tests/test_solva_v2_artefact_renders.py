@@ -20,10 +20,10 @@ from pathlib import Path
 
 
 REPO = Path(__file__).resolve().parents[2]
-V2_DIR = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2"
+V2_DIR = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2"
 SHELL = V2_DIR / "SlideShell.jsx"
 DIVIDER = V2_DIR / "SectionDivider.jsx"
-ORCH = V2_DIR / "SolvaArtefactV2.jsx"
+ORCH = V2_DIR / "ThinkLabArtefactV2.jsx"
 SLIDES = V2_DIR / "slides"
 
 
@@ -328,7 +328,7 @@ def test_frontend_feature_flag_helper_truth_table():
 def test_solva_session_wires_v2_via_feature_flag():
     """SolvaSession.jsx must check `solvaV2EnabledFor(account)` and
     swap between v2 and v1 — not hardcode either."""
-    page_path = REPO / "frontend" / "src" / "pages" / "SolvaSession.jsx"
+    page_path = REPO / "frontend" / "src" / "pages" / "ThinkLabSession.jsx"
     src = page_path.read_text(encoding="utf-8")
     assert "solvaV2EnabledFor(account)" in src, (
         "SolvaSession.jsx must gate v2/v1 swap behind the feature flag."

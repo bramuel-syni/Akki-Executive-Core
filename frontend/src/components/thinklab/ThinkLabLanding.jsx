@@ -39,7 +39,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import api from "@/lib/api/apiV2";
 // Phase D.1 (2026-05-26) — pre-conversation briefing deck.
-import SolvaBriefingDeck from "@/components/solva/SolvaBriefingDeck";
+import SolvaBriefingDeck from "@/components/thinklab/ThinkLabBriefingDeck";
 import { SUBMODULE_TO_AREA } from "@/data/solva-briefings";
 
 // Tokens (brief §7.1) — kept inline so the component is portable.

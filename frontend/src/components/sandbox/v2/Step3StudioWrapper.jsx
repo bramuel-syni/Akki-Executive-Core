@@ -25,7 +25,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { TOKEN, FONT } from "./tokens";
 import { Actions } from "@/lib/sandboxV2Flow";
-import usePrefersReducedMotion from "@/components/solva/flow/usePrefersReducedMotion";
+import usePrefersReducedMotion from "@/components/thinklab/flow/usePrefersReducedMotion";
 
 // JC-WAVE3 axios → shared client (2026-06-26) — drop the local
 // axios.create; use the shared client from lib/api which already

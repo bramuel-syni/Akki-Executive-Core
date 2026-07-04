@@ -15,8 +15,8 @@ import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-SLIDE = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2" / "slides" / "CostAsymmetrySlide.jsx"
-ORCH = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2" / "SolvaArtefactV2.jsx"
+SLIDE = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2" / "slides" / "CostAsymmetrySlide.jsx"
+ORCH = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2" / "ThinkLabArtefactV2.jsx"
 
 
 def test_cost_asymmetry_slide_file_exists():

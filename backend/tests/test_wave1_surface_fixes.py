@@ -37,7 +37,7 @@ SURFACE_FILES = {
     "monitor":        REPO / "frontend" / "src" / "pages" / "Monitor.jsx",
     "pulse":          REPO / "frontend" / "src" / "pages" / "Pulse.jsx",
     "learn":          REPO / "frontend" / "src" / "pages" / "Learn.jsx",
-    "solva-landing":  REPO / "frontend" / "src" / "components" / "solva" / "SolvaLanding.jsx",
+    "solva-landing":  REPO / "frontend" / "src" / "components" / "thinklab" / "ThinkLabLanding.jsx",
     "chat":           REPO / "frontend" / "src" / "pages" / "Chat.jsx",
 }
 

@@ -53,7 +53,7 @@ REPO = Path(__file__).resolve().parent.parent.parent
 BE = REPO / "backend"
 SOLVA_ROUTER = BE / "routers" / "solva_v2.py"
 PAGE = REPO / "frontend" / "src" / "pages" / "Questions.jsx"
-HELPER = REPO / "frontend" / "src" / "lib" / "takeToSolva.js"
+HELPER = REPO / "frontend" / "src" / "lib" / "takeToThinkLab.js"
 
 
 def _read(p: Path) -> str:

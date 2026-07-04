@@ -18,10 +18,10 @@ import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-SHELL = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2" / "SlideShell.jsx"
-ORCH = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2" / "SolvaArtefactV2.jsx"
-TICKER = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2" / "SolvaReasoningTicker.jsx"
-PANEL = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2" / "SessionLogPanel.jsx"
+SHELL = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2" / "SlideShell.jsx"
+ORCH = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2" / "ThinkLabArtefactV2.jsx"
+TICKER = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2" / "ThinkLabReasoningTicker.jsx"
+PANEL = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2" / "SessionLogPanel.jsx"
 HOOK = REPO / "frontend" / "src" / "hooks" / "useSolvaReasoningStream.js"
 
 

@@ -41,7 +41,11 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 # from A1). The FE-only-label invariant allowlists that single
 # constants file so this module can import the labels without
 # tripping the hard ratchet.
-from services.module_labels import MODULE_UI_SESSION_LABEL
+from services.module_labels import (
+    MODULE_UI_SESSION_LABEL,
+    TEMPLATE_ARTEFACT_FILENAME,
+    TEMPLATE_REFUSAL_ARTEFACT_FILENAME,
+)
 
 logger = logging.getLogger("akki.solva.export")
 
@@ -427,9 +431,9 @@ def _refusal_overlay(session: Dict[str, Any]) -> Dict[str, Any]:
 def _render_html(session: Dict[str, Any]) -> str:
     ctx = build_artefact_context(session)
     if ctx.get("is_refusal"):
-        tmpl = _env.get_template("solva_refusal_artefact.html")
+        tmpl = _env.get_template(TEMPLATE_REFUSAL_ARTEFACT_FILENAME)
     else:
-        tmpl = _env.get_template("solva_artefact.html")
+        tmpl = _env.get_template(TEMPLATE_ARTEFACT_FILENAME)
     return tmpl.render(**ctx)
 
 

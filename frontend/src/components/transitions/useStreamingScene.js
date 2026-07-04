@@ -9,7 +9,7 @@
  *      Akki Commentary, Cycle compilation, Work Studio Enhance).
  *      5–7 lines, optionally driven by a real-phase signal.
  *   3. Solva Layer Transitions — already implemented in
- *      `components/solva/flow/TransitionMessage.jsx`; kept as-is to
+ *      `components/thinklab/flow/TransitionMessage.jsx`; kept as-is to
  *      avoid disturbing the audit-row lineage that depends on its
  *      timing.
  *
@@ -25,7 +25,7 @@
  * collapses the scene to its final state (all lines visible, no animation).
  */
 import { useEffect, useState, useRef } from "react";
-import usePrefersReducedMotion from "@/components/solva/flow/usePrefersReducedMotion";
+import usePrefersReducedMotion from "@/components/thinklab/flow/usePrefersReducedMotion";
 
 export default function useStreamingScene({
   lines,

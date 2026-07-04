@@ -129,7 +129,7 @@ def test_m1a_home_triptych_alt_recast():
 
 
 def test_m1a_solva_modes_h2_recast():
-    s = _r("website/pages/product/Solva.jsx")
+    s = _r("website/pages/product/ThinkLab.jsx")
     assert "moment in senior thinking" not in s
     assert "Each mode is a faithful answer to a moment in executive thinking." in s
 

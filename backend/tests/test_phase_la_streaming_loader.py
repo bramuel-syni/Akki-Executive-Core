@@ -34,7 +34,7 @@ SOLVA_V2_PY = BACKEND / "routers" / "solva_v2.py"
 HOOK_JS = FRONTEND / "hooks" / "useStreamingProgress.js"
 SCENE_JSX = FRONTEND / "components" / "transitions" / "StreamingLogScene.jsx"
 INDEX_CSS = FRONTEND / "index.css"
-FRAME_AUDIT_JSX = FRONTEND / "components" / "solva" / "flow" / "FrameAuditScreen.jsx"
+FRAME_AUDIT_JSX = FRONTEND / "components" / "thinklab" / "flow" / "FrameAuditScreen.jsx"
 EXPORT_MODAL_JSX = FRONTEND / "components" / "studio" / "ExportModal.jsx"
 VISUAL_REF_MD = REPO / "memory" / "sprints" / "PHASE_L_VISUAL_REFERENCE.md"
 

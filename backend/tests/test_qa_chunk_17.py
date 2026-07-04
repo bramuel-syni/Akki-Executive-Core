@@ -172,7 +172,7 @@ def test_chunk17_c17_004_solva_prose_outer_overflow_class():
     `overflow-y-auto` + `max-h-[70vh]`. Either the outer or inner
     wrapper queried via getComputedStyle().overflowY should return
     "auto" — restructure was defence-in-depth."""
-    path = "/app/frontend/src/pages/SolvaPhaseDSession.jsx"
+    path = "/app/frontend/src/pages/ThinkLabPhaseDSession.jsx"
     with open(path) as f:
         src = f.read()
     # Find the ProseBlock function body and inspect ONLY the JSX
@@ -247,7 +247,7 @@ def test_chunk17_no_new_direct_llm_calls():
     None of it touches LLM call paths."""
     touched = [
         "/app/frontend/src/components/monitor/StrategicGoalsPanel.jsx",
-        "/app/frontend/src/pages/SolvaPhaseDSession.jsx",
+        "/app/frontend/src/pages/ThinkLabPhaseDSession.jsx",
         "/app/frontend/src/pages/cycle/CycleList.jsx",
         "/app/backend/scripts/seed_chunks.py",
         "/app/frontend/scripts/render-smoke.js",

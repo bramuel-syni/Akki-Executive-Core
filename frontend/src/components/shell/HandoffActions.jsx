@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import api from "@/lib/api/apiV2";
 import { apiErrorMessage } from "@/lib/api";
-import { takeToSolva } from "@/lib/takeToSolva";
+import { takeToSolva } from "@/lib/takeToThinkLab";
 import { Sparkles, Presentation, ListPlus, Loader2, MessageSquare } from "lucide-react";
 import AddToCycleModal from "@/components/shared/AddToCycleModal";
 

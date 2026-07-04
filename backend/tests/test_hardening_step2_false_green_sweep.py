@@ -273,7 +273,7 @@ def test_s2_f_craco_eslint_pins_b3_pattern():
 
 
 # ── S2.G — AttachDocumentModal `Search` icon import (B3 caught) ────
-ATTACH_DOC = REPO / "frontend/src/components/solva/AttachDocumentModal.jsx"
+ATTACH_DOC = REPO / "frontend/src/components/thinklab/AttachDocumentModal.jsx"
 
 
 def test_s2_g_attach_document_modal_imports_search_icon():

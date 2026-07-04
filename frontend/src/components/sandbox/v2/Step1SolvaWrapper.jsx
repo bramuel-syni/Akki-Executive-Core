@@ -30,12 +30,12 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-import FramingScreen from "@/components/solva/flow/FramingScreen";
-import QuestionScreen from "@/components/solva/flow/QuestionScreen";
-import PreparingInterstitial from "@/components/solva/flow/PreparingInterstitial";
-import SolvaArtefact from "@/components/solva/artefact/SolvaArtefact";
-import SolvaRefusalArtefact from "@/components/solva/artefact/SolvaRefusalArtefact";
-import { TOKEN, FONT } from "@/components/solva/flow/tokens";
+import FramingScreen from "@/components/thinklab/flow/FramingScreen";
+import QuestionScreen from "@/components/thinklab/flow/QuestionScreen";
+import PreparingInterstitial from "@/components/thinklab/flow/PreparingInterstitial";
+import SolvaArtefact from "@/components/thinklab/artefact/ThinkLabArtefact";
+import SolvaRefusalArtefact from "@/components/thinklab/artefact/ThinkLabRefusalArtefact";
+import { TOKEN, FONT } from "@/components/thinklab/flow/tokens";
 
 import { Actions as SbxActions } from "@/lib/sandboxV2Flow";
 

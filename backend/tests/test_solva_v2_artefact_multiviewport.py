@@ -28,7 +28,7 @@ import pytest
 
 
 REPO = Path(__file__).resolve().parents[2]
-V2_DIR = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2"
+V2_DIR = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2"
 SHELL = V2_DIR / "SlideShell.jsx"
 DIVIDER = V2_DIR / "SectionDivider.jsx"
 SLIDES = V2_DIR / "slides"
@@ -45,7 +45,7 @@ def test_orchestrator_mounts_body_class_for_print_scope():
     body class via useEffect when the artefact mounts and remove it
     on unmount. This replaces the prior `body:has(.solva-v2-print-root)`
     selector which was unreliable in some browser/Playwright pipelines."""
-    src = (V2_DIR / "SolvaArtefactV2.jsx").read_text(encoding="utf-8")
+    src = (V2_DIR / "ThinkLabArtefactV2.jsx").read_text(encoding="utf-8")
     assert "useEffect" in src
     assert "solva-v2-printing-context" in src, (
         "Orchestrator must reference the `solva-v2-printing-context` "

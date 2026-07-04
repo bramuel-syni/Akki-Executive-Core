@@ -242,7 +242,7 @@ def test_chunk15_no_new_direct_llm_calls():
     touched = [
         "/app/frontend/src/components/cycle/CycleStepNav.jsx",
         "/app/frontend/src/components/layout/AppShell.jsx",
-        "/app/frontend/src/components/solva/AttachDocumentModal.jsx",
+        "/app/frontend/src/components/thinklab/AttachDocumentModal.jsx",
         "/app/frontend/src/pages/SignIn.jsx",
     ]
     for path in touched:

@@ -13,13 +13,13 @@
  * GET /api/solva/v2/sessions/{sid} — same shape as the orchestrator stores.
  */
 import React, { useMemo, useState, useEffect } from "react";
-import PerSectionSynisenseBadge from "@/components/solva/artefact/PerSectionSynisenseBadge";
+import PerSectionSynisenseBadge from "@/components/thinklab/artefact/PerSectionSynisenseBadge";
 import { Download, FileText, MessageSquare, RefreshCw, Workflow } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import api from "@/lib/api/apiV2";
 import { apiErrorMessage, readActiveContextId } from "@/lib/api";
-import { takeToSolva } from "@/lib/takeToSolva";
+import { takeToSolva } from "@/lib/takeToThinkLab";
 import { TOKEN, FONT, SUBMODULE_LABELS } from "../flow/tokens";
 import ProbabilityBar from "./ProbabilityBar";
 import ReasoningExpandable from "./ReasoningExpandable";

@@ -15,7 +15,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
-import SolvaLanding from "@/components/solva/SolvaLanding";
+import SolvaLanding from "@/components/thinklab/ThinkLabLanding";
 import WorkspaceEntryGate from "@/components/transitions/WorkspaceEntryGate";
 
 export default function SolvaApp() {

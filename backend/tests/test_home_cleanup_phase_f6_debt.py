@@ -47,7 +47,7 @@ COMPILE_SVC     = BE / "services" / "tasks" / "compile_service.py"
 EMAIL_SVC       = BE / "email_service.py"
 CONTRIB_SVC     = BE / "services" / "tasks" / "contributor_invitation_service.py"
 
-SOLVA_LANDING   = FE / "components" / "solva" / "SolvaLanding.jsx"
+SOLVA_LANDING   = FE / "components" / "thinklab" / "ThinkLabLanding.jsx"
 DOC_DRAWER      = FE / "components" / "documents" / "DocumentDrawer.jsx"
 TASK_DRAWER     = FE / "components" / "tasks" / "TaskDrawer.jsx"
 

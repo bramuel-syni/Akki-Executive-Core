@@ -14,10 +14,10 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 HOOK = REPO / "frontend" / "src" / "hooks" / "useSolvaReasoningStream.js"
-TICKER = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2" / "SolvaReasoningTicker.jsx"
-ORCH = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2" / "SolvaArtefactV2.jsx"
-SHELL = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2" / "SlideShell.jsx"
-SLIDES = REPO / "frontend" / "src" / "components" / "solva" / "artefact_v2" / "slides"
+TICKER = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2" / "ThinkLabReasoningTicker.jsx"
+ORCH = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2" / "ThinkLabArtefactV2.jsx"
+SHELL = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2" / "SlideShell.jsx"
+SLIDES = REPO / "frontend" / "src" / "components" / "thinklab" / "artefact_v2" / "slides"
 
 
 # ─────────────────────────────────────────────────────────────────

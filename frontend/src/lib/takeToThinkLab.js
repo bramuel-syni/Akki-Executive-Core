@@ -5,7 +5,7 @@
  * helper. It navigates to /app/solva/session/new with the canonical
  * `ctx_type` + `ctx_id` query-param pair (and optional submodule).
  *
- * The Solva session-new page (pages/SolvaSession.jsx) reads those
+ * The Solva session-new page (pages/ThinkLabSession.jsx) reads those
  * params on mount, hits GET /api/solva/v2/seed?kind=...&id=..., and
  * pre-fills the framing textarea with the seed text. The user then
  * adds their framing context and clicks Begin.

@@ -103,7 +103,7 @@ async def _mint_test_jwt() -> tuple[str, str, str]:
 # ─── 1 ─ coupling-debt rule: single shared route ───────────────────
 print("\n[1] Both FE surfaces post to /work-studio/export/brief")
 FRONTEND = REPO / "frontend" / "src"
-solva_src = (FRONTEND / "components" / "solva" / "artefact" / "SolvaArtefact.jsx").read_text()
+solva_src = (FRONTEND / "components" / "thinklab" / "artefact" / "ThinkLabArtefact.jsx").read_text()
 task_src = (FRONTEND / "components" / "tasks" / "TaskDrawer.jsx").read_text()
 monitor_src = (FRONTEND / "components" / "monitor" / "StrategicGoalsPanel.jsx").read_text()
 

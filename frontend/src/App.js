@@ -71,7 +71,7 @@ const WebsitePrivacy = lazy(() => import("@/website/pages/Privacy"));
 const WebsiteTerms = lazy(() => import("@/website/pages/Terms"));
 const WebsiteMethodology = lazy(() => import("@/website/pages/Methodology"));
 const WebsiteExco360 = lazy(() => import("@/website/pages/Exco360"));
-const WebsiteProductSolva = lazy(() => import("@/website/pages/product/Solva"));
+const WebsiteProductSolva = lazy(() => import("@/website/pages/product/ThinkLab"));
 const WebsiteProductChat = lazy(() => import("@/website/pages/product/AkkiChat"));
 const WebsiteProductWorkStudio = lazy(() => import("@/website/pages/product/WorkStudio"));
 const WebsiteProductCycle = lazy(() => import("@/website/pages/product/CycleManager"));
@@ -139,13 +139,13 @@ const HelpFeatures = lazy(() => import("@/pages/HelpFeatures"));  // Phase E —
 const Wiki = lazy(() => import("@/pages/Wiki"));  // Phase P1 γ — wiki framework, replaces /help
 const Enterprise = lazy(() => import("@/pages/Enterprise"));
 const Decks = lazy(() => import("@/pages/Decks"));
-const SolvaApp = lazy(() => import("@/pages/SolvaApp"));
-const SolvaSession = lazy(() => import("@/pages/SolvaSession"));
-const SolvaSessions = lazy(() => import("@/pages/SolvaSessions"));
+const SolvaApp = lazy(() => import("@/pages/ThinkLabApp"));
+const SolvaSession = lazy(() => import("@/pages/ThinkLabSession"));
+const SolvaSessions = lazy(() => import("@/pages/ThinkLabSessions"));
 // Phase E Sub-task A (2026-05-16) — Phase D session page wired at a
 // distinct route so the legacy SolvaSession.jsx stays available for
 // pre-Phase-D sessions until the migration in Phase E Sub-task F.
-const SolvaPhaseDSession = lazy(() => import("@/pages/SolvaPhaseDSession"));
+const SolvaPhaseDSession = lazy(() => import("@/pages/ThinkLabPhaseDSession"));
 // Phase E Sub-task D (2026-05-16) — admin observability dashboard.
 const SynisenseObservability = lazy(() => import("@/pages/SynisenseObservability"));
 const Cycle = lazy(() => import("@/pages/Cycle"));

@@ -27,7 +27,7 @@ import OriginChip from "@/components/origin/OriginChip";
 import SourceMessageModal from "@/components/origin/SourceMessageModal";
 import api from "@/lib/api/apiV2";
 import { apiErrorMessage } from "@/lib/api";
-import { takeToSolva } from "@/lib/takeToSolva";
+import { takeToSolva } from "@/lib/takeToThinkLab";
 import {
   Sparkles, MessageSquare, Send, Bookmark, BookmarkCheck,
   CheckCircle2, ArrowRight, AlertTriangle, TrendingUp, Lightbulb,
