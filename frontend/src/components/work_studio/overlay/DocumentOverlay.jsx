@@ -39,6 +39,9 @@ import {
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tabs, TabsContent, TabsList, TabsTrigger,
+} from "@/components/ui/tabs";
 
 // ─────────────────────────────────────────────────────────────────────
 // RAG band helper (Phase 5 2026-06-04 — flipped from the Chunk 8
@@ -95,6 +98,24 @@ export default function DocumentOverlay({ contextId, artefactId, open, onClose }
   const [intelOpen, setIntelOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [commitOpen, setCommitOpen] = useState(false);
+
+  // JC-WS-DECK-A4 (2026-07-02) — 5-tab shell foundation. Initial tab
+  // read from URL `?tab=<name>` (same idiom as A3's `?pulse=` scroll-and-glow).
+  // Tab clicks do NOT write back to the URL (deliberate: overlay is
+  // opened via prop `open`, not via routing — URL round-trip would
+  // pollute the shell owner's URL bar). Valid values are the 5 tab
+  // trigger values; anything else falls back to "document".
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window === "undefined") return "document";
+    try {
+      const search = new URLSearchParams(window.location.search);
+      const raw = search.get("tab");
+      const valid = ["document", "intelligence", "notes", "signals", "related"];
+      return valid.includes(raw) ? raw : "document";
+    } catch {
+      return "document";
+    }
+  });
 
   // Track A Phase 6 (2026-06-04) — save-on-close belt.
   // DocumentSurface installs its `handleSaveNow` into this ref when
@@ -262,29 +283,118 @@ export default function DocumentOverlay({ contextId, artefactId, open, onClose }
                 }
               }}
             />
-            {/* Layer 2 — Intelligence card */}
-            <IntelligenceCard
-              report={doc.intelligence_report}
-              confidenceBand={doc.confidence_band}
-              confidenceRationale={doc.confidence_rationale}
-              confidenceScoredAt={doc.confidence_scored_at}
-              confidenceRecomputedAt={doc.confidence_recomputed_at}
-              onOpenFullReport={() => setIntelOpen(true)}
-            />
-            {/* Layer 3 — Document Surface (-033) */}
-            <DocumentSurface
-              key={`${artefactId}-${doc.lifecycle_state}`}
-              doc={doc}
-              editMode={editMode}
-              setEditMode={setEditMode}
-              contextId={contextId}
-              artefactId={artefactId}
-              onSaved={(updatedDoc) => setDoc(updatedDoc)}
-              onOpenRevise={() => setRevising(true)}
-              saveBeltRef={saveBeltRef}
-            />
+            {/* JC-WS-DECK-A4 (2026-07-02) — 5-tab shell foundation.
+                Toolbar stays OUTSIDE Tabs (chrome pattern preservation).
+                Document tab is default landing + hosts DocumentSurface.
+                Intelligence tab hosts IntelligenceCard (previously Layer 2).
+                Notes / Signals / Related ship as "Coming soon" placeholder
+                shells; content-population deferred to A6-A10. AIRevisionPanel
+                stays as sidebar; Modals stay overlay-level. */}
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              defaultValue="document"
+              className="flex-1 flex flex-col overflow-hidden"
+            >
+              <TabsList
+                className="mx-4 mt-3 self-start bg-transparent border border-[var(--rule)] h-8 p-0.5"
+                data-testid="document-overlay-tabs-list"
+              >
+                <TabsTrigger
+                  value="document"
+                  className="text-[12px] px-3 py-1 h-7 data-[state=active]:bg-[var(--parchment)] data-[state=active]:border data-[state=active]:border-[var(--rule)]"
+                  data-testid="document-overlay-tab-document"
+                >
+                  Document
+                </TabsTrigger>
+                <TabsTrigger
+                  value="intelligence"
+                  className="text-[12px] px-3 py-1 h-7 data-[state=active]:bg-[var(--parchment)] data-[state=active]:border data-[state=active]:border-[var(--rule)]"
+                  data-testid="document-overlay-tab-intelligence"
+                >
+                  Intelligence
+                </TabsTrigger>
+                <TabsTrigger
+                  value="notes"
+                  className="text-[12px] px-3 py-1 h-7 data-[state=active]:bg-[var(--parchment)] data-[state=active]:border data-[state=active]:border-[var(--rule)]"
+                  data-testid="document-overlay-tab-notes"
+                >
+                  Your Notes
+                </TabsTrigger>
+                <TabsTrigger
+                  value="signals"
+                  className="text-[12px] px-3 py-1 h-7 data-[state=active]:bg-[var(--parchment)] data-[state=active]:border data-[state=active]:border-[var(--rule)]"
+                  data-testid="document-overlay-tab-signals"
+                >
+                  Signals
+                </TabsTrigger>
+                <TabsTrigger
+                  value="related"
+                  className="text-[12px] px-3 py-1 h-7 data-[state=active]:bg-[var(--parchment)] data-[state=active]:border data-[state=active]:border-[var(--rule)]"
+                  data-testid="document-overlay-tab-related"
+                >
+                  Related Documents
+                </TabsTrigger>
+              </TabsList>
 
-            {/* AI Revision side panel — slides in alongside (-034) */}
+              <TabsContent value="document" className="flex-1 overflow-auto mt-2">
+                {/* Document tab — hosts DocumentSurface (previously Layer 3) */}
+                <DocumentSurface
+                  key={`${artefactId}-${doc.lifecycle_state}`}
+                  doc={doc}
+                  editMode={editMode}
+                  setEditMode={setEditMode}
+                  contextId={contextId}
+                  artefactId={artefactId}
+                  onSaved={(updatedDoc) => setDoc(updatedDoc)}
+                  onOpenRevise={() => setRevising(true)}
+                  saveBeltRef={saveBeltRef}
+                />
+              </TabsContent>
+
+              <TabsContent value="intelligence" className="flex-1 overflow-auto mt-2 px-4">
+                {/* Intelligence tab — hosts IntelligenceCard (previously Layer 2) */}
+                <IntelligenceCard
+                  report={doc.intelligence_report}
+                  confidenceBand={doc.confidence_band}
+                  confidenceRationale={doc.confidence_rationale}
+                  confidenceScoredAt={doc.confidence_scored_at}
+                  confidenceRecomputedAt={doc.confidence_recomputed_at}
+                  onOpenFullReport={() => setIntelOpen(true)}
+                />
+              </TabsContent>
+
+              <TabsContent value="notes" className="flex-1 overflow-auto mt-2">
+                <div
+                  data-testid="document-overlay-tab-content-notes-placeholder"
+                  className="mx-4 my-8 py-16 px-6 text-center text-[var(--muted)] italic text-[13px] border border-dashed border-[var(--rule)] rounded-md"
+                >
+                  Your Notes — coming soon. This tab will host private, deck-scoped notes with autosave, undo/redo, and offline-tolerant editing.
+                </div>
+              </TabsContent>
+
+              <TabsContent value="signals" className="flex-1 overflow-auto mt-2">
+                <div
+                  data-testid="document-overlay-tab-content-signals-placeholder"
+                  className="mx-4 my-8 py-16 px-6 text-center text-[var(--muted)] italic text-[13px] border border-dashed border-[var(--rule)] rounded-md"
+                >
+                  Signals — coming soon. This tab will surface risks, opportunities, and recommendations extracted from the deck content.
+                </div>
+              </TabsContent>
+
+              <TabsContent value="related" className="flex-1 overflow-auto mt-2">
+                <div
+                  data-testid="document-overlay-tab-content-related-placeholder"
+                  className="mx-4 my-8 py-16 px-6 text-center text-[var(--muted)] italic text-[13px] border border-dashed border-[var(--rule)] rounded-md"
+                >
+                  Related Documents — coming soon. This tab will list documents linked via shared metadata, explicit attachments, or the same lineage.
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            {/* AI Revision side panel — slides in alongside (-034).
+                A4 note: stays as sidebar; NOT tab-migrated (Shield-routed code
+                path untouched per F.6 discipline-pay). */}
             {revising && (
               <AIRevisionPanel
                 contextId={contextId}
@@ -299,7 +409,8 @@ export default function DocumentOverlay({ contextId, artefactId, open, onClose }
               />
             )}
 
-            {/* Modals (-032, -035, -036) */}
+            {/* Modals (-032, -035, -036) — A4 note: stay overlay-level;
+                NOT tab-scoped. */}
             <IntelligenceModal
               open={intelOpen}
               onClose={() => setIntelOpen(false)}
