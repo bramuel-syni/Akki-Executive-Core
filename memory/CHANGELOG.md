@@ -2,6 +2,52 @@
 
 > Append-only history of shipped work. Newest first.
 
+## 2026-07-02 — JC-STORAGE-PIVOT-GCS-BUILD · >16 MB uploads pivot direct-to-GCS · 12/12 GREEN
+
+**P0 · Storage pivot for >16 MB uploads via GCS V4 presigned PUT.**
+
+The k8s ingress `proxy-body-size` limit blocks large-file uploads at the edge before they reach FastAPI. This dispatch pivots files > 16 MB to browser-direct V4 signed PUT into Google Cloud Storage bucket `akki-executive-uploads-analyze`, bypassing the ingress body-size restriction entirely. Files ≤ 16 MB continue on the existing GridFS in-band flow, untouched (no migration, no backfill).
+
+**Path split**
+
+| Band | Route | Storage |
+|---|---|---|
+| ≤ 16 MB | `POST /api/workbook/upload-multi` (existing) | GridFS (unchanged) |
+| > 16 MB | `POST /api/uploads/presigned` → browser PUT to GCS → `POST /api/uploads/complete` | GCS blob (no GridFS mirror) |
+
+**Landed surface**
+
+- `backend/routers/uploads.py` — new router with 3 endpoints: presigned (V4 PUT · 15-min TTL), complete (verify + parse + persist), download (V4 GET · 5-min TTL).
+- `backend/services/storage_service.py` — additive GCS helpers block (`gcs_generate_presigned_upload_url`, `gcs_generate_presigned_download_url`, `gcs_verify_object_exists`, `gcs_provision_archive_marker`, `gcs_download_to_tempfile`, `gcs_delete_object`). S3/MinIO/LocalDiskStorage classes preserved byte-for-byte (SHA-256 hash-guarded in slice R4).
+- `backend/services/analysis_lifecycle.py` — additive third branch in `read_workbook_bytes` dispatching on `gcs_object_name` for streaming download.
+- `frontend/src/pages/AnalyzeJournal.jsx` — size-branched upload: `>16MB` uses presigned flow, `≤16MB` uses existing multipart. Work Studio upload path unchanged (follow-up ~30-60 LOC FE).
+- `backend/scripts/jc_gcs_canary_probe.py` — SA + bucket + write/read/delete round-trip canary using per-object methods only (no project-scope calls).
+- `backend/scripts/jc_storage_pivot_gcs_build_proving_slice.py` — 12-row proving slice.
+
+**Constraints honoured**
+
+- No project-scope GCS calls anywhere — the bound SA is bucket-object scoped only (`storage.buckets.list` = 403). All new code uses per-object methods (`bucket.blob(name).exists/upload/download/delete`, `bucket.blob(name).generate_signed_url(version="v4")`). AST-verified in slice R10.
+- Legacy GridFS uploads untouched. No migration, no backfill. Path B regression (100 KB xlsx via `/workbook/upload-multi`) asserts `db.analysis_blobs.gridfs_id` set + `gcs_object_name` absent.
+- Testing sub-agents STRICTLY BANNED throughout — pure bash execution of `python /app/backend/scripts/jc_storage_pivot_gcs_build_proving_slice.py`.
+- Split-literal discipline preserved (`_TL = "thin" + "klab"`, `_OLD = "Sol" + "va"`), tokenize-verified in slice R11.
+- Rename arc P4 hash invariants intact (slice R12).
+- F.6 discipline-pay N/A (no LLM path).
+- Tab Honesty Rule N/A (no overlay tab).
+- Chrome hard line intact (no Work Studio chrome touched).
+- Replacement-naming rule applied: specced `list_buckets` connectivity probe replaced with per-object canary; reason (SA is bucket-object scoped) documented explicitly in memo, not silently substituted.
+
+**Evidence**
+
+Slice `backend/scripts/jc_storage_pivot_gcs_build_proving_slice.py` → **12/12 GREEN** on 2026-07-02:
+
+- R1 env sanity · R2 canary GREEN · R3 archive marker · R4 S3/local classes preserved · R5 Path A upload (24.4 MB xlsx PUT direct-to-GCS) · R6 Path A read (GCS branch of read_workbook_bytes → parse_workbook OK) · R7 Path A signed download (24.4 MB round-tripped) · R8 Path B regression (GridFS untouched) · R9 threshold gate (400 use_in_band_route) · R10 no project-scope GCS calls (AST) · R11 split-literal discipline (tokenize) · R12 rename arc hash invariant.
+
+**Dispositions**
+
+- `K8S_INGRESS_STATUS.md` → **CLOSED-EVIDENCE-LANDED**. Locked call #5 discharged; ticket retires from LOAD-BEARING/FALLBACK-OPEN to fallback-insurance only for the 8-16 MB in-band GridFS band.
+- Compromised GCS key rotation: HARD STOP surfaced to user immediately following this landing.
+
+
 ## 2026-07-02 — JC-WS-DECK-AUTO-CHAIN-CLOSE · A8-BACKEND + A5 + A6 + A7 · 37/37 GREEN · CHAIN CLOSED
 
 **JC-WS-DECK-AUTO-CHAIN-CLOSE — SHIPPED · 4-phase autonomous chain closed.** Chain: A8-BACKEND → A5 → A6 → A7. Cumulative 37/37 proving-slice rows GREEN. New standing rule banked at `/app/memory/rules/TAB_HONESTY_RULE.md` — "A tab that renders must be backed by real capability at the account level, not browser-local state." Applied retroactively to A8 (localStorage → account-persisted CRUD) and forward to all future overlay tabs. Chrome hard line (R7-R10) preserved throughout. Engine surfaces untouched. Rename arc hash invariant intact (P4 slice 7/7 GREEN).

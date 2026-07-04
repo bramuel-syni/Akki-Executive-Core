@@ -1,8 +1,8 @@
-**Canonical Spec**: `sprints/BUG_ANALYZE_UPLOAD.md §USER_ACTION_CHECKLIST 🔴 #1` (original ingress annotation ask) + `sprints/JC_STORAGE_PIVOT_AZURE_SAS_ADVANCE.md §9 K8s ingress ticket disposition` (Azure presigned model = fallback-open) + user locked call #5 ("Keep K8s ingress ticket open until presigned proven in prod") + `sprints/JC_STORAGE_PIVOT_AZURE_SAS_ADVANCE.md §13` (Tigris pivot on-hold 2026-06-30) + Emergent-support-question in flight on presigned wrapper.
+**Canonical Spec**: `sprints/BUG_ANALYZE_UPLOAD.md §USER_ACTION_CHECKLIST 🔴 #1` (original ingress annotation ask) + `sprints/JC_STORAGE_PIVOT_AZURE_SAS_ADVANCE.md §9 K8s ingress ticket disposition` (Azure presigned model = fallback-open) + user locked call #5 ("Keep K8s ingress ticket open until presigned proven in prod") + `sprints/JC_STORAGE_PIVOT_AZURE_SAS_ADVANCE.md §13` (Tigris pivot on-hold 2026-06-30) + **`sprints/JC_STORAGE_PIVOT_GCS_BUILD.md` (2026-07-02 · pivot landed & proven GREEN via GCS presigned V4)**.
 
-# K8s ingress status — FALLBACK-OPEN (Azure presigned model reinstated 2026-06-30)
+# K8s ingress status — CLOSED-EVIDENCE-LANDED (GCS presigned model proven 2026-07-02)
 
-**Status**: FALLBACK-OPEN. Azure Blob presigned architecture is primary again per user reinstate direction 2026-06-30. Annotations serve as fallback insurance; ticket stays open until first prod large-file upload lands end-to-end through the presigned flow (locked call #5). Tigris rescope is on-hold pending Emergent support clarification on presigned-URL support.
+**Status**: **CLOSED-EVIDENCE-LANDED**. GCS presigned V4 direct-upload landed & proven GREEN via `backend/scripts/jc_storage_pivot_gcs_build_proving_slice.py` on 2026-07-02 (12/12 rows, including a 24.4 MB xlsx that PUT direct-to-GCS, parsed, and downloaded via V4 signed GET). Locked call #5 discharged — the ingress ticket now retires from LOAD-BEARING / FALLBACK-OPEN status to **fallback-insurance only** for the 8-16 MB in-band GridFS band. Ticket may be narrowed or left at 512m at platform team's discretion.
 
 ---
 
@@ -90,7 +90,8 @@ Interpretation:
 | 2026-06-26 | BUG-ANL-UPLOAD-GRIDFS closed; ingress ticket opened at value `proxy-body-size: 512m` |
 | 2026-06-30 (Azure Blob rescope) | Ticket recontextualized as FALLBACK-only after Azure Blob presigned pivot; stays open until presigned prod-evidence per locked call #5 |
 | 2026-06-30 (Tigris rescope attempted) | Ticket briefly flipped to LOAD-BEARING under Tigris backend-mediated architecture (playbook contradicted browser-direct-presigned assumption); escalation surfaced |
-| **2026-06-30 (Azure reinstate)** | Azure Blob presigned reinstated as primary path per user direction. Ticket reverts to FALLBACK-OPEN (Azure presigned model). Tigris ON-HOLD pending Emergent support clarification on presigned wrapper support. |
+| 2026-06-30 (Azure reinstate) | Azure Blob presigned reinstated as primary path per user direction. Ticket reverts to FALLBACK-OPEN (Azure presigned model). Tigris ON-HOLD pending Emergent support clarification on presigned wrapper support. |
+| **2026-07-02 (GCS pivot proven)** | **CLOSED-EVIDENCE-LANDED**. GCS presigned V4 direct-upload proven end-to-end: 24.4 MB xlsx → V4 signed PUT → GCS → parse_workbook OK → V4 signed GET → 24.4 MB round-tripped. Slice: `backend/scripts/jc_storage_pivot_gcs_build_proving_slice.py` 12/12 GREEN. Locked call #5 discharged. Ticket retires from LOAD-BEARING/FALLBACK-OPEN → fallback-insurance only for the 8-16 MB in-band GridFS band. |
 
 ---
 

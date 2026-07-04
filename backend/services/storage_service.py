@@ -254,3 +254,132 @@ def delete(key: str) -> bool:
         return get_storage().delete(key)
     except FileNotFoundError:
         return False
+
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# JC-STORAGE-PIVOT-GCS-BUILD (2026-07-02) — additive GCS helpers.
+# ═══════════════════════════════════════════════════════════════════════
+#
+# Purpose: browser-direct-to-GCS uploads for files > STORAGE_X_THRESHOLD_MB
+# to bypass the k8s ingress `proxy-body-size` limit.
+#
+# Design constraints (see /app/memory/user_actions/GCS_CREDS_STASHED.md
+# and /app/memory/rules/REPLACEMENT_NAMING_RULE.md):
+#   * The bound SA is **bucket-object scoped** — no project-scope calls.
+#     Do NOT call `client.list_buckets()`, `client.get_bucket(name)`, or
+#     any other API that requires project-level permissions. Use direct
+#     `client.bucket(name)` (returns a handle without an API call) plus
+#     per-object methods (`bucket.blob(x).upload_from_string()`,
+#     `.exists()`, `.download_as_bytes()`, `.delete()`, `.generate_signed_url()`).
+#   * V4 signing is used for all presigned URLs.
+#   * These helpers are ADDITIVE — the S3/MinIO/LocalDiskStorage backend
+#     above is untouched and remains the default for the pre-existing
+#     upload paths. Only the new `/api/uploads/*` router uses these.
+# ═══════════════════════════════════════════════════════════════════════
+
+from datetime import timedelta as _timedelta
+
+GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "").strip()
+GCS_ARCHIVE_PREFIX = os.environ.get("GCS_ARCHIVE_PREFIX", "_archive/")
+STORAGE_X_THRESHOLD_MB = int(os.environ.get("STORAGE_X_THRESHOLD_MB", "16") or "16")
+STORAGE_X_THRESHOLD_BYTES = STORAGE_X_THRESHOLD_MB * 1024 * 1024
+
+_GCS_CLIENT = None  # module-level cache; storage.Client() calls no APIs on construct
+
+
+def gcs_client():
+    """Cached GCS client. Constructor does NOT make an API call."""
+    global _GCS_CLIENT
+    if _GCS_CLIENT is not None:
+        return _GCS_CLIENT
+    from google.cloud import storage as _gcs_storage
+    _GCS_CLIENT = _gcs_storage.Client()
+    return _GCS_CLIENT
+
+
+def _gcs_bucket():
+    """Direct bucket handle. `client.bucket(name)` is a local operation
+    (no API call), safe for a bucket-object-scoped SA. NEVER swap this
+    for `client.get_bucket(name)` — that requires `storage.buckets.get`
+    which this SA lacks (403)."""
+    if not GCS_BUCKET_NAME:
+        raise RuntimeError("GCS_BUCKET_NAME env var not set")
+    return gcs_client().bucket(GCS_BUCKET_NAME)
+
+
+def gcs_generate_presigned_upload_url(
+    object_name: str,
+    content_type: str = "application/octet-stream",
+    ttl_seconds: int = 900,
+) -> str:
+    """Return a V4 signed PUT URL for `object_name`. Default TTL 15 min."""
+    blob = _gcs_bucket().blob(object_name)
+    return blob.generate_signed_url(
+        version="v4",
+        expiration=_timedelta(seconds=int(ttl_seconds)),
+        method="PUT",
+        content_type=content_type,
+    )
+
+
+def gcs_generate_presigned_download_url(
+    object_name: str,
+    ttl_seconds: int = 300,
+    response_disposition: Optional[str] = None,
+) -> str:
+    """Return a V4 signed GET URL for `object_name`. Default TTL 5 min."""
+    blob = _gcs_bucket().blob(object_name)
+    kwargs: Dict[str, Any] = dict(
+        version="v4",
+        expiration=_timedelta(seconds=int(ttl_seconds)),
+        method="GET",
+    )
+    if response_disposition:
+        kwargs["response_disposition"] = response_disposition
+    return blob.generate_signed_url(**kwargs)
+
+
+def gcs_verify_object_exists(object_name: str) -> bool:
+    """Per-object existence check via `bucket.blob(name).exists()`.
+    Safe for a bucket-object-scoped SA."""
+    try:
+        return bool(_gcs_bucket().blob(object_name).exists())
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("gcs_verify_object_exists failed for %s: %s", object_name, exc)
+        return False
+
+
+def gcs_provision_archive_marker() -> bool:
+    """Idempotently upload the archive-prefix marker. Confirms the SA
+    holds write permission on the target prefix without creating any
+    user-facing artefact."""
+    marker_name = f"{GCS_ARCHIVE_PREFIX.rstrip('/')}/.provisioned"
+    blob = _gcs_bucket().blob(marker_name)
+    if blob.exists():
+        return True
+    blob.upload_from_string(
+        b"jc-storage-pivot-gcs-build provisioned",
+        content_type="text/plain",
+    )
+    return True
+
+
+def gcs_download_to_tempfile(object_name: str, suffix: str = ".bin") -> str:
+    """Stream-download `object_name` to a NamedTemporaryFile and return
+    the path. Caller MUST `os.unlink()` after use."""
+    import tempfile as _tempfile
+    blob = _gcs_bucket().blob(object_name)
+    with _tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tf:
+        blob.download_to_file(tf)
+        path = tf.name
+    return path
+
+
+def gcs_delete_object(object_name: str) -> bool:
+    """Delete a single object; returns False if it does not exist."""
+    blob = _gcs_bucket().blob(object_name)
+    if not blob.exists():
+        return False
+    blob.delete()
+    return True

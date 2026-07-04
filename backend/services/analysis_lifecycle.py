@@ -160,11 +160,26 @@ async def read_workbook_bytes(db, blob_row: Dict[str, Any]) -> Tuple[Optional[by
         }.get(fmt, ".gridfs")
         path = await download_to_tempfile(db, gridfs_id, suffix=suffix)
         return None, path
+    # JC-STORAGE-PIVOT-GCS-BUILD (2026-07-02) — additive third branch.
+    # Path A workbooks (uploaded via /api/uploads/complete) carry
+    # `gcs_object_name` in place of `gridfs_id`. Stream-download from
+    # GCS to a tempfile with the correct extension so downstream
+    # openpyxl / csv parsers accept it.
+    gcs_object_name = blob_row.get("gcs_object_name")
+    if gcs_object_name:
+        fmt = (blob_row.get("file_format") or "").lower()
+        suffix = {
+            "xlsx": ".xlsx",
+            "csv":  ".csv",
+        }.get(fmt, ".gcs")
+        from services.storage_service import gcs_download_to_tempfile
+        path = gcs_download_to_tempfile(gcs_object_name, suffix=suffix)
+        return None, path
     legacy_b64 = blob_row.get("data_b64")
     if legacy_b64:
         return base64.b64decode(legacy_b64), None
     raise RuntimeError(
-        f"blob row carries neither gridfs_id nor data_b64 "
+        f"blob row carries neither gridfs_id nor gcs_object_name nor data_b64 "
         f"(analysis_id={blob_row.get('analysis_id')}, "
         f"source_id={blob_row.get('source_id')})"
     )

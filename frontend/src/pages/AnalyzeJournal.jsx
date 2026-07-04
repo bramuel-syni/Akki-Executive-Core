@@ -120,21 +120,77 @@ export default function AnalyzeJournal() {
     }
     setCreating(true);
     try {
-      const fd = new FormData();
-      for (const f of filesList) fd.append("files", f);
-      if (objective.trim()) fd.append("objective", objective.trim());
-      // BUG-ANL-001 — thread context_id into the FormData so the
-      // backend at /workbook/upload-multi:660-665 doesn't fall back
-      // to `active_context_id` (which may also be empty on a fresh
-      // session). Explicit > implicit.
-      fd.append("context_id", effectiveContextId);
-      const { data } = await api.post("/workbook/upload-multi", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      toast.success(`Analysis created (${filesList.length} file${filesList.length === 1 ? "" : "s"})`);
+      // JC-STORAGE-PIVOT-GCS-BUILD (2026-07-02) — size-branched routing.
+      // Files > 16 MB bypass ingress via V4 presigned PUT direct to GCS.
+      // Files <= 16 MB continue to route through the existing GridFS
+      // in-band multi-upload endpoint (unchanged). If the batch contains
+      // ANY large file, each large file is handled via the presigned
+      // flow individually and each small file continues through the
+      // in-band route. We MUST NOT mix large files into the multipart
+      // body — the ingress would 413 the entire request.
+      const THRESHOLD_BYTES = 16 * 1024 * 1024;
+      const largeFiles = [];
+      const smallFiles = [];
+      for (const f of filesList) {
+        if ((f?.size || 0) > THRESHOLD_BYTES) largeFiles.push(f);
+        else smallFiles.push(f);
+      }
+
+      let lastCreatedId = null;
+
+      // Path B — small files via existing in-band multipart route.
+      if (smallFiles.length > 0) {
+        const fd = new FormData();
+        for (const f of smallFiles) fd.append("files", f);
+        if (objective.trim()) fd.append("objective", objective.trim());
+        // BUG-ANL-001 — thread context_id into the FormData so the
+        // backend at /workbook/upload-multi:660-665 doesn't fall back
+        // to `active_context_id` (which may also be empty on a fresh
+        // session). Explicit > implicit.
+        fd.append("context_id", effectiveContextId);
+        const { data } = await api.post("/workbook/upload-multi", fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        lastCreatedId = data?.id || null;
+      }
+
+      // Path A — large files via presigned direct-to-GCS PUT + complete.
+      for (const f of largeFiles) {
+        const { data: pre } = await api.post("/uploads/presigned", {
+          filename: f.name,
+          content_type: f.type || "application/octet-stream",
+          size_bytes: f.size,
+          context_id: effectiveContextId,
+          kind: "workbook",
+        });
+        // Browser-direct PUT to GCS — bypasses k8s ingress entirely.
+        const putResp = await fetch(pre.upload_url, {
+          method: "PUT",
+          headers: { "Content-Type": pre.content_type },
+          body: f,
+        });
+        if (!putResp.ok) {
+          throw new Error(`GCS PUT failed (${putResp.status}) for ${f.name}`);
+        }
+        const { data: done } = await api.post("/uploads/complete", {
+          gcs_object_name: pre.gcs_object_name,
+          filename: f.name,
+          context_id: effectiveContextId,
+          kind: "workbook",
+          size_bytes: f.size,
+          objective: objective.trim() || undefined,
+        });
+        lastCreatedId = done?.id || lastCreatedId;
+      }
+
+      const pathParts = [
+        smallFiles.length ? `${smallFiles.length} small` : null,
+        largeFiles.length ? `${largeFiles.length} large` : null,
+      ].filter(Boolean).join(" + ");
+      toast.success(`Analysis created (${pathParts || filesList.length + " files"})`);
       setObjective("");
       await load();
-      openDrawer(data.id);
+      if (lastCreatedId) openDrawer(lastCreatedId);
     } catch (e) {
       toast.error(apiErrorMessage(e));
     } finally {

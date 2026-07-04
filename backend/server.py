@@ -241,6 +241,14 @@ from routers import deck_notes as _deck_notes_router  # noqa: E402
 app.include_router(_deck_notes_router.router)
 
 
+# JC-STORAGE-PIVOT-GCS-BUILD (2026-07-02) — >16 MB uploads bypass the
+# k8s ingress proxy-body-size limit via V4 signed direct-to-GCS PUT.
+# Files <= 16 MB continue on the existing GridFS in-band routes. F.6
+# N/A (no LLM path). See routers/uploads.py + services/storage_service.py.
+from routers import uploads as _uploads_router  # noqa: E402
+app.include_router(_uploads_router.router)
+
+
 # -----------------------------------------------------------------------------
 # Phase 4.4 — Dual-mount versioned surface (`/v1/<context>/*`).
 # Every existing `/api/*` public route is mounted a SECOND time under
