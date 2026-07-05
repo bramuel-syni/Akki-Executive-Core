@@ -160,10 +160,34 @@ api.js:224  api.interceptors.response.use((resp) => resp, (err) => { ... MEMBERS
 
 ---
 
-## Proving Slice: 10/10 GREEN (populated on run)
+## Proving Slice: 10/10 GREEN
 
-_(populated below at slice execution)_
+```
+[PASS] R1_file_classification_manifest — total=10 · R=10 · A=0
+[PASS] R2_rewrite_completeness — category_R_files=10 · fails=0
+[PASS] R3_allowlist_completeness — category_A_files=0 · allowlist_entries_needed=0
+[PASS] R4_auth_header_behavior — apiV2→api=True · fallthrough=True · api_bearer=True · api_csrf=True · api_active_ctx=True · rewritten_import_apiv2=True
+[PASS] R5_error_interceptor_behavior — csrf_retry=True · rbac_emit=True · session_emit=True · inline_401_bypass_files=0 · STATIC-ONLY (no JSDOM/RTL harness present)
+[PASS] R6_behavior_identical_claim — static_only=True · reps_verified=3/3 · basis=network-path-and-method-unchanged
+[PASS] R7_codemod_drift_exit_zero — rc=0 · pending_files=0 · pending_rewrites=0
+[PASS] R8_fe_build_clean — build_ok=True · failed_marker=False · log=/tmp/fe_build2.log
+[PASS] R9_shield_untouched — baseline_files=13 · current_files=13 · drift=0
+[PASS] R10_regression — prior_slices=46 · ast_broken=0 · rename_hash_intact=True · rules_banked=True · containment_present=True · triage_reconciled=True · ci_intact=True
+```
 
-## Trigger-2 Close
+Results file: `backend/scripts/.jc_fe_codemod_001_apply_slice_results.json`.
 
-_(Populated at close.)_
+## Trigger-2 Close (2026-07-04)
+
+**Board state (5-line):**
+- ARC: JC-FE-CODEMOD-001-APPLY + CONSOLIDATED CLEANUP · P1 bounded one-pass · 🟢 CLOSED · 10/10 GREEN · SHIPPED-UNPUSHED · commit=`ef05f97f`.
+- SCOPE: 10 FE files rewritten (apiV2) · 1 FE file secondary-signal fixed (GCS fetch escape-hatch) · CI triage reconciled · containment purged · 2 new rules banked. Zero backend runtime touches.
+- MOCKED-integrations: **SendGrid dev-mode + Resend mock — still MOCKED · production cutover queued separately**.
+- SHIELD: UNTOUCHED · R9 sha256 identity confirmed across 13 files in `services/synisense/shield/**` (0 drift).
+- PUSH STATUS: **SHIPPED-UNPUSHED** — `git remote -v` empty in preview pod · commit hash `ef05f97f` cited for local reconciliation · user pushes from their side (emergent platform "Save to Github").
+
+**Backend + frontend health**: unchanged. Backend RUNNING pid 1065. Frontend build clean (`yarn build` rc=0, 40.32s).
+
+**Post-close state:** codemod applied · CI triage reconciled · containment reported · report-vs-repo verifiable via commit hash `ef05f97f` · KEEP-as-is post-push verification deferred to user's failure-list dispatch · nothing else auto-fires.
+
+**Chain gate:** ARC CLOSED · HARD STOP · awaiting next user dispatch.
