@@ -17,7 +17,7 @@ import { COHORT, INVERTED_CTA } from "../copy";
 // `api` client. `/api/cohort/applications` is a public POST endpoint;
 // the CSRF interceptor in lib/api.js handles the double-submit token
 // transparently, so call sites no longer prime the cookie manually.
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 const FIELDS = [
   { id: "name",            label: "Name",                        required: true,  type: "text",     placeholder: "Full name" },
   { id: "email",           label: "Email",                       required: true,  type: "email",    placeholder: "you@organisation" },

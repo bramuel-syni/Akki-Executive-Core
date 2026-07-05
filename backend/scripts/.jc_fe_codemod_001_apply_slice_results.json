@@ -1,0 +1,98 @@
+{
+  "results": [
+    {
+      "row": "R1_file_classification_manifest",
+      "ok": true,
+      "detail": "total=10 \u00b7 R=10 \u00b7 A=0"
+    },
+    {
+      "row": "R2_rewrite_completeness",
+      "ok": true,
+      "detail": "category_R_files=10 \u00b7 fails=0"
+    },
+    {
+      "row": "R3_allowlist_completeness",
+      "ok": true,
+      "detail": "category_A_files=0 \u00b7 allowlist_entries_needed=0"
+    },
+    {
+      "row": "R4_auth_header_behavior",
+      "ok": true,
+      "detail": "apiV2\u2192api=True \u00b7 fallthrough=True \u00b7 api_bearer=True \u00b7 api_csrf=True \u00b7 api_active_ctx=True \u00b7 rewritten_import_apiv2=True"
+    },
+    {
+      "row": "R5_error_interceptor_behavior",
+      "ok": true,
+      "detail": "csrf_retry=True \u00b7 rbac_emit=True \u00b7 session_emit=True \u00b7 inline_401_bypass_files=0 \u2014 declared STATIC-ONLY verification (no JSDOM/RTL harness present)"
+    },
+    {
+      "row": "R6_behavior_identical_claim",
+      "ok": true,
+      "detail": "static_only=True (no JSDOM harness present) \u00b7 reps_verified=3/3 \u00b7 basis=network-path-and-method-unchanged"
+    },
+    {
+      "row": "R7_codemod_drift_exit_zero",
+      "ok": true,
+      "detail": "rc=0 \u00b7 pending_files=0 \u00b7 pending_rewrites=0"
+    },
+    {
+      "row": "R8_fe_build_clean",
+      "ok": true,
+      "detail": "build_ok=True \u00b7 failed_marker=False \u00b7 log=/tmp/fe_build2.log"
+    },
+    {
+      "row": "R9_shield_untouched",
+      "ok": true,
+      "detail": "baseline_files=13 \u00b7 current_files=13 \u00b7 drift=0"
+    },
+    {
+      "row": "R10_regression",
+      "ok": true,
+      "detail": "prior_slices=46 \u00b7 ast_broken=0 \u00b7 rename_hash_intact=True \u00b7 rules_banked=True \u00b7 containment_present=True \u00b7 triage_reconciled=True \u00b7 ci_intact=True"
+    }
+  ],
+  "classification": {
+    "frontend/src/components/chat/GovernanceSignals.jsx": {
+      "category": "R",
+      "cause": "Authenticated or session-scoped OR public-fall-through path; apiV2 preserves behavior via inheritance from `api`."
+    },
+    "frontend/src/components/sandbox/v2/ClosingStep.jsx": {
+      "category": "R",
+      "cause": "Authenticated or session-scoped OR public-fall-through path; apiV2 preserves behavior via inheritance from `api`."
+    },
+    "frontend/src/components/sandbox/v2/Step1SolvaWrapper.jsx": {
+      "category": "R",
+      "cause": "Authenticated or session-scoped OR public-fall-through path; apiV2 preserves behavior via inheritance from `api`."
+    },
+    "frontend/src/components/sandbox/v2/Step3StudioWrapper.jsx": {
+      "category": "R",
+      "cause": "Authenticated or session-scoped OR public-fall-through path; apiV2 preserves behavior via inheritance from `api`."
+    },
+    "frontend/src/components/sandbox/v2/Step4CycleSnapshot.jsx": {
+      "category": "R",
+      "cause": "Authenticated or session-scoped OR public-fall-through path; apiV2 preserves behavior via inheritance from `api`."
+    },
+    "frontend/src/pages/SharedArtefact.jsx": {
+      "category": "R",
+      "cause": "Authenticated or session-scoped OR public-fall-through path; apiV2 preserves behavior via inheritance from `api`."
+    },
+    "frontend/src/pages/TrustCenter.jsx": {
+      "category": "R",
+      "cause": "Authenticated or session-scoped OR public-fall-through path; apiV2 preserves behavior via inheritance from `api`."
+    },
+    "frontend/src/pages/WelcomePage.jsx": {
+      "category": "R",
+      "cause": "Authenticated or session-scoped OR public-fall-through path; apiV2 preserves behavior via inheritance from `api`."
+    },
+    "frontend/src/website/components/PublicVelocityTile.jsx": {
+      "category": "R",
+      "cause": "Authenticated or session-scoped OR public-fall-through path; apiV2 preserves behavior via inheritance from `api`."
+    },
+    "frontend/src/website/pages/Cohort.jsx": {
+      "category": "R",
+      "cause": "Authenticated or session-scoped OR public-fall-through path; apiV2 preserves behavior via inheritance from `api`."
+    }
+  },
+  "tip_commit_hash": "37ed9783",
+  "push_status": "SHIPPED-UNPUSHED (git remote unavailable in preview pod)"
+}

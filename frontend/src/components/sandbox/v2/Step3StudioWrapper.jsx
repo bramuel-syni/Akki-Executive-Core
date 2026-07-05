@@ -30,8 +30,7 @@ import usePrefersReducedMotion from "@/components/thinklab/flow/usePrefersReduce
 // JC-WAVE3 axios → shared client (2026-06-26) — drop the local
 // axios.create; use the shared client from lib/api which already
 // owns CSRF + same-origin guard + cross-origin fallback.
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 /* The 5 narration lines the agent rotates through over ~75s.
  * Brief-locked phrasing (§6.2). */
 const NARRATION_LINES = [

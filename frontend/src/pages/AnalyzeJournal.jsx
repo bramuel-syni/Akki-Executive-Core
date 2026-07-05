@@ -48,6 +48,7 @@ async function putFileViaResumableSession({
     // header. GCS returns 308 Resume Incomplete on partial upload
     // or 200/201 on completion. We interpret Range: bytes=0-N and
     // resume from N+1.
+    // eslint-disable-next-line no-restricted-syntax -- GCS resumable-upload session URI (not app backend); api client's Bearer/CSRF/X-Active-Context interceptors would conflict with GCS's signed-URL auth
     const resp = await fetch(sessionUri, {
       method: "PUT",
       headers: { "Content-Range": `bytes */${total}` },
@@ -78,6 +79,7 @@ async function putFileViaResumableSession({
         // Per GCS resumable-upload contract: single-chunk PUTs must
         // carry `Content-Range: bytes START-END/TOTAL`. On success
         // GCS returns 308 (partial) or 200/201 (final chunk).
+        // eslint-disable-next-line no-restricted-syntax -- GCS resumable-upload session URI (not app backend); api client's Bearer/CSRF/X-Active-Context interceptors would conflict with GCS's signed-URL auth
         const resp = await fetch(sessionUri, {
           method: "PUT",
           headers: {

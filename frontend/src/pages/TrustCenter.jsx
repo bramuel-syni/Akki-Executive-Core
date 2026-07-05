@@ -36,8 +36,7 @@ import TrustCenterTour from "../components/trust/TrustCenterTour";
 // `useAuthHeaders` hook read the WRONG key (`akki_token` vs
 // `akki_access_token`) and was a latent bug; cookie auth carried the
 // session anyway. Migration fixes the latent bug + unifies behaviour.
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 // ─────────────────────────────────────────────────────────────────────
 // Standards footer — single row, subtle. Each segment tooltips
 // what it maps to. NO marketing.

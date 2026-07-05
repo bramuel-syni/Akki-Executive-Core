@@ -21,8 +21,7 @@ import { useNavigate } from "react-router-dom";
 // localStorage key (`akki_token` vs the canonical `akki_access_token`)
 // AND lacked the CSRF double-submit header. The shared client handles
 // both transparently.
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 export default function GovernanceSignals({ governance, chatId, messageId }) {
   const navigate = useNavigate();
   if (!governance) return null;

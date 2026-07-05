@@ -28,8 +28,7 @@ import { Actions } from "@/lib/sandboxV2Flow";
 // JC-WAVE3 axios → shared client (2026-06-26) — drop the local
 // axios.create; use the shared client from lib/api which already
 // owns CSRF + same-origin guard + cross-origin fallback.
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 export default function Step4CycleSnapshot({ flow, dispatch, onComplete }) {
   const sid = flow.sessionId;
   const [snap, setSnap] = useState(null);

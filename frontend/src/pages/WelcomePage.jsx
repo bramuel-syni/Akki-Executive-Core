@@ -30,8 +30,7 @@ import { Loader2 } from "lucide-react";
 //     token in the body, not by the standard auth cookie/header.
 //   * The api client's CSRF interceptor handles the double-submit
 //     handshake automatically, replacing the ad-hoc ensureCsrf() helper.
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 export default function WelcomePage() {
   const { token } = useParams();
   const navigate = useNavigate();

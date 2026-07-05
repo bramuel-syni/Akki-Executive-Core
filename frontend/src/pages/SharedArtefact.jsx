@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 //   * GET /api/auth/me                    — best-effort auth detect
 // The api client tolerates 401 on /auth/me (caught below); for the
 // public read it just routes through the same-origin guard.
-import { api } from "@/lib/api";
+import api from "@/lib/api/apiV2";
 import {
   ShieldCheck, Loader2, AlertTriangle, ArrowUpRight, Eye,
 } from "lucide-react";

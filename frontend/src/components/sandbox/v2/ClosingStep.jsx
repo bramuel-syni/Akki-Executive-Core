@@ -29,8 +29,7 @@ import { Actions, writeResumeToken } from "@/lib/sandboxV2Flow";
 // JC-WAVE3 axios → shared client (2026-06-26) — drop the local
 // axios.create; use the shared client from lib/api which already
 // owns CSRF + same-origin guard + cross-origin fallback.
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 export default function ClosingStep({ flow, dispatch }) {
   const navigate = useNavigate();
   const name = (flow?.welcome?.name || "").trim();

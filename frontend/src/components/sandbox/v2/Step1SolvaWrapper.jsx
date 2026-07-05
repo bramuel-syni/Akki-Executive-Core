@@ -43,8 +43,7 @@ import { Actions as SbxActions } from "@/lib/sandboxV2Flow";
 // pre-auth axios.create; use the shared client from lib/api which
 // already owns CSRF + same-origin guard + cross-origin fallback.
 // Paths already relative to /api so callers stay byte-identical.
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 // 3-question Sandbox v3 micro-state-machine (subset of Phase I).
 const SBX_STATES = ["FRAMING", "Q1", "Q2", "Q3", "PREPARING", "ARTEFACT", "ARTEFACT_REFUSAL"];
 

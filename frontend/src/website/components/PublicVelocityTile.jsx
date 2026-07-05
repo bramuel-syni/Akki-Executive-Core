@@ -19,8 +19,7 @@ import React, { useEffect, useState } from "react";
 // api client's same-origin guard ensures the request lands on the
 // correct host whether or not the bundle was baked for a different
 // domain.
-import { api } from "@/lib/api";
-
+import api from "@/lib/api/apiV2";
 export default function PublicVelocityTile() {
   const [data, setData] = useState(null);
   useEffect(() => {
