@@ -1,0 +1,56 @@
+{
+  "arc": "JC-INTERNAL-HTTP-CONNECTTIMEOUT-CLASSIFY",
+  "canonical_spec": "user dispatch 2026-07-05",
+  "discipline": "CLASSIFY-ONLY \u00b7 R7 zero-touch",
+  "passed": 9,
+  "total": 9,
+  "green": true,
+  "rows": [
+    {
+      "row": "R1_memo_exists",
+      "ok": true,
+      "detail": "path=/app/memory/sprints/JC_INTERNAL_HTTP_CONNECTTIMEOUT_CLASSIFY.md exists=True size=25492"
+    },
+    {
+      "row": "R2_line1_canonical_spec_cite",
+      "ok": true,
+      "detail": "line1='**Canonical Spec: user dispatch 2026-07-05 \u00b7 `JC-INTERNAL-HTTP-CONNECTTIMEOUT-CLASSIFY` (CLASSIFY-ONLY arc, R7 zero-touch)**'"
+    },
+    {
+      "row": "R3_sections_present",
+      "ok": true,
+      "detail": "missing=[]"
+    },
+    {
+      "row": "R4_verdict_token",
+      "ok": true,
+      "detail": "tokens_in_memo=['CLEAR-TO-PROCEED'] tokens_in_\u00a75=['CLEAR-TO-PROCEED']"
+    },
+    {
+      "row": "R5_zero_touch",
+      "ok": true,
+      "detail": "protected_paths=7 diff_stat_bytes=0",
+      "raw_out": ""
+    },
+    {
+      "row": "R6_shield_sha256_identity",
+      "ok": true,
+      "detail": "shield_py_files=13 diff_bytes=0"
+    },
+    {
+      "row": "R7_dev_pipeline_row",
+      "ok": true,
+      "detail": "marker_present=True idx=56469"
+    },
+    {
+      "row": "R8_bundle_readmes_intact",
+      "ok": true,
+      "detail": "bundles_expected=5 missing=[]"
+    },
+    {
+      "row": "R9_amendment_echo",
+      "ok": true,
+      "detail": "scope_echo=True reinforcements_echo=True"
+    }
+  ]
+}
