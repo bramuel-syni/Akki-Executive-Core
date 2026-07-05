@@ -85,6 +85,14 @@ let webpackConfig = {
         // Test files may use fetch() for setup / mocking.
         { files: ["**/*.test.{js,jsx,ts,tsx}", "**/__tests__/**", "tests/**"],
           rules: { "no-restricted-syntax": "off" } },
+        // JC-FE-CODEMOD-001-CLOSE-CONDITIONS (2026-07-04) — GCS
+        // resumable-upload session URI: `fetch()` is the correct
+        // implementation because apiV2's Bearer/CSRF/X-Active-Context
+        // interceptors would wrongly attach app-auth to a Google Cloud
+        // Storage signed URL and break the upload. Path-anchored to
+        // this one file (no wildcards).
+        { files: ["src/pages/AnalyzeJournal.jsx"],
+          rules: { "no-restricted-syntax": "off" } },
       ],
     },
   },

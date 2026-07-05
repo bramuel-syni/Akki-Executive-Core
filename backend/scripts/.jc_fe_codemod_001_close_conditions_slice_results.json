@@ -1,0 +1,45 @@
+{
+  "results": [
+    {
+      "row": "R1_condition_a_manifest",
+      "ok": true,
+      "detail": "rows=10 \u00b7 pass=10/10"
+    },
+    {
+      "row": "R2_condition_a_auth_posture_correctness",
+      "ok": true,
+      "detail": "auth_files=3 \u00b7 public_files=7 \u00b7 fails=0"
+    },
+    {
+      "row": "R3_condition_b_eslint_disable_removed",
+      "ok": true,
+      "detail": "disable_comment_count=0"
+    },
+    {
+      "row": "R4_condition_b_allowlist_present",
+      "ok": true,
+      "detail": "path_anchored_entry=True \u00b7 cause_present=True \u00b7 wildcard_entries=0"
+    },
+    {
+      "row": "R5_condition_b_yarn_build_clean",
+      "ok": true,
+      "detail": "build_ok=True \u00b7 failed_marker=False"
+    },
+    {
+      "row": "R6_condition_b_codemod_drift_clean",
+      "ok": true,
+      "detail": "rc=0 \u00b7 pending_files=0 \u00b7 pending_rewrites=0"
+    },
+    {
+      "row": "R7_shield_untouched",
+      "ok": true,
+      "detail": "since_ef05f97f_modified=0 \u00b7 live_file_count=13 \u00b7 expected=13"
+    },
+    {
+      "row": "R8_regression",
+      "ok": true,
+      "detail": "prior_slices=47 \u00b7 ast_broken=0 \u00b7 bankings_intact=True \u00b7 craco_intact=True"
+    }
+  ],
+  "tip_commit_hash": "ec1e6a07"
+}
