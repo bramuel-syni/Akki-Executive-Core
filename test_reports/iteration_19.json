@@ -35,7 +35,7 @@
     "/app/backend/tests/test_iter19_polish_committee_medium.py (new, 8 tests, 7 pass / 1 skip due to missing committee seed)"
   ],
   "success_rate": {"backend": "100% (7/7 executed; 1 skipped on missing seed)", "frontend": "~70% — Cycle tabs render, Reports editor opens, Polish endpoint wired (no-op path), strip correctly gated. Live diff-modal + per-row Medium copy paths could not be exercised without (a) richer report body (b) committee seed (c) longer page wait on /app/blog-admin first-render"},
-  "test_credentials": "bramuel@syni.ai / TestBramuel2026!  ;  admin@akki.ai / AkkiAdmin2026!",
+  "test_credentials": "bramuel@syni.ai / TestBramuel2026!  ;  admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD>",
   "seed_data_creation": "None added in this iteration. Iter19 only exercised existing data. No TEST_ artifacts persisted (the schema-only test posts to checklists/generate were rejected at domain layer with 400 — no rows written).",
   "retest_needed": true,
   "main_agent_can_self_test": true,

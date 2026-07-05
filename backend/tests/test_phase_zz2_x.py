@@ -182,7 +182,7 @@ async def test_zz2_x_fixture_stream_shape(app):
         import requests
         base = "https://akki-executive.preview.emergentagent.com"
         rr = requests.post(f"{base}/api/auth/login",
-                           json={"email": "admin@akki.ai", "password": "AkkiAdmin2026!"},
+                           json={"email": "admin@akki.ai", "password": os.environ["ADMIN_SEED_PASSWORD"]},
                            timeout=15)
         token = rr.json()["access_token"]
         cid = requests.get(f"{base}/api/auth/me",

@@ -17,7 +17,7 @@ mark-answered, Use in Solva, Use in Chat, server-side q search).
 
 | Account         | Email             | Password         | Notes                              |
 |-----------------|-------------------|------------------|------------------------------------|
-| Superadmin      | admin@akki.ai     | `AkkiAdmin2026!` | MFA grace via `MFA_ADMIN_GRACE_EMAILS` |
+| Superadmin      | admin@akki.ai     | `<redacted:ADMIN_SEED_PASSWORD>` | MFA grace via `MFA_ADMIN_GRACE_EMAILS` |
 | Viewer (member) | viewer@akki.ai    | `Viewer2026!`    | Single membership on `Syni.ai HQ` |
 
 Both `email` and `email_lc` are indexed; the login handler accepts
@@ -121,7 +121,7 @@ curl -s -c /tmp/jar "$URL/api/csrf" > /tmp/csrf.json
 CSRF=$(python3 -c "import json; print(json.load(open('/tmp/csrf.json'))['csrf_token'])")
 LOGIN=$(curl -s -c /tmp/jar -b /tmp/jar -X POST "$URL/api/auth/login" \
   -H "Content-Type: application/json" -H "X-CSRF-Token: $CSRF" \
-  -d '{"email":"admin@akki.ai","password":"AkkiAdmin2026!"}')
+  -d '{"email":"admin@akki.ai","password":"<redacted:ADMIN_SEED_PASSWORD>"}')
 TOKEN=$(echo "$LOGIN" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('access_token') or d.get('token') or '')")
 
 # Mint a fresh CSRF (the auth cookie just changed).

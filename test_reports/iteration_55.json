@@ -35,7 +35,7 @@
     "backend": "11/11 functional pass (3 module-fixture errors during pytest were due to ingress 502 on long Opus calls; same flows verified via internal curl: outline 200, generate 200, quality_check score=95, feedback rating=up persisted, 409 on consumed outline, 400 on unconfirmed, 403 for non-superadmin admin endpoint, 200 superadmin admin endpoint, inbound 200 ok:false error:virus_scan with audit log)",
     "frontend": "100% — all decks/admin testids present, sidebar nav present, deck-quality panel renders with metrics, by-surface bars proportional"
   },
-  "test_credentials": "bramuel@syni.ai / TestBramuel2026! (standard); admin@akki.ai / AkkiAdmin2026! (superadmin); Postmark secret c04fdcf8-24c4-4e44-b19f-337f80607d6c",
+  "test_credentials": "bramuel@syni.ai / TestBramuel2026! (standard); admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD> (superadmin); Postmark secret c04fdcf8-24c4-4e44-b19f-337f80607d6c",
   "seed_data_creation": "2 outlines + 2 decks + 1 quality_check + 1 feedback created on ctx fb4df969 (Tuli NED) for bramuel. 1 inbound webhook audit_log row (action='inbound_email.rejected', reason='virus_scan') with resource_id starting 'no-id-' on bramuel's first ctx. All represent realistic prod-shape data; safe to leave.",
   "retest_needed": false,
   "main_agent_can_self_test": true,

@@ -48,7 +48,7 @@ async def shot_01_admin_status(pw):
         "bash", "-c",
         f'curl -s -X POST "{api}/api/auth/login" '
         '-H "Content-Type: application/json" '
-        '-d \'{"email":"admin@akki.ai","password":"AkkiAdmin2026!"}\' '
+        '-d \'{"email":"admin@akki.ai","password":os.environ["ADMIN_SEED_PASSWORD"]}\' '
         '| python3 -c "import sys,json;print(json.load(sys.stdin)[\'access_token\'])"',
     ]).decode().strip()
     status_resp = subprocess.check_output([

@@ -4,7 +4,7 @@ These were skipped before the Hardening Step 4 (2026-05-25) re-enable
 audit because their **E2E harness pattern** had bit-rotted:
 - They used `requests.Session()` against an external `BASE_URL`.
 - They hardcoded `bramuel@syni.ai / Bramuel2026!` + `admin@akki.ai /
-  AkkiAdmin2026!` credentials.
+  <redacted:ADMIN_SEED_PASSWORD>` credentials.
 - They hardcoded `TULI_CTX` and `MAWINGU_CTX` UUIDs that no longer match
   the current seed.
 

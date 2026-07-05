@@ -168,7 +168,7 @@ def main() -> int:
     p.add_argument("--timeout", type=int, default=90,
                    help="Inbox polling timeout in seconds.")
     p.add_argument("--admin-email", default="admin@akki.ai")
-    p.add_argument("--admin-password", default="AkkiAdmin2026!")
+    p.add_argument("--admin-password", default=os.environ["ADMIN_SEED_PASSWORD"])
     args = p.parse_args()
 
     api_key = (ENV.get("SENDGRID_API_KEY") or "").strip()

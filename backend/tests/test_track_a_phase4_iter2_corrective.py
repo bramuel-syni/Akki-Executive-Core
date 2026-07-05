@@ -44,6 +44,7 @@ from openpyxl import Workbook
 
 import server  # noqa: F401
 from server import app
+import os
 
 
 @pytest.fixture
@@ -169,7 +170,7 @@ async def test_notes_patch_empty_body_appends_history_entry(transport):
     422 → 200 + entry."""
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         # Seed via /upload-multi.
         fd = [("files", (
             "monthly.xlsx", _build_24mo_xlsx(),
@@ -269,7 +270,7 @@ async def test_low_r2_flag_fires_on_csv_noisy_data(transport, monkeypatch, caplo
     caplog.set_level(logging.WARNING, logger="akki.workbook_analysis")
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         # Upload the noisy CSV.
         fd = [("files", ("noisy.csv", _build_csv_noisy(), "text/csv"))]
         ctx = "tap4i2-lowr2-" + uuid.uuid4().hex[:6]

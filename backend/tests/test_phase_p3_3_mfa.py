@@ -176,7 +176,7 @@ async def test_p3_3_grace_admin_bypasses_force_enrol():
     """The seeded admin@akki.ai is grace-bypassed for this phase."""
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
         r1 = await ac.post("/api/auth/login",
-                           json={"email": "admin@akki.ai", "password": "AkkiAdmin2026!"})
+                           json={"email": "admin@akki.ai", "password": os.environ["ADMIN_SEED_PASSWORD"]})
         tok = r1.json()["access_token"]
         r2 = await ac.get("/api/admin/users",
                           headers={"Authorization": f"Bearer {tok}"})

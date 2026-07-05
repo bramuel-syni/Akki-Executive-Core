@@ -36,7 +36,7 @@ from PIL import Image
 
 BASE = os.environ.get("REACT_APP_BACKEND_URL", "https://akki-executive.preview.emergentagent.com")
 EMAIL = os.environ.get("ADMIN_EMAIL", "admin@akki.ai")
-PWD = os.environ.get("ADMIN_PWD", "AkkiAdmin2026!")
+PWD = os.environ.get("ADMIN_PWD", os.environ["ADMIN_SEED_PASSWORD"])
 
 OUT = Path("/app/frontend/src/website/assets/evidence")
 OUT.mkdir(parents=True, exist_ok=True)

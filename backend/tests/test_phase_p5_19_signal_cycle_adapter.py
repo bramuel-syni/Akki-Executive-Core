@@ -35,6 +35,7 @@ from httpx import AsyncClient, ASGITransport
 
 import server  # noqa: F401
 from server import app
+import os
 from services.inbox_routing import (
     DEFAULT_INBOX_CONTEXT_NAME,
     backfill_cycle_updates,
@@ -415,7 +416,7 @@ async def test_pulse_feed_returns_origin_field(transport):
         "origin": build_origin_envelope(message_id=msg_id, confidence_band="high"),
     })
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.get(
             f"/api/contexts/{ctx['id']}/pulse/feed?show_low=true", headers=headers,
         )
@@ -432,7 +433,7 @@ async def test_pulse_feed_origin_filter_narrows_and_excludes(transport):
     admin = await db.accounts.find_one({"email": "admin@akki.ai"}, {"_id": 0})
     ctx = await get_or_create_default_inbox_context(db, account_id=admin["id"])
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.get(
             f"/api/contexts/{ctx['id']}/pulse/feed?show_low=true&origin=email_akki",
             headers=headers,

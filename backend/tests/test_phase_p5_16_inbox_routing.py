@@ -475,7 +475,7 @@ async def test_classify_endpoint_admin_happy_path(transport):
         from_email="admin@akki.ai",
     )
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.post(
             f"/api/admin/inbox/messages/{msg['id']}/classify", headers=headers,
         )
@@ -493,7 +493,7 @@ async def test_classify_endpoint_admin_happy_path(transport):
 @pytest.mark.asyncio
 async def test_classify_endpoint_404_on_unknown_message_id(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.post(
             f"/api/admin/inbox/messages/msg-fake-{uuid.uuid4().hex}/classify",
             headers=headers,
@@ -515,7 +515,7 @@ async def test_route_endpoint_admin_can_manually_route(transport):
         from_email=email,
     )
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.post(
             f"/api/admin/inbox/messages/{msg['id']}/route",
             json={
@@ -538,7 +538,7 @@ async def test_dismiss_endpoint_flips_status_and_writes_log(transport):
         db, subject="hello", body="just saying hi, no action needed.",
     )
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.post(
             f"/api/admin/inbox/messages/{msg['id']}/dismiss", headers=headers,
         )
@@ -573,7 +573,7 @@ async def test_routing_log_endpoint_returns_persisted_rows(transport):
     )
     # Manual route + classify writes two log rows.
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         await client.post(
             f"/api/admin/inbox/messages/{msg['id']}/route",
             json={"route_kind": "task_create", "target_hint": {"account_id": acct}},
@@ -601,7 +601,7 @@ async def test_routing_log_endpoint_404_on_unknown_message_id(transport):
     positive isolation contract — the endpoint never reveals
     'message exists but you can't see it' vs 'message doesn't exist'."""
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.get(
             f"/api/admin/inbox/messages/msg-bogus-{uuid.uuid4().hex}/routing-log",
             headers=headers,

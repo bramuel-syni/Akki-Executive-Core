@@ -549,7 +549,7 @@ CSRF=$(curl -s -c "$CJ" "$API_URL/api/csrf" \
   | python3 -c "import sys,json; print(json.load(sys.stdin)['csrf_token'])")
 LJ=$(curl -s -b "$CJ" -c "$CJ" -X POST "$API_URL/api/auth/login" \
   -H "Content-Type: application/json" -H "X-CSRF-Token: $CSRF" \
-  -d '{"email":"admin@akki.ai","password":"AkkiAdmin2026!"}')
+  -d '{"email":"admin@akki.ai","password":"<redacted:ADMIN_SEED_PASSWORD>"}')
 TOKEN=$(echo "$LJ" | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
 CTX=$(echo "$LJ" | python3 -c "import sys,json; print(json.load(sys.stdin)['contexts'][0]['id'])")
 

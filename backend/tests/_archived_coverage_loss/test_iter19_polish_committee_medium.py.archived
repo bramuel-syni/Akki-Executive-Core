@@ -25,7 +25,7 @@ assert BASE_URL, "REACT_APP_BACKEND_URL not set"
 API = f"{BASE_URL}/api"
 
 BRAMUEL = {"email": "bramuel@syni.ai", "password": "Bramuel2026!"}
-ADMIN = {"email": "admin@akki.ai", "password": "AkkiAdmin2026!"}
+ADMIN = {"email": "admin@akki.ai", "password": "<redacted:ADMIN_SEED_PASSWORD>"}
 TULI_NED_CTX = "fb4df969-3f17-4279-bf78-f07bb9e29650"
 MAWINGU_CTX = "06cc1fc6-4308-4d19-a679-6f8f6bd692dc"  # has reportees seeded
 

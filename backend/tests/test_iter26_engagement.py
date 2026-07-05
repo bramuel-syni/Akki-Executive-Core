@@ -35,6 +35,7 @@ from httpx import AsyncClient, ASGITransport
 import server  # noqa: F401
 from server import app
 from core import db
+import os
 
 
 @pytest.fixture
@@ -107,7 +108,7 @@ async def test_view_record_and_dedupe(transport):
     seed = await _seed_doc_and_ctx()
     try:
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            h = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+            h = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
             url = f"/api/contexts/{seed['context_id']}/documents/{seed['doc_id']}/view"
             r1 = await ac.post(url, headers=h)
             assert r1.status_code == 200, r1.text
@@ -143,7 +144,7 @@ async def test_view_invalid_doc(transport):
     seed = await _seed_doc_and_ctx()
     try:
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            h = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+            h = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
             url = f"/api/contexts/{seed['context_id']}/documents/does-not-exist/view"
             r = await ac.post(url, headers=h)
             assert r.status_code == 404, r.text
@@ -159,7 +160,7 @@ async def test_share_record(transport):
     seed = await _seed_doc_and_ctx()
     try:
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            h = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+            h = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
             url = f"/api/contexts/{seed['context_id']}/documents/{seed['doc_id']}/share"
             r = await ac.post(
                 url,
@@ -188,7 +189,7 @@ async def test_share_invalid_email(transport):
     seed = await _seed_doc_and_ctx()
     try:
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            h = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+            h = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
             url = f"/api/contexts/{seed['context_id']}/documents/{seed['doc_id']}/share"
             r = await ac.post(
                 url, json={"recipient_emails": ["not-an-email"]}, headers=h,
@@ -208,7 +209,7 @@ async def test_engagement_summary_shape(transport):
     seed = await _seed_doc_and_ctx()
     try:
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            h = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+            h = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
             # Seed a share via the canonical endpoint.
             share_url = f"/api/contexts/{seed['context_id']}/documents/{seed['doc_id']}/share"
             r = await ac.post(

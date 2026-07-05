@@ -33,7 +33,7 @@ if BACKEND_DIR not in sys.path:
 
 BASE_URL = os.environ["REACT_APP_BACKEND_URL"].rstrip("/")
 ADMIN_EMAIL = "admin@akki.ai"
-ADMIN_PASSWORD = "AkkiAdmin2026!"
+ADMIN_PASSWORD = os.environ["ADMIN_SEED_PASSWORD"]
 
 
 @pytest.fixture(scope="module")

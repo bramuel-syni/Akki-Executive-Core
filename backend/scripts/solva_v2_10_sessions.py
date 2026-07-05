@@ -476,7 +476,7 @@ async def main() -> int:
 
     # Give FastAPI startup a chance to run if this process is the one hosting.
     email = "admin@akki.ai"
-    password = os.environ.get("ADMIN_PASSWORD", "AkkiAdmin2026!")
+    password = os.environ.get("ADMIN_PASSWORD", os.environ["ADMIN_SEED_PASSWORD"])
     await _seed_account(email, password)
 
     transport = httpx.ASGITransport(app=server.app)

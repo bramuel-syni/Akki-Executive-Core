@@ -3,10 +3,11 @@ record HTTP status + page title + visible primary heading. No Navy
 should appear in any computed style for known wordmark elements."""
 import asyncio, json
 from playwright.async_api import async_playwright
+import os
 
 BASE = "https://akki-executive.preview.emergentagent.com"
 EMAIL = "admin@akki.ai"
-PWD = "AkkiAdmin2026!"
+PWD = os.environ["ADMIN_SEED_PASSWORD"]
 
 PAGES = [
     ("home_marketing",     "/"),

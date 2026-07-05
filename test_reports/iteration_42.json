@@ -24,7 +24,7 @@
     "/app/backend/tests/test_iter42_signal_kpi.py"
   ],
   "success_rate": {"backend": "100%", "frontend": "100%"},
-  "test_credentials": "admin@akki.ai / AkkiAdmin2026!  ·  bramuel@syni.ai / TestBramuel2026!  ·  Tuli ctx fb4df969-3f17-4279-bf78-f07bb9e29650",
+  "test_credentials": "admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD>  ·  bramuel@syni.ai / TestBramuel2026!  ·  Tuli ctx fb4df969-3f17-4279-bf78-f07bb9e29650",
   "seed_data_creation": "Two ephemeral signal_actions docs created during heatmap tests: one shared action with TEST_iter42_share_*@example.com and two shared actions to the same TEST_iter42_dup_*@example.com (de-dup test). Both persist in signal_actions collection (audit trail by design) and are unique-prefixed so they won't collide with future iters. Heatmap totals are inflated slightly (acted: was 3 → now 4 after the iter41 regression test ran an 'acted' POST; shared: 6 unique recipients).",
   "retest_needed": false,
   "main_agent_can_self_test": true,

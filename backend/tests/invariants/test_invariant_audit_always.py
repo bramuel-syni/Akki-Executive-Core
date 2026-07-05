@@ -70,7 +70,7 @@ async def test_chat_call_writes_audit_and_trust_receipt(db_conn):
     """One chat round-trip → one audit row + one trust receipt row."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test", timeout=180.0) as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         admin_row = await db_conn.accounts.find_one(
             {"email": "admin@akki.ai"}, {"_id": 0, "id": 1},
         )

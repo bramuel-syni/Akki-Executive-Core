@@ -24,6 +24,7 @@ from httpx import AsyncClient, ASGITransport
 
 import server  # noqa: F401 — imports the FastAPI app
 from server import app
+import os
 from services.workbook_analyzer import (
     AnomalyRow,
     CitationUnverifiable,
@@ -471,7 +472,7 @@ async def test_upload_csrf_invariant_source_strict(transport):
 @pytest.mark.asyncio
 async def test_upload_and_full_pipeline(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         # Upload.
         r = await client.post(
             "/api/workbook/upload",
@@ -551,7 +552,7 @@ async def test_tenant_isolation_cross_account_returns_404(transport):
         viewer_email, viewer_password = other_email, other_password
 
     async with AsyncClient(transport=transport, base_url="http://test") as client_admin:
-        admin_headers = await _csrf_login(client_admin, "admin@akki.ai", "AkkiAdmin2026!")
+        admin_headers = await _csrf_login(client_admin, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client_admin.post(
             "/api/workbook/upload",
             files={"file": ("admins.csv", build_sample_csv(), "text/csv")},

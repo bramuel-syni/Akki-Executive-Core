@@ -29,6 +29,7 @@ from httpx import AsyncClient, ASGITransport
 
 import server  # noqa: F401 — imports the FastAPI app
 from server import app
+import os
 from services.ideas_engine import (
     IDEA_LENSES,
     CitationUnverifiable,
@@ -358,7 +359,7 @@ def transport():
 @pytest.mark.asyncio
 async def test_current_digest_lazy_generates_and_returns(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.get("/api/ideas/digest/current", headers=headers)
         assert r.status_code == 200, r.text
         body = r.json()
@@ -368,7 +369,7 @@ async def test_current_digest_lazy_generates_and_returns(transport):
 @pytest.mark.asyncio
 async def test_preferences_endpoint_get_and_put(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.get("/api/ideas/preferences", headers=headers)
         assert r.status_code == 200
         # PUT with valid subset.
@@ -412,7 +413,7 @@ async def test_tenant_isolation_specific_week_returns_404(transport):
     """
     from core import db, hash_password
     async with AsyncClient(transport=transport, base_url="http://test") as client_admin:
-        admin_headers = await _csrf_login(client_admin, "admin@akki.ai", "AkkiAdmin2026!")
+        admin_headers = await _csrf_login(client_admin, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         # Force admin's digest into existence + capture its id for
         # the negative-leak assertion below.
         r = await client_admin.get("/api/ideas/digest/current", headers=admin_headers)
@@ -501,7 +502,7 @@ async def test_admin_regenerate_is_admin_gated(transport):
 @pytest.mark.asyncio
 async def test_admin_regenerate_admin_allowed(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.post("/api/ideas/digest/regenerate", headers=headers)
         assert r.status_code == 200, r.text
 

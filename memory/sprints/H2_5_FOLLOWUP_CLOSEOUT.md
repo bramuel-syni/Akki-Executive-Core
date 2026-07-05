@@ -228,7 +228,7 @@ curl -s "$API/api/chats/$CHAT/synisense-metrics" \
 # expect identifiers_redacted ≥ 1 and model_calls ≥ 1
 
 ADMIN_TOKEN=$(curl -s -X POST "$API/api/auth/login" -H 'Content-Type: application/json' \
-    -d '{"email":"admin@akki.ai","password":"AkkiAdmin2026!"}' \
+    -d '{"email":"admin@akki.ai","password":"<redacted:ADMIN_SEED_PASSWORD>"}' \
     | python3 -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
 curl -s "$API/api/admin/audit-invariant-violations?hours=24" \
     -H "Authorization: Bearer $ADMIN_TOKEN" | python3 -m json.tool

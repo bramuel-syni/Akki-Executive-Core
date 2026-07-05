@@ -27,6 +27,7 @@ from httpx import AsyncClient, ASGITransport
 
 import server  # noqa: F401
 from server import app
+import os
 from services.inbox_routing import (
     backfill_default_inbox_cycles,
     get_or_create_default_inbox_context,
@@ -212,7 +213,7 @@ async def test_agenda_endpoint_surfaces_default_inbox_flag(transport):
         db, account_id=admin["id"], context_id=ctx["id"],
     )
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.get(
             f"/api/contexts/{ctx['id']}/cycle/agenda?cycle_id={cyc['id']}",
             headers=headers,
@@ -255,7 +256,7 @@ async def test_agenda_endpoint_returns_false_for_user_cycles(transport):
         user_cyc = {"id": cyc_id, "context_id": ctx_id}
 
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.get(
             f"/api/contexts/{user_cyc['context_id']}/cycle/agenda?cycle_id={user_cyc['id']}",
             headers=headers,
@@ -306,7 +307,7 @@ async def test_cycle_list_endpoint_carries_is_default_inbox_flag(transport):
         db, account_id=admin["id"], context_id=ctx["id"],
     )
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.get(
             f"/api/contexts/{ctx['id']}/cycles?status=all",
             headers=headers,

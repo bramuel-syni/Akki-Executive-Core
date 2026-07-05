@@ -24,7 +24,7 @@
     "/app/backend/tests/test_iter35_chat.py (NEW, 13 tests, all pass in ~14s with 4 live LLM round trips on claude-haiku-4-5)"
   ],
   "success_rate": {"backend": "100% (13/13)", "frontend": "100% on the four flows tested (login persist, 6 tiles, chat compose, policy-off bypass)"},
-  "test_credentials": "Bramuel: bramuel@syni.ai / TestBramuel2026!  ·  Admin: admin@akki.ai / AkkiAdmin2026!",
+  "test_credentials": "Bramuel: bramuel@syni.ai / TestBramuel2026!  ·  Admin: admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD>",
   "seed_data_creation": "Created several TEST_-prefixed chats during pytest (TEST iter35 chat, TEST shield, TEST chain, TEST iso, TEST patch, TEST listA/B, TEST archive, TEST neutral, TEST multi, TEST policy_off). All scoped to bramuel@syni.ai account. Visible in sidebar; safe to leave for next iteration regression.",
   "retest_needed": false,
   "main_agent_can_self_test": true,

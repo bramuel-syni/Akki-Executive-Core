@@ -33,7 +33,7 @@
     "/app/backend/tests/test_akki_v3.py (NEW: 55 pytest cases covering M0-M5)"
   ],
   "success_rate": {"backend": "98% (54/55)", "frontend": "100% on tested flows"},
-  "test_credentials": "Admin admin@akki.ai / AkkiAdmin2026! verified working. UI-created accounts wf.<uid>@akki.ai / TestExec2026! also work.",
+  "test_credentials": "Admin admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD> verified working. UI-created accounts wf.<uid>@akki.ai / TestExec2026! also work.",
   "seed_data_creation": "Each pytest run creates 3 TEST_ accounts (owner/member/outsider) with unique uuid suffixes; UI test creates 1 additional wf.<uid>@akki.ai account. No cleanup implemented yet.",
   "retest_needed": true,
   "main_agent_can_self_test": true,

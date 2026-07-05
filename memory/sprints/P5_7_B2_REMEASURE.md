@@ -48,7 +48,7 @@ test_phase_p5_10_audit_panel_direct_linkage — audit-panel resolver (FTT-023 po
 test_synisense_security               — Synisense security guard
 ```
 
-Every one of these files touches admin auth state (`admin@akki.ai`), session cookies, CSRF tokens, or `app.dependency_overrides` on auth-related deps (`get_current_account`, `get_current_session`). The autosave file requires a clean admin auth state per test (it calls `_csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")` at the top of every test); these polluters break that state.
+Every one of these files touches admin auth state (`admin@akki.ai`), session cookies, CSRF tokens, or `app.dependency_overrides` on auth-related deps (`get_current_account`, `get_current_session`). The autosave file requires a clean admin auth state per test (it calls `_csrf_login(ac, "admin@akki.ai", "<redacted:ADMIN_SEED_PASSWORD>")` at the top of every test); these polluters break that state.
 
 **A+D's env-snapshot/restore couldn't have closed these** — none of them depend on `BOUNDED_CONTEXT_TRANSPORT`, `SENDGRID_*`, or any other key A+D was leaking. They depend on Mongo collection state (`login_failed_attempts`, `session_revocations`, account-row mutations) and `app.dependency_overrides`. **Confirmed independent fix shape.**
 

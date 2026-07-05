@@ -83,7 +83,7 @@ def _admin_session() -> Tuple[requests.Session, str, str]:
     csrf = s.get(f"{api}/api/csrf", timeout=10).json()["csrf_token"]
     r = s.post(
         f"{api}/api/auth/login",
-        json={"email": "admin@akki.ai", "password": "AkkiAdmin2026!"},
+        json={"email": "admin@akki.ai", "password": os.environ["ADMIN_SEED_PASSWORD"]},
         headers={"X-CSRF-Token": csrf, "Content-Type": "application/json"},
         timeout=10,
     )

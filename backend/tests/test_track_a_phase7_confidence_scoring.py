@@ -530,7 +530,7 @@ async def test_commit_recompute_updates_pct_and_cache_key(
     )
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         admin_row = await db_conn.accounts.find_one(
             {"email": "admin@akki.ai"}, {"_id": 0, "id": 1, "default_context_id": 1},
         )
@@ -581,7 +581,7 @@ async def test_commit_recompute_skipped_when_structured_content_unchanged(
     )
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         admin_row = await db_conn.accounts.find_one(
             {"email": "admin@akki.ai"}, {"_id": 0, "id": 1, "default_context_id": 1},
         )
@@ -631,7 +631,7 @@ async def test_commit_recompute_failure_surfaces_flag_lifecycle_still_locks(
     )
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         admin_row = await db_conn.accounts.find_one(
             {"email": "admin@akki.ai"}, {"_id": 0, "id": 1, "default_context_id": 1},
         )
@@ -679,7 +679,7 @@ async def test_overlay_payload_surfaces_rationale_and_legacy_row_handles_absence
     string. FE chip handles both cases — covered by the
     `data-confidence-tooltip` attribute on `IntelligenceCard`."""
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         admin_row = await db_conn.accounts.find_one(
             {"email": "admin@akki.ai"}, {"_id": 0, "id": 1, "default_context_id": 1},
         )

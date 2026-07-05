@@ -129,7 +129,7 @@ async def test_chat_roundtrip_golden_shape(db_conn):
     """Pin the chat round-trip response shape."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test", timeout=180.0) as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         admin_row = await db_conn.accounts.find_one(
             {"email": "admin@akki.ai"}, {"_id": 0, "id": 1},
         )

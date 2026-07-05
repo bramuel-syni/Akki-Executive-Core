@@ -143,7 +143,7 @@ async def test_chat_surface_no_token_leak(db_conn, model_id, _provider_label):
     """
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test", timeout=180.0) as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         admin_row = await db_conn.accounts.find_one(
             {"email": "admin@akki.ai"}, {"_id": 0, "id": 1},
         )
@@ -199,7 +199,7 @@ async def test_solva_analyze_surface_no_token_leak(db_conn):
     """
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test", timeout=240.0) as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
 
         # Build a tiny CSV: 6 rows, (Month, Revenue) — enough to clear
         # the autopicker density gate (>= 6 non-null AND >= 30%

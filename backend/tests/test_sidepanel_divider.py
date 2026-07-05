@@ -34,6 +34,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import os
 
 
 REPO = Path(__file__).resolve().parents[2]
@@ -131,7 +132,7 @@ async def _sign_in_reference(page, base):
 
 async def _login_admin(page, base):
     await page.fill('[data-testid="signin-email-input"]', "admin@akki.ai")
-    await page.fill('[data-testid="signin-password-input"]', "AkkiAdmin2026!")
+    await page.fill('[data-testid="signin-password-input"]', os.environ["ADMIN_SEED_PASSWORD"])
     await page.click('[data-testid="signin-form"] button[type="submit"]')
     await page.wait_for_timeout(3500)
 

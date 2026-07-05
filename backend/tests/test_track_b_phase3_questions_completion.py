@@ -24,6 +24,7 @@ from httpx import AsyncClient, ASGITransport
 
 import server  # noqa: F401
 from server import app
+import os
 
 REPO = Path("/app")
 FRONTEND = REPO / "frontend" / "src"
@@ -112,7 +113,7 @@ async def _membership_for_admin(ac: AsyncClient, headers: Dict[str, str], contex
 async def test_share_records_audit_with_recipients(transport):
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         ctx = "tbp3-sh-" + uuid.uuid4().hex[:6]
         aid = await _membership_for_admin(ac, admin, ctx)
         qid = await _seed_question_via_admin_qa(ac, admin, account_id=aid, context_id=ctx)
@@ -138,7 +139,7 @@ async def test_share_records_audit_with_recipients(transport):
 async def test_reopen_answered_to_open(transport):
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         ctx = "tbp3-ro-" + uuid.uuid4().hex[:6]
         aid = await _membership_for_admin(ac, admin, ctx)
         qid = await _seed_question_via_admin_qa(
@@ -156,7 +157,7 @@ async def test_reopen_answered_to_open(transport):
 async def test_reopen_idempotent_on_already_open_after_close(transport):
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         ctx = "tbp3-roi-" + uuid.uuid4().hex[:6]
         aid = await _membership_for_admin(ac, admin, ctx)
         qid = await _seed_question_via_admin_qa(
@@ -176,7 +177,7 @@ async def test_reopen_idempotent_on_already_open_after_close(transport):
 @pytest.mark.asyncio
 async def test_reopen_guard_never_closed_returns_400(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         ctx = "tbp3-rog-" + uuid.uuid4().hex[:6]
         aid = await _membership_for_admin(ac, admin, ctx)
         qid = await _seed_question_via_admin_qa(
@@ -194,7 +195,7 @@ async def test_reopen_guard_never_closed_returns_400(transport):
 async def test_link_response_writes_doc_id_and_audit(transport):
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         ctx = "tbp3-lr-" + uuid.uuid4().hex[:6]
         aid = await _membership_for_admin(ac, admin, ctx)
         # Seed a doc in the same context.
@@ -222,7 +223,7 @@ async def test_link_response_writes_doc_id_and_audit(transport):
 async def test_link_response_cross_context_blocked(transport):
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         ctx_a = "tbp3-cxA-" + uuid.uuid4().hex[:6]
         ctx_b = "tbp3-cxB-" + uuid.uuid4().hex[:6]
         aid = await _membership_for_admin(ac, admin, ctx_a)
@@ -251,7 +252,7 @@ async def test_history_ordering_across_all_actions(transport):
     from core import db
     import asyncio
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         ctx = "tbp3-h-" + uuid.uuid4().hex[:6]
         aid = await _membership_for_admin(ac, admin, ctx)
         qid = await _seed_question_via_admin_qa(ac, admin, account_id=aid, context_id=ctx)
@@ -308,7 +309,7 @@ def test_empty_state_carries_verbatim_qa_copy_and_go_to_document_cta():
 @pytest.mark.asyncio
 async def test_cross_tenant_blocked_on_all_new_endpoints(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         ctx = "tbp3-tn-" + uuid.uuid4().hex[:6]
         aid = await _membership_for_admin(ac, admin, ctx)
         qid = await _seed_question_via_admin_qa(
@@ -340,7 +341,7 @@ async def test_cross_tenant_blocked_on_all_new_endpoints(transport):
 async def test_mark_answered_still_works(transport):
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         ctx = "tbp3-mr-" + uuid.uuid4().hex[:6]
         aid = await _membership_for_admin(ac, admin, ctx)
         qid = await _seed_question_via_admin_qa(ac, admin, account_id=aid, context_id=ctx)

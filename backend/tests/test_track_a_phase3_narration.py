@@ -34,6 +34,7 @@ from httpx import AsyncClient, ASGITransport
 import server  # noqa: F401
 from server import app
 from tests.fixtures.workbook_sample import build_sample_csv, build_sample_xlsx
+import os
 
 
 @pytest.fixture
@@ -98,7 +99,7 @@ async def test_synthesize_returns_narration_payload(transport, monkeypatch):
     monkeypatch.setattr(narr, "shield_invoke", AsyncMock(return_value=fake))
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi(ac, admin, ctx="tap3-ok-" + uuid.uuid4().hex[:6])
         r = await ac.post(f"/api/workbook/v2/analyses/{aid}/synthesize", headers=admin)
         assert r.status_code == 200, r.text
@@ -145,7 +146,7 @@ async def test_synthesize_handles_fenced_json_from_claude(transport, monkeypatch
     }))
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi(ac, admin, ctx="tap3-fence-" + uuid.uuid4().hex[:6])
         r = await ac.post(f"/api/workbook/v2/analyses/{aid}/synthesize", headers=admin)
         assert r.status_code == 200, r.text
@@ -182,7 +183,7 @@ async def test_synthesize_idempotent_cache_key(transport, monkeypatch):
     monkeypatch.setattr(narr, "shield_invoke", _stub)
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi(ac, admin, ctx="tap3-cache-" + uuid.uuid4().hex[:6])
         r1 = await ac.post(f"/api/workbook/v2/analyses/{aid}/synthesize", headers=admin)
         r2 = await ac.post(f"/api/workbook/v2/analyses/{aid}/synthesize", headers=admin)
@@ -211,7 +212,7 @@ async def test_citation_resolver_drops_out_of_range(transport, monkeypatch):
     monkeypatch.setattr(narr, "shield_invoke", AsyncMock(return_value=fake))
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi(ac, admin, ctx="tap3-cit-" + uuid.uuid4().hex[:6])
         r = await ac.post(f"/api/workbook/v2/analyses/{aid}/synthesize", headers=admin)
         obs = r.json()["observations"]
@@ -234,7 +235,7 @@ async def test_refuse_to_decide_when_no_evidence(transport, monkeypatch):
     monkeypatch.setattr(narr, "shield_invoke", spy)
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi(ac, admin, ctx="tap3-empty-" + uuid.uuid4().hex[:6])
         # Purge blobs first.
         await ac.post(f"/api/workbook/v2/analyses/{aid}/session-close", headers=admin)
@@ -309,7 +310,7 @@ async def test_cross_tenant_synthesize_404(transport, monkeypatch):
         "headline": "x", "observations": [],
     })))
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi(ac, admin, ctx="tap3-tn-" + uuid.uuid4().hex[:6])
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         viewer = await _csrf_login(ac, "viewer@akki.ai", "Viewer2026!")
@@ -331,7 +332,7 @@ async def test_phase_1_and_2_regressions_still_pass(transport, monkeypatch):
                           "evidence_citation_indices": [0]}],
     })))
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi(ac, admin, ctx="tap3-reg-" + uuid.uuid4().hex[:6])
         # Synthesize first.
         await ac.post(f"/api/workbook/v2/analyses/{aid}/synthesize", headers=admin)
@@ -389,7 +390,7 @@ async def test_voice_lint_drops_banned_voice_observations(transport, monkeypatch
     })
     monkeypatch.setattr(narr, "shield_invoke", AsyncMock(return_value=fake))
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi(ac, admin, ctx="tap3-vl-" + uuid.uuid4().hex[:6])
         r = await ac.post(f"/api/workbook/v2/analyses/{aid}/synthesize", headers=admin)
         bodies = [o["body"] for o in r.json()["observations"]]

@@ -305,7 +305,7 @@ async def test_p7_payload_endpoints_refuse_foreign_context():
     must not return SENT_C anywhere."""
     async with httpx.AsyncClient(base_url=BASE, timeout=30) as cx:
         r = await cx.post("/api/auth/login",
-            json={"email": "admin@akki.ai", "password": "AkkiAdmin2026!"})
+            json={"email": "admin@akki.ai", "password": os.environ["ADMIN_SEED_PASSWORD"]})
         assert r.status_code == 200, r.text
         token = cx.cookies.get("access_token")
         cookies = {"access_token": token}

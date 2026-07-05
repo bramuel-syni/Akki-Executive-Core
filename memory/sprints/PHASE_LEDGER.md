@@ -1745,7 +1745,7 @@ The Citizen Digital feed was already replaced in an earlier dispatch via `news_s
   - `/app/admin/users` — All-accounts user management
   - `/app/admin/cohort/copy` — Cohort copy editor (founder edits onboarding copy)
 - **Auth gate**: All three routes wrap in `<Gated>` which is `<ProtectedRoute><FirstSessionGuard><HardLockGuard>…`. **There is no superadmin role check in the route gate** — any authenticated user with active context can reach the URL. Server-side cohort endpoints (`/api/admin/cohort/*`) enforce superadmin via `require_superadmin()` dependency; the page itself surfaces but data calls return 403 for non-superadmins.
-- **Founder auth**: Use `admin@akki.ai` / `AkkiAdmin2026!` (per `/app/memory/test_credentials.md`). Custom-magic-link OR Google OAuth flow — but for the preview pod the password is fastest.
+- **Founder auth**: Use `admin@akki.ai` / `<redacted:ADMIN_SEED_PASSWORD>` (per `/app/memory/test_credentials.md`). Custom-magic-link OR Google OAuth flow — but for the preview pod the password is fastest.
 - **Preview URL**: `https://akki-executive.preview.emergentagent.com/app/admin/cohort`
 - **Cohort Console sections** (testid-locked):
   - `cohort-console-page` — page root
@@ -2081,7 +2081,7 @@ User reported "Can't sign in. Getting the error" on https://akki.syni.ai (produc
 | 2 | `GET /signin` | HTTP 200, React shell loads | ✅ Sign-in page serving |
 | 3 | `GET /api/auth/me` (no session) | HTTP 401 `{"detail":"Not authenticated"}` | ✅ Correct unauthenticated contract |
 | 4 | `OPTIONS /api/auth/login` preflight | HTTP 200, `access-control-allow-origin: https://akki.syni.ai`, `access-control-allow-credentials: true`, `vary: Origin` | ✅ CORS correctly reflects origin (not `*`), credentials supported |
-| 5 | `POST /api/auth/login` with `admin@akki.ai`/`AkkiAdmin2026!` | **HTTP 200** with full account payload, 11 contexts, `access_token` cookie + body, `refresh_token` cookie (`HttpOnly; Max-Age=28800; SameSite=none; Secure`) | ✅ **EMAIL/PASSWORD AUTH IS FULLY FUNCTIONAL IN PRODUCTION** |
+| 5 | `POST /api/auth/login` with `admin@akki.ai`/`<redacted:ADMIN_SEED_PASSWORD>` | **HTTP 200** with full account payload, 11 contexts, `access_token` cookie + body, `refresh_token` cookie (`HttpOnly; Max-Age=28800; SameSite=none; Secure`) | ✅ **EMAIL/PASSWORD AUTH IS FULLY FUNCTIONAL IN PRODUCTION** |
 | 5b | Same with INVALID password | HTTP 401 `{"detail":"Invalid email or password"}` | ✅ Error contract correct |
 | 6 | `GET /api/auth/oauth/google/start` | HTTP 200, returns `{"auth_base_url":"https://auth.emergentagent.com/","callback_path":"/oauth/callback","provider":"google"}` | ✅ Emergent-managed OAuth handshake URL emitted correctly |
 | 7 | `POST /api/auth/oauth/google/finish` with synthetic session_id | HTTP 400 `{"error":"oauth_session_invalid","message":"OAuth session expired or was already consumed.","provider_status":404}` | ✅ Structured error contract working; OAuth proxy plumbing correct |

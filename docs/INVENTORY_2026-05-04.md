@@ -371,7 +371,7 @@ Synisense in-house (no external service call other than optional Gemini
 fallback via Emergent key).
 
 ### Test credentials
-- Superadmin: `admin@akki.ai` / `AkkiAdmin2026!`
+- Superadmin: `admin@akki.ai` / `<redacted:ADMIN_SEED_PASSWORD>`
 - Non-owner viewer: `viewer@akki.ai` / `Viewer2026!`
 
 ---

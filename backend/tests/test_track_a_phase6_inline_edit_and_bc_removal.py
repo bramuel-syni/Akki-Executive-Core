@@ -147,7 +147,7 @@ async def test_synthesize_does_not_write_top_level_narration(transport, monkeypa
 
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_analysis(
             ac, admin, ctx="tap6-bc-narr-" + uuid.uuid4().hex[:6],
         )
@@ -171,7 +171,7 @@ async def test_notes_post_does_not_write_top_level_notes(transport):
     `notes_updated_at` mirrors. notes_history[-1] is canonical."""
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_analysis(
             ac, admin, ctx="tap6-bc-notes-" + uuid.uuid4().hex[:6],
         )
@@ -200,7 +200,7 @@ async def test_get_analysis_strips_legacy_bc_mirrors_for_legacy_rows(
     user's contract: "API response shape drops. No derived BC field
     on the API as a fallback." We strip on read."""
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
 
         # Find the admin's account_id.
         admin_row = await db_conn.accounts.find_one(
@@ -265,7 +265,7 @@ async def test_listing_note_count_reads_from_notes_history_only(transport, db_co
     Listing endpoint MUST return note_count=0 — no BC fallback to
     `r.get("notes")` (which was dropped in Phase 6)."""
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
 
         admin_row = await db_conn.accounts.find_one(
             {"email": "admin@akki.ai"}, {"_id": 0, "id": 1, "default_context_id": 1},
@@ -311,7 +311,7 @@ async def test_commit_still_locks_lifecycle_after_bc_removal(transport, db_conn)
     accidental shared-helper edit doesn't ripple."""
     # Work Studio commit endpoint = POST /api/contexts/{cid}/work-studio/documents/{aid}/commit
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         admin_row = await db_conn.accounts.find_one(
             {"email": "admin@akki.ai"}, {"_id": 0, "id": 1, "default_context_id": 1},
         )
@@ -351,7 +351,7 @@ async def test_commit_still_fires_pre_commit_snapshot_after_bc_removal(transport
     """Pre-commit snapshot path on POST /commit must fire after
     Phase 6 BC mirror removal."""
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         admin_row = await db_conn.accounts.find_one(
             {"email": "admin@akki.ai"}, {"_id": 0, "id": 1, "default_context_id": 1},
         )
@@ -401,7 +401,7 @@ async def test_synthesize_fresh_row_has_no_top_level_narration(transport, monkey
 
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_analysis(
             ac, admin, ctx="tap6-fresh-narr-" + uuid.uuid4().hex[:6],
         )
@@ -415,7 +415,7 @@ async def test_notes_post_fresh_row_has_no_top_level_notes_or_notes_updated_at(t
     top-level `notes` or `notes_updated_at` on the DB row."""
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_analysis(
             ac, admin, ctx="tap6-fresh-notes-" + uuid.uuid4().hex[:6],
         )
@@ -435,7 +435,7 @@ async def test_get_response_shape_contract_no_bc_mirrors_leak(transport, monkeyp
     monkeypatch.setattr(narr, "shield_invoke", AsyncMock(return_value=_shield_ok(_OK_NARRATION)))
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_analysis(
             ac, admin, ctx="tap6-resp-shape-" + uuid.uuid4().hex[:6],
         )
@@ -469,7 +469,7 @@ async def test_revise_creates_pre_revision_snapshot_before_shield_call(
     Shield call fires. If Shield raises, the snapshot still exists.
     This is deterministic — no LLM needed."""
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         admin_row = await db_conn.accounts.find_one(
             {"email": "admin@akki.ai"}, {"_id": 0, "id": 1, "default_context_id": 1},
         )
@@ -553,7 +553,7 @@ async def test_revise_happy_path_real_shield_round_trip(transport, db_conn):
     fires POST /revise, asserts that the diff returned contains at
     least one section_diff entry. No mocks."""
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         admin_row = await db_conn.accounts.find_one(
             {"email": "admin@akki.ai"}, {"_id": 0, "id": 1, "default_context_id": 1},
         )
@@ -631,7 +631,7 @@ async def test_revise_refusal_path_412_no_source_docs_no_shield_call(
     monkeypatch.setattr(router_mod, "shield_invoke", sentinel_shield)
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         admin_row = await db_conn.accounts.find_one(
             {"email": "admin@akki.ai"}, {"_id": 0, "id": 1, "default_context_id": 1},
         )

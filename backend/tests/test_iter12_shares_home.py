@@ -30,7 +30,7 @@ BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 assert BASE_URL, "REACT_APP_BACKEND_URL missing"
 
 BRAMUEL = {"email": "bramuel@syni.ai", "password": "Bramuel2026!"}
-ADMIN = {"email": "admin@akki.ai", "password": "AkkiAdmin2026!"}
+ADMIN = {"email": "admin@akki.ai", "password": os.environ["ADMIN_SEED_PASSWORD"]}
 
 
 def _login(creds):

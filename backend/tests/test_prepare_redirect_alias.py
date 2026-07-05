@@ -36,7 +36,7 @@ def admin_session():
     s = requests.session()
     r = s.post(
         f"{BACKEND}/api/auth/login",
-        json={"email": "admin@akki.ai", "password": "AkkiAdmin2026!"},
+        json={"email": "admin@akki.ai", "password": os.environ["ADMIN_SEED_PASSWORD"]},
         timeout=10,
     )
     r.raise_for_status()

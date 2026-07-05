@@ -32,7 +32,7 @@
   ],
   "updated_files": [],
   "success_rate": {"backend": "n/a (frontend-only re-test)", "frontend": "Flow1 100% PASS; Flow2 70% (UI wiring proven, draft blocked on seed); Flow3 0% (blocked on auth bug); Flow4 100% PASS"},
-  "test_credentials": "bramuel@syni.ai / TestBramuel2026!  ;  admin@akki.ai / AkkiAdmin2026!",
+  "test_credentials": "bramuel@syni.ai / TestBramuel2026!  ;  admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD>",
   "seed_data_creation": "Re-ran /app/backend/scripts/seed_iter19_e2e.py (idempotent). No new seed artefacts added by this iteration.",
   "retest_needed": true,
   "main_agent_can_self_test": true,

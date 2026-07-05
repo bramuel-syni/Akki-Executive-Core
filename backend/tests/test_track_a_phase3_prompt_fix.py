@@ -42,6 +42,7 @@ from openpyxl import Workbook
 
 import server  # noqa: F401
 from server import app
+import os
 
 
 @pytest.fixture
@@ -144,7 +145,7 @@ async def test_banned_jargon_in_headline_blanked(transport, monkeypatch, bad_hea
     monkeypatch.setattr(narr, "shield_invoke", AsyncMock(return_value=fake))
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_24mo(ac, admin, ctx="tap3v2-jargon-" + uuid.uuid4().hex[:6])
         r = await ac.post(f"/api/workbook/v2/analyses/{aid}/synthesize", headers=admin)
         assert r.status_code == 200, r.text
@@ -182,7 +183,7 @@ async def test_forecast_meta_surfaces_in_response(transport, monkeypatch):
     monkeypatch.setattr(narr, "shield_invoke", AsyncMock(return_value=fake))
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_24mo(ac, admin, ctx="tap3v2-fmeta-" + uuid.uuid4().hex[:6])
         r = await ac.post(f"/api/workbook/v2/analyses/{aid}/synthesize", headers=admin)
         assert r.status_code == 200, r.text
@@ -233,7 +234,7 @@ async def test_bounded_retry_when_whats_likely_next_omitted(transport, monkeypat
     monkeypatch.setattr(narr, "shield_invoke", spy)
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_24mo(ac, admin, ctx="tap3v2-retry-" + uuid.uuid4().hex[:6])
         r = await ac.post(f"/api/workbook/v2/analyses/{aid}/synthesize", headers=admin)
         assert r.status_code == 200, r.text
@@ -281,7 +282,7 @@ async def test_post_shield_validator_sets_per_tab_missing_flags(transport, monke
     monkeypatch.setattr(narr, "shield_invoke", spy)
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_24mo(ac, admin, ctx="tap3v4-validator-" + uuid.uuid4().hex[:6])
         r = await ac.post(f"/api/workbook/v2/analyses/{aid}/synthesize", headers=admin)
         assert r.status_code == 200, r.text
@@ -476,7 +477,7 @@ async def test_forecast_meta_passes_to_prompt_even_when_run_forecast_raises(
     })))
 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_24mo(ac, admin, ctx="tap3v3-noraise-" + uuid.uuid4().hex[:6])
         r = await ac.post(f"/api/workbook/v2/analyses/{aid}/synthesize", headers=admin)
         assert r.status_code == 200, r.text
@@ -526,7 +527,7 @@ async def test_logger_warning_on_swallowed_forecast_exception(
 
     caplog.set_level(_logging.WARNING, logger="akki.workbook_analysis")
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_24mo(ac, admin, ctx="tap3v3-log-" + uuid.uuid4().hex[:6])
         r = await ac.post(f"/api/workbook/v2/analyses/{aid}/synthesize", headers=admin)
         assert r.status_code == 200, r.text

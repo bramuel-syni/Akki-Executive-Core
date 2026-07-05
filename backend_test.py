@@ -2,7 +2,7 @@
 
 Run with: python /app/backend_test.py
 
-Auth: admin@akki.ai / AkkiAdmin2026! (superadmin owns Syni.ai HQ).
+Auth: admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD> (superadmin owns Syni.ai HQ).
 External URL is read from /app/frontend/.env.
 """
 from __future__ import annotations
@@ -41,7 +41,7 @@ BASE = _frontend_env().rstrip("/")
 JWT_SECRET = _backend_env("JWT_SECRET") or "local-dev-jwt-secret-do-not-use-in-prod-30af8e2b91d3"
 
 ADMIN_EMAIL = "admin@akki.ai"
-ADMIN_PASSWORD = "AkkiAdmin2026!"
+ADMIN_PASSWORD = os.environ["ADMIN_SEED_PASSWORD"]
 
 results: List[Dict[str, Any]] = []
 

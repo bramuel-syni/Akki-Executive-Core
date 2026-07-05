@@ -116,7 +116,7 @@ async def test_work_studio_compile_start_golden_shape(db_conn):
     now_iso = datetime.now(timezone.utc).isoformat()
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test", timeout=240.0) as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         admin_row = await db_conn.accounts.find_one(
             {"email": "admin@akki.ai"}, {"_id": 0, "id": 1, "default_context_id": 1},
         )

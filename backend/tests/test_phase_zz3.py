@@ -23,6 +23,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+import os
 
 REPO = Path(__file__).resolve().parent.parent.parent
 TC_PY = REPO / "backend" / "routers" / "trust_center.py"
@@ -136,7 +137,7 @@ async def test_zz3_reasoning_endpoint_e2e_admin_smoke():
     base = "https://akki-executive.preview.emergentagent.com"
     r = requests.post(f"{base}/api/auth/login",
                       json={"email": "admin@akki.ai",
-                            "password": "AkkiAdmin2026!"},
+                            "password": os.environ["ADMIN_SEED_PASSWORD"]},
                       timeout=15)
     if r.status_code >= 400:
         pytest.skip(f"login failed: {r.status_code}")

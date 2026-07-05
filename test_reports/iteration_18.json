@@ -28,7 +28,7 @@
     "/app/backend/tests/test_iter18_cycle_blog.py (new, 16 tests, all pass)"
   ],
   "success_rate": {"backend": "100% (16/16)", "frontend": "~80% — marketing pages, BlogPost render, /respond submit flow, Cycle sidebar+tabs all GREEN. Cycle tab CONTENT visibility is the one open question; /respond textarea count looks light."},
-  "test_credentials": "bramuel@syni.ai / TestBramuel2026! (NED, ctx 06cc1fc6-4308-4d19-a679-6f8f6bd692dc); admin@akki.ai / AkkiAdmin2026! (superadmin)",
+  "test_credentials": "bramuel@syni.ai / TestBramuel2026! (NED, ctx 06cc1fc6-4308-4d19-a679-6f8f6bd692dc); admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD> (superadmin)",
   "seed_data_creation": "Created via test runs: 5 'TEST_*' open questions added to Tuli Financial Group bank (used to keep generate non-empty across runs); 2-3 fresh TEST_ reportees on delivered@resend.dev; ~3-4 dispatched-then-responded checklists; ~2-3 submissions; 1 newly-composed published Exco360 blog post (LLM compose succeeded, then publish flipped to published). All test reportees use delivered@resend.dev so no real inbox got mail.",
   "retest_needed": true,
   "main_agent_can_self_test": true,

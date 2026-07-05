@@ -23,7 +23,7 @@
     "/app/backend/tests/test_iter37_38.py (NEW, 7 tests, all pass in ~4s)"
   ],
   "success_rate": {"backend": "100% (7/7)", "frontend": "100% (8/8 flows: 5 URL aliases + bramuel UI login + bramuel /admin/health redirect + admin /admin/health full grid + Run-checks refresh)"},
-  "test_credentials": "admin@akki.ai / AkkiAdmin2026! (superadmin); bramuel@syni.ai / TestBramuel2026! (regular dual user). Cron secret env: AKKI_CRON_SECRET=local-dev-cron-secret-rotate-in-prod-2026.",
+  "test_credentials": "admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD> (superadmin); bramuel@syni.ai / TestBramuel2026! (regular dual user). Cron secret env: AKKI_CRON_SECRET=local-dev-cron-secret-rotate-in-prod-2026.",
   "seed_data_creation": "None added in this iteration. The cron weekly-digest run iterates existing contexts and is idempotent.",
   "retest_needed": false,
   "main_agent_can_self_test": true,

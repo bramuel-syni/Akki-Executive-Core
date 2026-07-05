@@ -26,6 +26,7 @@ from httpx import AsyncClient, ASGITransport
 import server  # noqa: F401
 from server import app
 from core import db
+import os
 
 
 @pytest.fixture
@@ -107,7 +108,7 @@ async def test_patch_notes_sets_notes_updated_at(transport):
     seed = await _seed_doc_and_ctx(transport)
     try:
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            h = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+            h = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
 
             # Baseline — fresh row has neither field.
             row0 = await db.documents.find_one(
@@ -167,7 +168,7 @@ async def test_patch_empty_notes_clears_field_and_bumps_timestamp(transport):
     seed = await _seed_doc_and_ctx(transport)
     try:
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            h = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+            h = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
 
             # Establish a notes value first.
             r = await ac.patch(
@@ -210,7 +211,7 @@ async def test_patch_notes_idempotency_safe_for_autosave_debounce(transport):
     seed = await _seed_doc_and_ctx(transport)
     try:
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            h = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+            h = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
             payload = {"notes": "Same text both flushes."}
 
             # First flush.

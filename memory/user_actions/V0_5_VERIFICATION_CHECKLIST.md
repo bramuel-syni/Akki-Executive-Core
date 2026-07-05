@@ -5,7 +5,7 @@
 3 shipped components awaiting your verification. Each has a URL/route, test data setup, step-by-step actions, expected results, red flags, ~30-45 min per component.
 
 **Test credentials** (from `/app/memory/test_credentials.md`):
-- `admin@akki.ai` / `AkkiAdmin2026!` — superadmin, owns Syni.ai HQ, carries `solva_v2_poc=true` + `solva_v2=true` feature flags
+- `admin@akki.ai` / `<redacted:ADMIN_SEED_PASSWORD>` — superadmin, owns Syni.ai HQ, carries `solva_v2_poc=true` + `solva_v2=true` feature flags
 - `juliusaopio@gmail.com` / `Julius@Akki!2026-Exec` — rich substrate (5 contexts × 6 committees × 14 docs) — recommended for briefings/tracker
 - `bramuel@syni.ai` / `Bramuel2026!` — NED test account (3 NED contexts + 1 exec)
 

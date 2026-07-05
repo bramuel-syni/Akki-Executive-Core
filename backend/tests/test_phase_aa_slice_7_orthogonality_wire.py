@@ -68,7 +68,7 @@ except Exception:  # noqa: BLE001
 
 
 ADMIN_EMAIL = "admin@akki.ai"
-ADMIN_PASSWORD = "AkkiAdmin2026!"
+ADMIN_PASSWORD = os.environ["ADMIN_SEED_PASSWORD"]
 
 
 async def _simulate_extraction(cid: str, doc_id: str, marker: str) -> tuple[str, str]:

@@ -17,7 +17,7 @@ pytestmark = pytest.mark.skip(reason="Patch 19 — E2E test using requests.Sessi
 import requests
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL").rstrip("/")
-ADMIN = {"email": "admin@akki.ai", "password": "AkkiAdmin2026!"}
+ADMIN = {"email": "admin@akki.ai", "password": os.environ["ADMIN_SEED_PASSWORD"]}
 USER = {"email": "bramuel@syni.ai", "password": "Bramuel2026!"}
 TULI_CTX = "fb4df969-3f17-4279-bf78-f07bb9e29650"
 

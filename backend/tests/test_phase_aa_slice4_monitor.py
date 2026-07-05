@@ -55,7 +55,7 @@ def _frontend_url() -> str:
 
 
 ADMIN_EMAIL = "admin@akki.ai"
-ADMIN_PASSWORD = "AkkiAdmin2026!"
+ADMIN_PASSWORD = os.environ["ADMIN_SEED_PASSWORD"]
 
 VIEWPORTS = (1280, 1024, 820)
 

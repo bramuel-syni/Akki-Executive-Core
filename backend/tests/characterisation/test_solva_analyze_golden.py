@@ -126,7 +126,7 @@ async def test_solva_analyze_golden_shape(db_conn):
     now_iso = datetime.now(timezone.utc).isoformat()
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test", timeout=240.0) as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
 
         # 1. Upload — creates the Analysis entity.
         files = [

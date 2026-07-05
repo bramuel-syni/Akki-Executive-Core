@@ -178,7 +178,7 @@ async def test_first_synthesize_creates_one_run(transport, monkeypatch):
 
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_single(
             ac, admin, ctx="tap4-runs-first-" + uuid.uuid4().hex[:6],
         )
@@ -210,7 +210,7 @@ async def test_idempotent_resynthesize_does_not_append(transport, monkeypatch):
 
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_single(
             ac, admin, ctx="tap4-runs-idemp-" + uuid.uuid4().hex[:6],
         )
@@ -237,7 +237,7 @@ async def test_changed_content_appends_new_run(transport, monkeypatch):
 
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_single(
             ac, admin, ctx="tap4-runs-change-" + uuid.uuid4().hex[:6],
         )
@@ -266,7 +266,7 @@ async def test_changed_content_appends_new_run(transport, monkeypatch):
 async def test_first_note_appended_to_history(transport, monkeypatch):
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_single(
             ac, admin, ctx="tap4-notes-first-" + uuid.uuid4().hex[:6],
         )
@@ -299,7 +299,7 @@ async def test_identical_note_is_idempotent_noop(transport, monkeypatch):
     notes_history. The second response is the tail entry (same id)."""
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_single(
             ac, admin, ctx="tap4-notes-idemp-" + uuid.uuid4().hex[:6],
         )
@@ -326,7 +326,7 @@ async def test_distinct_notes_append_in_order(transport, monkeypatch):
     """Distinct bodies append in sequence; BC mirror reflects the latest."""
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_single(
             ac, admin, ctx="tap4-notes-distinct-" + uuid.uuid4().hex[:6],
         )
@@ -365,7 +365,7 @@ async def test_three_source_synthesize_runs_with_prefixed_sheets(transport, monk
 
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi(
             ac, admin, ctx="tap4-multi-3-" + uuid.uuid4().hex[:6], n=3,
         )
@@ -412,7 +412,7 @@ async def test_multi_workbook_capped_at_five(transport, monkeypatch):
 
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi(
             ac, admin, ctx="tap4-multi-6-" + uuid.uuid4().hex[:6], n=6,
         )

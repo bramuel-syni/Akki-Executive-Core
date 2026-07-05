@@ -24,6 +24,7 @@ from httpx import AsyncClient, ASGITransport
 
 import server  # noqa: F401
 from server import app
+import os
 
 REPO = Path("/app")
 FRONTEND = REPO / "frontend" / "src"
@@ -83,7 +84,7 @@ async def _seed_task_direct(*, account_id: str, context_id: str, state: str = "d
 async def test_commission_draft_to_active_and_audit(transport):
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         # admin's actual account id is whatever /auth/me returns.
         me = await ac.get("/api/auth/me", headers=admin)
         admin_id = me.json()["account"]["id"]
@@ -113,7 +114,7 @@ async def test_commission_draft_to_active_and_audit(transport):
 async def test_close_active_to_closed_and_audit(transport):
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         me = await ac.get("/api/auth/me", headers=admin)
         admin_id = me.json()["account"]["id"]
         tid = await _seed_task_direct(
@@ -138,7 +139,7 @@ async def test_close_active_to_closed_and_audit(transport):
 async def test_commission_idempotent_on_active(transport):
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         me = await ac.get("/api/auth/me", headers=admin)
         admin_id = me.json()["account"]["id"]
         tid = await _seed_task_direct(
@@ -162,7 +163,7 @@ async def test_commission_idempotent_on_active(transport):
 async def test_close_idempotent_on_closed(transport):
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         me = await ac.get("/api/auth/me", headers=admin)
         admin_id = me.json()["account"]["id"]
         tid = await _seed_task_direct(
@@ -188,7 +189,7 @@ async def test_close_idempotent_on_closed(transport):
 @pytest.mark.asyncio
 async def test_state_machine_guards(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         me = await ac.get("/api/auth/me", headers=admin)
         admin_id = me.json()["account"]["id"]
         # commission on closed → 400
@@ -215,7 +216,7 @@ async def test_state_machine_guards(transport):
 @pytest.mark.asyncio
 async def test_cross_tenant_lifecycle_blocked(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         me = await ac.get("/api/auth/me", headers=admin)
         admin_id = me.json()["account"]["id"]
         tid = await _seed_task_direct(
@@ -238,7 +239,7 @@ async def test_filter_tab_counts_match_db(transport):
     """Seed 3 drafts + 2 actives + 5 closeds in a fresh context;
     assert the counts endpoint returns the live numbers."""
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         me = await ac.get("/api/auth/me", headers=admin)
         admin_id = me.json()["account"]["id"]
         ctx = "tbp2-cnt-" + uuid.uuid4().hex[:6]

@@ -33,6 +33,7 @@ from unittest import mock
 import httpx
 import pytest
 import pytest_asyncio
+import os
 
 sys.path.insert(0, "/app/backend")
 from server import app  # noqa: E402
@@ -607,7 +608,7 @@ async def _superadmin_token(client):
     logging in as the canonical admin (`admin@akki.ai`). Tests run
     against the live admin seeded by ``server.startup``."""
     r = await client.post("/api/auth/login", json={
-        "email": "admin@akki.ai", "password": "AkkiAdmin2026!",
+        "email": "admin@akki.ai", "password": os.environ["ADMIN_SEED_PASSWORD"],
     })
     assert r.status_code == 200, (r.status_code, r.text[:300])
     token = r.json()["access_token"]
@@ -819,7 +820,7 @@ async def test_wire_admin_audit_invariant_violations_endpoint_exists(client):
 
         ADMIN_TOKEN=$(curl -s -X POST "$API/api/auth/login" \\
             -H 'Content-Type: application/json' \\
-            -d '{"email":"admin@akki.ai","password":"AkkiAdmin2026!"}' \\
+            -d '{"email":"admin@akki.ai","password":os.environ["ADMIN_SEED_PASSWORD"]}' \\
             | python3 -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
         curl -s "$API/api/admin/audit-invariant-violations?hours=24" \\
             -H "Authorization: Bearer $ADMIN_TOKEN" \\

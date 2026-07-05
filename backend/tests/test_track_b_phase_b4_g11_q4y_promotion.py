@@ -44,6 +44,7 @@ from httpx import AsyncClient, ASGITransport
 import server  # noqa: F401
 from server import app
 from core import db
+import os
 from services.documents.intelligence_service import (
     promote_intelligence_questions_to_q4y,
 )
@@ -335,7 +336,7 @@ async def test_companyhome_attention_card_count_reflects_doc_extracted_questions
         # authenticated route to prove the count surfaces end-to-end.
         # Route is `/api/contexts/{cid}/home/insights` (home.py:222).
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            admin_h = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+            admin_h = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
             r = await ac.get(
                 f"/api/contexts/{seed['context_id']}/home/insights",
                 headers=admin_h,

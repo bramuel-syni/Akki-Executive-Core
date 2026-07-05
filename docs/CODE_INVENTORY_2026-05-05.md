@@ -515,7 +515,7 @@ Cron endpoints fired by APScheduler in `server.py`: `/api/blog/cron/weekly` (Tue
 | `RESEND_API_KEY` | Outbound email | TEST MODE in dev |
 | `POSTMARK_SERVER_TOKEN` | Inbound email | LIVE in dev |
 
-**Implicit / commented / referenced (not present in dev `.env`):** `STRIPE_SECRET_KEY`, `STRIPE_API_KEY`, `STRIPE_WEBHOOK_SECRET` (boot guard refuses startup if `BILLING_ENABLED=true` without these); `FRONTEND_URL`, `PUBLIC_APP_URL` (used by save-and-send for resume URLs); `ADMIN_EMAIL`, `ADMIN_PASSWORD` (boot seeds — defaults `admin@akki.ai` / `AkkiAdmin2026!`); `AKKI_AUTH_OBSERVE_RATE` (default 0.01); `VALIDATOR_DAILY_SOFT_CAP` (default 200); `AKKI_ENV`.
+**Implicit / commented / referenced (not present in dev `.env`):** `STRIPE_SECRET_KEY`, `STRIPE_API_KEY`, `STRIPE_WEBHOOK_SECRET` (boot guard refuses startup if `BILLING_ENABLED=true` without these); `FRONTEND_URL`, `PUBLIC_APP_URL` (used by save-and-send for resume URLs); `ADMIN_EMAIL`, `ADMIN_PASSWORD` (boot seeds — defaults `admin@akki.ai` / `<redacted:ADMIN_SEED_PASSWORD>`); `AKKI_AUTH_OBSERVE_RATE` (default 0.01); `VALIDATOR_DAILY_SOFT_CAP` (default 200); `AKKI_ENV`.
 
 ### `frontend/.env`
 ```
@@ -574,7 +574,7 @@ WDS_SOCKET_PORT=443
 ## 8) Quick reference: seeded test credentials
 
 From `/app/memory/test_credentials.md`:
-- **Superadmin:** `admin@akki.ai` / `AkkiAdmin2026!` (owns `Syni.ai HQ` + 5 strategic-pack demo contexts)
+- **Superadmin:** `admin@akki.ai` / `<redacted:ADMIN_SEED_PASSWORD>` (owns `Syni.ai HQ` + 5 strategic-pack demo contexts)
 - **Non-owner viewer:** `viewer@akki.ai` / `Viewer2026!`
 - **Phase K.3 tester:** `juliusaopio@gmail.com` / `Julius@Akki!2026-Exec` (dual / superadmin / 5 contexts mirroring 14 strategic-pack docs)
 

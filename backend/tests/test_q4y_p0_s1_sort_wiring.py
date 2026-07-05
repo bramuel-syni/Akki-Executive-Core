@@ -28,6 +28,7 @@ from httpx import AsyncClient, ASGITransport
 
 import server
 from core import db
+import os
 
 
 REPO = Path(__file__).resolve().parent.parent.parent
@@ -124,7 +125,7 @@ async def _login(c: AsyncClient) -> str:
     r = await c.post(
         "/api/auth/login",
         headers={"X-CSRF-Token": csrf},
-        json={"email": "admin@akki.ai", "password": "AkkiAdmin2026!"},
+        json={"email": "admin@akki.ai", "password": os.environ["ADMIN_SEED_PASSWORD"]},
     )
     return r.json()["access_token"]
 

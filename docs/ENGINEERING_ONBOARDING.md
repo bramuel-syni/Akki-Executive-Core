@@ -156,7 +156,7 @@ Smoke test:
 ```bash
 curl http://localhost:8001/api/health        # {"status":"ok","db":"up"}
 open http://localhost:3000                   # land on /signin
-# log in with admin@akki.ai / AkkiAdmin2026!  (see memory/test_credentials.md)
+# log in with admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD>  (see memory/test_credentials.md)
 ```
 
 ---

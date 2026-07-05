@@ -35,6 +35,7 @@ from openpyxl import Workbook
 
 import server  # noqa: F401
 from server import app
+import os
 
 
 @pytest.fixture
@@ -76,7 +77,7 @@ async def test_phase5_schema_additive_fields_persist(transport):
     """Exports persist `source_count`, `contributor_count`, `akki_generated`."""
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         cid = "aff5e102-04b8-4948-9f6b-27c9eca1f0d7"
         files = {"file": ("minutes_p5.txt", _build_minutes_text(), "text/plain")}
         data = {"instructions": "Add a risks section.", "output_format": "auto"}
@@ -138,7 +139,7 @@ async def test_phase5_w3_csrf_token_on_stream_request(transport):
         csrf = r.json()["csrf_token"]
         r = await ac.post(
             "/api/auth/login",
-            json={"email": "admin@akki.ai", "password": "AkkiAdmin2026!"},
+            json={"email": "admin@akki.ai", "password": os.environ["ADMIN_SEED_PASSWORD"]},
             headers={"X-CSRF-Token": csrf},
         )
         token = r.json().get("access_token") or r.json().get("token")
@@ -197,7 +198,7 @@ async def test_phase5_w2_compile_start_success(transport, monkeypatch):
         "routers.work_studio_export._run_export", _noop_run, raising=False,
     )
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         cid = "aff5e102-04b8-4948-9f6b-27c9eca1f0d7"
 
         # Seed a compilation.
@@ -242,7 +243,7 @@ async def test_phase5_w2_compile_start_success(transport, monkeypatch):
 async def test_phase5_w2_compile_start_404_on_missing(transport):
     """/start against a non-existent compilation returns 404."""
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         cid = "aff5e102-04b8-4948-9f6b-27c9eca1f0d7"
         bogus = "comp-" + uuid.uuid4().hex
         r = await ac.post(
@@ -263,7 +264,7 @@ async def test_phase5_w2_compile_start_idempotent(transport, monkeypatch):
         "routers.work_studio_export._run_export", _noop_run, raising=False,
     )
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         cid = "aff5e102-04b8-4948-9f6b-27c9eca1f0d7"
         comp_body = {
             "title": "P5 Idem Test " + uuid.uuid4().hex[:6],
@@ -315,7 +316,7 @@ async def test_phase5_w2_compile_full_cycle(transport):
     via `pytest -m integration`. NOT in default sweep."""
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         cid = "aff5e102-04b8-4948-9f6b-27c9eca1f0d7"
         comp_body = {
             "title": "P5 Real LLM Test " + uuid.uuid4().hex[:6],
@@ -363,7 +364,7 @@ async def test_phase5_w5_manual_create_endpoint(transport):
     Pre-Phase-5 this was 405 (the multipart-only POST /documents was
     the closest match)."""
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         cid = "aff5e102-04b8-4948-9f6b-27c9eca1f0d7"
         body = {
             "name": "P5 Draft " + uuid.uuid4().hex[:6],
@@ -392,7 +393,7 @@ async def test_phase5_w5_save_draft_creates_on_first_call(transport):
     """First /save-draft with a fresh session_id creates a new row."""
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         cid = "aff5e102-04b8-4948-9f6b-27c9eca1f0d7"
         sid = str(uuid.uuid4())
         r = await ac.post(
@@ -419,7 +420,7 @@ async def test_phase5_w5_save_draft_updates_on_second_call(transport):
     """Second /save-draft with the same session_id UPDATES the row."""
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         cid = "aff5e102-04b8-4948-9f6b-27c9eca1f0d7"
         sid = str(uuid.uuid4())
         payload = {
@@ -455,7 +456,7 @@ async def test_phase5_w5_save_draft_idempotent_under_concurrency(transport):
     draft_session_id collapse to ONE row."""
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         cid = "aff5e102-04b8-4948-9f6b-27c9eca1f0d7"
         sid = str(uuid.uuid4())
         payload = {
@@ -503,7 +504,7 @@ async def test_phase5_loading_checklist_polling_contract(transport):
     that transitions running → complete | failed."""
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         cid = "aff5e102-04b8-4948-9f6b-27c9eca1f0d7"
         # Use the /save-draft path to create a `status=complete` row
         # synchronously (no LLM dependency).
@@ -569,7 +570,7 @@ async def test_phase5_pdf_inline_render_path(transport, monkeypatch):
     We synthesise a complete PDF export row to avoid the LLM cost."""
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         cid = "aff5e102-04b8-4948-9f6b-27c9eca1f0d7"
 
         # Fabricate a PDF row + on-disk file.

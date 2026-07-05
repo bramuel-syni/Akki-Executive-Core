@@ -24,7 +24,7 @@ UI refinement**, not a backend rewrite.
 ### A1 — Provider switch + grouped selector
 - `routers/chat.py:82-104` exposes 9 models across 3 provider groups
   (Anthropic / OpenAI / Google). Verified via curl on
-  `/api/chat/models` (admin@akki.ai, AkkiAdmin2026!) → returns all
+  `/api/chat/models` (admin@akki.ai, <redacted:ADMIN_SEED_PASSWORD>) → returns all
   9 with `provider` field per entry.
 - `frontend/src/pages/Chat.jsx:1564-1685` — `ModelPicker` refactored
   from flat list to grouped two-level layout (provider header +

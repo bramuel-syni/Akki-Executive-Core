@@ -23,7 +23,7 @@ from dotenv import load_dotenv
 load_dotenv("/app/frontend/.env")
 BASE_URL = os.environ["REACT_APP_BACKEND_URL"].rstrip("/")
 ADMIN_EMAIL = "admin@akki.ai"
-ADMIN_PASSWORD = "AkkiAdmin2026!"
+ADMIN_PASSWORD = os.environ["ADMIN_SEED_PASSWORD"]
 
 
 # ---------------------------------------------------------------------------

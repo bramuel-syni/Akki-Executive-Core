@@ -19,7 +19,7 @@ sys.path.insert(0, "/app/backend")
 
 BASE_URL = os.environ["REACT_APP_BACKEND_URL"].rstrip("/")
 ADMIN_EMAIL = "admin@akki.ai"
-ADMIN_PASS = "AkkiAdmin2026!"
+ADMIN_PASS = os.environ["ADMIN_SEED_PASSWORD"]
 USER_EMAIL = "bramuel@syni.ai"
 USER_PASS = "Bramuel2026!"
 POSTMARK_SECRET = "c04fdcf8-24c4-4e44-b19f-337f80607d6c"

@@ -108,7 +108,7 @@ Acceptance: 11/11 GREEN. Surface ratchet asserts at the new pin (`9aa905f6d951f2
 **Pollution surface analysis** (from source-read of the file, lines 31-50):
 - Module-level imports: `import server`, `from server import app`, `from core import db`. These are stable across the broad-suite (no per-test re-import).
 - The `transport` fixture is **function-scoped** (line 31-33 `@pytest.fixture` with no `scope=`). ✅ Already clean — not the leak vector.
-- Each test calls `_csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")` — depends on:
+- Each test calls `_csrf_login(ac, "admin@akki.ai", "<redacted:ADMIN_SEED_PASSWORD>")` — depends on:
   - `admin@akki.ai` row in `db.accounts` (must exist, password must hash-match, must not be `is_locked=True`)
   - `/api/csrf` returning a valid token (depends on CSRF dep registration)
   - `/api/auth/login` not being rate-limited (depends on `login_failed_attempts` counter)

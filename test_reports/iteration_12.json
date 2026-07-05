@@ -31,7 +31,7 @@
     "backend": "100% (14/14 iter12 tests PASS — home stream shape+auth, share lifecycle incl. 400 self / 404 missing / create / inbox / outbox / auth / opened_at / revoke / post-revoke view, share-comment via comments router, sprint6 shielding regression)",
     "frontend": "100% on reviewed surfaces — all 11 required testids present (home-scope-toggle / -current / -all, home-tab-shared, section-shared-with-you, shared-with-you-list, shared-card-<id>, signal-share-<id>, briefing-share-btn verified in source, share-modal + 8 modal testids). 'SHARED BY AKKI' accent-soft badge renders on recipient card. Zero console errors during the full happy-path."
   },
-  "test_credentials": "bramuel@syni.ai / TestBramuel2026! (sharer, 6 contexts), admin@akki.ai / AkkiAdmin2026! (AKKI-user recipient). Seeded by scripts/seed_bramuel.py + server.py startup admin-seed.",
+  "test_credentials": "bramuel@syni.ai / TestBramuel2026! (sharer, 6 contexts), admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD> (AKKI-user recipient). Seeded by scripts/seed_bramuel.py + server.py startup admin-seed.",
   "seed_data_creation": "Round-trip test created 2 TEST_-prefixed shares (one bramuel→admin via UI submit, one admin→bramuel via direct API). Both were revoked in the test's finally block (revoke via DELETE /api/shares/{id}). One TEST_signal_for_bramuel_share was created in admin's Syni.ai HQ context — not cleaned up (no signal-delete API) but is harmless seed noise confined to admin's context.",
   "retest_needed": false,
   "main_agent_can_self_test": true,

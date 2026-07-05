@@ -25,6 +25,7 @@ from datetime import datetime, timedelta, timezone
 import httpx
 import pytest
 import pytest_asyncio
+import os
 
 sys.path.insert(0, "/app/backend")
 from server import app  # noqa: E402
@@ -211,7 +212,7 @@ async def test_admin_endpoint_requires_superadmin(client):
 async def test_admin_endpoint_works_for_superadmin(client):
     # The bootstrap admin is superadmin per the test fixture conventions.
     r = await client.post("/api/auth/login", json={
-        "email": "admin@akki.ai", "password": "AkkiAdmin2026!",
+        "email": "admin@akki.ai", "password": os.environ["ADMIN_SEED_PASSWORD"],
     })
     if r.status_code != 200:
         pytest.skip(f"admin login unavailable in this env: {r.status_code}")

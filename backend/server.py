@@ -983,7 +983,14 @@ async def on_startup():
 
     # Admin seed
     admin_email = os.environ.get("ADMIN_EMAIL", "admin@akki.ai").lower()
-    admin_password = os.environ.get("ADMIN_PASSWORD", "AkkiAdmin2026!")
+    # ADMIN_SEED_PASSWORD is the canonical env-driven credential.
+    # Hard-fail if missing — never emit a plaintext fallback.
+    admin_password = os.environ.get("ADMIN_SEED_PASSWORD")
+    if not admin_password:
+        raise RuntimeError(
+            "ADMIN_SEED_PASSWORD environment variable is required for admin seed. "
+            "Set it in /app/backend/.env before boot."
+        )
     existing = await db.accounts.find_one({"email": admin_email}, {"_id": 0})
     if not existing:
         admin_id = str(uuid.uuid4())

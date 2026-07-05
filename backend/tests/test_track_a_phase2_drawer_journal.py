@@ -30,6 +30,7 @@ from httpx import AsyncClient, ASGITransport
 import server  # noqa: F401
 from server import app
 from tests.fixtures.workbook_sample import build_sample_csv
+import os
 
 REPO = Path("/app")
 FRONTEND = REPO / "frontend" / "src"
@@ -83,7 +84,7 @@ async def _seed_multi(client: AsyncClient, headers: Dict[str, str], *,
 @pytest.mark.asyncio
 async def test_v2_list_returns_only_tenant_rows(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         admin_aid = await _seed_multi(
             ac, admin, ctx="tap2-list-" + uuid.uuid4().hex[:6],
         )
@@ -107,7 +108,7 @@ async def test_v2_list_returns_only_tenant_rows(transport):
 @pytest.mark.asyncio
 async def test_upload_multi_persists_objective_text(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi(
             ac, admin,
             ctx="tap2-obj-" + uuid.uuid4().hex[:6],
@@ -124,7 +125,7 @@ async def test_upload_multi_persists_objective_text(transport):
 @pytest.mark.asyncio
 async def test_v2_detail_returns_full_entity(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi(ac, admin, ctx="tap2-det-" + uuid.uuid4().hex[:6])
         r = await ac.get(f"/api/workbook/v2/analyses/{aid}", headers=admin)
         assert r.status_code == 200
@@ -142,7 +143,7 @@ async def test_v2_detail_returns_full_entity(transport):
 @pytest.mark.asyncio
 async def test_note_post_then_appears_on_read(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi(ac, admin, ctx="tap2-note-" + uuid.uuid4().hex[:6])
         r = await ac.post(
             f"/api/workbook/v2/analyses/{aid}/notes",
@@ -164,7 +165,7 @@ async def test_note_post_then_appears_on_read(transport):
 @pytest.mark.asyncio
 async def test_two_notes_both_persist(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi(ac, admin, ctx="tap2-2note-" + uuid.uuid4().hex[:6])
         for body in ("first", "second"):
             r = await ac.post(
@@ -184,7 +185,7 @@ async def test_two_notes_both_persist(transport):
 @pytest.mark.asyncio
 async def test_export_endpoints_still_serve_ana_ids(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi(ac, admin, ctx="tap2-exp-" + uuid.uuid4().hex[:6])
         for ext, mime_prefix in (
             ("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
@@ -209,7 +210,7 @@ async def test_export_endpoints_still_serve_ana_ids(transport):
 @pytest.mark.asyncio
 async def test_cross_tenant_note_post_blocked(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        admin = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+        admin = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         admin_aid = await _seed_multi(
             ac, admin, ctx="tap2-cross-" + uuid.uuid4().hex[:6],
         )

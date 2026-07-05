@@ -218,7 +218,7 @@ curl -s -o /dev/null -w "HTTP %{http_code}\n" \
 # (3) F#3 + Warning #2 — admin endpoint clean
 ADMIN_TOKEN=$(curl -s -X POST "$API/api/auth/login" \
     -H 'Content-Type: application/json' \
-    -d '{"email":"admin@akki.ai","password":"AkkiAdmin2026!"}' \
+    -d '{"email":"admin@akki.ai","password":"<redacted:ADMIN_SEED_PASSWORD>"}' \
     | python3 -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
 curl -s "$API/api/admin/audit-invariant-violations?hours=24" \
     -H "Authorization: Bearer $ADMIN_TOKEN" | python3 -m json.tool

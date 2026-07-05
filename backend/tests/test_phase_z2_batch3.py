@@ -26,6 +26,7 @@ from typing import Any
 
 import pytest
 from httpx import AsyncClient, ASGITransport
+import os
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 FRONTEND = REPO_ROOT / "frontend" / "src"
@@ -185,7 +186,7 @@ def _get_admin_token() -> str:
     base = "https://akki-executive.preview.emergentagent.com"
     rr = requests.post(
         f"{base}/api/auth/login",
-        json={"email": "admin@akki.ai", "password": "AkkiAdmin2026!"},
+        json={"email": "admin@akki.ai", "password": os.environ["ADMIN_SEED_PASSWORD"]},
         timeout=15,
     )
     rr.raise_for_status()

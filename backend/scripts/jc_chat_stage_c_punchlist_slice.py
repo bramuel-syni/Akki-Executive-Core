@@ -54,7 +54,7 @@ load_dotenv("/app/backend/.env")
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL") or "https://akki-executive.preview.emergentagent.com"
 ADMIN_EMAIL = "admin@akki.ai"
-ADMIN_PWD = "AkkiAdmin2026!"
+ADMIN_PWD = os.environ["ADMIN_SEED_PASSWORD"]
 CONTEXT_ID = "a2937d0f-37f1-4042-a897-ab73a6cd652a"  # Mara Heritage Bank · Demo
 
 

@@ -30,6 +30,7 @@ from httpx import AsyncClient, ASGITransport
 import server  # noqa: F401
 from server import app
 from core import db
+import os
 
 
 @pytest.fixture
@@ -111,7 +112,7 @@ async def test_share_document_accepts_recipient_emails_list(transport):
     seed = await _seed_doc_and_ctx()
     try:
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            h = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+            h = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
             r = await ac.post(
                 f"/api/contexts/{seed['context_id']}/documents/{seed['doc_id']}/share",
                 json={
@@ -167,7 +168,7 @@ async def test_share_document_rejects_malformed_payloads(transport):
     seed = await _seed_doc_and_ctx()
     try:
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            h = await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+            h = await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
             base = f"/api/contexts/{seed['context_id']}/documents/{seed['doc_id']}/share"
 
             # (a) Empty list — min_length=1 violation.

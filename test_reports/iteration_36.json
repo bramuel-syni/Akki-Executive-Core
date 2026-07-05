@@ -24,7 +24,7 @@
     "/app/backend/tests/test_iter36.py (NEW, 12 tests, all pass in ~10s)"
   ],
   "success_rate": {"backend": "100% (12/12)", "frontend": "Landing 100%, Influence Map 100%, Chat audit + doc-evolution share UI — testids verified in source + DOM but Radix portal click timing in automation prevented a full download-round-trip on this run"},
-  "test_credentials": "Bramuel: bramuel@syni.ai / TestBramuel2026!  ·  Admin: admin@akki.ai / AkkiAdmin2026!",
+  "test_credentials": "Bramuel: bramuel@syni.ai / TestBramuel2026!  ·  Admin: admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD>",
   "seed_data_creation": "Pytest created TEST iter36 audit export chat + one 'hello world' message (used for audit export rows); one doc_evolution share to delivered@resend.dev in Tuli Exec context. All within Bramuel's account, safe to leave.",
   "retest_needed": false,
   "main_agent_can_self_test": true,

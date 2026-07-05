@@ -30,7 +30,7 @@
   ],
   "updated_files": [],
   "success_rate": {"backend": "100% (15/15 on smoke slice: Auth lockout + Documents + Signals + Ask)", "frontend": "95% — all routes/components render, one HTML-validity bug in Workspace doc-row"},
-  "test_credentials": "admin@akki.ai / AkkiAdmin2026! — verified working. Admin default context 'Syni.ai HQ' already has 1 uploaded doc 'Q3 Board Pack' and 3 pre-generated signals.",
+  "test_credentials": "admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD> — verified working. Admin default context 'Syni.ai HQ' already has 1 uploaded doc 'Q3 Board Pack' and 3 pre-generated signals.",
   "seed_data_creation": "None created in this iteration (used existing admin context + pre-existing doc + pre-existing signals). Ask history gained +1 exchange from the test question 'What were the Q3 revenue figures?'.",
   "retest_needed": false,
   "main_agent_can_self_test": true,

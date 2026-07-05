@@ -23,7 +23,7 @@ SEED_ADMIN = ROOT / "scripts" / "seed_admin_strategic_data.py"
 SEED_JULIUS = ROOT / "scripts" / "seed_julius_opio.py"
 
 ADMIN_EMAIL = "admin@akki.ai"
-ADMIN_PW = "AkkiAdmin2026!"
+ADMIN_PW = os.environ["ADMIN_SEED_PASSWORD"]
 JULIUS_EMAIL = "juliusaopio@gmail.com"
 JULIUS_PW = "Julius@Akki!2026-Exec"
 BACKEND = os.environ.get("BACKEND_URL", "http://localhost:8001")

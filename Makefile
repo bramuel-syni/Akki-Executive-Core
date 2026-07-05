@@ -42,7 +42,7 @@ evidence-pngs-check:
 # Prerequisites (must hold before invoking this target):
 #   - Backend + frontend serving the configured REACT_APP_BACKEND_URL
 #   - Playwright + browser binaries installed: `python -m playwright install chromium`
-#   - test_credentials.md superadmin (admin@akki.ai / AkkiAdmin2026!) seeded
+#   - test_credentials.md superadmin (admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD>) seeded
 #
 # Exit non-zero on any failure → blocks the deploy step that depends on it.
 deploy-check:

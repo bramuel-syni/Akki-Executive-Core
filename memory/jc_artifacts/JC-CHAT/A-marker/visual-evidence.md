@@ -51,7 +51,7 @@
 
 Anyone can reproduce the visual delta by:
 
-1. Logging in as `admin@akki.ai` / `AkkiAdmin2026!`
+1. Logging in as `admin@akki.ai` / `<redacted:ADMIN_SEED_PASSWORD>`
 2. Navigating to `/app/chat`
 3. Comparing the surface against `git show HEAD~1:frontend/src/pages/Chat.jsx`
    diff (or any Stage 0 / pre-Stage-A snapshot).

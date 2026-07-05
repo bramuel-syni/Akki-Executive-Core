@@ -182,7 +182,7 @@ async def test_zz4_endpoint_live_admin_smoke():
     import requests
     base = "https://akki-executive.preview.emergentagent.com"
     r = requests.post(f"{base}/api/auth/login",
-                      json={"email": "admin@akki.ai", "password": "AkkiAdmin2026!"},
+                      json={"email": "admin@akki.ai", "password": os.environ["ADMIN_SEED_PASSWORD"]},
                       timeout=15)
     if r.status_code >= 400:
         pytest.skip(f"login: {r.status_code}")

@@ -34,7 +34,7 @@
     "backend": "7/7 (100%)",
     "frontend": "Admin panels 100% (deck-alerts + regen-reasons + bar label phrasing all verified live); Decks regen-chip UI structurally verified via source grep but not clicked-live due to context-switch issue blocking step3 access"
   },
-  "test_credentials": "bramuel@syni.ai / TestBramuel2026! (standard); admin@akki.ai / AkkiAdmin2026! (superadmin)",
+  "test_credentials": "bramuel@syni.ai / TestBramuel2026! (standard); admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD> (superadmin)",
   "seed_data_creation": "Updated 3 deck_telemetry rows on bramuel's account with quality_score in [40,45,50] and _iter56_seeded:true marker. 1 new outline + 1 new deck on Tuli NED ctx fb4df969 (outline-edit-test outline_id with edits_applied for research_question + audience_assumed). Existing deck 4fde929d feedback overwritten with regen_reason='weak_research_question', comment='the question was too broad'.",
   "retest_needed": false,
   "main_agent_can_self_test": true,

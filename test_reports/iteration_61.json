@@ -31,7 +31,7 @@
     "backend": "100% (12/12 passed)",
     "frontend": "100% on Solve module (picker→intent→session→phase advance verified). Admin auth-events dashboard render not visually verified due to second-login timeout in same session — API verified via backend tests."
   },
-  "test_credentials": "User: bramuel@syni.ai / TestBramuel2026!  |  Admin: admin@akki.ai / AkkiAdmin2026!",
+  "test_credentials": "User: bramuel@syni.ai / TestBramuel2026!  |  Admin: admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD>",
   "seed_data_creation": "Created several TEST_iter61 solve sessions during pytest runs — abandoned after testing. Bramuel now has additional completed/abandoned solve_sessions rows.",
   "retest_needed": false,
   "main_agent_can_self_test": true,

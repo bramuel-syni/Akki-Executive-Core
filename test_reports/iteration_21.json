@@ -26,7 +26,7 @@
   ],
   "updated_files": [],
   "success_rate": {"backend": "100% (re-verified via UI, no direct backend testing per request)", "frontend": "Flow 3: 100% (5/5 assertions pass), Flow 2: blocked at ctx/role bootstrap by test-script artifact, feature not reached in this run"},
-  "test_credentials": "bramuel@syni.ai / TestBramuel2026! (verified login works, ctx-switch-fb4df969 visible in switcher menu); admin@akki.ai / AkkiAdmin2026! (verified login works, blog-admin gate now passes)",
+  "test_credentials": "bramuel@syni.ai / TestBramuel2026! (verified login works, ctx-switch-fb4df969 visible in switcher menu); admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD> (verified login works, blog-admin gate now passes)",
   "seed_data_creation": "None — used existing seed (iter19-tuli-audit-cmte chip ID, blog posts already seeded). Confirmed 6 admin-post-* rows visible.",
   "retest_needed": true,
   "should_main_agent_self_test": true,

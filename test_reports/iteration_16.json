@@ -36,7 +36,7 @@
     "backend": "100% (32/32 regression + 5/5 new iter16 tests PASS)",
     "frontend": "95% (label renames ✓, Learn modal flow ✓, Governance filter ✓, ESC close ✓; soft finding: 3 of 4 LEARN_MORE tabs under the ≥ 8 curated-source threshold)"
   },
-  "test_credentials": "bramuel@syni.ai / TestBramuel2026! (used); admin@akki.ai / AkkiAdmin2026! (not needed for this iter). AKKI_CRON_SECRET=local-dev-cron-secret-rotate-in-prod-2026 verified in /app/backend/.env and matches the cleanup endpoint contract.",
+  "test_credentials": "bramuel@syni.ai / TestBramuel2026! (used); admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD> (not needed for this iter). AKKI_CRON_SECRET=local-dev-cron-secret-rotate-in-prod-2026 verified in /app/backend/.env and matches the cleanup endpoint contract.",
   "seed_data_creation": "None — all tests reuse existing Bramuel seed + cleanup endpoint sweeps only expired sandboxes. Iter16 personalisation test does not persist state (LLM call is stateless).",
   "retest_needed": false,
   "main_agent_can_self_test": true,

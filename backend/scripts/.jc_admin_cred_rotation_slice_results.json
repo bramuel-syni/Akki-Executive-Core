@@ -1,0 +1,65 @@
+[
+  {
+    "row": "R1_zero_plaintext_scan",
+    "ok": true,
+    "detail": "remaining_source_hits=0",
+    "hits": []
+  },
+  {
+    "row": "R2_pyc_cold_boot",
+    "ok": true,
+    "detail": "lingering_pyc_hits=0",
+    "hits": []
+  },
+  {
+    "row": "R3_archived_files",
+    "ok": true,
+    "detail": "archived_files_scanned=9 \u00b7 plaintext_hits=0 \u00b7 disposition=REDACTED (retained as marker \u00b7 not deleted)",
+    "hits": []
+  },
+  {
+    "row": "R4_env_variable",
+    "ok": true,
+    "detail": "env_key=ADMIN_SEED_PASSWORD \u00b7 length=43 \u00b7 sha256_prefix=d5ef5abd6327"
+  },
+  {
+    "row": "R5_fingerprint_emission_guard",
+    "ok": true,
+    "detail": "plaintext_in_slice=False \u00b7 plaintext_in_rotate=False \u00b7 cred_full_hash_in_slice=False \u00b7 cred_full_hash_in_rotate=False"
+  },
+  {
+    "row": "R6_mongo_state_sync",
+    "ok": true,
+    "detail": "admin_email=admin@akki.ai \u00b7 hash_present=True \u00b7 verify_ok=True"
+  },
+  {
+    "row": "R7_login_smoke",
+    "ok": true,
+    "detail": "status=200 \u00b7 has_token_or_account=True \u00b7 admin=admin@akki.ai"
+  },
+  {
+    "row": "R8_seeder_hard_fail",
+    "ok": true,
+    "detail": "returncode=1 \u00b7 stderr_has_key_name=True"
+  },
+  {
+    "row": "R9_rotation_script_idempotency",
+    "ok": true,
+    "detail": "run1_rc=0 \u00b7 run2_rc=0 \u00b7 run2_is_noop=True"
+  },
+  {
+    "row": "R10_pytest_smoke",
+    "ok": true,
+    "detail": "collect_rc=0 \u00b7 tests_collected=4416 \u00b7 rep_import_ok=True"
+  },
+  {
+    "row": "R11_shield_untouched",
+    "ok": true,
+    "detail": "baseline_files=13 \u00b7 current_files=13 \u00b7 drift=0"
+  },
+  {
+    "row": "R12_mocked_line_and_rename_hash",
+    "ok": true,
+    "detail": "changelog_ok=True \u00b7 prd_ok=True \u00b7 mocked_line_in_memo=True"
+  }
+]

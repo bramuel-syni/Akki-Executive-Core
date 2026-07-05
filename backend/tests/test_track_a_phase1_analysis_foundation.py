@@ -36,6 +36,7 @@ from openpyxl import load_workbook
 
 import server  # noqa: F401 — imports the FastAPI app
 from server import app
+import os
 from services.workbook_analyzer import (
     WorkbookAnalysis,
     build_pptx_report,
@@ -99,7 +100,7 @@ async def _seed_multi_analysis(
 async def test_multi_file_upload_creates_one_analysis_with_two_source_refs(transport):
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         ctx = "ctx-mfu-" + uuid.uuid4().hex[:6]
         r = await client.post(
             "/api/workbook/upload-multi",
@@ -134,7 +135,7 @@ async def test_250mb_boundary_rejects_overflow(transport):
     try:
         wba_router.MAX_BYTES = 1024
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+            headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
             payload = b"x," * 600 + b"\n"
             r = await client.post(
                 "/api/workbook/upload",
@@ -187,7 +188,7 @@ def test_pptx_builder_byte_identical_on_same_input():
 @pytest.mark.asyncio
 async def test_multi_file_xlsx_export_end_to_end(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi_analysis(client, headers, context_suffix="xlsx")
         r = await client.get(f"/api/workbook/analyses/{aid}/report.xlsx", headers=headers)
         assert r.status_code == 200, r.text
@@ -214,7 +215,7 @@ async def test_multi_file_xlsx_export_end_to_end(transport):
 @pytest.mark.asyncio
 async def test_multi_file_docx_export_end_to_end(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi_analysis(client, headers, context_suffix="docx")
         r = await client.get(f"/api/workbook/analyses/{aid}/report.docx", headers=headers)
         assert r.status_code == 200, r.text
@@ -236,7 +237,7 @@ async def test_multi_file_docx_export_end_to_end(transport):
 @pytest.mark.asyncio
 async def test_multi_file_pptx_export_end_to_end(transport):
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         aid = await _seed_multi_analysis(client, headers, context_suffix="pptx")
         r = await client.get(f"/api/workbook/analyses/{aid}/report.pptx", headers=headers)
         assert r.status_code == 200, r.text
@@ -260,7 +261,7 @@ async def test_multi_file_pptx_export_end_to_end(transport):
 async def test_session_close_purges_blob_retains_analysis(transport):
     from core import db
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.post(
             "/api/workbook/upload-multi",
             files=[("files", ("sc.csv", build_sample_csv(), "text/csv"))],
@@ -294,7 +295,7 @@ async def test_tenant_scope_viewer_cannot_read_admin_analysis(transport):
     .pptx, and the v2 read endpoint. Cross-direction: admin must
     not see viewer's new-entity Analysis."""
     async with AsyncClient(transport=transport, base_url="http://test") as client_admin:
-        admin_headers = await _csrf_login(client_admin, "admin@akki.ai", "AkkiAdmin2026!")
+        admin_headers = await _csrf_login(client_admin, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         admin_aid = await _seed_multi_analysis(
             client_admin, admin_headers, context_suffix="tenant-admin",
         )
@@ -323,7 +324,7 @@ async def test_tenant_scope_viewer_cannot_read_admin_analysis(transport):
         )
 
     async with AsyncClient(transport=transport, base_url="http://test") as client_admin:
-        admin_headers = await _csrf_login(client_admin, "admin@akki.ai", "AkkiAdmin2026!")
+        admin_headers = await _csrf_login(client_admin, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client_admin.get(
             f"/api/workbook/v2/analyses/{viewer_aid}", headers=admin_headers,
         )

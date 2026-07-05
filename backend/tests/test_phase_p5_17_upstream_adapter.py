@@ -32,6 +32,7 @@ from httpx import AsyncClient, ASGITransport
 
 import server  # noqa: F401
 from server import app
+import os
 from services.inbox_routing import (
     ORIGIN_EMAIL_AKKI,
     backfill_tasks,
@@ -269,7 +270,7 @@ async def test_tasks_list_includes_origin_field_when_present(transport):
         "status_history": [], "origin": env, "readiness_score": 0,
     })
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.get("/api/tasks?state=draft", headers=headers)
         assert r.status_code == 200, r.text
         tasks = r.json()
@@ -285,7 +286,7 @@ async def test_tasks_list_origin_filter_narrows_to_email_akki(transport):
     from core import db
     admin = await db.accounts.find_one({"email": "admin@akki.ai"}, {"_id": 0})
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.get("/api/tasks?origin=email_akki", headers=headers)
         assert r.status_code == 200, r.text
         tasks = r.json()
@@ -310,7 +311,7 @@ async def test_tasks_list_origin_manual_excludes_email_akki(transport):
         # NO origin field — represents a manually-created task.
     })
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.get("/api/tasks?origin=manual", headers=headers)
         assert r.status_code == 200, r.text
         tasks = r.json()
@@ -327,7 +328,7 @@ async def test_tasks_without_origin_render_origin_null(transport):
     from core import db
     admin = await db.accounts.find_one({"email": "admin@akki.ai"}, {"_id": 0})
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.get("/api/tasks", headers=headers)
         assert r.status_code == 200, r.text
         for t in r.json():
@@ -403,7 +404,7 @@ async def test_preview_endpoint_superadmin_sees_any_message(transport):
     )
     msg = await _seed_inbox_message(db, account_id=other["id"])
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = await _csrf_login(client, "admin@akki.ai", "AkkiAdmin2026!")
+        headers = await _csrf_login(client, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         r = await client.get(
             f"/api/inbox/messages/{msg['id']}/preview", headers=headers,
         )

@@ -26,7 +26,7 @@
   ],
   "updated_files": ["/app/backend/tests/test_iter54_llm_spend_quota_inbound.py"],
   "success_rate": {"backend": "100% (10/10)", "frontend": "100% — all 4 admin screenshots captured, redirects & enterprise update-note verified"},
-  "test_credentials": "admin@akki.ai / AkkiAdmin2026! (superadmin); bramuel@syni.ai / TestBramuel2026! (standard)",
+  "test_credentials": "admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD> (superadmin); bramuel@syni.ai / TestBramuel2026! (standard)",
   "seed_data_creation": "TEST_iter54a_<uuid> and TEST_iter54b_<uuid> rows written/deleted in llm_deep_usage during quota tests; cleaned up at end. One audit_log row written under bramuel's first ctx for action='inbound_email.rejected' resource_id=<test message id> — left in place as expected production audit trail.",
   "retest_needed": false,
   "main_agent_can_self_test": true,

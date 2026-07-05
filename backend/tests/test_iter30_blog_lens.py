@@ -21,7 +21,7 @@ BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 assert BASE_URL, "REACT_APP_BACKEND_URL must be set"
 CRON_SECRET = "local-dev-cron-secret-rotate-in-prod-2026"
 ADMIN_EMAIL = "admin@akki.ai"
-ADMIN_PASSWORD = "AkkiAdmin2026!"
+ADMIN_PASSWORD = os.environ["ADMIN_SEED_PASSWORD"]
 USER_EMAIL = "bramuel@syni.ai"
 USER_PASSWORD = "Bramuel2026!"
 

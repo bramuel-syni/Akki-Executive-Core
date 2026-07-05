@@ -41,7 +41,7 @@ def _client():
 async def _admin_login_token() -> str:
     async with _client() as ac:
         r = await ac.post("/api/auth/login",
-                          json={"email": "admin@akki.ai", "password": "AkkiAdmin2026!"})
+                          json={"email": "admin@akki.ai", "password": os.environ["ADMIN_SEED_PASSWORD"]})
         return r.json()["access_token"]
 
 

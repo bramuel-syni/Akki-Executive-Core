@@ -20,7 +20,7 @@ BASE_URL = os.environ.get(
     "REACT_APP_BACKEND_URL", "http://localhost:8001"
 ).rstrip("/")
 ADMIN_EMAIL = "admin@akki.ai"
-ADMIN_PASSWORD = "AkkiAdmin2026!"
+ADMIN_PASSWORD = os.environ["ADMIN_SEED_PASSWORD"]
 
 
 def _login():

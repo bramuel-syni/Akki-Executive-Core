@@ -91,7 +91,7 @@ async def _seed_pre_v1_chat(*, account_id: str, ctx_id: str,
 
 async def _superadmin_token(client):
     r = await client.post("/api/auth/login", json={
-        "email": "admin@akki.ai", "password": "AkkiAdmin2026!",
+        "email": "admin@akki.ai", "password": os.environ["ADMIN_SEED_PASSWORD"],
     })
     assert r.status_code == 200, r.text[:300]
     return {"Authorization": f"Bearer {r.json()['access_token']}"}

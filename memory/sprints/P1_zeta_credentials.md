@@ -9,7 +9,7 @@
 ### `admin@akki.ai`  (superadmin)
 
 - **Email:** admin@akki.ai
-- **Password:** AkkiAdmin2026!
+- **Password:** <redacted:ADMIN_SEED_PASSWORD>
 - **Role:** superadmin (`is_superadmin: True`)
 - **Tenant:** Syni.ai HQ owner
 - **Use for:** admin-only flows (admin portal, cohort inbox, prompt-tune,

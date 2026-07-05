@@ -12,7 +12,7 @@ import requests
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://akki-executive.preview.emergentagent.com").rstrip("/")
 ADMIN_EMAIL = "admin@akki.ai"
-ADMIN_PASS = "AkkiAdmin2026!"
+ADMIN_PASS = os.environ["ADMIN_SEED_PASSWORD"]
 USER_EMAIL = "bramuel@syni.ai"
 USER_PASS = "Bramuel2026!"
 TULI_CFO_CTX = "2ceb9fde-a202-4891-adb1-ecf47dfe2258"

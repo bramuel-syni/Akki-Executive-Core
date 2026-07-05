@@ -15,6 +15,7 @@ import uuid
 from pathlib import Path
 
 import pytest
+import os
 
 
 REPO = Path(__file__).resolve().parents[2]
@@ -148,7 +149,7 @@ async def test_invite_founder_live_cta_opens_modal_at_1280():
             await page.goto(f"{base}/signin", wait_until="domcontentloaded", timeout=20000)
             await page.wait_for_selector('[data-testid="signin-email-input"]', timeout=15000)
             await page.fill('[data-testid="signin-email-input"]', "admin@akki.ai")
-            await page.fill('[data-testid="signin-password-input"]', "AkkiAdmin2026!")
+            await page.fill('[data-testid="signin-password-input"]', os.environ["ADMIN_SEED_PASSWORD"])
             await page.click('[data-testid="signin-form"] button[type="submit"]')
             await page.wait_for_timeout(3000)
 

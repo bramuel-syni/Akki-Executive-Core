@@ -96,7 +96,7 @@ async def test_phase_x_bug2_live_dom_superadmin_cta_disabled():
             await page.goto(f"{base}/signin", wait_until="domcontentloaded", timeout=20000)
             await page.wait_for_selector('[data-testid="signin-email-input"]', timeout=15000)
             await page.fill('[data-testid="signin-email-input"]', "admin@akki.ai")
-            await page.fill('[data-testid="signin-password-input"]', "AkkiAdmin2026!")
+            await page.fill('[data-testid="signin-password-input"]', os.environ["ADMIN_SEED_PASSWORD"])
             await page.click('[data-testid="signin-form"] button[type="submit"]')
             await page.wait_for_timeout(3000)
 

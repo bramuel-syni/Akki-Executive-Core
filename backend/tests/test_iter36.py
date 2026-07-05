@@ -17,7 +17,7 @@ BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://akki-executive.previ
 API = f"{BASE_URL}/api"
 
 BRAMUEL = {"email": "bramuel@syni.ai", "password": "Bramuel2026!"}
-ADMIN = {"email": "admin@akki.ai", "password": "AkkiAdmin2026!"}
+ADMIN = {"email": "admin@akki.ai", "password": os.environ["ADMIN_SEED_PASSWORD"]}
 
 TULI_EXEC_HINT = "Tuli"
 TULI_DOC1 = "a90b82e3-3fa9-4a26-be0c-d63bdfc51909"

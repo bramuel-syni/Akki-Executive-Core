@@ -46,7 +46,7 @@
     "backend": "94% (17/18 pytest pass; 1 critical 500 on billing/status)",
     "frontend": "100% (4/4 flows: Billing tab + Stripe redirect, Schedule modal save+persist+clear, ReportEditor unsaved badge + confirm dialog, BlogAdmin Medium body cache)"
   },
-  "test_credentials": "bramuel@syni.ai / TestBramuel2026! (verified). admin@akki.ai / AkkiAdmin2026! (verified for blog-admin). AKKI_CRON_SECRET=local-dev-cron-secret-rotate-in-prod-2026 (verified). STRIPE_API_KEY=sk_test_emergent (creates sessions OK, retrieve fails — see backend issue).",
+  "test_credentials": "bramuel@syni.ai / TestBramuel2026! (verified). admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD> (verified for blog-admin). AKKI_CRON_SECRET=local-dev-cron-secret-rotate-in-prod-2026 (verified). STRIPE_API_KEY=sk_test_emergent (creates sessions OK, retrieve fails — see backend issue).",
   "seed_data_creation": "None — used existing iter19 seed (Tuli ned ctx fb4df969..., Mawingu ned ctx 06cc1fc6..., 6 blog admin posts).",
   "retest_needed": true,
   "should_main_agent_self_test": false,

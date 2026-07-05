@@ -100,12 +100,12 @@ async def _admin_headers():
     """Seeded admin from `/app/memory/test_credentials.md`."""
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         try:
-            return await _csrf_login(ac, "admin@akki.ai", "AkkiAdmin2026!")
+            return await _csrf_login(ac, "admin@akki.ai", os.environ["ADMIN_SEED_PASSWORD"])
         except Exception:
             pytest.skip(
                 "Phase 5.5.2 first-session-shape invariant requires the "
                 "seeded admin from /app/memory/test_credentials.md "
-                "(admin@akki.ai / AkkiAdmin2026!). Login failed — "
+                "(admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD>). Login failed — "
                 "ensure the seed script ran before this invariant. "
                 "This is a setup precondition, not a contract failure."
             )

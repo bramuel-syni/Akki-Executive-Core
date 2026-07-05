@@ -73,7 +73,7 @@ OTHER_WS_CATEGORIES = ("board_pack", "minutes", "draft", "deck", "briefing")
 OTHER_DOCS_ORIGINS = ("akki_generated", "email_receipt")
 ADMIN_CTX_NAME = "TEST_SeededNedCo"
 ADMIN_EMAIL = "admin@akki.ai"
-ADMIN_PASSWORD = "AkkiAdmin2026!"
+ADMIN_PASSWORD = os.environ["ADMIN_SEED_PASSWORD"]
 
 
 async def _ensure_active_context(page, ctx_name: str) -> None:

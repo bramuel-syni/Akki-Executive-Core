@@ -20,7 +20,7 @@ EXISTING_DECK_ID = "4fde929d-d9ae-433d-8cc9-bf60fda6eacd"
 USER_EMAIL = "bramuel@syni.ai"
 USER_PASSWORD = "Bramuel2026!"
 ADMIN_EMAIL = "admin@akki.ai"
-ADMIN_PASSWORD = "AkkiAdmin2026!"
+ADMIN_PASSWORD = os.environ["ADMIN_SEED_PASSWORD"]
 
 
 @pytest.fixture(scope="module")

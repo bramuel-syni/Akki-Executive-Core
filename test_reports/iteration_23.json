@@ -24,7 +24,7 @@
     "backend": "100% (18/18 pytest + 4/4 ad-hoc cross-account & webhook checks)",
     "frontend": "not tested (per request — frontend was 100% GREEN in iter22)"
   },
-  "test_credentials": "bramuel@syni.ai / TestBramuel2026! (verified). admin@akki.ai / AkkiAdmin2026! (verified for cross-account 404 check). AKKI_CRON_SECRET=local-dev-cron-secret-rotate-in-prod-2026 (verified).",
+  "test_credentials": "bramuel@syni.ai / TestBramuel2026! (verified). admin@akki.ai / <redacted:ADMIN_SEED_PASSWORD> (verified for cross-account 404 check). AKKI_CRON_SECRET=local-dev-cron-secret-rotate-in-prod-2026 (verified).",
   "seed_data_creation": "None — re-used existing iter19 seed; only created transient pending payment_transactions rows (one per checkout session test).",
   "retest_needed": false,
   "should_main_agent_self_test": true,
