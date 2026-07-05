@@ -7183,3 +7183,29 @@ draft surfaced verbatim.
 - GET /status (frontend, public)
 
 
+
+
+---
+
+### 2026-07-05 · JC-INTERNAL-HTTP-CONNECTTIMEOUT-CLASSIFY · CLASSIFY-ONLY report arc CLOSED
+
+**Canonical Spec:** user dispatch 2026-07-05 · `JC-INTERNAL-HTTP-CONNECTTIMEOUT-CLASSIFY` + 2 reinforcements (§5 gating deliverable · zero-touch reinforcement).
+
+**Status:** 🟢 SHIPPED-UNPUSHED · 9/9 proving-slice GREEN · commit=`e3e52509` (close-flip commit=`b40969bb`).
+
+**Deliverables:** 5-section classification memo at `memory/sprints/JC_INTERNAL_HTTP_CONNECTTIMEOUT_CLASSIFY.md` + proving slice at `backend/scripts/jc_internal_http_connecttimeout_classify_proving_slice.py`.
+
+**Verdict:** **CLEAR-TO-PROCEED** for the 5 evidence bundles under `memory/evidence/2026_07_02/`. All 5 bundle captures use direct Motor client / AST introspection / Pydantic reflection — zero touch the contract layer (`get_akki`/`get_synisense`/`get_solva`). Empty rows in B4 = declared substrate gap (`strategic_goals=0`), not transport contamination. Gap/partial statuses in B1/B2/B3/B5 = substrate-declared honestly.
+
+**Failure-mode taxonomy (recon-only, no code touched):**
+- D1 base `_HTTPAdapterBase._call`: FAIL-CLOSED (correct — retries then raises).
+- D2 boot backfill task: DEFENSIVE-DEGRADE (log-visible; hourly cron recovers).
+- D3 best-effort Shield wrappers (`compile_service.shield_invoke_bounded`, `intelligence_service._task_shield_recommendations`): DEFENSIVE-DEGRADE (log-visible per docstring).
+- D4 direct call sites: FAIL-CLOSED (exception propagates to FastAPI 500).
+- SILENT-DEGRADE findings: **zero** in audited surfaces.
+
+**Environment issue itself (loopback ConnectTimeout on `127.0.0.1:8001` when `BOUNDED_CONTEXT_TRANSPORT=http`) remains OPEN — deferred to user disposition (fix / gate / silence). NOT in scope for this arc.**
+
+**R7 zero-touch verified:** `git diff --stat aff25763 -- <7 protected paths>` = 0 bytes; Shield 13 files sha256 identity confirmed.
+
+**Testing sub-agents BANNED throughout. MOCKED-integrations line preserved. HARD STOP at report close.**
