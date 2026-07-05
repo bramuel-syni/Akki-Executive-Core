@@ -33,4 +33,15 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install pytest Pillow
-      - run: python3 -m pytest backend/tests/test_phase_m0a_marketing_assets.py backend/tests/test_phase_m4_webp_siblings.py -q
+      # JC-CORE-REPUSH-LANE-CLASSIFY (2026-07-05) — `--noconftest` is
+      # the cheap-fix disposition: local repro shows these two tests
+      # (`test_phase_m0a_marketing_assets.py` + `test_phase_m4_webp_siblings.py`)
+      # are pure `pathlib` + `struct.unpack` on PNG/WebP signatures with
+      # ZERO backend runtime deps. Actions failure = `backend/tests/conftest.py`
+      # tries to `load_dotenv('/app/backend/.env')` + heavy backend imports
+      # (motor / fastapi / core.py side-effects) that aren't installed on the
+      # runner with only `pytest + Pillow`. `--noconftest` skips the whole
+      # conftest tree; the tests themselves still enforce all M.0a/M.4
+      # assertions. Cheapest possible fix (1 flag). See sprint memo
+      # `JC_CORE_REPUSH_LANE_CLASSIFY.md` for full disposition ledger.
+      - run: python3 -m pytest --noconftest backend/tests/test_phase_m0a_marketing_assets.py backend/tests/test_phase_m4_webp_siblings.py -q

@@ -1,0 +1,64 @@
+{
+  "arc": "JC-CORE-REPUSH-LANE-CLASSIFY",
+  "canonical_spec": "user dispatch 2026-07-05",
+  "sub_arcs": [
+    "re-push close-conditions delta",
+    "4-lane classify-fix-or-disable"
+  ],
+  "passed": 10,
+  "total": 10,
+  "green": true,
+  "rows": [
+    {
+      "row": "R1_aff25763_exists",
+      "ok": true,
+      "detail": "rc=0 out='aff25763 JC-FE-CODEMOD-001-CLOSE-CONDITIONS \u00b7 8/8 GREEN \u00b7 closes both conditions on JC-FE-CODEMOD-001-APPLY'"
+    },
+    {
+      "row": "R2_subarc1_close_discipline",
+      "ok": true,
+      "detail": "path=(b)_shipped-unpushed \u00b7 unpushed_declared=True hash_cited=True user_push_instruction=True eslint_disable=0 allowlist_present=True"
+    },
+    {
+      "row": "R3_codemod_drift_local",
+      "ok": true,
+      "detail": "codemods_run=2 failures=0",
+      "failures": []
+    },
+    {
+      "row": "R4_gitleaks_log_source",
+      "ok": true,
+      "detail": "wait_for_paste_emitted=True disposed_without_logs=False"
+    },
+    {
+      "row": "R5_gitleaks_augment_discipline",
+      "ok": true,
+      "detail": "unchanged=True parseable=True useDefault=True unanchored_paths=[]"
+    },
+    {
+      "row": "R6_gitleaks_real_signal",
+      "ok": true,
+      "detail": "has_gitleaks_section=True path_b_prematurely_claimed=False"
+    },
+    {
+      "row": "R7_per_lane_table",
+      "ok": true,
+      "detail": "header_row_present=True missing_lanes=[]"
+    },
+    {
+      "row": "R8_deletion_ledger_consistency",
+      "ok": true,
+      "detail": "lh_deleted=True lh_ledgered=True rs_deleted=True rs_ledgered=True"
+    },
+    {
+      "row": "R9_shield_sha256_identity",
+      "ok": true,
+      "detail": "shield_py_files=13 diff_bytes=0"
+    },
+    {
+      "row": "R10_prior_bankings",
+      "ok": true,
+      "detail": "bankings_untouched=True prior_slices=48 ast_failures=[]"
+    }
+  ]
+}
