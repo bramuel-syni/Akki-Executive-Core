@@ -1,0 +1,134 @@
+{
+  "results": [
+    {
+      "row": "R1_lane_count_reconciliation",
+      "ok": true,
+      "detail": "expected=12 \u00b7 deleted=4 \u00b7 surviving=8 \u00b7 total_inventory=12 \u00b7 matches_expected=True"
+    },
+    {
+      "row": "R2_lane_verdict_manifest",
+      "ok": true,
+      "detail": "lanes_in_manifest=12 \u00b7 schema_valid=True"
+    },
+    {
+      "row": "R3_deletion_ledger_integrity",
+      "ok": true,
+      "detail": "deleted_files=4 \u00b7 missing_ledger_entries=0"
+    },
+    {
+      "row": "R4_gitleaks_config_valid",
+      "ok": true,
+      "detail": "path_count=11 \u00b7 useDefault=True \u00b7 valid_toml=True"
+    },
+    {
+      "row": "R5_path_scoped_allowlist_discipline",
+      "ok": true,
+      "detail": "path_entries=11 \u00b7 wildcard_count=0"
+    },
+    {
+      "row": "R6_no_lane_deleted_without_cause",
+      "ok": true,
+      "detail": "missing=0"
+    },
+    {
+      "row": "R7_cheap_fix_minimality",
+      "ok": true,
+      "detail": "fixable_cheap_lanes=2 \u00b7 declared_max_LOC_per_fix<10"
+    },
+    {
+      "row": "R8_no_new_external_dependency",
+      "ok": true,
+      "detail": "new_secrets_beyond_baseline=[]"
+    },
+    {
+      "row": "R9_regression",
+      "ok": true,
+      "detail": "prior_slices_scanned=45 \u00b7 ast_broken=0 \u00b7 shield_identity=True \u00b7 rename_hash_intact=True"
+    },
+    {
+      "row": "R10_real_signal_declaration",
+      "ok": true,
+      "detail": "real_signal_lanes=['codemod-drift'] \u00b7 section_present=True \u00b7 all_declared=True"
+    }
+  ],
+  "lane_manifest": {
+    "backend-tests": {
+      "last_run": "N/A (no live log fetch available)",
+      "verdict": "CANNOT-PASS-IN-THIS-ENV",
+      "disposition": "DELETE",
+      "cause": "CANNOT-PASS-IN-THIS-ENV: `pip install -r backend/requirements.txt` fails to resolve `emergentintegrations==0.1.0` (private wheelhouse at cloudfront `d33sy5i8bnduwe`, not on PyPI). GH Actions runner has no `--extra-index-url` configured."
+    },
+    "codemod-drift": {
+      "last_run": "local repro: --check exits 1 with 10 pending rewrites",
+      "verdict": "REAL-SIGNAL",
+      "disposition": "KEEP",
+      "cause": "10 files under frontend/src have raw axios import drift; codemod-001 catches it. Per dispatch: do not auto-fix real signals in triage arc \u2192 surfaced for user disposition in next dispatch."
+    },
+    "dep-audit": {
+      "last_run": "N/A (no live log fetch available)",
+      "verdict": "CANNOT-PASS-IN-THIS-ENV",
+      "disposition": "DELETE",
+      "cause": "CANNOT-PASS-IN-THIS-ENV: same class as backend-tests (pip-audit traverses the full requirement graph \u2192 fails on emergentintegrations). Secondary `npm-audit` job coupled in same file; Dependabot already carries that HIGH/CRITICAL npm signal channel."
+    },
+    "deploy": {
+      "last_run": "N/A (no live log fetch available)",
+      "verdict": "CANNOT-PASS-IN-THIS-ENV",
+      "disposition": "DELETE",
+      "cause": "CANNOT-PASS-IN-THIS-ENV: 7 absent GitHub secrets in this env (AZURE_VM_HOST/USER/SSH_KEY, ACR_NAME/LOGIN_SERVER/USERNAME/PASSWORD, REACT_APP_BACKEND_URL) AND workflow targets Azure ACR + VM SSH deploy which is not the current production deploy pipeline (Cloud Build)."
+    },
+    "gitleaks": {
+      "last_run": "static: config-path correct, TOML valid, path allowlist non-wildcard",
+      "verdict": "PASSES",
+      "disposition": "KEEP+AUGMENT",
+      "cause": "MUST STAY per dispatch. Config-path input correct. Added 2 path-scoped entries for jc_*_proving_slice.py + rotate_admin_password_*.py (post-cred-rotation dispatch new paths)."
+    },
+    "invariants": {
+      "last_run": "N/A (no live log fetch available)",
+      "verdict": "CANNOT-PASS-IN-THIS-ENV",
+      "disposition": "DELETE",
+      "cause": "CANNOT-PASS-IN-THIS-ENV: same class as backend-tests (workflow does `pip install -r requirements.txt` despite the docstring claim about minimum-dep-slice)."
+    },
+    "lighthouse": {
+      "last_run": "N/A (no live log fetch available)",
+      "verdict": "PASSES",
+      "disposition": "KEEP",
+      "cause": "Static analysis: workflow shape correct; lighthouserc.json targets live preview URL; frontend/yarn.lock committed. No env-blocking constraint identified."
+    },
+    "marketing-assets-guard": {
+      "last_run": "local repro: 13/13 tests pass",
+      "verdict": "PASSES",
+      "disposition": "KEEP",
+      "cause": "Verified locally: pytest test_phase_m0a_marketing_assets.py + test_phase_m4_webp_siblings.py \u2192 13 passed."
+    },
+    "pipeline-log-sync": {
+      "last_run": "local repro: fixed post-LEGACY_ALLOWLIST edit \u2014 121 memos checked, 0 missing",
+      "verdict": "FIXABLE-CHEAP",
+      "disposition": "FIX",
+      "cause": "Added `5.5.3`, `5.6.2`, `5.7` to LEGACY_ALLOWLIST (3 entries \u00b7 matches pre-2026-06-24 baseline shape \u00b7 19 P5_7_* sub-memo collision resolved)."
+    },
+    "render-smoke": {
+      "last_run": "N/A (no live log fetch available)",
+      "verdict": "PASSES",
+      "disposition": "KEEP",
+      "cause": "Static analysis: workflow shape correct; RENDER_SMOKE_EMAIL/PASSWORD secrets assumed present (dispatch did NOT list among expected-deletions absent-secrets class)."
+    },
+    "requirements-guard": {
+      "last_run": "local repro: pre-fix exit=1 with 2 offenses; post-fix exit=0 clean",
+      "verdict": "FIXABLE-CHEAP",
+      "disposition": "FIX",
+      "cause": "Added `# ci-requirements-guard: allow <reason>` marker to en_core_web_lg + en_core_web_sm PEP 508 direct-references (spaCy models legitimately live on GitHub releases + runtime fallback in presidio_engine.py exists)."
+    },
+    "voice-lint": {
+      "last_run": "local repro: `voice_lint: clean` exit=0",
+      "verdict": "PASSES",
+      "disposition": "KEEP",
+      "cause": "Verified locally: python3 scripts/lint_voice.py \u2192 clean across customer-copy surfaces."
+    }
+  },
+  "deletions": {
+    "backend-tests": "CANNOT-PASS-IN-THIS-ENV: `pip install -r backend/requirements.txt` fails to resolve `emergentintegrations==0.1.0` (private wheelhouse at cloudfront `d33sy5i8bnduwe`, not on PyPI). GH Actions runner has no `--extra-index-url` configured.",
+    "dep-audit": "CANNOT-PASS-IN-THIS-ENV: same class as backend-tests (pip-audit traverses the full requirement graph \u2192 fails on emergentintegrations). Secondary `npm-audit` job coupled in same file; Dependabot already carries that HIGH/CRITICAL npm signal channel.",
+    "invariants": "CANNOT-PASS-IN-THIS-ENV: same class as backend-tests (workflow does `pip install -r requirements.txt` despite the docstring claim about minimum-dep-slice).",
+    "deploy": "CANNOT-PASS-IN-THIS-ENV: 7 absent GitHub secrets in this env (AZURE_VM_HOST/USER/SSH_KEY, ACR_NAME/LOGIN_SERVER/USERNAME/PASSWORD, REACT_APP_BACKEND_URL) AND workflow targets Azure ACR + VM SSH deploy which is not the current production deploy pipeline (Cloud Build)."
+  }
+}

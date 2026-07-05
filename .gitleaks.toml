@@ -40,6 +40,15 @@ paths = [
   '''^memory/sprints/.*\.md$''',
   '''^memory/audit/.*\.md$''',
   '''^docs/PRODUCT_REVIEW\.md$''',
+  # JC-ADMIN-CRED-ROTATION (2026-07-04) — proving slices + one-shot
+  # rotation utilities carry fingerprint hex prefixes (12-char sha256
+  # slices) + split-literal ("Akki" + "Admin" + ...) references + env
+  # variable NAMES like `ADMIN_SEED_PASSWORD` (name only, never value).
+  # These are legitimate CI/QA artefacts, not live credentials. Path-
+  # scoped narrowly to the JC proving-slice + rotation-script naming
+  # conventions — NOT a wildcard.
+  '''^backend/scripts/jc_[a-z0-9_]+_proving_slice\.py$''',
+  '''^backend/scripts/rotate_admin_password_[0-9_]+\.py$''',
 ]
 
 # Per-path overrides for known-safe files.
