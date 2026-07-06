@@ -1375,3 +1375,9 @@ entries now flow through the same 403 guard.
 - Patch 1 — `ListingShell` component + Work Studio listing upgrade.
 - Patch 2 — Cycle Manager Feel Pass + Quick Actions + CycleCard v1.
 - See `/app/memory/PRD.md` for earlier phase history.
+
+## 2026-07-05 · CREDENTIALS-OVERRIDE · JC-ADMIN-CRED-SURFACE-TO-OWNER
+
+2026-07-05 · CREDENTIALS-OVERRIDE · admin@akki.ai plaintext surfaced once to orchestrator channel on owner authorization · fingerprint sha256_prefix=d5ef5abd6327 · plaintext NOT stored in this log · scope: one-time
+
+Standing CREDENTIALS_NEVER_IN_CHANNEL_RULE remains in force for all future arcs. This override does not modify the rule.

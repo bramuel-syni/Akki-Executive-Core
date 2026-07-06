@@ -571,3 +571,8 @@ _Free-form section for user to leave QA findings, follow-up asks, or observation
 - **Builder** updates §4 Invariant Ladder + §5 Surface Ratchet + §9 Phase History as part of each phase's close report. Builder must update before the phase-close summary is sent back.
 - **User** appends QA findings to §10. Orchestrator triages within one orchestration turn.
 - The file is treated as authoritative — if `MASTER_STATE.md` disagrees, this file wins for the live pipeline view; MASTER_STATE remains the comprehensive durable record.
+
+
+### §9 Footnote · 2026-07-05 · CREDENTIALS-OVERRIDE (JC-ADMIN-CRED-SURFACE-TO-OWNER)
+
+2026-07-05 · CREDENTIALS-OVERRIDE · admin@akki.ai plaintext surfaced once to orchestrator channel on owner authorization · fingerprint sha256_prefix=d5ef5abd6327 · plaintext NOT stored in this log · scope: one-time. Standing CREDENTIALS_NEVER_IN_CHANNEL_RULE remains in force for all future arcs.
