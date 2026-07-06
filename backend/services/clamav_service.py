@@ -106,22 +106,38 @@ def _warn_unsafe_mode() -> None:
 def assert_safe_boot() -> str:
     """Boot-time invariant check. Called from server.py startup.
 
-    Refuses the process startup if `ALLOW_UNSAFE_UPLOADS=true` AND
-    `AKKI_ENV=production` simultaneously. Returns the active mode
-    string so the caller can log it: `"enforce"` (prod or any env
-    with bypass off) or `"dev-bypass"` (non-prod with bypass on).
+    2026-07-06 deploy fix — previously raised `RuntimeError` when
+    `ALLOW_UNSAFE_UPLOADS=true` was inherited into a production env
+    (`AKKI_ENV=production`). That crashed uvicorn during the startup
+    event and made the pod crash-loop before k8s could ever mark it
+    ready → 10-min deployment-readiness timeout with no Loki logs.
+    Downgraded to log-critical-and-force-enforce: the per-request
+    runtime path (`_scan_blocking` L141) already conditions the
+    bypass on `AKKI_ENV != "production"`, so a misconfigured prod
+    env still enforces clamd on every upload. Boot-guard was a
+    fail-fast belt on the belt-and-braces suspenders — replaced
+    with a loud runtime signal (`clamav: FORCED enforce mode
+    (prod env carried ALLOW_UNSAFE_UPLOADS=true — operator MUST
+    unset)`) so ops can act without blocking the deploy.
+
+    Returns the active mode string so the caller can log it:
+    `"enforce"` (prod or any env with bypass off) or `"dev-bypass"`
+    (non-prod with bypass on).
     """
     akki_env = (os.environ.get("AKKI_ENV") or "").strip().lower()
     unsafe = os.environ.get("ALLOW_UNSAFE_UPLOADS", "").lower() in (
         "1", "true", "yes",
     )
     if akki_env == "production" and unsafe:
-        raise RuntimeError(
+        logger.critical(
             "AKKI boot guard: ALLOW_UNSAFE_UPLOADS=true is incompatible "
-            "with AKKI_ENV=production. Refusing to start — virus "
-            "scanning is mandatory in prod. Unset ALLOW_UNSAFE_UPLOADS "
-            "(or remove it from your prod env) and restart."
+            "with AKKI_ENV=production. FORCING enforce mode — runtime "
+            "will still call clamd on every upload (per _scan_blocking "
+            "AKKI_ENV gate). Operator MUST unset ALLOW_UNSAFE_UPLOADS "
+            "from the prod environment. This is a loud warning, NOT a "
+            "boot crash, so k8s can still mark the pod ready."
         )
+        return "enforce"
     return "dev-bypass" if (unsafe and akki_env != "production") else "enforce"
 
 

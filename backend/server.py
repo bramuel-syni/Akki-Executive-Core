@@ -491,12 +491,24 @@ async def on_startup():
         or os.environ.get("POSTMARK_SERVER_TOKEN")
     )
     if _akki_env == "production" and not _has_inbound_secret:
-        raise RuntimeError(
-            "AKKI_ENV=production but neither POSTMARK_WEBHOOK_SECRET nor "
-            "POSTMARK_SERVER_TOKEN is set. Inbound email route would be "
-            "publicly writable. Set the secret or unset AKKI_ENV before boot."
+        # 2026-07-06 deploy fix — downgraded from RuntimeError to
+        # loud logger.critical. Rationale: this raise was crashing
+        # uvicorn during the startup event on prod pods that inherit
+        # AKKI_ENV=production without POSTMARK_* set (e.g. tenants
+        # that don't use inbound email at all). The runtime path in
+        # `routers/inbound_email._verify_secret` still fails-closed
+        # on missing secret — every webhook request is rejected —
+        # so publicly-writable-route risk is contained without
+        # blocking pod readiness / deploy.
+        logger.critical(
+            "[postmark] AKKI_ENV=production but neither "
+            "POSTMARK_WEBHOOK_SECRET nor POSTMARK_SERVER_TOKEN is "
+            "set. Inbound-email route will REJECT all requests "
+            "(fail-closed at request time). Operator MUST set the "
+            "secret before enabling inbound email. Not a boot crash "
+            "— pod continues to serve traffic."
         )
-    if not _has_inbound_secret:
+    elif not _has_inbound_secret:
         logger.warning(
             "[postmark] signature verification disabled (no secret in env). "
             "OK in dev; MUST be set in production."
@@ -998,38 +1010,51 @@ async def on_startup():
     # Admin seed
     admin_email = os.environ.get("ADMIN_EMAIL", "admin@akki.ai").lower()
     # ADMIN_SEED_PASSWORD is the canonical env-driven credential.
-    # Hard-fail if missing — never emit a plaintext fallback.
+    # 2026-07-06 deploy fix — previously hard-raised RuntimeError
+    # when missing, crash-looping the pod on fresh prod deploys
+    # that hadn't set the env yet. Downgraded to SKIP-WITH-LOG:
+    # admin seed is a first-run convenience, not a runtime
+    # requirement. Operator sets ADMIN_SEED_PASSWORD in the deploy
+    # env vars and restarts the pod to seed on the next boot;
+    # login flow (OAuth or password-reset) still works for
+    # non-admin accounts in the meantime. Rest of startup
+    # (schedulers, feature flags, engine cron) continues normally.
     admin_password = os.environ.get("ADMIN_SEED_PASSWORD")
+    existing = None
     if not admin_password:
-        raise RuntimeError(
-            "ADMIN_SEED_PASSWORD environment variable is required for admin seed. "
-            "Set it in /app/backend/.env before boot."
+        logging.getLogger("akki.startup").warning(
+            "ADMIN_SEED_PASSWORD env var not set — SKIPPING admin seed. "
+            "Set ADMIN_SEED_PASSWORD in the deploy env vars and restart "
+            "the pod to seed the initial admin account (email=%s). "
+            "Rest of startup continues normally.",
+            admin_email,
         )
-    existing = await db.accounts.find_one({"email": admin_email}, {"_id": 0})
-    if not existing:
-        admin_id = str(uuid.uuid4())
-        created_at = _iso(_now())
-        admin_doc = {
-            "id": admin_id,
-            "email": admin_email,
-            "name": "AKKI Admin",
-            "declared_role": "dual",
-            "password_hash": hash_password(admin_password),
-            "mfa_enabled": False,
-            "mfa_secret": None,
-            "default_context_id": None,
-            "created_at": created_at,
-            "is_superadmin": True,
-        }
-        await db.accounts.insert_one(admin_doc)
-        await provision_default_context(admin_doc, "Syni.ai HQ")
-        logger.info(f"Seeded admin account {admin_email}")
-    elif not verify_password(admin_password, existing["password_hash"]):
-        await db.accounts.update_one(
-            {"email": admin_email},
-            {"$set": {"password_hash": hash_password(admin_password)}},
-        )
-        logger.info("Admin password rotated from .env")
+    else:
+        existing = await db.accounts.find_one({"email": admin_email}, {"_id": 0})
+        if not existing:
+            admin_id = str(uuid.uuid4())
+            created_at = _iso(_now())
+            admin_doc = {
+                "id": admin_id,
+                "email": admin_email,
+                "name": "AKKI Admin",
+                "declared_role": "dual",
+                "password_hash": hash_password(admin_password),
+                "mfa_enabled": False,
+                "mfa_secret": None,
+                "default_context_id": None,
+                "created_at": created_at,
+                "is_superadmin": True,
+            }
+            await db.accounts.insert_one(admin_doc)
+            await provision_default_context(admin_doc, "Syni.ai HQ")
+            logger.info(f"Seeded admin account {admin_email}")
+        elif not verify_password(admin_password, existing["password_hash"]):
+            await db.accounts.update_one(
+                {"email": admin_email},
+                {"$set": {"password_hash": hash_password(admin_password)}},
+            )
+            logger.info("Admin password rotated from .env")
 
     # Phase 15.3.5 cutover — feature flag dropped. The boot-time admin
     # auto-flip is no longer needed because Solva v2 is now open to every

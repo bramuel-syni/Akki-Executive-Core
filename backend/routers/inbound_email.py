@@ -94,11 +94,23 @@ def _is_production() -> bool:
 
 def _verify_inbound_boot_guard() -> None:
     """Called at app startup. Refuses boot if production env is
-    accepting URL-secret fallback."""
+    accepting URL-secret fallback.
+
+    2026-07-06 deploy fix — downgraded from raise to loud
+    logger.critical. Same reasoning as `_verify_secret` fix in
+    server.py: crashing uvicorn on a startup-time check made the
+    pod crash-loop and blocked k8s deploy. The runtime path still
+    fails-closed on missing HMAC/secret so publicly-writable-route
+    risk is contained per-request.
+    """
     if _is_production() and not _hmac_mode_enabled():
-        raise RuntimeError(
+        import logging as _lg
+        _lg.getLogger("akki").critical(
             "AKKI_ENV=production but POSTMARK_USE_HMAC is disabled. "
-            "Refusing to boot — HMAC/Basic auth is mandatory in prod."
+            "Inbound-email verifier will still reject requests missing "
+            "HMAC/Basic-Auth (per-request fail-closed). Operator MUST "
+            "enable HMAC before accepting production inbound webhooks. "
+            "Not a boot crash."
         )
 
 
