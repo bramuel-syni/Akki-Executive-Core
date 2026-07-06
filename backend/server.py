@@ -180,6 +180,20 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
 )
 
+
+# ---------------------------------------------------------------------------
+# Kubernetes liveness/readiness probes (unprefixed).
+# ---------------------------------------------------------------------------
+# The Emergent K8s platform hits `GET /health` (HTTP/1.0, from 127.0.0.1) on
+# every probe cycle. Historical `/api/health` and `/api/healthz/*` endpoints
+# remain (rich DB/context-health checks); this bare `/health` is a minimal
+# liveness signal — the FastAPI process is up and serving. No DB call so a
+# transient Mongo blip does not fail the liveness probe and force a pod
+# restart (readiness/rich checks live under `/api/healthz/composite`).
+@app.get("/health", include_in_schema=False)
+async def _liveness_probe() -> dict[str, str]:
+    return {"status": "ok"}
+
 # -----------------------------------------------------------------------------
 # Phase 4.1 — Router composition via context-bound FastAPI apps.
 # The three apps (`synisense_app`, `solva_app`, `akki_app`) each
