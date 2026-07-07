@@ -1,8 +1,8 @@
 {
   "arc": "JC-CONNECTTIMEOUT-RELABEL-D5",
   "canonical_spec_line1": "user dispatch 2026-07-05 \u00b7 JC-CONNECTTIMEOUT-RELABEL-D5 \u00b7 memo-correction only",
-  "verdict": "RED",
-  "passed": 5,
+  "verdict": "GREEN",
+  "passed": 6,
   "total": 6,
   "rows": [
     {
@@ -48,15 +48,17 @@
     {
       "row": "R5",
       "name": "zero_code_touches_only_allowed_paths_changed",
-      "pass": false,
+      "pass": true,
       "detail": {
         "pre_arc_head": "e5ae43c9",
         "changed": [
-          "backend/scripts/.jc_gen_path_connecttimeout_slice_results.json"
+          "backend/scripts/.jc_connecttimeout_relabel_d5_slice_results.json",
+          "backend/scripts/jc_connecttimeout_relabel_d5_proving_slice.py",
+          "memory/DEV_PIPELINE.md",
+          "memory/sprints/JC_GEN_PATH_CONNECTTIMEOUT.md",
+          "memory/sprints/JC_INTERNAL_HTTP_CONNECTTIMEOUT_CLASSIFY.md"
         ],
-        "unauthorised": [
-          "backend/scripts/.jc_gen_path_connecttimeout_slice_results.json"
-        ],
+        "unauthorised": [],
         "allowed": [
           "backend/scripts/.jc_connecttimeout_relabel_d5_slice_results.json",
           "backend/scripts/jc_connecttimeout_relabel_d5_proving_slice.py",
