@@ -38,6 +38,7 @@ from pydantic import BaseModel, Field
 
 from core import db, iso, now, write_audit, require_context_membership, get_current_account
 from contracts import get_synisense  # Phase 4.3 — signals reads route through SyniSense.
+from services import deck_generation_jobs  # JC-DECK-GEN-ASYNC-KICKOFF-POLL 2026-07-05
 
 logger = logging.getLogger("akki.decks")
 
@@ -163,19 +164,97 @@ def _outline_prompt(intent: str, audience: Optional[str], target_slides: int,
     )
 
 
-@router.post("/api/contexts/{context_id}/decks/outline")
+@router.post("/api/contexts/{context_id}/decks/outline", status_code=202)
 async def create_outline(
     context_id: str,
     body: OutlineIn,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
 ):
-    """Plan a deck cheaply; surface gaps; do NOT consume the deck deep slot."""
-    target_slides = body.target_slides or 8
+    """JC-DECK-GEN-ASYNC-KICKOFF-POLL (2026-07-05) — async kick-off for outline planning.
+
+    Returns 202 immediately with a `job_id` + `status_url` handle. The Shield-routed
+    LLM outline call runs in a background task; the FE polls the status endpoint.
+
+    Even though outline is a STANDARD-tier call (no deep-slot burn), it goes
+    through Shield which has an internal 20s LLM provider timeout — so leaving
+    it synchronous ships the same DETERMINISTIC-EDGE-TIMEOUT-CEILING bug the
+    generate path had. Point-3 mandate: no existing endpoint left synchronous
+    behind the ceiling.
+    """
+    account_id = ctx["account"]["id"]
+    user_id = ctx["account"].get("id")
+    # Snapshot the intent so the request body isn't referenced by the runner.
+    intent_snapshot = body.intent.strip()
+    audience_snapshot = body.audience
+    target_slides_snapshot = body.target_slides or 8
+    parent_outline_id_snapshot = body.parent_outline_id
+
+    # Use a stable-ish target_id derived from the intent (so back-to-back
+    # identical POSTs return the same in-flight job).
+    import hashlib
+    target_id = hashlib.sha256(
+        f"outline:{context_id}:{intent_snapshot}:{parent_outline_id_snapshot or ''}".encode("utf-8")
+    ).hexdigest()[:32]
+
+    job = await deck_generation_jobs.create_job(
+        job_kind="outline",
+        account_id=account_id,
+        context_id=context_id,
+        user_id=user_id,
+        target_id=target_id,
+    )
+
+    if job["phase"] != deck_generation_jobs.PHASE_QUEUED:
+        return {
+            "job_id": job["job_id"],
+            "phase": job["phase"],
+            "status_url": (
+                f"/api/contexts/{context_id}/decks/generation-status/{job['job_id']}"
+            ),
+        }
+
+    await deck_generation_jobs.spawn_generation(
+        job["job_id"],
+        lambda jid: _run_outline_job(
+            job_id=jid,
+            context_id=context_id,
+            ctx=ctx,
+            intent=intent_snapshot,
+            audience=audience_snapshot,
+            target_slides=target_slides_snapshot,
+            parent_outline_id=parent_outline_id_snapshot,
+        ),
+    )
+
+    return {
+        "job_id": job["job_id"],
+        "phase": deck_generation_jobs.PHASE_QUEUED,
+        "status_url": (
+            f"/api/contexts/{context_id}/decks/generation-status/{job['job_id']}"
+        ),
+    }
+
+
+async def _run_outline_job(
+    *,
+    job_id: str,
+    context_id: str,
+    ctx: Dict[str, Any],
+    intent: str,
+    audience: Optional[str],
+    target_slides: int,
+    parent_outline_id: Optional[str],
+) -> Dict[str, Any]:
+    """Background runner for outline planning. Engine calls UNCHANGED — this
+    function contains the exact same steps that used to run inline, annotated
+    with phase markers.
+    """
+    await deck_generation_jobs.set_phase(
+        job_id, deck_generation_jobs.PHASE_READING, progress=15,
+    )
     ctx_name = ctx["context"].get("name") or "the company"
     evidence = await _gather_context_signals(ctx["account"]["id"], context_id)
 
-    # Look up the most recent regen-reason this user gave on a prior deck
-    # so the planner can fold the lesson into this outline (zero deep budget).
     last_regen = await db.decks.find_one(
         {"context_id": context_id,
          "account_id": ctx["account"]["id"],
@@ -198,10 +277,13 @@ async def create_outline(
             learning_hint = label + (f" — user said: \"{comment}\"" if comment else "")
 
     prompt = _outline_prompt(
-        body.intent.strip(), body.audience, target_slides, ctx_name, evidence,
+        intent, audience, target_slides, ctx_name, evidence,
         learning_hint=learning_hint,
     )
 
+    await deck_generation_jobs.set_phase(
+        job_id, deck_generation_jobs.PHASE_STRUCTURING, progress=50,
+    )
     from llm_service import call_llm
     llm_out = await call_llm(
         module="decks.outline",
@@ -212,13 +294,22 @@ async def create_outline(
     raw = llm_out.get("response") or "{}"
     parsed = _safe_json(raw)
     if not parsed or "slides" not in parsed:
-        raise HTTPException(status_code=502, detail="Outline planner returned malformed response.")
+        await deck_generation_jobs.set_error(job_id, {
+            "type": "MalformedOutlineResponse",
+            "message": "Outline planner returned malformed response.",
+            "status": 502,
+        })
+        return {}
+
+    await deck_generation_jobs.set_phase(
+        job_id, deck_generation_jobs.PHASE_DRAFTING, progress=85,
+    )
 
     # Iteration count if iterating on a prior outline.
     iteration = 1
-    if body.parent_outline_id:
+    if parent_outline_id:
         parent = await db.deck_outlines.find_one(
-            {"id": body.parent_outline_id, "context_id": context_id},
+            {"id": parent_outline_id, "context_id": context_id},
             {"_id": 0, "iteration": 1},
         )
         if parent:
@@ -229,8 +320,8 @@ async def create_outline(
         "id": outline_id,
         "context_id": context_id,
         "account_id": ctx["account"]["id"],
-        "intent": body.intent.strip(),
-        "audience": body.audience,
+        "intent": intent,
+        "audience": audience,
         "target_slides": target_slides,
         "research_question": parsed.get("research_question"),
         "audience_assumed": parsed.get("audience_assumed"),
@@ -242,7 +333,7 @@ async def create_outline(
         "model": llm_out.get("model"),
         "tier": llm_out.get("tier"),
         "iteration": iteration,
-        "parent_outline_id": body.parent_outline_id,
+        "parent_outline_id": parent_outline_id,
         "approved": False,
         "consumed_deck_id": None,
         "learning_hint_used": learning_hint,
@@ -250,6 +341,7 @@ async def create_outline(
     }
     await db.deck_outlines.insert_one(rec)
     rec.pop("_id", None)
+    await deck_generation_jobs.set_result(job_id, rec)
     return rec
 
 
@@ -282,13 +374,28 @@ def _generate_prompt(outline: Dict[str, Any], ctx_name: str) -> str:
     )
 
 
-@router.post("/api/contexts/{context_id}/decks/{outline_id}/generate")
+@router.post("/api/contexts/{context_id}/decks/{outline_id}/generate", status_code=202)
 async def generate_deck(
     context_id: str,
     outline_id: str,
     body: GenerateIn,
     ctx: Dict[str, Any] = Depends(require_context_membership()),
 ):
+    """JC-DECK-GEN-ASYNC-KICKOFF-POLL (2026-07-05) — async kick-off.
+
+    Returns 202 immediately with a `job_id` + `status_url` handle. The heavy
+    LLM-await work runs in a background task; the FE polls the status endpoint.
+
+    Pre-conditions (validated synchronously before returning 202):
+      - `body.confirmed` must be True (invisible auto-confirm from FE per Stage 1).
+      - Outline must exist in this context (404 if not).
+      - Outline must not already have been consumed (409 with existing envelope).
+
+    The engine invocation itself is UNCHANGED — this endpoint only wraps it in
+    an asyncio background task and instruments phase transitions on a job row.
+    Zero touches to `call_llm_with_tier`, `validate_independent`, the audit
+    write, or the LLM adapters.
+    """
     if not body.confirmed:
         raise HTTPException(
             status_code=400,
@@ -306,24 +413,102 @@ async def generate_deck(
             detail="This outline has already produced a deck. Iterate the outline to make a new one.",
         )
 
-    # Apply user edits to the outline before generating (research question
-    # tweak, slide titles, etc.). Edits are versioned ON the outline record
-    # so re-runs and admin telemetry can see exactly what was generated.
-    edits_applied = {}
-    if body.edits:
-        if body.edits.get("research_question"):
-            outline["research_question"] = body.edits["research_question"][:280]
+    account_id = ctx["account"]["id"]
+    user_id = ctx["account"].get("id")
+
+    # Create a job row (or return existing in-flight job for idempotency).
+    job = await deck_generation_jobs.create_job(
+        job_kind="source_generate",
+        account_id=account_id,
+        context_id=context_id,
+        user_id=user_id,
+        target_id=outline_id,
+    )
+
+    # If the job is already terminal (unlikely — same target_id after commit),
+    # short-circuit with the terminal state instead of spawning a new task.
+    if job["phase"] not in (
+        deck_generation_jobs.PHASE_QUEUED,
+    ):
+        return {
+            "job_id": job["job_id"],
+            "phase": job["phase"],
+            "status_url": (
+                f"/api/contexts/{context_id}/decks/generation-status/{job['job_id']}"
+            ),
+        }
+
+    # Snapshot the request context so the background task doesn't rely on the
+    # request lifecycle (which returns 202 immediately after this).
+    edits = body.edits
+    await deck_generation_jobs.spawn_generation(
+        job["job_id"],
+        lambda jid: _run_generate_deck_job(
+            job_id=jid,
+            context_id=context_id,
+            outline_id=outline_id,
+            ctx=ctx,
+            edits=edits,
+        ),
+    )
+
+    return {
+        "job_id": job["job_id"],
+        "phase": deck_generation_jobs.PHASE_QUEUED,
+        "status_url": (
+            f"/api/contexts/{context_id}/decks/generation-status/{job['job_id']}"
+        ),
+    }
+
+
+async def _run_generate_deck_job(
+    *,
+    job_id: str,
+    context_id: str,
+    outline_id: str,
+    ctx: Dict[str, Any],
+    edits: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Background runner for the source/blank generate flow.
+
+    Instruments the wrapper with phase transitions at natural boundaries.
+    The engine body (LLM call, validator, sensitivity, telemetry, audit) is
+    UNCHANGED — this function contains the exact same steps that used to run
+    inline, just annotated with phase markers before/after each block.
+    """
+    # ------ Phase: reading_sources — outline read + edit apply -------
+    await deck_generation_jobs.set_phase(
+        job_id, deck_generation_jobs.PHASE_READING, progress=10,
+    )
+    outline = await db.deck_outlines.find_one(
+        {"id": outline_id, "context_id": context_id},
+        {"_id": 0},
+    )
+    if not outline:
+        await deck_generation_jobs.set_error(job_id, {
+            "type": "OutlineNotFound", "message": "Outline vanished between kickoff and runner", "status": 404,
+        })
+        return {}
+
+    edits_applied: Dict[str, Any] = {}
+    if edits:
+        if edits.get("research_question"):
+            outline["research_question"] = edits["research_question"][:280]
             edits_applied["research_question"] = outline["research_question"]
-        if body.edits.get("slides"):
-            outline["slides"] = body.edits["slides"]
+        if edits.get("slides"):
+            outline["slides"] = edits["slides"]
             edits_applied["slides_edited"] = True
-        if body.edits.get("audience_assumed"):
-            outline["audience_assumed"] = body.edits["audience_assumed"]
+        if edits.get("audience_assumed"):
+            outline["audience_assumed"] = edits["audience_assumed"]
             edits_applied["audience_assumed"] = outline["audience_assumed"]
 
     ctx_name = ctx["context"].get("name") or "the company"
     prompt = _generate_prompt(outline, ctx_name)
 
+    # ------ Phase: structuring — LLM call in flight (engine untouched) -------
+    await deck_generation_jobs.set_phase(
+        job_id, deck_generation_jobs.PHASE_STRUCTURING, progress=35,
+    )
     from llm_tier_quota import call_llm_with_tier
     llm_out, quota_state = await call_llm_with_tier(
         surface="deck",
@@ -338,7 +523,17 @@ async def generate_deck(
     raw = llm_out.get("response") or "{}"
     parsed = _safe_json(raw)
     if not parsed or "slides" not in parsed:
-        raise HTTPException(status_code=502, detail="Deck generator returned malformed response.")
+        await deck_generation_jobs.set_error(job_id, {
+            "type": "MalformedGeneratorResponse",
+            "message": "Deck generator returned malformed response.",
+            "status": 502,
+        })
+        return {}
+
+    # ------ Phase: drafting — post-process (validator, sensitivity, telemetry) --
+    await deck_generation_jobs.set_phase(
+        job_id, deck_generation_jobs.PHASE_DRAFTING, progress=70,
+    )
 
     deck_id = str(uuid.uuid4())
     rec = {
@@ -454,7 +649,38 @@ async def generate_deck(
         {"slides": len(rec["slides"]), "tier": rec["tier"],
          "outline_iterations": outline.get("iteration") or 1},
     )
+
+    # ------ Phase: complete -------
+    await deck_generation_jobs.set_result(job_id, rec)
     return rec
+
+
+@router.get("/api/contexts/{context_id}/decks/generation-status/{job_id}")
+async def get_generation_status(
+    context_id: str,
+    job_id: str,
+    ctx: Dict[str, Any] = Depends(require_context_membership()),
+):
+    """JC-DECK-GEN-ASYNC-KICKOFF-POLL (2026-07-05) — poll endpoint.
+
+    Returns `{job_id, phase, progress, result?, error?}`. Idempotent — safe to
+    poll repeatedly. Account-scoped: reading a job that belongs to a different
+    account returns 404 (indistinguishable from non-existence to prevent
+    enumeration).
+    """
+    account_id = ctx["account"]["id"]
+    job = await deck_generation_jobs.get_job(job_id, account_id=account_id)
+    if not job or job.get("context_id") != context_id:
+        raise HTTPException(status_code=404, detail="Job not found.")
+    return {
+        "job_id": job["job_id"],
+        "phase": job["phase"],
+        "progress": job.get("progress", 0),
+        "result": job.get("result"),
+        "error": job.get("error"),
+        "created_at": job.get("created_at"),
+        "updated_at": job.get("updated_at"),
+    }
 
 
 # ---------------------------------------------------------------------------

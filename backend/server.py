@@ -532,6 +532,16 @@ async def on_startup():
         import logging as _lg
         _lg.getLogger("akki.startup").warning("stripe idempotency indexes: %s", e)
 
+    # ─── JC-DECK-GEN-ASYNC-KICKOFF-POLL (2026-07-05) — deck generation
+    # async job store indexes (idempotent). Async pattern: kickoff returns
+    # 202, background task updates job phase, FE polls status endpoint.
+    try:
+        from services import deck_generation_jobs as _deck_jobs
+        await _deck_jobs.ensure_indexes()
+    except Exception as e:  # noqa: BLE001
+        import logging as _lg
+        _lg.getLogger("akki.startup").warning("deck_generation_jobs indexes: %s", e)
+
     # ─── Patch 21 — News aggregator boot ────────────────────────────────
     # Set up the indexes idempotently, then start the background sweep
     # task. Sweep fetches all enabled sources every NEWS_REFRESH_MINUTES

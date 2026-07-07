@@ -150,9 +150,11 @@ export default function CreateSummaryDeckModal({
     return sources.length > 0;
   }, [title, startFrom, sources]);
 
-  // v1.1 §4.3 · chain outline → auto-confirm generate → poll → complete.
-  // Approval step is INVISIBLE (auto-confirm=true) so the user sees ONE
-  // continuous progress flow (no submit-for-review, no approve/reject).
+  // v1.1 §4.3 · async kick-off (POST returns 202 immediately) + polling.
+  // JC-DECK-GEN-ASYNC-KICKOFF-POLL (2026-07-05) — removes synchronous LLM-await
+  // behind the ~21s DETERMINISTIC-EDGE-TIMEOUT-CEILING. The kick-off POST
+  // returns in <1s with a job handle; the FE polls the status endpoint every
+  // 2s and maps backend phases 1:1 to the progress checklist.
   const handleCreate = async () => {
     if (!canSubmit) return;
     setPhase(PHASE.GENERATING);
@@ -164,25 +166,92 @@ export default function CreateSummaryDeckModal({
     });
 
     try {
-      // Step 1 · Outline (STANDARD tier, no deep-slot burn).
+      // Step 1 · Outline kick-off (STANDARD tier, no deep-slot burn — now async).
+      // JC-DECK-GEN-ASYNC-KICKOFF-POLL (2026-07-05) — even the outline call
+      // is Shield-routed and subject to the DETERMINISTIC-EDGE-TIMEOUT-CEILING,
+      // so it too returns a job handle and is polled via the status endpoint.
       setProgressState({ reading: "active", structuring: "pending", drafting: "pending" });
       const outlineBody = {
         intent: title.trim() + (sources.length ? ` — sources: ${sources.map(s => s.name).join(", ")}` : ""),
         audience: null,
         target_slides: 8,
       };
-      const { data: outline } = await api.post(`/contexts/${contextId}/decks/outline`, outlineBody);
-      setProgressState({ reading: "done", structuring: "active", drafting: "pending" });
+      const { data: outlineKickoff } = await api.post(`/contexts/${contextId}/decks/outline`, outlineBody);
+      if (!outlineKickoff || !outlineKickoff.job_id) {
+        throw new Error("Outline kick-off did not return a job handle.");
+      }
+      const outlineStatusUrl = `/contexts/${contextId}/decks/generation-status/${outlineKickoff.job_id}`;
+      // Poll outline job (max 150s — usually completes in <15s).
+      let outline = null;
+      let outlineErr = null;
+      for (let i = 0; i < 75; i += 1) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const { data: st } = await api.get(outlineStatusUrl);
+        if (st?.phase === "complete") {
+          outline = st.result;
+          break;
+        }
+        if (st?.phase === "error") {
+          outlineErr = st.error || { message: "Outline planning failed." };
+          break;
+        }
+      }
+      if (outlineErr) {
+        throw new Error(outlineErr.message || "Outline planning failed.");
+      }
+      if (!outline || !outline.id) {
+        throw new Error("Outline generation timed out after 150 seconds. Please try again.");
+      }
 
-      // Step 2 · Generate (DEEP tier · confirmed=true bypasses user-visible approval).
-      const { data: deck } = await api.post(
+      // Step 2 · Kick-off deck generation (async · 202 with job handle).
+      // Endpoint returns immediately regardless of LLM duration.
+      const { data: kickoff } = await api.post(
         `/contexts/${contextId}/decks/${outline.id}/generate`,
         { confirmed: true, edits: null },
       );
-      setProgressState({ reading: "done", structuring: "done", drafting: "done" });
 
-      // Attach the user-provided title to the deck (backend may have its own).
-      // We rely on the deck.id for detail-view navigation.
+      if (!kickoff || !kickoff.job_id) {
+        throw new Error("Kick-off did not return a job handle.");
+      }
+
+      // Step 3 · Poll status endpoint every 2s. Map backend phases 1:1 to
+      // the progress checklist. Stop on `complete` or `error`.
+      const jobId = kickoff.job_id;
+      const statusUrl = `/contexts/${contextId}/decks/generation-status/${jobId}`;
+      // Safety ceiling — 5 minutes max poll duration. If generation is still
+      // running past that the FE surfaces a timeout error and the backend
+      // job continues in the background (idempotent on next kick-off attempt).
+      const pollMax = 150; // 150 * 2s = 300s
+      let deck = null;
+      let jobError = null;
+      for (let i = 0; i < pollMax; i += 1) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const { data: status } = await api.get(statusUrl);
+        const backendPhase = status?.phase;
+        // Map backend phase to progress checklist state.
+        if (backendPhase === "queued" || backendPhase === "reading_sources") {
+          setProgressState({ reading: "active", structuring: "pending", drafting: "pending" });
+        } else if (backendPhase === "structuring") {
+          setProgressState({ reading: "done", structuring: "active", drafting: "pending" });
+        } else if (backendPhase === "drafting") {
+          setProgressState({ reading: "done", structuring: "done", drafting: "active" });
+        } else if (backendPhase === "complete") {
+          setProgressState({ reading: "done", structuring: "done", drafting: "done" });
+          deck = status.result;
+          break;
+        } else if (backendPhase === "error") {
+          jobError = status.error || { message: "Generation failed." };
+          break;
+        }
+      }
+
+      if (jobError) {
+        throw new Error(jobError.message || "Generation failed.");
+      }
+      if (!deck) {
+        throw new Error("Generation timed out after 5 minutes. Please try again — the job may still complete in the background.");
+      }
+
       const enriched = { ...deck, _user_title: title.trim(), _sources: sources };
       setCreatedDeck(enriched);
       setPhase(PHASE.COMPLETE);

@@ -1,0 +1,140 @@
+{
+  "arc": "JC-DECK-GEN-ASYNC-KICKOFF-POLL",
+  "canonical_spec_line1": "user dispatch 2026-07-05 \u00b7 JC-DECK-GEN-ASYNC-KICKOFF-POLL \u00b7 architectural arc \u00b7 Path B disposition",
+  "verdict": "GREEN",
+  "passed": 15,
+  "total": 15,
+  "rows": [
+    {
+      "row": "R1",
+      "name": "endpoint_enumeration_present",
+      "pass": true,
+      "detail": {
+        "memo_bytes": 29872
+      }
+    },
+    {
+      "row": "R2",
+      "name": "kickoff_endpoints_declare_202",
+      "pass": true,
+      "detail": {
+        "decks_202_count": 2,
+        "regen_202_count": 1
+      }
+    },
+    {
+      "row": "R3",
+      "name": "status_endpoint_present_2_paths",
+      "pass": true,
+      "detail": {
+        "decks_path_present": true,
+        "regen_path_present": true
+      }
+    },
+    {
+      "row": "R4",
+      "name": "background_task_spawn_wired",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "row": "R5",
+      "name": "job_store_schema_complete",
+      "pass": true,
+      "detail": {
+        "missing_keys": []
+      }
+    },
+    {
+      "row": "R6",
+      "name": "account_isolation_get_job_filters_account",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "row": "R7",
+      "name": "commit_lock_409_shape_byte_identical",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "row": "R8",
+      "name": "audit_write_call_preserved_verbatim",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "row": "R9",
+      "name": "engine_files_unchanged_vs_pre_arc",
+      "pass": true,
+      "detail": {
+        "pre_arc": "5d1204ca",
+        "changed_engines": []
+      }
+    },
+    {
+      "row": "R10",
+      "name": "shield_sha256_identity_preserved",
+      "pass": true,
+      "detail": {
+        "head": "d5705c922df8a9aaacfccce62dde401fc440ee22c3c7947c03cc087b0afc5f07",
+        "pre_arc": "d5705c922df8a9aaacfccce62dde401fc440ee22c3c7947c03cc087b0afc5f07",
+        "head_file_count": 13,
+        "pre_file_count": 13
+      }
+    },
+    {
+      "row": "R11",
+      "name": "phase_transitions_instrumented",
+      "pass": true,
+      "detail": {
+        "missing_phase_constants": [],
+        "set_phase_calls_in_decks": 6
+      }
+    },
+    {
+      "row": "R12",
+      "name": "fe_state_machine_wired_to_backend_phases",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "row": "R13",
+      "name": "path_b_evidence_artefacts_present",
+      "pass": true,
+      "detail": {
+        "s05_async_v2_state.png": {
+          "exists": true,
+          "bytes": 98088
+        },
+        "s05_async_attempt2_state.png": {
+          "exists": true,
+          "bytes": 96209
+        }
+      }
+    },
+    {
+      "row": "R14",
+      "name": "no_state_injection_declared_in_memo",
+      "pass": true,
+      "detail": {
+        "forbidden_patterns_absent": true
+      }
+    },
+    {
+      "row": "R15",
+      "name": "regression_prior_slices_ast_clean_and_bankings_intact",
+      "pass": true,
+      "detail": {
+        "prior_slice_count": 53,
+        "ast_failures": [],
+        "part0_rules_present": {
+          "CANONICAL_SPEC_UX_BRIEF_V1_1_RULE.md": true,
+          "UI_STORIES_CLOSE_ON_UI_LAYER_ONLY_RULE.md": true,
+          "USER_QA_RE_RUN_IS_FINAL_GATE_RULE.md": true,
+          "DECK_ID_COLLISION_GUARD_RULE.md": true
+        }
+      }
+    }
+  ]
+}

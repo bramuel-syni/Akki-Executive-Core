@@ -206,6 +206,12 @@ Dispatch line-1 label = `JC-GEN-PATH-CONNECTTIMEOUT`. Project scope = Akki-Execu
 
 **Post-close state:**
 - `JC-GEN-PATH-CONNECTTIMEOUT` arc CLOSED as SHIPPED-UNPUSHED · Step B disposition (BLOCKED-BY-ENV · DETERMINISTIC-EDGE-TIMEOUT-CEILING · relabeled 2026-07-05 per `JC-CONNECTTIMEOUT-RELABEL-D5`).
+
+---
+
+## Supersession note · 2026-07-05 · `JC-DECK-GEN-ASYNC-KICKOFF-POLL` arc
+
+**SUPERSEDED for DECK-031 resolution** by `JC-DECK-GEN-ASYNC-KICKOFF-POLL` (2026-07-05 · Path B outcome). Original s05 BLOCKED-BY-ENV disposition preserved in commit history above. This arc's "wait for lower-load" path — already killed by user + relabel arc (`JC-CONNECTTIMEOUT-RELABEL-D5`) as a dead fix for a fixed ceiling — is definitively closed as a remediation path. The correct architectural fix (async kickoff + polling) has been shipped across all 4 named generation paths (source-generate + blank-generate + regenerate + outline discovered as secondary) plus banked for enhance-when-built. However, s05 organic recapture in the preview pod still fails on a NEW failure class (SHIELD-INTERNAL-LLM-PROVIDER-TIMEOUT · `services/synisense/shield/llm_router.py:186` internal 20s asyncio.wait_for cap on litellm.acompletion) that is INSIDE the untouchable Shield surface. DECK-031 remains deferred behind user disposition on that new class (4 remediation paths surfaced in the async arc's memo). See `sprints/JC_DECK_GEN_ASYNC_KICKOFF_POLL.md` §3 Path B disposition + Real Signals.
 - Stage 1 (Deck QA Recovery) remains SHIPPED-PENDING-USER-QA (unchanged; s05 partial-blocked persists · disclosed honestly).
 - Stage 2 HELD.
 - Stage 3a-3e HELD.

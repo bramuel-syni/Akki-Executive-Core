@@ -25,7 +25,7 @@ from fastapi import APIRouter, Body, Depends
 from pydantic import BaseModel, Field
 
 from core import db, get_current_account
-from services import deck_retrieval, deck_lineage, deck_regenerate
+from services import deck_retrieval, deck_lineage, deck_regenerate, deck_generation_jobs
 
 
 log = logging.getLogger("work_studio.deck_related_lineage_regen")
@@ -66,11 +66,21 @@ class RegenerateBody(BaseModel):
     prompt: Optional[str] = None
 
 
-class RegenerateResponse(BaseModel):
-    new_document: Dict[str, Any]
-    regenerated_from: str
-    shield_audit_event_id: Optional[str]
-    version_number: int
+class RegenerateAsyncResponse(BaseModel):
+    """JC-DECK-GEN-ASYNC-KICKOFF-POLL (2026-07-05) — kickoff handle."""
+    job_id: str
+    phase: str
+    status_url: str
+
+
+class RegenerateStatusResponse(BaseModel):
+    job_id: str
+    phase: str
+    progress: int
+    result: Optional[Dict[str, Any]] = None
+    error: Optional[Dict[str, Any]] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
 
 # ─── Endpoints ────────────────────────────────────────────────
@@ -107,7 +117,8 @@ async def get_lineage(
 
 @router.post(
     "/decks/{document_id}/regenerate",
-    response_model=RegenerateResponse,
+    response_model=RegenerateAsyncResponse,
+    status_code=202,
     responses={409: {"description": "Committed deck cannot be regenerated"}},
 )
 async def post_regenerate(
@@ -115,14 +126,118 @@ async def post_regenerate(
     body: RegenerateBody = Body(default_factory=RegenerateBody),
     me: Dict[str, Any] = Depends(get_current_account),
 ):
-    """F.6 SHIELD-ROUTED · regeneration via canonical chokepoint.
+    """F.6 SHIELD-ROUTED · JC-DECK-GEN-ASYNC-KICKOFF-POLL (2026-07-05) — async kickoff.
 
-    Raises 409 (compile-bridge-shape envelope) if source is committed.
-    Creates a NEW documents row referencing parent via `regenerated_from`.
-    Prior versions are never mutated or deleted.
+    Returns 202 with a job handle. The Shield-routed LLM call runs in a
+    background asyncio task; the FE polls `/api/decks/generation-status/{job_id}`.
+
+    Pre-conditions validated synchronously BEFORE returning 202:
+      - Document must exist + caller must be a member of its context (else
+        `deck_regenerate._load_and_membership_check` raises 404/403).
+      - Document must not be committed (else raises 409 with compile-bridge
+        shape — byte-identical to A10 standard).
+
+    Engine (`services.deck_regenerate.regenerate_deck`) is UNCHANGED — this
+    router just wraps it in a background task and instruments phase transitions
+    on the shared `deck_generation_jobs` collection. Shield chokepoint invocation,
+    audit fingerprint (19 fields), and version-chain semantics are preserved.
     """
-    return await deck_regenerate.regenerate_deck(
-        document_id=document_id,
+    # Synchronous pre-flight: same membership + commit-lock checks the engine
+    # performs at the top of regenerate_deck. Failing here means we never
+    # spawn a background task on a doomed request.
+    parent = await deck_regenerate._load_and_membership_check(document_id, me["id"])
+    if parent.get("lifecycle_state") == "committed":
+        # Re-raise via the same helper the engine uses so 409 envelope is
+        # byte-identical to compile-bridge (A10 standard).
+        raise deck_regenerate.commit_locked_409(document_id)
+
+    context_id = parent.get("context_id")
+
+    # Create or return existing in-flight job.
+    job = await deck_generation_jobs.create_job(
+        job_kind="regenerate",
         account_id=me["id"],
-        prompt_override=body.prompt,
+        context_id=context_id,
+        user_id=me["id"],
+        target_id=document_id,
     )
+
+    if job["phase"] != deck_generation_jobs.PHASE_QUEUED:
+        return {
+            "job_id": job["job_id"],
+            "phase": job["phase"],
+            "status_url": f"/api/decks/generation-status/{job['job_id']}",
+        }
+
+    prompt = body.prompt
+    account_id = me["id"]
+
+    async def _runner(job_id: str) -> Dict[str, Any]:
+        # ------ Phase: reading_sources — load parent text (already loaded, but
+        # this is the observable checkpoint before the LLM fire) -------
+        await deck_generation_jobs.set_phase(
+            job_id, deck_generation_jobs.PHASE_READING, progress=10,
+        )
+        # ------ Phase: structuring — Shield-routed LLM call (engine untouched) -
+        await deck_generation_jobs.set_phase(
+            job_id, deck_generation_jobs.PHASE_STRUCTURING, progress=35,
+        )
+        try:
+            engine_result = await deck_regenerate.regenerate_deck(
+                document_id=document_id,
+                account_id=account_id,
+                prompt_override=prompt,
+            )
+        except Exception as e:  # noqa: BLE001 — propagate as job error
+            status_code = getattr(e, "status_code", 500)
+            detail = getattr(e, "detail", str(e))
+            await deck_generation_jobs.set_error(job_id, {
+                "type": e.__class__.__name__,
+                "message": str(detail)[:1000],
+                "status": status_code,
+            })
+            return {}
+        # ------ Phase: drafting — post-Shield persistence completed by engine --
+        await deck_generation_jobs.set_phase(
+            job_id, deck_generation_jobs.PHASE_DRAFTING, progress=80,
+        )
+        # ------ Phase: complete -------
+        await deck_generation_jobs.set_result(job_id, engine_result)
+        return engine_result
+
+    await deck_generation_jobs.spawn_generation(job["job_id"], _runner)
+
+    return {
+        "job_id": job["job_id"],
+        "phase": deck_generation_jobs.PHASE_QUEUED,
+        "status_url": f"/api/decks/generation-status/{job['job_id']}",
+    }
+
+
+@router.get(
+    "/decks/generation-status/{job_id}",
+    response_model=RegenerateStatusResponse,
+)
+async def get_regenerate_status(
+    job_id: str,
+    me: Dict[str, Any] = Depends(get_current_account),
+):
+    """JC-DECK-GEN-ASYNC-KICKOFF-POLL (2026-07-05) — poll endpoint for regenerate
+    (and any future top-level `/decks` async generation surfaces).
+
+    Account-scoped: returns 404 if job not found OR belongs to another account
+    (indistinguishable to prevent enumeration).
+    """
+    from fastapi import HTTPException
+    job = await deck_generation_jobs.get_job(job_id, account_id=me["id"])
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found.")
+    return {
+        "job_id": job["job_id"],
+        "phase": job["phase"],
+        "progress": job.get("progress", 0),
+        "result": job.get("result"),
+        "error": job.get("error"),
+        "created_at": job.get("created_at"),
+        "updated_at": job.get("updated_at"),
+    }
