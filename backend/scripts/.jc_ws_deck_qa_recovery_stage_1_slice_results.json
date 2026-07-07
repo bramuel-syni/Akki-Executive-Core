@@ -1,0 +1,61 @@
+{
+  "arc": "JC-WS-DECK-QA-RECOVERY-STAGE-1",
+  "canonical_spec": "UX Brief v1.1 (7 July 2026) \u00b7 user dispatch 2026-07-05",
+  "close_discipline": "UI-layer evidence closes the UI stories (per RULE-UI-STORIES-CLOSE-ON-UI-LAYER-ONLY). Slice is regression floor.",
+  "stop_and_show_gate": "STAGE 2 (Enhance bug) and STAGES 3a-3e (v1.1 conformance) HELD. SHIPPED-PENDING-USER-QA per RULE-USER-QA-RE-RUN-IS-FINAL-GATE.",
+  "passed": 10,
+  "total": 10,
+  "green": true,
+  "rows": [
+    {
+      "row": "R1_composer_decoupled",
+      "ok": true,
+      "detail": "decks_jsx_href_to_composer=0 (must=0) \u00b7 app_js_composer_route_still_present=1 (must>=1)"
+    },
+    {
+      "row": "R2_approval_decoupled",
+      "ok": true,
+      "detail": "initial_view=list:True \u00b7 setView('outline')_calls=0 (must=0) \u00b7 invisible_auto_confirm_present:True"
+    },
+    {
+      "row": "R3_engines_reused",
+      "ok": true,
+      "detail": "backend_decks_router_diff_bytes=0 (must=0) \u00b7 modal_calls_outline=True \u00b7 modal_calls_generate=True"
+    },
+    {
+      "row": "R4_shield_sha256",
+      "ok": true,
+      "detail": "shield_py_files=13 \u00b7 diff_bytes=0"
+    },
+    {
+      "row": "R5_account_isolation",
+      "ok": true,
+      "detail": "context_ownership_check_hits=9 (must>=5)"
+    },
+    {
+      "row": "R6_fail_closed_router",
+      "ok": true,
+      "detail": "Depends(context/account/admin)_hits=7 (must>=5)"
+    },
+    {
+      "row": "R7_ui_evidence_present",
+      "ok": true,
+      "detail": "expected=10 missing=[] small=[]"
+    },
+    {
+      "row": "R8_v11_ids",
+      "ok": true,
+      "detail": "line1_v11:True \u00b7 deck_ids_present:True \u00b7 active_v10_refs (must=0)=0 \u00b7 first_leak=None"
+    },
+    {
+      "row": "R9_prior_slices_ast_clean",
+      "ok": true,
+      "detail": "prior_slices=49 ast_failures=[]"
+    },
+    {
+      "row": "R10_stages_2_3_held",
+      "ok": true,
+      "detail": "stage_2_marker_touched:False \u00b7 stage_3_markers:0 \u00b7 catalogue_created:False"
+    }
+  ]
+}

@@ -533,6 +533,12 @@ function App() {
               standalone page (W3), while Minutes / Decks / Reports
               still open the overlay drawer from the listing (W4). */}
           <Route path="/app/work-studio/document/:artefactId" element={<Gated><WorkStudioDocumentPage /></Gated>} />
+          {/* JC-WS-DECK-QA-RECOVERY-STAGE-1 (2026-07-05) — v1.1 §4.1 requires
+              a first-class Deck list at /app/decks. Previously only the
+              deep-link route (/app/decks/:deckId) existed. Both routes now
+              land on the same page component; the presence/absence of
+              :deckId toggles list-view vs detail-view rendering. */}
+          <Route path="/app/decks" element={<Gated><Decks /></Gated>} />
           <Route path="/app/decks/:deckId" element={<Gated><Decks /></Gated>} />
           <Route path="/app/pulse" element={<Gated><Pulse /></Gated>} />
           {/* Phase P5.15 — Pulse Ideas by Akki (weekly cited synthesis).

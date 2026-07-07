@@ -23,6 +23,11 @@ import HandoffActions from "@/components/shell/HandoffActions";
 // Phase L.b.3 (2026-05-27) — Real backend-driven SSE for deck generation.
 import StreamingLogScene from "@/components/transitions/StreamingLogScene";
 import useStreamingProgress from "@/hooks/useStreamingProgress";
+// JC-WS-DECK-QA-RECOVERY-STAGE-1 (2026-07-05) — v1.1-compliant Create
+// Summary Deck modal. Replaces v1.0 intent→outline-review→generate flow
+// which routed through Work Studio Composer + approval workflow (both
+// documents-scoped; NOT for decks per UX Brief v1.1 §4.2-4.3).
+import CreateSummaryDeckModal from "@/components/decks/CreateSummaryDeckModal";
 
 /**
  * Decks — three-step flow that keeps the user from burning Opus on weak prompts.
@@ -44,13 +49,19 @@ export default function Decks() {
   const cid = activeContext?.id;
   const { deckId: deepLinkDeckId } = useParams();
 
-  const [view, setView] = useState("intent"); // intent | outline | deck
+  const [view, setView] = useState("list"); // list | deck   ── JC-WS-DECK-QA-RECOVERY-STAGE-1: v1.1 §4.1 default landing = Deck list. v1.0 "intent" / "outline" views deleted (approval-workflow leak). "deck" view = Deck Detailed View, opened after modal-driven creation or card click.
   const [outline, setOutline] = useState(null);
   const [deck, setDeck] = useState(null);
   const [quota, setQuota] = useState(null);
   const [history, setHistory] = useState([]);
   const [studioHistory, setStudioHistory] = useState([]);
   const [activePlays, setActivePlays] = useState([]);
+  // JC-WS-DECK-QA-RECOVERY-STAGE-1 — new v1.1 §4.2 Create Summary Deck modal state.
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  // Track deck IDs that were just created so we can pulse-animate them on
+  // list entry (v1.1 §4.3 requirement: card enters with pulse animation
+  // before settling).
+  const [freshDeckIds, setFreshDeckIds] = useState(new Set());
 
   useEffect(() => {
     if (!cid) return;
@@ -61,7 +72,7 @@ export default function Decks() {
       refreshState();
       return;
     }
-    setView("intent");
+    setView("list");
     setOutline(null);
     setDeck(null);
     setHistory([]);
@@ -146,41 +157,107 @@ export default function Decks() {
           )}
         </header>
 
-        <Stepper view={view} />
+        {/* JC-WS-DECK-QA-RECOVERY-STAGE-1 · Stepper removed — the v1.0
+            Intent → Outline → Deck 3-step visual belonged to the approval
+            workflow (now bypassed per v1.1 §4.2-4.3). v1.1 flow is: Deck
+            list → modal (title + Start From + progress checklist +
+            completion) → auto-open Detail View. No stepper. */}
 
-        {view === "intent" && (
+        {view === "list" && (
           <>
-            <IntentStep
-              contextId={cid}
-              onDrafted={(o) => { setOutline(o); setView("outline"); }}
-              history={history}
-              onResume={(deckId) => loadDeck(cid, deckId, setDeck, setView)}
-            />
+            {/* JC-WS-DECK-QA-RECOVERY-STAGE-1 · v1.1 §4.1 Deck list + §4.2 Create Summary Deck CTA */}
+            <section
+              className="bg-white border border-[var(--rule)] rounded-sm p-6 mb-8"
+              data-testid="decks-list-header"
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="akki-serif text-[20px] text-[var(--ink)] mb-1">Decks</h2>
+                  <p className="text-[12.5px] text-[var(--muted)]">
+                    Board-grade decks from your own workspace content or an uploaded document.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setCreateModalOpen(true)}
+                  className="bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white rounded-sm h-10 px-6"
+                  data-testid="decks-create-summary-btn"
+                >
+                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                  Create Summary Deck
+                </Button>
+              </div>
+            </section>
+
+            {history.length > 0 && (
+              <section data-testid="decks-history" className="mb-8">
+                <h3 className="text-[11px] uppercase tracking-[0.18em] text-[var(--muted)] mb-3">
+                  Your decks
+                </h3>
+                <ul className="bg-white border border-[var(--rule)] rounded-sm divide-y divide-[var(--rule)]">
+                  {history.map((d) => {
+                    const isFresh = freshDeckIds.has(d.id);
+                    return (
+                      <li
+                        key={d.id}
+                        className={`px-5 py-4 flex items-center justify-between gap-4 hover:bg-[var(--cream-deep)]/30 cursor-pointer transition-colors ${
+                          isFresh ? "deck-card-pulse" : ""
+                        }`}
+                        onClick={() => loadDeck(cid, d.id, setDeck, setView)}
+                        data-testid={`deck-card-${d.id}`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <p className="akki-serif text-[15px] text-[var(--ink)] truncate mr-2">
+                              {d.title || "(Untitled)"}
+                            </p>
+                            {/* v1.1 §4.1 badges — Draft / Committed / Archived + Akki Generated */}
+                            <span
+                              className="text-[10px] uppercase tracking-[0.14em] px-2 py-0.5 border border-amber-300 bg-amber-50 text-amber-800 rounded-sm"
+                              data-testid={`deck-badge-draft-${d.id}`}
+                            >
+                              {d.status === "committed" ? "Committed" :
+                               d.status === "archived" ? "Archived" : "Draft"}
+                            </span>
+                            <span
+                              className="text-[10px] uppercase tracking-[0.14em] px-2 py-0.5 border border-[var(--accent)]/30 bg-[var(--accent)]/10 text-[var(--accent)] rounded-sm"
+                              data-testid={`deck-badge-akki-${d.id}`}
+                            >
+                              Akki Generated
+                            </span>
+                          </div>
+                          <p className="text-[11.5px] text-[var(--muted)]">
+                            {d.created_at && new Date(d.created_at).toLocaleDateString(undefined, {
+                              year: "numeric", month: "short", day: "numeric",
+                            })}
+                            {d.quality_check?.score != null && ` · quality ${d.quality_check.score}`}
+                          </p>
+                        </div>
+                        {d.validation && d.validation.verdict && (
+                          <ValidatedBadge size="compact" validation={d.validation} />
+                        )}
+                        <ChevronRight className="w-4 h-4 text-[var(--muted)] shrink-0" />
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
+            {history.length === 0 && (
+              <section
+                className="border border-dashed border-[var(--rule)] rounded-sm p-10 text-center"
+                data-testid="decks-empty-state"
+              >
+                <p className="text-[13px] text-[var(--muted)] mb-1">No decks yet.</p>
+                <p className="text-[12px] text-[var(--muted)]">
+                  Click &quot;Create Summary Deck&quot; above to generate your first one.
+                </p>
+              </section>
+            )}
+
             {activePlays.length > 0 && (
               <ActiveWorkflowsRail plays={activePlays} />
             )}
-            {studioHistory.length > 0 && (
-              <StudioHistoryStrip
-                items={studioHistory}
-                contextId={cid}
-                onOpenDeck={(deckId) => loadDeck(cid, deckId, setDeck, setView)}
-              />
-            )}
           </>
-        )}
-
-        {view === "outline" && outline && (
-          <OutlineStep
-            outline={outline}
-            contextId={cid}
-            onIterate={(o) => setOutline(o)}
-            onGenerated={async (d) => {
-              setDeck(d);
-              setView("deck");
-              await refreshState();
-            }}
-            onCancel={() => { setOutline(null); setView("intent"); }}
-          />
         )}
 
         {view === "deck" && deck && (
@@ -188,9 +265,44 @@ export default function Decks() {
             deck={deck}
             contextId={cid}
             onUpdated={setDeck}
-            onNew={() => { setDeck(null); setOutline(null); setView("intent"); refreshState(); }}
+            onNew={() => { setDeck(null); setOutline(null); setView("list"); refreshState(); }}
           />
         )}
+
+        {/* JC-WS-DECK-QA-RECOVERY-STAGE-1 · v1.1 §4.2 Create Summary Deck modal.
+            Chains outline → auto-confirm generate invisibly (backend approval
+            step is bypassed via `confirmed=true` so user never sees an
+            approval workflow — that's a documents-scoped concept per v1.1). */}
+        <CreateSummaryDeckModal
+          open={createModalOpen}
+          contextId={cid}
+          onOpenChange={setCreateModalOpen}
+          onDeckCreated={async (d) => {
+            // v1.1 §4.3 · card enters list with pulse; Deck Detailed View
+            // opens automatically without requiring the user to click.
+            setFreshDeckIds(prev => new Set([...prev, d.id]));
+            await refreshState();
+            setDeck(d);
+            setView("deck");
+            // Clear pulse marker after animation window (~2s).
+            setTimeout(() => {
+              setFreshDeckIds(prev => {
+                const next = new Set(prev);
+                next.delete(d.id);
+                return next;
+              });
+            }, 2000);
+          }}
+          onDownload={(d) => {
+            // Kick off download via existing endpoint (reused engine).
+            window.open(`${API_BASE}/contexts/${cid}/decks/${d.id}/download`, "_blank");
+          }}
+          onGoToChat={(d) => {
+            // Route to Chat with the deck as a handoff object; existing
+            // handoff pattern used across the app.
+            window.location.href = `/app/chat?deck_id=${encodeURIComponent(d.id)}`;
+          }}
+        />
       </div>
     </AppShell>
   );
@@ -1090,14 +1202,12 @@ function StudioHistoryStrip({ items, contextId, onOpenDeck }) {
               <div className="flex flex-wrap items-center gap-1.5 shrink-0">
                 <SensitivityChip sensitivity={it.sensitivity} />
                 <ExposurePill exposure={it.exposure} />
-                <a
-                  href={`/app/studio/composer/${it.kind}/${it.id}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm border border-[var(--rule)] text-[10px] uppercase tracking-[0.14em] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
-                  data-testid={`studio-history-compose-${it.kind}-${it.id}`}
-                >
-                  Compose
-                </a>
+                {/* JC-WS-DECK-QA-RECOVERY-STAGE-1 (2026-07-05) — DELETED the
+                    "Compose" link that routed decks into /app/studio/composer/*.
+                    Per RULE-CANONICAL-SPEC-UX-BRIEF-V1-1, the Work Studio
+                    Composer is documents-scoped only; decks live in the
+                    deck-native Detailed View. Composer route itself is
+                    UNTOUCHED (still active for documents). */}
                 <button
                   type="button"
                   onClick={(e) => {

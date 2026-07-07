@@ -1381,3 +1381,7 @@ entries now flow through the same 403 guard.
 2026-07-05 · CREDENTIALS-OVERRIDE · admin@akki.ai plaintext surfaced once to orchestrator channel on owner authorization · fingerprint sha256_prefix=d5ef5abd6327 · plaintext NOT stored in this log · scope: one-time
 
 Standing CREDENTIALS_NEVER_IN_CHANNEL_RULE remains in force for all future arcs. This override does not modify the rule.
+
+## 2026-07-05 · JC-WS-DECK-QA-RECOVERY-STAGE-1 · Stage 1 SHIPPED-PENDING-USER-QA
+
+Canonical Spec: UX Brief v1.1 (7 July 2026) §4.2-4.3. Structural fix eliminating Work Studio Composer + user-visible approval workflow from the Deck creation journey. Part 0 permanent rules banked. UI-layer close via 10-screenshot journey on live preview. Backend engines reused verbatim (0 diff bytes). Shield UNTOUCHED. 33 v1.1 stories close-manifested. Slice regression floor 10/10. STOP-AND-SHOW gate ABSOLUTE — Stages 2 + 3 HELD pending user QA re-run against regenerated v1.1 catalogue (RULE-USER-QA-RE-RUN-IS-FINAL-GATE).
