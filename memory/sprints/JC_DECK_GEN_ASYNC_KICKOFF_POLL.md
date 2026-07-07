@@ -2,7 +2,7 @@
 
 # JC-DECK-GEN-ASYNC-KICKOFF-POLL · Async architecture landed across all 4 generation paths · s05 still blocked by NEW failure class
 
-**Status:** SHIPPED-UNPUSHED · commit hash cited at close. Content marker: **`deck-gen-async-shipped-s05-still-blocked-with-diagnostic`** (Path B outcome).
+**Status:** SHIPPED-UNPUSHED · commit=`656c74c8` (arc close · citation-update follow-up next). Content marker: **`deck-gen-async-shipped-s05-still-blocked-with-diagnostic`** (Path B outcome).
 
 **F.6:** N/A · this arc wraps request/response SHAPE around engines (kick-off + poll) · Shield chokepoint invocation, LLM tier quota, validator, sensitivity scoring, audit fingerprint (19 fields), commit-lock 409 shape — all preserved byte-identical.
 

@@ -7237,3 +7237,43 @@ draft surfaced verbatim.
 **No silencing / gating / try-except / stubbing / mocking / state-injection introduced.** R9 grep on changed backend/*.py files: 0 suspicious patterns. R10 organic user-flow captures only (Playwright script uses page.fill / page.click / page.goto only; `page.evaluate` used solely for user-visible affordance `akki:open-company-switcher` custom event).
 
 **Testing sub-agents BANNED throughout. MOCKED-integrations line preserved (SendGrid dev-mode + Resend mock). HARD STOP at close. Nothing auto-fires.**
+
+
+
+
+---
+
+### 2026-07-05 · JC-DECK-GEN-ASYNC-KICKOFF-POLL · Architectural arc CLOSED with Path B disposition
+
+**Canonical Spec:** user dispatch 2026-07-05 · `JC-DECK-GEN-ASYNC-KICKOFF-POLL` (12-item Amendment Echo).
+
+**Status:** 🟢 SHIPPED-UNPUSHED · 15/15 proving-slice GREEN · commit=`656c74c8` (arc close) + follow-up citation commit · content marker `deck-gen-async-shipped-s05-still-blocked-with-diagnostic`.
+
+**Architectural change:** convert every generation-triggering deck path from synchronous LLM-await to **kick-off (202 with job handle) + FE polling** pattern.
+
+**Backend async infra:**
+- NEW `services/deck_generation_jobs.py` — job store (`deck_generation_jobs` Mongo collection) + phase-tracking wrapper + task spawn via `asyncio.create_task`. Schema: `{job_id UNIQUE, job_kind, account_id, context_id, user_id, target_id, phase, progress, result, error, request_hash, created_at, updated_at}`. Idempotent index bootstrap on startup.
+- MODIFIED `routers/decks.py` — `POST /decks/outline` + `POST /decks/{outline_id}/generate` now return 202 with `{job_id, phase, status_url}`. Body extracted verbatim into `_run_outline_job` / `_run_generate_deck_job` runners with phase-transition markers at natural boundaries. NEW `GET /decks/generation-status/{job_id}` endpoint.
+- MODIFIED `routers/deck_related_lineage_regen.py` — `POST /decks/{document_id}/regenerate` now returns 202. Commit-lock 409 pre-flight preserved byte-identical via engine helper `deck_regenerate.commit_locked_409` (A10 standard). NEW top-level `GET /decks/generation-status/{job_id}` endpoint.
+- MODIFIED `server.py` — startup index bootstrap wired (6 lines).
+
+**Frontend:**
+- MODIFIED `CreateSummaryDeckModal.jsx` — `handleCreate` rewritten as kickoff+poll pattern. Progress checklist maps 1:1 to backend phase enum (`queued`/`reading_sources`/`structuring`/`drafting`/`complete`/`error`). No faked phases per HARD STOP condition.
+
+**Untouched (verified via R6-R10 of slice · 0 diff bytes since PRE_ARC_HEAD `5d1204ca`):**
+- `services/synisense/shield/**` (13 files · sha256 composite identity preserved)
+- `services/deck_regenerate.py` (engine · 0 diff bytes)
+- `llm_service.py` + `llm_tier_quota.py` + `studio_sensitivity.py` (engines · 0 diff bytes)
+- `contracts/_adapters/_http_client.py` + `.env`
+
+**Path B outcome (s05/DECK-031 still blocked):**
+- Async architecture successfully removed FE-facing Cloudflare 21s edge dependency (kickoff POST returns 202 in <1s · verified via 2 organic recapture attempts).
+- s05 hit **NEW failure class: SHIELD-INTERNAL-LLM-PROVIDER-TIMEOUT** at `services/synisense/shield/llm_router.py:186` — `asyncio.wait_for(litellm.acompletion(...), timeout=20.0s)` raising `ServiceUnavailable` at t~22s. Deterministic across 2 attempts.
+- DECK-031 remains deferred behind user disposition on the new class.
+- 4 remediation paths surfaced (environmental switch to production QA env · Shield internal timeout tuning · model preference tuning · upstream escalation to Emergent Integrations) — self-remediation NOT executed (Shield is untouchable).
+
+**Prior arc supersession:** `JC-GEN-PATH-CONNECTTIMEOUT` closure section updated with supersession note. "Wait for lower-load" dead path (already killed by relabel arc) definitively closed.
+
+**Stage 1 (Deck QA Recovery)** remains SHIPPED-PENDING-USER-QA (s05 partial-blocked per Path B). **Stages 2 (Enhance) + 3a-3e** remain HELD per STOP-AND-SHOW gate.
+
+**Testing sub-agents BANNED. MOCKED-integrations line preserved (SendGrid + Resend). HARD STOP at close. Nothing auto-fires.**
