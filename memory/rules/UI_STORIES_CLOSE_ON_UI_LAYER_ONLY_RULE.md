@@ -31,3 +31,31 @@ Per journey: screenshots (or recording) of the actual flow on the **live preview
 ## Not modifiable
 
 Any change requires explicit new dispatch that names this rule.
+
+---
+
+## Corollary · 2026-07-05 · State-injection captures do not close UI stories
+
+**Banked 2026-07-05 · effective permanent · applies to ALL UI story closes.**
+
+**Canonical Spec Source:** user dispatch 2026-07-05 · `JC-GEN-PATH-CONNECTTIMEOUT` · Corollary block.
+
+### Statement
+
+State-injection captures (Playwright `page.evaluate` state-set, forced React state, mocked backend responses, `data-testid`-scoped state manipulation, or any UI-state manipulation that bypasses the actual user-triggered flow) **MAY SUPPLEMENT** evidence but **NEVER CLOSE** a UI story. Only **organic user-flow captures** — where the UI state is arrived at via the actual user journey — close.
+
+### Enforcement
+
+- Every UI-layer screenshot used as a close artefact MUST be traceable to a user-triggered flow. The Playwright script (or manual capture instructions) MUST show the actual clicks / typing / navigation that arrive at the state, NOT a `page.evaluate("setPhase('complete')")` or equivalent.
+- Backend mock responses (intercepting `fetch` / `XMLHttpRequest` to return canned data) do NOT satisfy organic capture. If the real backend endpoint fails in the capture environment, either (a) fix the environment so the real endpoint succeeds, or (b) declare the story BLOCKED-BY-ENV and defer the close — do NOT manufacture the state.
+- Code-inspection evidence (grep + line references confirming a data-testid exists, or that the render branch exists) is REGRESSION FLOOR only. It does not close a UI story on its own.
+- If the state-injection was used only during development for iteration (e.g. faster loop), that's fine — but the FINAL close artefact MUST be organic.
+
+### Interaction
+
+- **Extends `UI_STORIES_CLOSE_ON_UI_LAYER_ONLY_RULE`** (the parent rule above) — this corollary tightens the "UI-layer evidence" definition to exclude manufactured / injected states.
+- **Composes with `USER_QA_RE_RUN_IS_FINAL_GATE_RULE`** — user's QA re-run naturally arrives at UI states organically; the agent's evidence must meet the same bar so the user's re-run is meaningful.
+
+### Not modifiable
+
+Any change requires explicit new dispatch that names this corollary.
