@@ -10,7 +10,7 @@
       "name": "memo_exists_and_line1_cites_canonical_spec",
       "pass": true,
       "detail": {
-        "memo_bytes": 19645,
+        "memo_bytes": 19724,
         "line1_prefix": "**Canonical Spec: user dispatch 2026-07-05 \u00b7 `JC-GEN-PATH-CONNECTTIMEOUT` + user amendment 2026-07-05 (3 tightening cons"
       }
     },
@@ -99,7 +99,9 @@
       "name": "no_new_mocks_stubs_silencers_in_backend_product_code",
       "pass": true,
       "detail": {
-        "changed_backend_py_files": [],
+        "changed_backend_py_files": [
+          "backend/scripts/jc_gen_path_connecttimeout_proving_slice.py"
+        ],
         "suspicious_matches": []
       }
     },
