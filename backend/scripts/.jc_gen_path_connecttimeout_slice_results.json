@@ -1,0 +1,116 @@
+{
+  "arc": "JC-GEN-PATH-CONNECTTIMEOUT",
+  "canonical_spec_line1": "user dispatch 2026-07-05 \u00b7 JC-GEN-PATH-CONNECTTIMEOUT + 3 user amendments",
+  "verdict": "GREEN",
+  "passed": 10,
+  "total": 10,
+  "rows": [
+    {
+      "row": "R1",
+      "name": "memo_exists_and_line1_cites_canonical_spec",
+      "pass": true,
+      "detail": {
+        "memo_bytes": 19645,
+        "line1_prefix": "**Canonical Spec: user dispatch 2026-07-05 \u00b7 `JC-GEN-PATH-CONNECTTIMEOUT` + user amendment 2026-07-05 (3 tightening cons"
+      }
+    },
+    {
+      "row": "R2",
+      "name": "memo_has_all_required_sections",
+      "pass": true,
+      "detail": {
+        "required": [
+          "Received-scope echo",
+          "Step 0 \u00b7 Classify-first",
+          "Step 2 \u00b7 Organic s05 recapture",
+          "Step B disposition",
+          "Real Signals Surfaced",
+          "Closure section",
+          "Zero-touch discipline verification",
+          "Amendment-Echo compliance"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "row": "R3",
+      "name": "transient_upstream_volatility_banked",
+      "pass": true,
+      "detail": {
+        "occurrences": 8
+      }
+    },
+    {
+      "row": "R4",
+      "name": "prior_classify_arc_addendum_present",
+      "pass": true,
+      "detail": {
+        "prior_arc_bytes": 26961,
+        "addendum_lineage_cite": true
+      }
+    },
+    {
+      "row": "R5",
+      "name": "content_marker_present",
+      "pass": true,
+      "detail": {
+        "marker": "s05-blocked-by-env-transient-upstream-volatility",
+        "occurrences": 3
+      }
+    },
+    {
+      "row": "R6",
+      "name": "zero_touch_protected_paths",
+      "pass": true,
+      "detail": {
+        "pre_arc_head": "d52c13e5",
+        "touched": []
+      }
+    },
+    {
+      "row": "R7",
+      "name": "shield_sha256_identity_preserved_vs_pre_arc_head",
+      "pass": true,
+      "detail": {
+        "head_composite_sha256": "d5705c922df8a9aaacfccce62dde401fc440ee22c3c7947c03cc087b0afc5f07",
+        "pre_arc_composite_sha256": "d5705c922df8a9aaacfccce62dde401fc440ee22c3c7947c03cc087b0afc5f07",
+        "pre_arc_head": "d52c13e5",
+        "head_file_count": 13,
+        "pre_arc_file_count": 13
+      }
+    },
+    {
+      "row": "R8",
+      "name": "organic_capture_artefacts_present_size_floor_50KB",
+      "pass": true,
+      "detail": {
+        "s05_attempt2_env_blocked.png": {
+          "exists": true,
+          "bytes": 107546
+        },
+        "s05_attempt3_env_blocked.png": {
+          "exists": true,
+          "bytes": 106712
+        }
+      }
+    },
+    {
+      "row": "R9",
+      "name": "no_new_mocks_stubs_silencers_in_backend_product_code",
+      "pass": true,
+      "detail": {
+        "changed_backend_py_files": [],
+        "suspicious_matches": []
+      }
+    },
+    {
+      "row": "R10",
+      "name": "state_injection_corollary_honoured",
+      "pass": true,
+      "detail": {
+        "declaration": "page.evaluate used only for akki:open-company-switcher (user-visible affordance)",
+        "memo_declares_organic_only": true
+      }
+    }
+  ]
+}

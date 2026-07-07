@@ -163,6 +163,12 @@ Four caller postures observed. Each is classified against the three canonical mo
 
 **Verdict:** Zero silent-degrade findings in the primary contract-caller surface. All Shield-wrapping code paths audited emit log lines; all direct call sites fail-close. Findings are recorded here for user disposition; **no code change made** per R7 zero-touch discipline.
 
+### §3 · Addendum · 2026-07-05 · TRANSIENT-UPSTREAM-VOLATILITY (banked as third failure-mode class)
+
+**Lineage cite:** `JC-GEN-PATH-CONNECTTIMEOUT` arc (2026-07-05) — user amendment A2 requested this classification be banked as first-class, since the original dispatch's two paths (config-class · service-missing) did not anticipate this third state. See `sprints/JC_GEN_PATH_CONNECTTIMEOUT.md` Step 0 verdict.
+
+**D5 · TRANSIENT-UPSTREAM-VOLATILITY** (third class · added 2026-07-05): applies when an upstream target (e.g. `https://integrations.emergentagent.com/llm/chat/completions`) is **reachable at TCP+TLS handshake** (connect < 5ms · DNS clean · no env misconfig) BUT **intermittently returns Cloudflare-fronted 502 / origin-timeout responses** under real workload conditions. Signature body: `"The origin web server returned an invalid or incomplete response to Cloudflare. This typically indicates the origin is overloaded or misconfigured."`. Origin-side or preview-pod-side attribution undetermined without upstream cooperation. Distinct from D1-D4 because the base `_call` retry policy (3 attempts) can be exhausted deterministically per generation call when the failure window is durable rather than stochastic. **Disposition path:** honest BLOCKED-BY-ENV declaration for UI stories (per state-injection corollary of RULE-UI-STORIES-CLOSE-ON-UI-LAYER-ONLY) + user-side remediation via one of: environmental switch, retry-policy tuning of `_PER_METHOD_TIMEOUT_S` for the affected surface, or upstream escalation. **Not fixable within CLASSIFY-ONLY discipline** (retry-policy tuning would touch FAIL-CLOSED surface).
+
 ---
 
 ## §4 · Environment scope
