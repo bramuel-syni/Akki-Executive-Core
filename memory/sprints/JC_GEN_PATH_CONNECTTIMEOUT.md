@@ -1,10 +1,10 @@
-**Canonical Spec: user dispatch 2026-07-05 · `JC-GEN-PATH-CONNECTTIMEOUT` + user amendment 2026-07-05 (3 tightening constraints: bounded-retry-ceiling · TRANSIENT-UPSTREAM-VOLATILITY first-class classification · real-signal declaration).**
+**Canonical Spec: user dispatch 2026-07-05 · `JC-GEN-PATH-CONNECTTIMEOUT` + user amendment 2026-07-05 (3 tightening constraints: bounded-retry-ceiling · DETERMINISTIC-EDGE-TIMEOUT-CEILING first-class classification · real-signal declaration) + user dispatch 2026-07-05 · `JC-CONNECTTIMEOUT-RELABEL-D5` (D5 label corrected after three identical t=21s failures established fixed-ceiling behaviour — correction lineage banked in classify memo §3 addendum).**
 
 # JC-GEN-PATH-CONNECTTIMEOUT · Classify + narrow-scope disposition · CLOSE memo
 
 **Arc discipline:** CLASSIFY-FIRST · zero touch of `_http_client.py::_call` · zero touch of `BOUNDED_CONTEXT_TRANSPORT` · zero touch of retry policy · zero touch of any FAIL-CLOSED surface · zero touch of Shield · zero touch of generation engines / backend routers · no silencing / gating / try-except wrapping / stubbing / mocking · no state-injection captures · organic user-flow only (per RULE-UI-STORIES-CLOSE-ON-UI-LAYER-ONLY + state-injection corollary) · Testing sub-agents BANNED · MOCKED-integrations line preserved · Stages 2 + 3a-3e HELD · HARD STOP at close.
 
-**Status:** SHIPPED-UNPUSHED · commit=`402100b9` (arc-close · citation-update follow-up commit will be next). Content marker: **`s05-blocked-by-env-transient-upstream-volatility`** (per user amendment · Step B outcome).
+**Status:** SHIPPED-UNPUSHED · commit=`402100b9` (arc-close · citation-update follow-up commit will be next) + `JC-CONNECTTIMEOUT-RELABEL-D5` relabel commit cited below. Content marker: **`s05-blocked-by-env-deterministic-edge-timeout-ceiling`** (per user amendment · Step B outcome · corrected 2026-07-05 · original marker preserved in commit history · see classify memo §3 addendum for correction lineage).
 
 ---
 
@@ -26,7 +26,9 @@
 
 **A1. Bounded retry ceiling · at most 2 ADDITIONAL attempts** on top of the one already made (so 3 total honest attempts, each capped at ~90s poll window). If still `complete=False` after attempt 3, escalate to Step B honestly. Total patience budget ~4.5 min. This prevents the retry from drifting into grind-until-it-works (which would silently mask real volatility).
 
-**A2. Bank TRANSIENT-UPSTREAM-VOLATILITY as a first-class classification in this memo AND as an addendum row in the prior classify arc's §3 taxonomy** (`sprints/JC_INTERNAL_HTTP_CONNECTTIMEOUT_CLASSIFY.md`). One-line addendum with honest lineage cite. The original dispatch's two paths (config-class · service-missing) didn't anticipate this third state — you correctly identified it. Lock it in so future arcs don't force-fit into A/B.
+**A2. Bank DETERMINISTIC-EDGE-TIMEOUT-CEILING as a first-class classification in this memo AND as an addendum row in the prior classify arc's §3 taxonomy** (`sprints/JC_INTERNAL_HTTP_CONNECTTIMEOUT_CLASSIFY.md`). One-line addendum with honest lineage cite. The original dispatch's two paths (config-class · service-missing) didn't anticipate this third state — you correctly identified it. Lock it in so future arcs don't force-fit into A/B.
+
+*(Correction lineage 2026-07-05 · `JC-CONNECTTIMEOUT-RELABEL-D5`: original A2 label was relabeled after three identical t=21s failures established fixed-ceiling behaviour — not variability. Correction lineage prose banked verbatim in classify memo §3 addendum.)*
 
 **A3. Real-signal declaration in Trigger-2**: even if Step A succeeds and s05 closes organically, the underlying volatility remains as an unresolved signal. State in a "Real Signals Surfaced" section: `LLM proxy transient volatility observed under real generation load · upstream-side or preview-pod-side origin undetermined · user disposition pending on remediation (production QA env / retry policy tuning / upstream escalation)`. Do NOT self-remediate — that's user's call as a separate arc.
 
@@ -48,7 +50,7 @@
 
 **NOT service-missing.** The proxy answers HTTP requests within a bounded latency window when the load is low.
 
-**IS: TRANSIENT-UPSTREAM-VOLATILITY (third classification, banked per user amendment A2).** Under real generation load, the proxy occasionally returns a Cloudflare 502 response body — verbatim: `"The origin web server returned an invalid or incomplete response to Cloudflare. This typically indicates the origin is overloaded or misconfigured."` — the origin behind the Cloudflare-fronted proxy is either upstream-side under-provisioned OR the preview-pod's outbound connectivity to the proxy is throttled at a middle-hop. **Undetermined which side** without upstream logs / traceroute cooperation (see Real Signals §, user-disposition pending).
+**IS: DETERMINISTIC-EDGE-TIMEOUT-CEILING (third classification, banked per user amendment A2 · relabeled 2026-07-05 per `JC-CONNECTTIMEOUT-RELABEL-D5` · correction lineage in classify memo §3 addendum).** Under real generation load, the Cloudflare-fronted proxy returns a 502 response body at a FIXED latency ceiling — verbatim: `"The origin web server returned an invalid or incomplete response to Cloudflare. This typically indicates the origin is overloaded or misconfigured."` — three identical t=21s failures across independent retry attempts established the deterministic character (fixed-ceiling evidence, not variability; variability would produce varied timings). The ceiling is likely an edge request-timeout cap imposed by the Cloudflare-fronted proxy or by a middle-hop tearing down the outbound connection at that mark. Cannot fully disambiguate origin-side vs preview-pod-side attribution without upstream cooperation, but the deterministic character rules out "occasional load spikes" / stochastic overload.
 
 **Neither Step 1 (config-class fix) nor Step 3 (service-missing STOP) applies.** Step 2 (organic s05 recapture) is executed against the volatility with a bounded retry ceiling per amendment A1.
 
@@ -84,11 +86,11 @@ Per amendment A1 · retry ceiling exhausted honestly at 3 total attempts, each c
 
 ---
 
-## Step B disposition · s05 BLOCKED-BY-ENV · TRANSIENT-UPSTREAM-VOLATILITY
+## Step B disposition · s05 BLOCKED-BY-ENV · DETERMINISTIC-EDGE-TIMEOUT-CEILING
 
-**Content marker (per CLOSE-IS-NOT-CLOSED-UNTIL-PUSHED rule):** `s05-blocked-by-env-transient-upstream-volatility`.
+**Content marker (per CLOSE-IS-NOT-CLOSED-UNTIL-PUSHED rule):** `s05-blocked-by-env-deterministic-edge-timeout-ceiling` (corrected 2026-07-05 · original marker preserved in commit history · see classify memo §3 addendum for correction lineage).
 
-**DECK-031 status:** deferred behind user-side remediation of the transient volatility. Stage 1 close-manifest for DECK-031 remains as declared in `JC_WS_DECK_QA_RECOVERY_STAGE_1.md` — code-inspection evidence (`CreateSummaryDeckModal.jsx:406-432` verified · 3 CTA testids `deck-complete-download-btn` / `deck-complete-take-to-chat-btn` / `deck-complete-close-btn` present in source) is REGRESSION FLOOR only per state-injection corollary; the UI-layer story does NOT close on that alone. When the upstream volatility resolves, a fresh organic capture will close DECK-031.
+**DECK-031 status:** deferred behind user-side remediation of the deterministic edge-timeout ceiling. Stage 1 close-manifest for DECK-031 remains as declared in `JC_WS_DECK_QA_RECOVERY_STAGE_1.md` — code-inspection evidence (`CreateSummaryDeckModal.jsx:406-432` verified · 3 CTA testids `deck-complete-download-btn` / `deck-complete-take-to-chat-btn` / `deck-complete-close-btn` present in source) is REGRESSION FLOOR only per state-injection corollary; the UI-layer story does NOT close on that alone. **DECK-031 closes when EITHER (a) QA runs in a venue without the ~21s edge request-timeout cap, OR (b) async generation lands (kick-off + poll/webhook) so the deck generation is no longer synchronous behind a request-timeout ceiling.** DECK-031 does NOT close on "wait for a lower-load moment" — that moment does not exist for a fixed ceiling; retrying against a fixed cap fails identically forever.
 
 **Impact chain:**
 - Stage 1 remains SHIPPED-PENDING-USER-QA (per RULE-USER-QA-RE-RUN-IS-FINAL-GATE) — agent-side evidence unchanged, s05 partial-blocked disclosed truthfully in Stage 1's own memo.
@@ -120,17 +122,29 @@ Per amendment A1 · retry ceiling exhausted honestly at 3 total attempts, each c
 
 ---
 
-## Real Signals Surfaced (per user amendment A3)
+## Real Signals Surfaced (per user amendment A3 · corrected 2026-07-05 per `JC-CONNECTTIMEOUT-RELABEL-D5`)
 
-**Signal 1 · LLM proxy transient volatility under real generation load.**
-- Origin: `https://integrations.emergentagent.com/llm/chat/completions` returning Cloudflare 502 body (`"The origin web server returned an invalid or incomplete response to Cloudflare. This typically indicates the origin is overloaded or misconfigured."`) after ~21s.
-- Latency window: 21s consistent across attempts 2 + 3 — suggests either (a) the origin has a fixed 20s timeout that the proxy waits on before returning 502, or (b) the preview-pod's outbound connectivity to the proxy tears down at that mark. Cannot disambiguate without upstream logs.
-- **Origin-side or preview-pod-side: undetermined.** Both hypotheses fit the observed evidence. Diagnosis requires cooperation from the Emergent Integrations team (upstream logs) OR a repro from a different preview-pod / environment.
-- **User disposition pending** on remediation. Recommended dispositions (surfaced, not auto-fired):
-  - **Path 1 · Environmental:** switch to a production QA env with different network egress path; test whether the volatility persists.
-  - **Path 2 · Retry-policy tuning:** raise `_http_client.py::_call` per-method timeout for the deck generation path from `DEFAULT_TIMEOUT_S=5.0s` to something matching the 21s upstream window (e.g. `deck_generate=45.0s` in `_PER_METHOD_TIMEOUT_S`). This is a config-class touch of a FAIL-CLOSED surface — **out of scope for this arc** (dispatch item 7 prohibits it) — user must dispatch a follow-up arc explicitly.
-  - **Path 3 · Upstream escalation:** file a ticket with Emergent Integrations citing the 502 body signature + 21s consistent latency + repro path (POST to `/llm/chat/completions` from this preview pod under Shield-routed deck generation load).
-- **Self-remediation NOT executed** (per user amendment A3 · "that's user's call as a separate arc").
+**Signal 1 · LLM proxy deterministic edge-timeout ceiling under real generation load.**
+- Origin: `https://integrations.emergentagent.com/llm/chat/completions` returning Cloudflare 502 body (`"The origin web server returned an invalid or incomplete response to Cloudflare. This typically indicates the origin is overloaded or misconfigured."`) at t=21s.
+- Latency window: 21s IDENTICAL across three independent retry attempts (attempts 1 + 2 + 3) — deterministic ceiling, not variability. Variability would produce varied timings. The fixed 21s cap is consistent with (a) a Cloudflare-fronted edge request-timeout imposed at the proxy, OR (b) a middle-hop tearing the outbound connection at that mark. Origin behind the Cloudflare edge does not appear to be under stochastic overload — the pattern is a hard ceiling.
+- **Origin-side or preview-pod-side attribution: undetermined** without upstream cooperation, but the deterministic character rules out "occasional load spike" / stochastic-overload hypotheses.
+- **User disposition pending** on remediation via the decision tree below.
+
+### Decision tree (venue-check first · then correct-fix if the cap holds)
+
+1. **Venue-check FIRST · awaits user answer.** Does the production / QA deployment impose the SAME edge request-timeout cap (~21s) on this LLM proxy path? User is the only source of truth on this because the answer depends on the production ingress + Cloudflare-configuration state, which the preview pod cannot introspect.
+2. **If NO (cap is preview-pod-only):** run QA in the production deployment. Class resolved in-env. NO code change needed. DECK-031 organic capture then completes in that venue.
+3. **If YES or unknown:** the real issue is **synchronous LLM generation behind a request-timeout ceiling**. The correct fix is **async generation** (kick-off endpoint returns a job id immediately; frontend polls a status endpoint OR receives a webhook when the deck is ready). This is a scoped fork touching the generation request path (backend `routers/decks.py::/generate` + FE `CreateSummaryDeckModal.jsx` submission handler) — surfaces deliberately kept UNTOUCHED in the classify arc. **Would require explicit user approval** since it touches previously-locked surfaces.
+
+### Remediation paths (surfaced, not auto-fired)
+
+- **Path 1 · Venue check + environmental switch:** answer venue-check question; if venue is clean, run QA in prod → DECK-031 closes organically in that venue.
+- **Path 2 · Async generation fork (only if venue-check yields YES/unknown):** kick-off + poll/webhook redesign of the deck generation request path. Requires explicit user approval as a follow-up arc.
+- **Path 3 · Upstream escalation:** file a ticket with Emergent Integrations citing the DETERMINISTIC ~21s edge-timeout ceiling + identical Cloudflare 502 body signature across three attempts + repro path (POST to `/llm/chat/completions` from this preview pod under Shield-routed deck generation load). Ask whether the ceiling is configurable / deployment-specific and whether async generation contracts are supported upstream.
+
+**Path 2 in the original 2026-07-05 real-signals list — retry-policy tuning of `_PER_METHOD_TIMEOUT_S` — has been REMOVED** (2026-07-05 · `JC-CONNECTTIMEOUT-RELABEL-D5`): retrying against a fixed ceiling fails identically forever. The original path was a dead fix pointed at by the wrong "transient" label; the corrected label points at the correct fix (async generation) instead.
+
+- **Self-remediation NOT executed** (per user amendment A3 · "that's user's call as a separate arc"). Zero touches to `_http_client.py` / `BOUNDED_CONTEXT_TRANSPORT` / retry policy / FAIL-CLOSED surfaces / Shield / generation engines / backend routers / FE / `.env` throughout this arc.
 
 **Signal 2 · Frontend error UX handles the volatility gracefully (regression-floor observation).**
 - On 502, `CreateSummaryDeckModal.jsx:197-201` catches the exception, sets `phase=FORM`, populates `create-deck-error` testid with `apiErrorMessage(e)`, and emits `toast.error(...)` in top-right. User sees actionable error state, no infinite spinner, no crash. This is REGRESSION FLOOR (not a story close) — it's the frontend's existing FAIL-CLOSED discipline working as designed.
@@ -151,9 +165,9 @@ Per amendment A1 · retry ceiling exhausted honestly at 3 total attempts, each c
 ## Amendment-Echo compliance
 
 - 10-item base-dispatch echo present at Line 12-21 above.
-- 3 user-amendment items (A1 bounded ceiling · A2 TRANSIENT-UPSTREAM-VOLATILITY first-class · A3 real-signal declaration) echoed verbatim at Line 23-27 above.
+- 3 user-amendment items (A1 bounded ceiling · A2 DETERMINISTIC-EDGE-TIMEOUT-CEILING first-class [label relabeled 2026-07-05 per `JC-CONNECTTIMEOUT-RELABEL-D5` · correction lineage in classify memo §3 addendum] · A3 real-signal declaration) echoed verbatim at Line 23-27 above.
 - Amendment A1 executed: 3 total attempts · ~4.5 min budget consumed · escalated to Step B honestly.
-- Amendment A2 executed: TRANSIENT-UPSTREAM-VOLATILITY banked as first-class classification in Step 0 above; one-line addendum row appended to `sprints/JC_INTERNAL_HTTP_CONNECTTIMEOUT_CLASSIFY.md` §3 with lineage cite (see that file · new addendum block at end of §3).
+- Amendment A2 executed: DETERMINISTIC-EDGE-TIMEOUT-CEILING banked as first-class classification in Step 0 above (relabeled 2026-07-05 per `JC-CONNECTTIMEOUT-RELABEL-D5` after three identical t=21s failures established the deterministic character · correction lineage banked in classify memo §3 addendum); one-line addendum row appended to `sprints/JC_INTERNAL_HTTP_CONNECTTIMEOUT_CLASSIFY.md` §3 with lineage cite (see that file · new addendum block at end of §3 · relabel correction lineage inline).
 - Amendment A3 executed: dedicated "Real Signals Surfaced" section above; self-remediation NOT executed.
 
 ---
@@ -171,7 +185,7 @@ Dispatch line-1 label = `JC-GEN-PATH-CONNECTTIMEOUT`. Project scope = Akki-Execu
 - **NEW** `backend/scripts/.jc_gen_path_connecttimeout_slice_results.json` (slice output).
 - **NEW** `memory/evidence/2026_07_deck_recovery_stage_1/s05_attempt2_env_blocked.png` (organic capture · attempt 2).
 - **NEW** `memory/evidence/2026_07_deck_recovery_stage_1/s05_attempt3_env_blocked.png` (organic capture · attempt 3).
-- **MODIFIED** `memory/sprints/JC_INTERNAL_HTTP_CONNECTTIMEOUT_CLASSIFY.md` (§3 addendum row · TRANSIENT-UPSTREAM-VOLATILITY as third failure-mode class per amendment A2).
+- **MODIFIED** `memory/sprints/JC_INTERNAL_HTTP_CONNECTTIMEOUT_CLASSIFY.md` (§3 addendum row · DETERMINISTIC-EDGE-TIMEOUT-CEILING as third failure-mode class per amendment A2 · relabeled 2026-07-05 per `JC-CONNECTTIMEOUT-RELABEL-D5`).
 - **MODIFIED** `memory/DEV_PIPELINE.md` §9 row for `JC-GEN-PATH-CONNECTTIMEOUT` (🟡 → 🟢 SHIPPED-UNPUSHED with commit hash + content marker at close).
 
 **Zero backend product-code touches.** **Zero frontend product-code touches.** **Zero `.env` touches.** **Zero Shield touches** (R4 · sha256 identity verified). **Zero mocks / stubs / silencers introduced.**
@@ -185,13 +199,13 @@ Dispatch line-1 label = `JC-GEN-PATH-CONNECTTIMEOUT`. Project scope = Akki-Execu
 - **User-QA-re-run gate (per RULE-USER-QA-RE-RUN-IS-FINAL-GATE):** unchanged for Stage 1 — remains SHIPPED-PENDING-USER-QA. DECK-031 story remains deferred behind upstream-volatility remediation.
 - **Deck-ID-collision guard:** N/A this arc (no v1.0 or v1.1 story-ID claims made beyond DECK-031 deferral).
 - **STOP-AND-SHOW gate:** ABSOLUTE. Stages 2 (Enhance bug) + 3a-3e (v1.1 conformance) remain HELD pending user acknowledgment.
-- **CLOSE-IS-NOT-CLOSED-UNTIL-PUSHED:** SHIPPED-UNPUSHED · commit=`402100b9` (arc close) + follow-up citation-update commit · `git remote -v` empty in preview pod · user pushes via "Save to GitHub" · content marker = `s05-blocked-by-env-transient-upstream-volatility`.
+- **CLOSE-IS-NOT-CLOSED-UNTIL-PUSHED:** SHIPPED-UNPUSHED · commit=`402100b9` (arc close) + follow-up citation-update commit + `JC-CONNECTTIMEOUT-RELABEL-D5` relabel commit · `git remote -v` empty in preview pod · user pushes via "Save to GitHub" · content marker = `s05-blocked-by-env-deterministic-edge-timeout-ceiling` (corrected 2026-07-05 · original marker preserved in commit history · see classify memo §3 addendum for correction lineage).
 - **Testing sub-agents BANNED:** honoured throughout. Only pure bash + `mcp_screenshot_tool` (Playwright-backed) organic captures used.
 - **MOCKED-integrations line preserved:** SendGrid dev-mode + Resend mock — untouched.
 - **HARD STOP at close.** Nothing auto-fires. Gitleaks disposition still WAIT-FOR-USER-LOG-PASTE (prior arc · unchanged).
 
 **Post-close state:**
-- `JC-GEN-PATH-CONNECTTIMEOUT` arc CLOSED as SHIPPED-UNPUSHED · Step B disposition (BLOCKED-BY-ENV · TRANSIENT-UPSTREAM-VOLATILITY).
+- `JC-GEN-PATH-CONNECTTIMEOUT` arc CLOSED as SHIPPED-UNPUSHED · Step B disposition (BLOCKED-BY-ENV · DETERMINISTIC-EDGE-TIMEOUT-CEILING · relabeled 2026-07-05 per `JC-CONNECTTIMEOUT-RELABEL-D5`).
 - Stage 1 (Deck QA Recovery) remains SHIPPED-PENDING-USER-QA (unchanged; s05 partial-blocked persists · disclosed honestly).
 - Stage 2 HELD.
 - Stage 3a-3e HELD.

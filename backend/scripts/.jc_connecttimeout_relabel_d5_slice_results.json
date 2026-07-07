@@ -1,0 +1,86 @@
+{
+  "arc": "JC-CONNECTTIMEOUT-RELABEL-D5",
+  "canonical_spec_line1": "user dispatch 2026-07-05 \u00b7 JC-CONNECTTIMEOUT-RELABEL-D5 \u00b7 memo-correction only",
+  "verdict": "RED",
+  "passed": 5,
+  "total": 6,
+  "rows": [
+    {
+      "row": "R1",
+      "name": "classify_memo_label_replaced_correction_lineage_present",
+      "pass": true,
+      "detail": {
+        "classify_transient_hits": 1,
+        "classify_new_hits": 3,
+        "correction_lineage_present": true
+      }
+    },
+    {
+      "row": "R2",
+      "name": "gen_path_memo_label_fully_replaced",
+      "pass": true,
+      "detail": {
+        "gen_path_transient_hits": 0,
+        "gen_path_new_hits": 8
+      }
+    },
+    {
+      "row": "R3",
+      "name": "content_marker_corrected_in_gen_path_memo",
+      "pass": true,
+      "detail": {
+        "new_marker_hits": 3,
+        "old_marker_hits": 0
+      }
+    },
+    {
+      "row": "R4",
+      "name": "real_signals_section_corrected",
+      "pass": true,
+      "detail": {
+        "decision_tree_present": true,
+        "venue_check_present": true,
+        "async_gen_present": true,
+        "retry_tuning_removed": true,
+        "no_active_lower_load_language": true
+      }
+    },
+    {
+      "row": "R5",
+      "name": "zero_code_touches_only_allowed_paths_changed",
+      "pass": false,
+      "detail": {
+        "pre_arc_head": "e5ae43c9",
+        "changed": [
+          "backend/scripts/.jc_gen_path_connecttimeout_slice_results.json"
+        ],
+        "unauthorised": [
+          "backend/scripts/.jc_gen_path_connecttimeout_slice_results.json"
+        ],
+        "allowed": [
+          "backend/scripts/.jc_connecttimeout_relabel_d5_slice_results.json",
+          "backend/scripts/jc_connecttimeout_relabel_d5_proving_slice.py",
+          "memory/DEV_PIPELINE.md",
+          "memory/sprints/JC_GEN_PATH_CONNECTTIMEOUT.md",
+          "memory/sprints/JC_INTERNAL_HTTP_CONNECTTIMEOUT_CLASSIFY.md"
+        ]
+      }
+    },
+    {
+      "row": "R6",
+      "name": "prior_bankings_intact_and_prior_slices_ast_clean",
+      "pass": true,
+      "detail": {
+        "part0_rules_present": {
+          "CANONICAL_SPEC_UX_BRIEF_V1_1_RULE.md": true,
+          "UI_STORIES_CLOSE_ON_UI_LAYER_ONLY_RULE.md": true,
+          "USER_QA_RE_RUN_IS_FINAL_GATE_RULE.md": true,
+          "DECK_ID_COLLISION_GUARD_RULE.md": true
+        },
+        "state_injection_corollary_present": true,
+        "prior_slice_count": 52,
+        "ast_failures": []
+      }
+    }
+  ]
+}
