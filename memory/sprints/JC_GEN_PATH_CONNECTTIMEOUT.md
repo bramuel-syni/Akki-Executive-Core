@@ -4,7 +4,7 @@
 
 **Arc discipline:** CLASSIFY-FIRST · zero touch of `_http_client.py::_call` · zero touch of `BOUNDED_CONTEXT_TRANSPORT` · zero touch of retry policy · zero touch of any FAIL-CLOSED surface · zero touch of Shield · zero touch of generation engines / backend routers · no silencing / gating / try-except wrapping / stubbing / mocking · no state-injection captures · organic user-flow only (per RULE-UI-STORIES-CLOSE-ON-UI-LAYER-ONLY + state-injection corollary) · Testing sub-agents BANNED · MOCKED-integrations line preserved · Stages 2 + 3a-3e HELD · HARD STOP at close.
 
-**Status:** SHIPPED-UNPUSHED · commit=`b57b6cfc`. Content marker: **`s05-blocked-by-env-transient-upstream-volatility`** (per user amendment · Step B outcome).
+**Status:** SHIPPED-UNPUSHED · commit=`402100b9` (arc-close · citation-update follow-up commit will be next). Content marker: **`s05-blocked-by-env-transient-upstream-volatility`** (per user amendment · Step B outcome).
 
 ---
 
@@ -185,7 +185,7 @@ Dispatch line-1 label = `JC-GEN-PATH-CONNECTTIMEOUT`. Project scope = Akki-Execu
 - **User-QA-re-run gate (per RULE-USER-QA-RE-RUN-IS-FINAL-GATE):** unchanged for Stage 1 — remains SHIPPED-PENDING-USER-QA. DECK-031 story remains deferred behind upstream-volatility remediation.
 - **Deck-ID-collision guard:** N/A this arc (no v1.0 or v1.1 story-ID claims made beyond DECK-031 deferral).
 - **STOP-AND-SHOW gate:** ABSOLUTE. Stages 2 (Enhance bug) + 3a-3e (v1.1 conformance) remain HELD pending user acknowledgment.
-- **CLOSE-IS-NOT-CLOSED-UNTIL-PUSHED:** SHIPPED-UNPUSHED · commit=`b57b6cfc` · `git remote -v` empty in preview pod · user pushes via "Save to GitHub" · content marker = `s05-blocked-by-env-transient-upstream-volatility`.
+- **CLOSE-IS-NOT-CLOSED-UNTIL-PUSHED:** SHIPPED-UNPUSHED · commit=`402100b9` (arc close) + follow-up citation-update commit · `git remote -v` empty in preview pod · user pushes via "Save to GitHub" · content marker = `s05-blocked-by-env-transient-upstream-volatility`.
 - **Testing sub-agents BANNED:** honoured throughout. Only pure bash + `mcp_screenshot_tool` (Playwright-backed) organic captures used.
 - **MOCKED-integrations line preserved:** SendGrid dev-mode + Resend mock — untouched.
 - **HARD STOP at close.** Nothing auto-fires. Gitleaks disposition still WAIT-FOR-USER-LOG-PASTE (prior arc · unchanged).
