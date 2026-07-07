@@ -7209,3 +7209,31 @@ draft surfaced verbatim.
 **R7 zero-touch verified:** `git diff --stat aff25763 -- <7 protected paths>` = 0 bytes; Shield 13 files sha256 identity confirmed.
 
 **Testing sub-agents BANNED throughout. MOCKED-integrations line preserved. HARD STOP at report close.**
+
+
+
+
+---
+
+### 2026-07-05 · JC-GEN-PATH-CONNECTTIMEOUT · CLASSIFY-FIRST arc CLOSED with Step B disposition
+
+**Canonical Spec:** user dispatch 2026-07-05 · `JC-GEN-PATH-CONNECTTIMEOUT` + 3 user amendments (A1 bounded retry ceiling · A2 TRANSIENT-UPSTREAM-VOLATILITY first-class · A3 real-signal declaration).
+
+**Status:** 🟢 SHIPPED-UNPUSHED · 10/10 proving-slice GREEN · commit=`402100b9` (arc-close) + `ee7d68d6` (citation follow-up) · content marker `s05-blocked-by-env-transient-upstream-volatility`.
+
+**Step 0 classify verdict: TRANSIENT-UPSTREAM-VOLATILITY** (banked as third failure-mode class D5 · appended to prior classify arc §3 taxonomy with lineage cite). Neither config-class nor service-missing — the upstream `https://integrations.emergentagent.com/llm/chat/completions` connects in ~2ms but returns Cloudflare 502 body at t=21s under Shield-routed DEEP-tier generation load.
+
+**Step 2 bounded retry ceiling per amendment A1:** 3 total attempts (1 prior fork + 2 this session) each capped at ~90s poll window · ~4.5 min total patience budget consumed · attempts 2 + 3 hit IDENTICAL 502 error at IDENTICAL t=21s → volatility durable → escalated to Step B honestly.
+
+**Step B disposition:** `s05 BLOCKED-BY-ENV · TRANSIENT-UPSTREAM-VOLATILITY` per state-injection corollary of RULE-UI-STORIES-CLOSE-ON-UI-LAYER-ONLY. DECK-031 remains deferred behind user-side upstream remediation. Stage 1 (Deck QA Recovery) unchanged (SHIPPED-PENDING-USER-QA). Stages 2 + 3a-3e remain HELD.
+
+**Real Signals Surfaced per amendment A3:**
+- LLM proxy transient volatility under real generation load · origin-side or preview-pod-side undetermined.
+- 3 recommended remediation paths surfaced (environmental switch to production QA env · retry-policy tuning of `_PER_METHOD_TIMEOUT_S` for deck-generate surface · upstream escalation to Emergent Integrations team).
+- **Self-remediation NOT executed** per amendment A3 — user disposition pending as separate arc.
+
+**Zero touches:** `_http_client.py::_call`, `BOUNDED_CONTEXT_TRANSPORT`, retry policy, Shield (13 files sha256 identity preserved), FAIL-CLOSED surfaces, generation engines, backend routers, `CreateSummaryDeckModal.jsx`, `.env`. R6 verified via `git diff --stat` on 7 protected paths since PRE_ARC_HEAD `d52c13e5` = 0 bytes.
+
+**No silencing / gating / try-except / stubbing / mocking / state-injection introduced.** R9 grep on changed backend/*.py files: 0 suspicious patterns. R10 organic user-flow captures only (Playwright script uses page.fill / page.click / page.goto only; `page.evaluate` used solely for user-visible affordance `akki:open-company-switcher` custom event).
+
+**Testing sub-agents BANNED throughout. MOCKED-integrations line preserved (SendGrid dev-mode + Resend mock). HARD STOP at close. Nothing auto-fires.**
