@@ -31,6 +31,16 @@ paths = [
   '''^\.gitleaks\.toml$''',
   # frontend STORAGE_KEY constants — these are localStorage keys, not secrets.
   '''^frontend/src/components/cohort/Day16Banner\.jsx$''',
+  # placeholder tokens <pass>, <PROD_ATLAS_URI> in production env runbook
+  '''^docs/RUNBOOKS/PRODUCTION_ENV\.md$''',
+  # deployment doc placeholder tokens
+  '''^docs/DEPLOYMENT\.md$''',
+  # product spec placeholder tokens
+  '''^docs/PRODUCT_SPEC\.md$''',
+  # SG.fake-key-for-warning-check fixture used by provider health test
+  '''^backend/tests/test_admin_email_provider_health\.py$''',
+  # Azure engineer request notes containing documented placeholder secrets
+  '''^memory/user_actions/AZURE_ENGINEER_REQUEST.*\.md$''',
   # AKKI Audit (P1.5, 2026-06-24) — sprint memos + audit memos quote
   # redaction markers (`<REDACTED_ROTATE_AFTER_LEAK>`) and
   # already-rotated basic-auth USER identifiers (`BASIC_AUTH_USER=...`,
