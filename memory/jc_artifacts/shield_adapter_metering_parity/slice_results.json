@@ -1,0 +1,40 @@
+{
+  "arc": "JC-SHIELD-ADAPTER-METERING-PARITY-DIAGNOSE",
+  "pre_arc_head": "4d1d0f80",
+  "passed": 6,
+  "total": 6,
+  "verdict": "GREEN",
+  "content_marker": "shield-adapter-metering-parity-classified-neither-straight-swap",
+  "rows": [
+    {
+      "row": "R1",
+      "ok": true,
+      "note": "memo populated (25145 bytes) \u00b7 all 10 sections present \u00b7 line-1 canonical rationale cite present"
+    },
+    {
+      "row": "R2",
+      "ok": true,
+      "note": "all 7 adapter trace markers present"
+    },
+    {
+      "row": "R3",
+      "ok": true,
+      "note": "all 32 governance enumeration markers present (M1-M14+M16, S1-S5, 12 item names)"
+    },
+    {
+      "row": "R4",
+      "ok": true,
+      "note": "all 6 delta markers present + item counts (13, 4) verified"
+    },
+    {
+      "row": "R5",
+      "ok": true,
+      "note": "all 10 recommendation markers present \u00b7 framing discipline clean"
+    },
+    {
+      "row": "R6",
+      "ok": true,
+      "note": "zero-touch verified: 2 allowed report-only files touched \u00b7 0 diff bytes on 14 protected paths \u00b7 Shield 13-file sha256 identity preserved"
+    }
+  ]
+}
