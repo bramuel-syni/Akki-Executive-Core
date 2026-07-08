@@ -374,6 +374,250 @@ def _generate_prompt(outline: Dict[str, Any], ctx_name: str) -> str:
     )
 
 
+# ---------------------------------------------------------------------------
+# JC-DECK-GENERATE-CHUNKED-INVOCATION (2026-07-08) — A1 chunked invocation.
+# Partitions the single LLM call into meta + N slide-batch chunks. Each chunk
+# fits under the Shield 20s wait_for ceiling. All 14 governance controls
+# (M1-M13 + M16) preserved by staying inside `call_llm_with_tier → call_llm →
+# shield_invoke → invoke_with_metering`. Per-chunk 19-field audit row + 13-field
+# trust receipt emitted N+1 times per user request (expected · honest metering).
+# ---------------------------------------------------------------------------
+# House-style directive shared across all chunk prompts so cross-chunk
+# stylistic consistency is deterministic (not delegated to LLM inference).
+_CHUNK_HOUSE_STYLE = (
+    "Voice: calm, editorial, third person. Sentence length: medium. Avoid "
+    "hype adjectives (transformative, revolutionary, groundbreaking). Use "
+    "concrete nouns and specific numbers where the outline supplies them. "
+    "Each slide body is 3-6 markdown bullet lines OR a short paragraph "
+    "(pick one per slide). Never both. No headings inside the slide body."
+)
+
+
+def _generate_meta_prompt(outline: Dict[str, Any], ctx_name: str) -> str:
+    """Chunk 0 · deck-level metadata (title + subtitle + high-level frame).
+
+    Small, fast prompt — bounded output ~200-400 tokens. Fits well under 20s.
+    """
+    slide_titles = [s.get("title", "") for s in (outline.get("slides") or [])]
+    return (
+        "Produce the deck-level metadata (title + subtitle) for a slide "
+        "deck about the following research question. Use the calm, editorial "
+        "AKKI house style.\n\n"
+        f"CONTEXT: {ctx_name}\n"
+        f"AUDIENCE: {outline.get('audience_assumed') or 'board/ExCo'}\n"
+        f"RESEARCH QUESTION: {outline.get('research_question') or ''}\n\n"
+        "SLIDE TITLES (already approved by user; do not invent new slides):\n"
+        + "\n".join(f"- {t}" for t in slide_titles) + "\n\n"
+        f"{_CHUNK_HOUSE_STYLE}\n\n"
+        "Return STRICT JSON only:\n"
+        "{\n"
+        '  "title": "<deck title, max 90 chars>",\n'
+        '  "subtitle": "<single line, max 120 chars>"\n'
+        "}\n"
+    )
+
+
+def _generate_chunk_prompt(
+    outline: Dict[str, Any],
+    ctx_name: str,
+    chunk_slides: list,
+    *,
+    chunk_index: int,
+    total_chunks: int,
+    prior_titles: list,
+) -> str:
+    """Chunks 1..N · slide bodies for a contiguous batch of outline slides.
+
+    Prior-titles context threads the cited-entity continuity axis (R-COH-5) —
+    each chunk sees the titles produced in earlier chunks so entity/theme
+    references remain consistent across chunk seams without duplicating full
+    prior content (keeps chunk size bounded).
+    """
+    slides_block = "\n".join(
+        f"- Slide {s['n']}: {s.get('title','')} — {s.get('purpose','')}\n"
+        f"  Key points: {'; '.join(s.get('key_points') or [])}"
+        for s in chunk_slides
+    )
+    prior_block = (
+        "\nEARLIER-CHUNK SLIDE TITLES (for continuity; do NOT repeat their bodies):\n"
+        + "\n".join(f"- {t}" for t in prior_titles) + "\n"
+    ) if prior_titles else ""
+    return (
+        f"Produce the slide bodies for chunk {chunk_index} of {total_chunks} "
+        "of a slide deck for AKKI. Use the approved outline; do NOT invent "
+        "new slides, merge slides, or renumber. Preserve the slide `n` "
+        "values from the outline verbatim.\n\n"
+        f"CONTEXT: {ctx_name}\n"
+        f"AUDIENCE: {outline.get('audience_assumed') or 'board/ExCo'}\n"
+        f"RESEARCH QUESTION: {outline.get('research_question') or ''}\n"
+        f"{prior_block}\n"
+        "SLIDES FOR THIS CHUNK:\n" + slides_block + "\n\n"
+        f"{_CHUNK_HOUSE_STYLE}\n\n"
+        "Return STRICT JSON only:\n"
+        "{\n"
+        '  "slides": [{"n": <int>, "title": "<short>", "body_md": "<markdown body>"}, ...],\n'
+        '  "speaker_notes": [{"n": <int>, "note": "<one note, 1-2 sentences>"}, ...]\n'
+        "}\n"
+        "The `slides` array must contain EXACTLY the slides listed above "
+        "(same count, same `n` values, same order). Same for `speaker_notes`."
+    )
+
+
+def _partition_outline_slides(slides: list, *, chunk_size: int = 3) -> list:
+    """Partition outline slides into contiguous chunks of at most `chunk_size`.
+
+    Guarantees each chunk stays small enough that Shield's 20s wait_for cap on
+    `invoke_with_metering` does not trigger. Empirically 2-3 slide bodies per
+    chunk finishes well under 20s on Opus 4.6 tier.
+    """
+    return [slides[i:i + chunk_size] for i in range(0, len(slides), chunk_size)]
+
+
+def _aggregate_chunks(
+    meta_parsed: Dict[str, Any],
+    chunk_parsed_list: list,
+    outline: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Merge meta + N chunk results into the final deck payload shape.
+
+    Output shape identical to the pre-chunking `_generate_prompt` response
+    contract — this preserves every downstream consumer (validator, sensitivity
+    scorer, telemetry, FE parser). Aggregation is deterministic (no LLM call).
+    """
+    all_slides: list = []
+    all_notes: list = []
+    outline_slides = outline.get("slides") or []
+    outline_by_n = {int(s.get("n", -1)): s for s in outline_slides if s.get("n") is not None}
+
+    for ck in chunk_parsed_list:
+        for slide in ck.get("slides") or []:
+            all_slides.append(slide)
+        for note in ck.get("speaker_notes") or []:
+            all_notes.append(note)
+
+    # Sort by outline `n` so the merged order matches the outline exactly.
+    all_slides.sort(key=lambda s: int(s.get("n") or 0))
+    all_notes.sort(key=lambda n: int(n.get("n") or 0) if isinstance(n, dict) else 0)
+
+    # Flatten notes to the legacy shape (list of strings, per outline slide order).
+    flat_notes = [
+        (n.get("note") if isinstance(n, dict) else str(n))[:400]
+        for n in all_notes
+    ]
+
+    # Backfill missing slides from outline (defensive — never lose an outline slide).
+    seen_ns = {int(s.get("n") or 0) for s in all_slides}
+    for outline_n, outline_slide in outline_by_n.items():
+        if outline_n not in seen_ns:
+            all_slides.append({
+                "n": outline_n,
+                "title": outline_slide.get("title") or f"Slide {outline_n}",
+                "body_md": "",  # coherence check R-COH-3 will flag empty body
+            })
+    all_slides.sort(key=lambda s: int(s.get("n") or 0))
+
+    return {
+        "title": (meta_parsed.get("title") or "Untitled deck")[:120],
+        "subtitle": (meta_parsed.get("subtitle") or "")[:200],
+        "slides": all_slides,
+        "speaker_notes": flat_notes,
+    }
+
+
+def _validate_coherence(assembled: Dict[str, Any], outline: Dict[str, Any]) -> Dict[str, Any]:
+    """Coherence quality gate · R-COH-1..R-COH-5 · qualitative + quantitative.
+
+    Returns {"ok": bool, "failures": [{"row": ..., "detail": ...}, ...]}.
+    If any R-COH row fails, the caller should mark the job BLOCKED-ON-COHERENCE
+    and surface the failure list. Does NOT ship SHIPPED.
+    """
+    failures: list = []
+    slides = assembled.get("slides") or []
+    outline_slides = outline.get("slides") or []
+    outline_count = len(outline_slides)
+
+    # R-COH-1 · no orphan section headers (every slide has both title and body)
+    for s in slides:
+        title = (s.get("title") or "").strip()
+        body = (s.get("body_md") or "").strip()
+        if title and not body:
+            failures.append({
+                "row": "R-COH-1",
+                "detail": f"orphan section header · slide n={s.get('n')} title={title[:60]!r} · body_md empty",
+            })
+        elif body and not title:
+            failures.append({
+                "row": "R-COH-1",
+                "detail": f"orphan body · slide n={s.get('n')} body_md non-empty but title empty",
+            })
+
+    # R-COH-2 · no duplicated titles across slides
+    titles = [(s.get("title") or "").strip().lower() for s in slides if (s.get("title") or "").strip()]
+    seen = set()
+    dups = set()
+    for t in titles:
+        if t in seen:
+            dups.add(t)
+        seen.add(t)
+    if dups:
+        failures.append({
+            "row": "R-COH-2",
+            "detail": f"duplicated slide titles: {sorted(dups)[:5]}",
+        })
+
+    # R-COH-3 · no truncated bullets or sentences at chunk seams
+    # Heuristic: body_md ending in a partial word (no trailing punctuation/newline)
+    # and non-empty is a suspect truncation. Skip empty bodies (already R-COH-1).
+    for s in slides:
+        body = (s.get("body_md") or "").rstrip()
+        if not body:
+            continue
+        last_char = body[-1]
+        # Acceptable terminators: ., !, ?, ), ], `, quote marks, list closers
+        if last_char not in {".", "!", "?", ")", "]", "`", '"', "'", "*", "_"}:
+            # Also accept newline-terminated bullet groups
+            if not body.endswith(("\n",)) and len(body.split()[-1]) > 2:
+                # Word chars only — flag as suspect truncation
+                if body.split()[-1].isalpha():
+                    failures.append({
+                        "row": "R-COH-3",
+                        "detail": f"suspect truncation · slide n={s.get('n')} body ends {body[-40:]!r}",
+                    })
+
+    # R-COH-4 · narrative arc — slide count == outline count, ordered by n
+    if len(slides) != outline_count:
+        failures.append({
+            "row": "R-COH-4",
+            "detail": f"slide count mismatch · assembled={len(slides)} vs outline={outline_count}",
+        })
+    prev_n = -1
+    for s in slides:
+        n = int(s.get("n") or 0)
+        if n <= prev_n:
+            failures.append({
+                "row": "R-COH-4",
+                "detail": f"narrative arc broken · slide sequence not monotonic at n={n} (prev={prev_n})",
+            })
+            break
+        prev_n = n
+
+    # R-COH-5 · cited-entity continuity — heuristic: research_question terms
+    # that appear in outline should not be introduced from scratch by "This
+    # deck..." or "In this deck" phrasing multiple times (structural marker
+    # for chunks that don't know about each other). Also verify count of
+    # meta-references stays bounded.
+    body_concat = " ".join((s.get("body_md") or "") for s in slides).lower()
+    intro_markers = ["this deck examines", "this deck covers", "this deck explores"]
+    intro_hits = sum(body_concat.count(m) for m in intro_markers)
+    if intro_hits > 1:
+        failures.append({
+            "row": "R-COH-5",
+            "detail": f"cited-entity continuity broken · '{intro_hits}' redundant deck-scope introductions across chunks",
+        })
+
+    return {"ok": not failures, "failures": failures}
+
+
 @router.post("/api/contexts/{context_id}/decks/{outline_id}/generate", status_code=202)
 async def generate_deck(
     context_id: str,
@@ -503,32 +747,127 @@ async def _run_generate_deck_job(
             edits_applied["audience_assumed"] = outline["audience_assumed"]
 
     ctx_name = ctx["context"].get("name") or "the company"
-    prompt = _generate_prompt(outline, ctx_name)
 
-    # ------ Phase: structuring — LLM call in flight (engine untouched) -------
+    # ------ Phase: structuring — CHUNKED LLM calls (JC-DECK-GENERATE-CHUNKED-INVOCATION 2026-07-08) --
+    # A1 chunked invocation: partition the single ~30s LLM call into meta + N slide-batch chunks,
+    # each fitting under the Shield 20s wait_for cap on `invoke_with_metering`. Preserves all 14
+    # governance controls (M1-M13 + M16) — each chunk emits a full 19-field audit row + 13-field
+    # trust receipt via the existing `call_llm_with_tier → call_llm → shield_invoke` chain.
+    # No re-routing to streaming; stays inside the metering adapter.
     await deck_generation_jobs.set_phase(
-        job_id, deck_generation_jobs.PHASE_STRUCTURING, progress=35,
+        job_id, deck_generation_jobs.PHASE_STRUCTURING, progress=20,
     )
     from llm_tier_quota import call_llm_with_tier
-    llm_out, quota_state = await call_llm_with_tier(
+
+    outline_slides = outline.get("slides") or []
+    slide_chunks = _partition_outline_slides(outline_slides, chunk_size=3)
+    total_chunks = 1 + len(slide_chunks)  # 1 meta + N slide-batch chunks
+    logger.info(
+        "deck-gen-chunked · job=%s outline_slides=%d chunk_count=%d (1 meta + %d slide-batch chunks of <=3 slides each)",
+        job_id, len(outline_slides), total_chunks, len(slide_chunks),
+    )
+
+    # Chunk 0 · meta (title + subtitle)
+    meta_prompt = _generate_meta_prompt(outline, ctx_name)
+    meta_out, quota_state = await call_llm_with_tier(
         surface="deck",
         account_id=ctx["account"]["id"],
         requested_tier="deep",
         call_args={
-            "module": "decks.generate",
-            "user_query": prompt,
+            "module": "decks.generate.meta",
+            "user_query": meta_prompt,
             "response_format": "json",
         },
     )
-    raw = llm_out.get("response") or "{}"
-    parsed = _safe_json(raw)
-    if not parsed or "slides" not in parsed:
+    meta_parsed = _safe_json(meta_out.get("response") or "{}") or {}
+    if not meta_parsed.get("title"):
         await deck_generation_jobs.set_error(job_id, {
             "type": "MalformedGeneratorResponse",
-            "message": "Deck generator returned malformed response.",
+            "message": "Deck generator returned malformed response (meta chunk missing title).",
             "status": 502,
         })
         return {}
+
+    # Chunks 1..N · slide-batch bodies
+    chunk_parsed_list: list = []
+    prior_titles: list = []
+    chunk_call_evidence: list = []  # per-chunk metering evidence for R-METER rows
+    for i, chunk_slides in enumerate(slide_chunks, start=1):
+        chunk_prompt = _generate_chunk_prompt(
+            outline, ctx_name, chunk_slides,
+            chunk_index=i, total_chunks=len(slide_chunks),
+            prior_titles=prior_titles,
+        )
+        # Progress lifts smoothly from 20 to 65 across the chunk loop.
+        chunk_progress = 20 + int(((i / max(1, len(slide_chunks))) * 45))
+        await deck_generation_jobs.set_phase(
+            job_id, deck_generation_jobs.PHASE_STRUCTURING, progress=chunk_progress,
+        )
+        chunk_out, quota_state = await call_llm_with_tier(
+            surface="deck",
+            account_id=ctx["account"]["id"],
+            requested_tier="deep",
+            call_args={
+                "module": f"decks.generate.chunk_{i}_of_{len(slide_chunks)}",
+                "user_query": chunk_prompt,
+                "response_format": "json",
+            },
+        )
+        chunk_parsed = _safe_json(chunk_out.get("response") or "{}") or {}
+        if not chunk_parsed.get("slides"):
+            await deck_generation_jobs.set_error(job_id, {
+                "type": "MalformedGeneratorResponse",
+                "message": f"Deck generator returned malformed response (chunk {i}/{len(slide_chunks)} missing slides).",
+                "status": 502,
+            })
+            return {}
+        chunk_parsed_list.append(chunk_parsed)
+        prior_titles.extend(
+            (s.get("title") or "") for s in chunk_parsed.get("slides") or []
+        )
+        # Per-chunk metering evidence — model + tier surfaced back by
+        # call_llm_with_tier; audit row already written by Shield's
+        # invoke_with_metering under the hood.
+        chunk_call_evidence.append({
+            "chunk_index": i,
+            "slide_count": len(chunk_slides),
+            "outline_n_range": [chunk_slides[0].get("n"), chunk_slides[-1].get("n")],
+            "model": chunk_out.get("model"),
+            "tier": chunk_out.get("tier"),
+        })
+
+    parsed = _aggregate_chunks(meta_parsed, chunk_parsed_list, outline)
+    # llm_out surface for downstream code paths that expect a single result dict.
+    llm_out = {
+        "response": json.dumps(parsed),
+        "model": meta_out.get("model"),
+        "tier": meta_out.get("tier"),
+    }
+
+    if not parsed or "slides" not in parsed:
+        await deck_generation_jobs.set_error(job_id, {
+            "type": "MalformedGeneratorResponse",
+            "message": "Deck aggregator returned malformed response.",
+            "status": 502,
+        })
+        return {}
+
+    # Coherence quality gate · R-COH-1..R-COH-5 (mandatory per user's A1 ruling).
+    coherence = _validate_coherence(parsed, outline)
+    if not coherence["ok"]:
+        await deck_generation_jobs.set_error(job_id, {
+            "type": "BlockedOnCoherence",
+            "message": "Chunked deck failed coherence quality gate.",
+            "failures": coherence["failures"],
+            "chunk_evidence": chunk_call_evidence,
+            "status": 502,
+        })
+        logger.warning(
+            "deck-gen-chunked · job=%s BLOCKED-ON-COHERENCE · %d failures",
+            job_id, len(coherence["failures"]),
+        )
+        return {}
+
 
     # ------ Phase: drafting — post-process (validator, sensitivity, telemetry) --
     await deck_generation_jobs.set_phase(

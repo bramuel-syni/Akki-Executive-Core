@@ -1,0 +1,75 @@
+{
+  "arc": "JC-DECK-GENERATE-CHUNKED-INVOCATION",
+  "pre_arc_head": "1fe2493b",
+  "content_marker": "deck-generate-chunked-invocation-shipped-a1-14-controls-preserved-coherence-gate-armed",
+  "passed": 13,
+  "total": 13,
+  "verdict": "GREEN",
+  "rows": [
+    {
+      "row": "R1",
+      "ok": true,
+      "note": "all 6 chunk helpers present in routers.decks"
+    },
+    {
+      "row": "R2",
+      "ok": true,
+      "note": "meta_prompt=813b \u00b7 chunk_prompt=1119b \u00b7 both include STRICT JSON contract"
+    },
+    {
+      "row": "R3",
+      "ok": true,
+      "note": "partitioner correct on 6 cases (n=8/5/7/3/1/0 with chunk_size=3)"
+    },
+    {
+      "row": "R4",
+      "ok": true,
+      "note": "aggregate: 3 chunks \u2192 1 deck \u00b7 8 slides \u00b7 8 notes \u00b7 title='Test Deck'"
+    },
+    {
+      "row": "R5",
+      "ok": true,
+      "note": "_run_generate_deck_job refactored to chunk loop \u00b7 all 10 markers present"
+    },
+    {
+      "row": "R-COH-1",
+      "ok": true,
+      "note": "positive PASS + negative (orphan title / orphan body) correctly flagged as R-COH-1"
+    },
+    {
+      "row": "R-COH-2",
+      "ok": true,
+      "note": "duplicated title case correctly flagged as R-COH-2"
+    },
+    {
+      "row": "R-COH-3",
+      "ok": true,
+      "note": "mid-word truncation correctly flagged as R-COH-3"
+    },
+    {
+      "row": "R-COH-4",
+      "ok": true,
+      "note": "count mismatch + non-monotonic n both correctly flagged as R-COH-4"
+    },
+    {
+      "row": "R-COH-5",
+      "ok": true,
+      "note": "repeated deck-scope introductions (structural chunk-blind marker) correctly flagged as R-COH-5"
+    },
+    {
+      "row": "R-METER-1",
+      "ok": true,
+      "note": "2 call_llm_with_tier sites (meta + chunk loop) \u00b7 zero streaming-adapter symbols \u00b7 A1 discipline holds"
+    },
+    {
+      "row": "R-METER-2",
+      "ok": true,
+      "note": "legacy _generate_prompt intact for regenerate paths + backward-compat"
+    },
+    {
+      "row": "R-SHIELD",
+      "ok": true,
+      "note": "Shield 13-file sha256 identity preserved vs PRE_ARC_HEAD"
+    }
+  ]
+}
