@@ -2,7 +2,7 @@
 
 # JC-WS-DECK-QA-RECOVERY-STAGE-2 · Enhance journey async-from-start · Path A close
 
-**Status:** SHIPPED-UNPUSHED · commit hash cited at close. Content marker: **`deck-enhance-async-from-start-shipped-full-journey-organic`** (Path A outcome — full v1.1 §4.5 journey captured organically on live preview).
+**Status:** SHIPPED-UNPUSHED · commit=`16854aec` (arc close · citation follow-up next). Content marker: **`deck-enhance-async-from-start-shipped-full-journey-organic`** (Path A outcome — full v1.1 §4.5 journey captured organically on live preview).
 
 **F.6:** N/A — this arc rewires request/response shape and adds a mirror-insert to `db.decks` (external to `_run_enhance` engine). Shield chokepoint invocation, LLM tier quota, validator, sensitivity scoring, audit fingerprint (19 fields), commit-lock 409 shape — all preserved byte-identical. `_run_enhance` engine body 0 diff bytes.
 

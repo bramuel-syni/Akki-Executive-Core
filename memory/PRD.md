@@ -7277,3 +7277,59 @@ draft surfaced verbatim.
 **Stage 1 (Deck QA Recovery)** remains SHIPPED-PENDING-USER-QA (s05 partial-blocked per Path B). **Stages 2 (Enhance) + 3a-3e** remain HELD per STOP-AND-SHOW gate.
 
 **Testing sub-agents BANNED. MOCKED-integrations line preserved (SendGrid + Resend). HARD STOP at close. Nothing auto-fires.**
+
+
+
+
+---
+
+### 2026-07-05 · JC-WS-DECK-QA-RECOVERY-STAGE-2 · Async-from-start Enhance journey CLOSED with Path A disposition
+
+**Canonical Spec:** user dispatch 2026-07-05 · `JC-WS-DECK-QA-RECOVERY-STAGE-2` · v1.1 §4.5 · 13-item Amendment Echo.
+
+**Status:** 🟢 SHIPPED-UNPUSHED · 16/16 proving-slice GREEN · commit=`16854aec` (arc close) + follow-up citation commit · content marker `deck-enhance-async-from-start-shipped-full-journey-organic`.
+
+**Step 1 · Hard bug fixed (ExportRequestIn scope 2000-char overflow):**
+- Added NEW dedicated field `source_artefact_body: Optional[str] = Field(default=None, max_length=32000)` on ExportRequestIn.
+- `scope` cap NOT raised (still `Field(max_length=2000)` byte-identical).
+- `_run_enhance` synthesis routes source artefact body text through the new dedicated field.
+- `_flat_user_input()` appends `SOURCE ARTEFACT BODY:` sub-section when populated.
+- Backward-compat verified (non-enhance callers pass no `source_artefact_body`; behaviour unchanged).
+
+**Step 2 · Backend async-from-start:**
+- `POST /api/contexts/{cid}/work-studio/enhance/{kind}` decorator adds `status_code=202`.
+- `deck_generation_jobs` row created on kickoff (`job_kind="enhance"`, `target_id=export_id`).
+- `_runner` body wrapped with phase-transition markers external to engine (`queued → reading_upload → structuring → drafting → complete/error`).
+- Shared status endpoint `/api/contexts/{cid}/decks/generation-status/{job_id}` (reuses prior arc's endpoint).
+- Response body extended: `{job_id, phase, status_url}` alongside legacy `{export_id, status, kind}`.
+- Mirror-insert into `db.decks` on `kind="deck"` completion (external to engine · lineage links `source="enhance"` + `enhanced_from_export_id`) so enhanced deck appears in Deck list per v1.1 §4.5 requirement.
+- `_ENHANCE_ACCEPTED_EXT_BY_KIND` extended for deck kind to include `.docx` per v1.1 §4.5 verbatim (validation config only).
+
+**Step 3 · Frontend (NEW EnhanceDeckModal.jsx · ~380 LOC):**
+- Full v1.1 §4.5 modal implementation with verbatim strings (title, instructions placeholder, Auto sublabel).
+- State machine `FORM → KICKING_OFF → GENERATING → COMPLETE` with polling.
+- Progress checklist maps 1:1 to real backend phases (no faked phases).
+- Poll-transient-tolerance: swallows up to 6 consecutive network/5xx errors on polling GETs (terminal phases always authoritative).
+- Same tolerance applied to `CreateSummaryDeckModal.jsx` (outline + generate polls) for consistency.
+- Wired into `Decks.jsx` with "Enhance Deck" outlined CTA next to primary "Create Summary Deck" CTA.
+
+**Step 4 · UI-layer proof · Path A organic completion:**
+- Real 36898-byte DOCX on live preview.
+- Kickoff POST returned 202 in <1s.
+- Full completion at t=91s (Path A · well within FE polling ceiling).
+- 10 organic screenshots e01-e10 captured (modal open · file upload · Remove · placeholder · CTA gating · output format Auto+verbatim sublabel · progress checklist · **completion CTAs Download/Take-to-Chat/Close** · enhanced card at top of Deck list with "Enhanced: enhance_test_source.docx · DRAFT · AKKI GENERATED" · Deck Detail View auto-opens on card click).
+- Zero state-injection · Playwright driving actual DOM events only.
+
+**Untouched (verified R9-R11 · 0 diff bytes vs PRE_ARC_HEAD `7d8577e4` on 9 engine paths + 13 Shield files sha256 identity preserved):**
+- `services/synisense/shield/**` (13 files)
+- `services/two_pass.py` + `services/work_studio_export.py` + `services/deck_regenerate.py`
+- `llm_service.py` + `llm_tier_quota.py` + `studio_sensitivity.py`
+- `contracts/_adapters/_http_client.py` + `.env`
+
+**Two-layer ceiling clarification honoured:** async-from-start bypassed EDGE ceiling (kickoff 202 in <1s + polling with tolerance held 91s); Shield-internal ceiling did NOT fire on the enhance path this run — the enhance code path exercises Shield differently than the deck-outline path that hit the ceiling in the prior arc. Path B contingency was fully wired but did not activate.
+
+**DECK-091/092/093 (v1.1 §4.5)** CLOSED on Path A organic UI evidence.
+
+**Stage 1** unchanged (SHIPPED-PENDING-USER-QA · s05 partial-blocked · SHIELD-INTERNAL-LLM-PROVIDER-TIMEOUT for Create Summary Deck path still user-pending in separate arc). **Stages 3a-3e** HELD per STOP-AND-SHOW gate.
+
+**Testing sub-agents BANNED. MOCKED-integrations line preserved. HARD STOP at close. Nothing auto-fires.**
