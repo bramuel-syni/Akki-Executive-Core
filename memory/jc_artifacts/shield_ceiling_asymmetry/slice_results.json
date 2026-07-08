@@ -28,7 +28,7 @@
     {
       "row": "R5",
       "ok": true,
-      "note": "only allowed files touched since f7255414: ['backend/scripts/jc_shield_ceiling_asymmetry_diagnose_proving_slice.py', 'memory/sprints/JC_SHIELD_CEILING_ASYMMETRY_DIAGNOSE.md']"
+      "note": "only allowed files touched since f7255414: ['backend/scripts/jc_shield_ceiling_asymmetry_diagnose_proving_slice.py', 'memory/DEV_PIPELINE.md', 'memory/jc_artifacts/shield_ceiling_asymmetry/slice_results.json', 'memory/sprints/JC_SHIELD_CEILING_ASYMMETRY_DIAGNOSE.md']"
     },
     {
       "row": "R6",

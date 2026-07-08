@@ -65,6 +65,7 @@ ALLOWED_TOUCHED_PATHS = {
     "memory/sprints/JC_SHIELD_CEILING_ASYMMETRY_DIAGNOSE.md",
     "backend/scripts/jc_shield_ceiling_asymmetry_diagnose_proving_slice.py",
     "memory/DEV_PIPELINE.md",
+    "memory/jc_artifacts/shield_ceiling_asymmetry/slice_results.json",
 }
 
 # Sections + markers the memo MUST contain (STEP 3 = Case-A verdict).
