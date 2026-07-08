@@ -7411,3 +7411,35 @@ draft surfaced verbatim.
 - `/app/memory/rules/SPLIT_PATH_VIEWER_IDENTITY_CHECK_RULE.md`
 
 **Testing sub-agents BANNED. MOCKED-integrations line preserved. HARD STOP at classification (Track 1) + at brief-placement (Track 2). Nothing auto-fires.**
+
+---
+
+## Post-compaction resume · 2026-07-08 · Four-item dispatch execution status
+
+### Item 3 · UX Brief v1.0 placement + catalogue verify
+
+**Status: PLACED + VERIFIED · STAGE-1-READY-AWAITING-USER-GREENLIGHT-POST-REANCHOR-REVIEW**
+
+- Fetched: https://customer-assets.emergentagent.com/job_feature-docs/artifacts/yj2n8rom_UX_BRIEF_V1_0_2026_07_08.md
+- Saved to: `/app/memory/briefs/UX_BRIEF_V1_0_2026_07_08.md`
+- Size: 30024 bytes · 485 lines · line 1 identity confirmed: `# Work Studio — Drafts & Briefs UX Brief · Version 1.0 (8 July 2026)`
+- DB-### verification: **PASS** · 113 unique tokens · contiguous DB-001..DB-113 · zero gaps · zero duplicates (each ID appears exactly once)
+- Commit: brief-placement commit ships as SHIPPED-UNPUSHED under `CLOSE_IS_NOT_CLOSED_UNTIL_PUSHED_RULE` — user pushes via "Save to GitHub"
+- **Stage 1 (`JC-WS-DRAFTS-BRIEFS-QA-RECOVERY-STAGE-1`) HELD** · will fire only on user's explicit greenlight AFTER they review Item 2 (rule re-anchor) output
+
+### Item 4 · Gitleaks Path A config fix
+
+**Status: HARD-STOPPED · SURFACE-BLOCKER · gitleaks binary absent in this pod**
+
+- `which gitleaks` → NOT FOUND
+- `apt list --installed | grep -i gitleaks` → empty
+- **Per dispatch protocol**: "If any item hits an unexpected condition (…gitleaks binary absent, etc.), surface immediately and hard-stop that item — do not improvise."
+- **Not executed**: `.gitleaks.toml` edit, 3-step canary proof (cannot prove without a binary; making config changes without proof would be improvising)
+- **Action required from user**: choose one of:
+  - (a) install gitleaks in this pod (e.g., `wget https://github.com/gitleaks/gitleaks/releases/download/v.../gitleaks_..._linux_x64.tar.gz` — I will not do this unilaterally)
+  - (b) approve me installing it now with the specific version pin
+  - (c) execute the 3-step canary on the user's side after config edit and paste back the exit codes for me to bank
+
+### Item 5 · Deck QA Recovery Stage 3a-3e
+
+**Status: HELD-BEHIND-DECK-031-DISPOSITION** · queued in sprint queue · Do NOT dispatch · Awaits: DECK-031 fix ships (A1 or A2b, user's choice from Track 1 delta table below) AND then explicit re-trigger from user.
