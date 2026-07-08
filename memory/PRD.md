@@ -7353,3 +7353,61 @@ draft surfaced verbatim.
 **Push status:** SHIPPED-UNPUSHED · commits=`f7255414` (§9 🟡), `943ecf99` (memo+slice), `fd78147b` (§9 🟢 + JSON), `452c859d` (slice allowlist tweak). User pushes via "Save to GitHub".
 
 **Testing sub-agents BANNED. MOCKED-integrations line preserved. HARD STOP at classification. Nothing auto-fires. Stages 3a-3e HELD.**
+
+---
+
+## JC-SHIELD-ADAPTER-METERING-PARITY-DIAGNOSE closure entry · 2026-07-08
+
+**Canonical rationale:** Governance parity between metering and streaming adapters · gates A1/A2 disposition on `JC-SHIELD-CEILING-ASYMMETRY-DIAGNOSE` follow-on.
+
+**Verdict: NEITHER-STRAIGHT-SWAP** — ∆ has both directions; neither A1 nor A2 is a straight swap.
+
+**Adapters traced (READ-ONLY):**
+- METERING-ADAPTER = `client.py::invoke (:37-128)` wrapping `llm_router.invoke_with_metering (:118-221)`
+- STREAMING-ADAPTER-BARE = `streaming.py::collect_llm_text (:456-481)` / `stream_llm_direct (:331-447)` (used by Enhance path at `work_studio_export.py:619+767`)
+- STREAMING-ADAPTER-GOVERNED = `client.py::prepare_for_streaming (:149-249)` (Shield-adjacent H2.5 gateway; used only by chat router)
+
+**Governance emissions:**
+- Metering-adapter: 15 items (M1-M14 + M16 · purpose validation, tenant-scoped de-id, re-id, fail-closed 20s cap, latency, request/response hashes, exact/estimated tokens, metering_method, cost_usd, 19-field audit row, 13-field trust receipt, tenant isolation)
+- Streaming-adapter-bare: 5 items (S1-S5 · deltas, provider_used, fallback_triggered, per-chunk usage, error surface)
+- Governed-streaming: 14 items (all M except M3 the 20s cap)
+
+**∆ computed (both directions):**
+- ∆(metering \ streaming-bare) = **13 items** (large one-way governance loss)
+- ∆(streaming-bare \ metering) = **4 items** (streaming-only capabilities)
+- ∆(metering \ streaming-governed) = **1 item** (M3 the 20s cap · which IS the bypass mechanism)
+- ∆(streaming-governed \ metering) = **3 items**
+
+**Recommendations (do NOT build):**
+- **A1 (chunked `shield_invoke`) = default** · preserves all 13 governance items · N+2 sub-calls each <20s.
+- **A2a (bare adapter reroute) = NOT DEFENSIBLE** · sheds 13 governance items · violates user's rule.
+- **A2b (governed-streaming via `prepare_for_streaming`) = DEFENSIBLE with explicit trade-off** · sheds only M3 · larger plumbing surface.
+
+**Real Signals surfaced:**
+- (iv) **Enhance path is currently governance-degraded** — uses bare `collect_llm_text` instead of `prepare_for_streaming`. Zero Shield audit rows / trust receipts / de-id / purpose validation on Enhance today. Latent defect. Separate arc `JC-WS-ENHANCE-GOVERNANCE-REPAIR` may be warranted.
+- (v) Metering-adapter failure rows absent (exception propagates before write_audit).
+- (vi) Streaming vs metering audit-row schema UNIFIED (both write to same 19-field `synisense_audit_log`).
+
+**Files touched (report-only):** memo + slice + slice-results JSON + §9 row + this PRD entry. Zero product-code / config / env / Shield touches. Shield sha256 identity `c6902d324e...` preserved (13 files).
+
+**Push status:** SHIPPED-UNPUSHED · commits=`4d1d0f80` (§9 🟡), `72eb72d6` (memo+slice · 6/6 GREEN), `fbbca702` (§9 🟢 + JSON). Content marker: `shield-adapter-metering-parity-classified-neither-straight-swap`.
+
+---
+
+## JC-WS-DRAFTS-BRIEFS-QA-RECOVERY-STAGE-1 · 🔴 WAIT-FOR-USER-BRIEF-PLACEMENT · 2026-07-08
+
+**Track 2 dispatched but STOPPED at STEP 0a per HARD STOP CONDITION**: UX Brief v1.0 (8 July 2026) for Drafts/Briefs feature is NOT present at any of:
+- Suggested canonical path `/app/memory/briefs/UX_BRIEF_V1_0_2026_07_08.md` — absent
+- Grep for `UX Brief v1.0 (8 July 2026)` / `Drafts/Briefs v1.0` anywhere in `/app/memory/` — zero hits
+- `find` for `*2026_07_08*` or `*07_08*` — zero hits
+
+**Action required from user**: Place the Drafts/Briefs v1.0 brief at `/app/memory/briefs/UX_BRIEF_V1_0_2026_07_08.md`. Per `RULE-ONE-CANONICAL-DOC-PER-FEATURE`, do NOT reuse the retired Deck v1.0 — they are different documents for different features.
+
+**Zero code touched.** Track 2 §9 row NOT flipped 🟡 (arc hit hard-stop at STEP 0a before code-touch phase). Arc will fire when brief is placed.
+
+**3 new standing rules banked (effective permanent · both tracks)** at commit prior to this PRD entry:
+- `/app/memory/rules/ONE_CANONICAL_DOC_PER_FEATURE_RULE.md`
+- `/app/memory/rules/BORN_IN_CORRECT_LIFECYCLE_STATE_RULE.md`
+- `/app/memory/rules/SPLIT_PATH_VIEWER_IDENTITY_CHECK_RULE.md`
+
+**Testing sub-agents BANNED. MOCKED-integrations line preserved. HARD STOP at classification (Track 1) + at brief-placement (Track 2). Nothing auto-fires.**
