@@ -64,6 +64,8 @@ MATCH ✅
 
 ### Step (a) · Baseline scan (of committed git history — what CI runs by default)
 
+**3-step canary NOT completed** (HARD-STOP triggered at step (a) baseline non-zero):
+
 ```
 $ gitleaks detect --config .gitleaks.toml --no-banner --report-format json --report-path /tmp/gitleaks_git_only.json
 scan completed in 10.6s
