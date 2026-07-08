@@ -7333,3 +7333,23 @@ draft surfaced verbatim.
 **Stage 1** unchanged (SHIPPED-PENDING-USER-QA · s05 partial-blocked · SHIELD-INTERNAL-LLM-PROVIDER-TIMEOUT for Create Summary Deck path still user-pending in separate arc). **Stages 3a-3e** HELD per STOP-AND-SHOW gate.
 
 **Testing sub-agents BANNED. MOCKED-integrations line preserved. HARD STOP at close. Nothing auto-fires.**
+
+---
+
+## JC-SHIELD-CEILING-ASYMMETRY-DIAGNOSE closure entry · 2026-07-08
+
+**Canonical Spec:** user dispatch 2026-07-08 · `JC-SHIELD-CEILING-ASYMMETRY-DIAGNOSE` (CLASSIFY-ONLY · P1) + 3 reinforcements (call-count runtime evidence discipline · prompt-semantic reading for (b) · Case A framing).
+
+**Verdict: CASE A.** Application-layer fix viable; Shield untouched required.
+
+**Answer (a) — final:** The 20s ceiling is NOT symmetrically per-inner-call. It is a **per-LLM-adapter cap** within Shield. Fires on `services/synisense/shield/llm_router.py::invoke_with_metering` (non-streaming, `asyncio.wait_for(20.0s)` wrapper at `:186-189`); does NOT fire on `services/synisense/shield/streaming.py::stream_llm_direct` (streaming, no wait_for anywhere). Enhance path uses the streaming adapter (2 sub-calls per request, unbounded); Generate path uses the metering adapter (1 sub-call per request, capped 20s). Runtime call-count evidence for the 91s `dbdad051` enhance run: **INDETERMINATE** (logs rotated). Static evidence + 104 corroborating in-log timeouts (all from metering path, none from streaming) is conclusive on the root-cause axis.
+
+**Answer (b) — final:** **YES · Generate IS chunkable AT THE PROMPT LEVEL** — outline stage pre-locks narrative arc; per-slide body_md expansion is bounded per-slide-local; cross-slide dependency is stylistic not semantic. Rough shape: 1 meta call + N per-slide body calls + 1 deterministic aggregation pass. **Alternative Option A2 (likely simpler)**: reroute Generate through the `stream_llm_direct` adapter Enhance uses (no chunking; no prompt refactor).
+
+**Proposed follow-up arc:** `JC-DECK-GENERATE-CHUNKED-INVOCATION` (or `JC-DECK-GENERATE-STREAM-ADAPTER-REROUTE`) — user approval required; **do NOT build in this arc**.
+
+**Files touched (report-only):** 1 sprint memo + 1 proving slice (7 rows GREEN) + 1 slice results JSON + 1 §9 row 🟡→🟢. Zero product-code / config / env / Shield touches. Shield sha256 identity `c6902d324e...` preserved (13 files).
+
+**Push status:** SHIPPED-UNPUSHED · commits=`f7255414` (§9 🟡), `943ecf99` (memo+slice), `fd78147b` (§9 🟢 + JSON), `452c859d` (slice allowlist tweak). User pushes via "Save to GitHub".
+
+**Testing sub-agents BANNED. MOCKED-integrations line preserved. HARD STOP at classification. Nothing auto-fires. Stages 3a-3e HELD.**
