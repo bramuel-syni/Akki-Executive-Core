@@ -1,0 +1,177 @@
+{
+  "arc": "JC-WS-DECK-QA-RECOVERY-STAGE-2",
+  "canonical_spec_line1": "user dispatch 2026-07-05 \u00b7 JC-WS-DECK-QA-RECOVERY-STAGE-2 \u00b7 v1.1 \u00a74.5 Enhance journey async-from-start",
+  "verdict": "GREEN",
+  "passed": 16,
+  "total": 16,
+  "rows": [
+    {
+      "row": "R1",
+      "name": "step_0b_endpoint_enumeration_present",
+      "pass": true,
+      "detail": {
+        "memo_bytes": 22732
+      }
+    },
+    {
+      "row": "R2",
+      "name": "export_request_source_artefact_body_field_added",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "row": "R3",
+      "name": "scope_cap_unchanged_at_2000",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "row": "R4",
+      "name": "enhance_kickoff_declares_202",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "row": "R5",
+      "name": "status_endpoint_present_shared_path",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "row": "R6",
+      "name": "account_isolation_kickoff_and_status",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "row": "R7",
+      "name": "commit_lock_409_byte_identical",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "row": "R8",
+      "name": "audit_write_call_preserved_engine_writes",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "row": "R9",
+      "name": "engines_unchanged_vs_pre_arc",
+      "pass": true,
+      "detail": {
+        "pre_arc": "7d8577e4",
+        "changed_engines": []
+      }
+    },
+    {
+      "row": "R10",
+      "name": "shield_sha256_identity_preserved",
+      "pass": true,
+      "detail": {
+        "head": "d5705c922df8a9aaacfccce62dde401fc440ee22c3c7947c03cc087b0afc5f07",
+        "pre_arc": "d5705c922df8a9aaacfccce62dde401fc440ee22c3c7947c03cc087b0afc5f07",
+        "head_files": 13,
+        "pre_files": 13
+      }
+    },
+    {
+      "row": "R11",
+      "name": "no_sync_bounded_await_introduced",
+      "pass": true,
+      "detail": {
+        "banned_lines_added": []
+      }
+    },
+    {
+      "row": "R12",
+      "name": "fe_state_machine_wired_to_backend_phases",
+      "pass": true,
+      "detail": {
+        "generation-status_in_modal": true,
+        "complete_check": true,
+        "error_check": true,
+        "cta_testid": true,
+        "decks_enhance_btn": true
+      }
+    },
+    {
+      "row": "R13",
+      "name": "path_a_10_organic_screenshots_present",
+      "pass": true,
+      "detail": {
+        "e01_modal_open.png": {
+          "exists": true,
+          "bytes": 85303
+        },
+        "e02_file_uploaded.png": {
+          "exists": true,
+          "bytes": 84924
+        },
+        "e03_remove_control.png": {
+          "exists": true,
+          "bytes": 85142
+        },
+        "e04_instructions_field.png": {
+          "exists": true,
+          "bytes": 85137
+        },
+        "e05_both_filled_cta_active.png": {
+          "exists": true,
+          "bytes": 85451
+        },
+        "e06_output_format_options.png": {
+          "exists": true,
+          "bytes": 85451
+        },
+        "e07_kickoff_progress_checklist.png": {
+          "exists": true,
+          "bytes": 91345
+        },
+        "e08_completion_disposition.png": {
+          "exists": true,
+          "bytes": 91627
+        },
+        "e09_card_landing.png": {
+          "exists": true,
+          "bytes": 100959
+        },
+        "e10_detail_auto_open.png": {
+          "exists": true,
+          "bytes": 100429
+        }
+      }
+    },
+    {
+      "row": "R14",
+      "name": "no_state_injection_declared",
+      "pass": true,
+      "detail": {}
+    },
+    {
+      "row": "R15",
+      "name": "v1_1_story_ids_only_no_v1_0_claims",
+      "pass": true,
+      "detail": {
+        "v1_1_45_cited": true,
+        "deck_091_cited": true,
+        "no_positive_v1_0_claims": true
+      }
+    },
+    {
+      "row": "R16",
+      "name": "regression_prior_slices_ast_clean_bankings_intact",
+      "pass": true,
+      "detail": {
+        "prior_slice_count": 54,
+        "ast_failures": [],
+        "part0_rules_present": {
+          "CANONICAL_SPEC_UX_BRIEF_V1_1_RULE.md": true,
+          "UI_STORIES_CLOSE_ON_UI_LAYER_ONLY_RULE.md": true,
+          "USER_QA_RE_RUN_IS_FINAL_GATE_RULE.md": true,
+          "DECK_ID_COLLISION_GUARD_RULE.md": true
+        }
+      }
+    }
+  ]
+}

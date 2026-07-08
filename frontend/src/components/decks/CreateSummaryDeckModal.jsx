@@ -182,11 +182,22 @@ export default function CreateSummaryDeckModal({
       }
       const outlineStatusUrl = `/contexts/${contextId}/decks/generation-status/${outlineKickoff.job_id}`;
       // Poll outline job (max 150s — usually completes in <15s).
+      // JC-WS-DECK-QA-RECOVERY-STAGE-2 (2026-07-05) — poll transient tolerance.
+      let outlineConsecErrors = 0;
       let outline = null;
       let outlineErr = null;
       for (let i = 0; i < 75; i += 1) {
         await new Promise((r) => setTimeout(r, 2000));
-        const { data: st } = await api.get(outlineStatusUrl);
+        let st;
+        try {
+          const resp = await api.get(outlineStatusUrl);
+          st = resp.data;
+          outlineConsecErrors = 0;
+        } catch (pollErr) {
+          outlineConsecErrors += 1;
+          if (outlineConsecErrors >= 6) throw pollErr;
+          continue;
+        }
         if (st?.phase === "complete") {
           outline = st.result;
           break;
@@ -221,12 +232,30 @@ export default function CreateSummaryDeckModal({
       // Safety ceiling — 5 minutes max poll duration. If generation is still
       // running past that the FE surfaces a timeout error and the backend
       // job continues in the background (idempotent on next kick-off attempt).
+      //
+      // JC-WS-DECK-QA-RECOVERY-STAGE-2 (2026-07-05) — poll transient tolerance.
+      // Occasional Cloudflare 502 on GET polls is noise; swallow up to N
+      // consecutive errors before failing. Terminal backend phases
+      // (complete/error) remain authoritative.
+      const MAX_CONSECUTIVE_POLL_ERRORS = 6; // ~12s tolerance
+      let consecutivePollErrors = 0;
       const pollMax = 150; // 150 * 2s = 300s
       let deck = null;
       let jobError = null;
       for (let i = 0; i < pollMax; i += 1) {
         await new Promise((r) => setTimeout(r, 2000));
-        const { data: status } = await api.get(statusUrl);
+        let status;
+        try {
+          const resp = await api.get(statusUrl);
+          status = resp.data;
+          consecutivePollErrors = 0;
+        } catch (pollErr) {
+          consecutivePollErrors += 1;
+          if (consecutivePollErrors >= MAX_CONSECUTIVE_POLL_ERRORS) {
+            throw pollErr;
+          }
+          continue;
+        }
         const backendPhase = status?.phase;
         // Map backend phase to progress checklist state.
         if (backendPhase === "queued" || backendPhase === "reading_sources") {

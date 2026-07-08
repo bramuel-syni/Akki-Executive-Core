@@ -28,6 +28,7 @@ import useStreamingProgress from "@/hooks/useStreamingProgress";
 // which routed through Work Studio Composer + approval workflow (both
 // documents-scoped; NOT for decks per UX Brief v1.1 §4.2-4.3).
 import CreateSummaryDeckModal from "@/components/decks/CreateSummaryDeckModal";
+import EnhanceDeckModal from "@/components/decks/EnhanceDeckModal";
 
 /**
  * Decks — three-step flow that keeps the user from burning Opus on weak prompts.
@@ -58,6 +59,8 @@ export default function Decks() {
   const [activePlays, setActivePlays] = useState([]);
   // JC-WS-DECK-QA-RECOVERY-STAGE-1 — new v1.1 §4.2 Create Summary Deck modal state.
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  // JC-WS-DECK-QA-RECOVERY-STAGE-2 — v1.1 §4.5 Enhance Deck modal state (async-from-start).
+  const [enhanceModalOpen, setEnhanceModalOpen] = useState(false);
   // Track deck IDs that were just created so we can pulse-animate them on
   // list entry (v1.1 §4.3 requirement: card enters with pulse animation
   // before settling).
@@ -177,14 +180,25 @@ export default function Decks() {
                     Board-grade decks from your own workspace content or an uploaded document.
                   </p>
                 </div>
-                <Button
-                  onClick={() => setCreateModalOpen(true)}
-                  className="bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white rounded-sm h-10 px-6"
-                  data-testid="decks-create-summary-btn"
-                >
-                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                  Create Summary Deck
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setEnhanceModalOpen(true)}
+                    className="rounded-sm h-10 px-4 border-[var(--rule)]"
+                    data-testid="decks-enhance-btn"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                    Enhance Deck
+                  </Button>
+                  <Button
+                    onClick={() => setCreateModalOpen(true)}
+                    className="bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white rounded-sm h-10 px-6"
+                    data-testid="decks-create-summary-btn"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                    Create Summary Deck
+                  </Button>
+                </div>
               </div>
             </section>
 
@@ -301,6 +315,32 @@ export default function Decks() {
             // Route to Chat with the deck as a handoff object; existing
             // handoff pattern used across the app.
             window.location.href = `/app/chat?deck_id=${encodeURIComponent(d.id)}`;
+          }}
+        />
+
+        {/* JC-WS-DECK-QA-RECOVERY-STAGE-2 · v1.1 §4.5 Enhance Deck modal.
+            Async-from-start pattern: POST returns 202 with job handle;
+            FE polls status endpoint until phase=complete or phase=error.
+            Two-layer ceiling clarification: async solves EDGE ceiling;
+            Shield-internal 20s cap still applies (HOLD pending Emergent). */}
+        <EnhanceDeckModal
+          open={enhanceModalOpen}
+          contextId={cid}
+          onOpenChange={setEnhanceModalOpen}
+          onDeckEnhanced={async (row) => {
+            // Refresh the deck list so the enhanced card lands at the top
+            // with Draft + Akki Generated badges + pulse animation.
+            const rowId = row?.id || row?.export_id;
+            if (rowId) setFreshDeckIds(prev => new Set([...prev, rowId]));
+            await refreshState();
+            setTimeout(() => {
+              if (!rowId) return;
+              setFreshDeckIds(prev => {
+                const next = new Set(prev);
+                next.delete(rowId);
+                return next;
+              });
+            }, 2000);
           }}
         />
       </div>

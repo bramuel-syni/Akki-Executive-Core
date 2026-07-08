@@ -45,6 +45,7 @@ from core import (
 )
 from services import two_pass as _tp
 from services import work_studio_export as _ex
+from services import deck_generation_jobs  # JC-WS-DECK-QA-RECOVERY-STAGE-2 2026-07-05
 from services.work_studio.confidence_scorer import (
     score_confidence as _score_confidence,
 )
@@ -104,6 +105,22 @@ class ExportRequestIn(BaseModel):
     objective:   str = Field(min_length=1, max_length=2000)
     scope:       str = Field(min_length=1, max_length=2000)
     output_format: Literal["docx", "pptx", "pdf", "auto"] = "auto"
+
+    # JC-WS-DECK-QA-RECOVERY-STAGE-2 (2026-07-05) — dedicated channel for
+    # source artefact BODY text (uploaded document content) on the enhance
+    # journey. Pre-arc, `_run_enhance` was stuffing up to 16000 chars of
+    # extracted document text into `scope`, which is `Field(max_length=2000)`.
+    # For any real user upload >2000 chars this raised a Pydantic
+    # ValidationError and the enhance run failed with a 500. Root-cause fix
+    # per user amendment (Step 1): source artefact content rides its OWN
+    # field/channel; `scope` cap stays at 2000 (scope is user-intent /
+    # short-form, not artefact-body). Optional field — non-enhance callers
+    # (Board Pack / Committee Pack / Minutes / Report / prepare-briefs /
+    # sandbox synth) don't populate it and behaviour is unchanged.
+    # `_flat_user_input()` appends this content to the LLM user_text
+    # payload when present so the two-pass pipeline sees the artefact
+    # body as part of the SCOPE block (labelled distinctly).
+    source_artefact_body: Optional[str] = Field(default=None, max_length=32000)
 
     # JC-WS-A (2026-06-25) — Source-material packs journey.
     # When the user has explicitly selected source documents on the
@@ -190,7 +207,14 @@ class ExportStatusOut(BaseModel):
 _ENHANCE_KINDS = ("deck", "report", "minutes", "committee_pack", "board_pack")
 _ENHANCE_MAX_BYTES = 25 * 1024 * 1024  # 25 MB ceiling, mirrors chat_attach
 _ENHANCE_ACCEPTED_EXT_BY_KIND = {
-    "deck":    {".pptx", ".pdf"},
+    # JC-WS-DECK-QA-RECOVERY-STAGE-2 (2026-07-05) — added `.docx` per v1.1
+    # §4.5 verbatim: "a styled file upload control accepting DOCX, PPTX,
+    # and PDF files". Users often upload prose (e.g. an executive summary
+    # in Word) and want Akki to enhance it into a slide deck. The engine
+    # `_run_enhance` decodes bytes via ClamAV + text-extract and passes
+    # to the LLM — extension-agnostic downstream. This is validation
+    # config, not engine work.
+    "deck":    {".docx", ".pptx", ".pdf"},
     "report":  {".docx", ".pdf"},
     "minutes": {".docx", ".pdf", ".txt"},
     # QA-2026-05-16-043 — committee pack ships as DOCX/PDF input.
@@ -433,11 +457,24 @@ def _format_grounding(paragraphs: List[Dict[str, Any]]) -> str:
 
 
 def _flat_user_input(body: ExportRequestIn) -> str:
-    return (
-        f"DESCRIPTION: {body.description.strip()}\n\n"
-        f"OBJECTIVE: {body.objective.strip()}\n\n"
-        f"SCOPE: {body.scope.strip()}"
-    )
+    """Flatten the request body into the LLM's user_text payload.
+
+    JC-WS-DECK-QA-RECOVERY-STAGE-2 (2026-07-05) — when the enhance journey
+    populates `source_artefact_body` (dedicated channel for uploaded
+    document content), we append it to the SCOPE block labelled as a
+    distinct sub-section. Non-enhance callers pass `source_artefact_body=None`
+    and behaviour is unchanged (byte-identical to pre-arc concatenation).
+    """
+    parts = [
+        f"DESCRIPTION: {body.description.strip()}",
+        f"OBJECTIVE: {body.objective.strip()}",
+        f"SCOPE: {body.scope.strip()}",
+    ]
+    if body.source_artefact_body:
+        parts.append(
+            "SOURCE ARTEFACT BODY:\n" + body.source_artefact_body.strip()
+        )
+    return "\n\n".join(parts)
 
 
 # =============================================================================
@@ -1774,7 +1811,12 @@ async def _run_enhance(
         logger.warning("synisense shielding skipped on enhance: %s", exc)
 
     # ── Synthesise an ExportRequestIn from instructions + source
-    SOURCE_CAP = 16000
+    # JC-WS-DECK-QA-RECOVERY-STAGE-2 (2026-07-05) — root-cause fix for the
+    # 2000-char scope overflow: source artefact body now rides on its own
+    # dedicated `source_artefact_body` field (cap 32000). `scope` stays at
+    # the original 2000-char cap and carries a short scope descriptor
+    # (kind + filename + truncation notice) rather than the artefact text.
+    SOURCE_CAP = 16000  # unchanged — same cap; different transport channel
     body_synth = ExportRequestIn(
         description=f"Enhance my {kind}: {instructions[:1500]}",
         objective=(
@@ -1783,10 +1825,11 @@ async def _run_enhance(
             "rewrite, drop, or reorder sections only as the instructions direct."
         ),
         scope=(
-            f"SOURCE ARTEFACT (kind={kind}, filename={source_filename!r}, "
-            f"truncated to {SOURCE_CAP} chars):\n\n"
-            + body_text[:SOURCE_CAP]
+            f"Enhance the {kind} artefact — see SOURCE ARTEFACT BODY block. "
+            f"kind={kind}, filename={source_filename!r}, "
+            f"source_body_chars={min(len(body_text), SOURCE_CAP)}."
         ),
+        source_artefact_body=body_text[:SOURCE_CAP],
         output_format=output_format,  # already resolved; not "auto"
     )
 
@@ -2522,7 +2565,7 @@ async def download_export(
 # source_artefact_id (Form, optional). One of file/source_artefact_id
 # must be provided.
 # =============================================================================
-@router.post("/contexts/{context_id}/work-studio/enhance/{kind}", response_model=Optional[ExportStartResponse])
+@router.post("/contexts/{context_id}/work-studio/enhance/{kind}", response_model=Optional[ExportStartResponse], status_code=202)
 async def start_enhance(
     context_id: str,
     kind: str,
@@ -2534,8 +2577,18 @@ async def start_enhance(
     file: Optional[UploadFile] = File(None),
     ctx: Dict[str, Any] = Depends(require_context_membership()),
 ):
-    """Phase C.3 — start a Work Studio enhance run. Same persistence
-    shape as export (rows in db.work_studio_exports with source='enhance').
+    """Phase C.3 — start a Work Studio enhance run.
+
+    JC-WS-DECK-QA-RECOVERY-STAGE-2 (2026-07-05) — returns 202 with a
+    `deck_generation_jobs` job handle alongside the legacy `export_id`.
+    The enhance journey is now async-from-start with phase tracking:
+    `queued → reading_upload → structuring → drafting → complete | error`.
+    FE polls `/api/contexts/{cid}/decks/generation-status/{job_id}` for
+    phase transitions and terminal state.
+
+    Same persistence shape as export (rows in db.work_studio_exports with
+    source='enhance'). Engine `_run_enhance` is UNCHANGED (0 diff bytes) —
+    this endpoint just wraps it in a phase-tracked job runner.
     """
     if kind not in _ENHANCE_KINDS:
         raise HTTPException(
@@ -2637,6 +2690,19 @@ async def start_enhance(
             "error": "thin_input",
         }
 
+    # JC-WS-DECK-QA-RECOVERY-STAGE-2 (2026-07-05) — async-from-start job.
+    # Shares the `deck_generation_jobs` collection with the prior arc's
+    # source-generate / regenerate / outline jobs. `job_kind="enhance"`
+    # discriminator + `target_id=export_id` links the job back to the
+    # persisted work_studio_exports row.
+    job = await deck_generation_jobs.create_job(
+        job_kind="enhance",
+        account_id=ctx["account"]["id"],
+        context_id=context_id,
+        user_id=ctx["account"]["id"],
+        target_id=export_id,
+    )
+
     # Schedule the worker.
     #
     # Chunk 3 (2026-05-13, WS-R06/R12/R15) — pre-Chunk-3 this catch-all
@@ -2650,11 +2716,106 @@ async def start_enhance(
     # logger.exception still captures the full traceback for ops.
     async def _runner():
         try:
+            # ------ Phase: reading_upload — source bytes already resolved
+            # in pre-flight (line ~2551); this marker signals the runner
+            # has entered the engine.
+            await deck_generation_jobs.set_phase(
+                job["job_id"], deck_generation_jobs.PHASE_READING, progress=15,
+            )
+            # ------ Phase: structuring — engine _run_enhance body runs
+            # here (Shield-routed LLM call + two-pass pipeline). Engine
+            # UNCHANGED. Phase marker is external to the engine.
+            await deck_generation_jobs.set_phase(
+                job["job_id"], deck_generation_jobs.PHASE_STRUCTURING, progress=40,
+            )
             await _run_enhance(
                 export_id=export_id, account_id=ctx["account"]["id"],
                 context_id=context_id, kind=kind, output_format=fmt,
                 instructions=instructions, source_data=source_bytes,
                 source_filename=source_filename, source_label=source_label,
+            )
+            # ------ Phase: drafting — post-LLM persistence + audit already
+            # written by _run_enhance; this marker signals finalisation.
+            await deck_generation_jobs.set_phase(
+                job["job_id"], deck_generation_jobs.PHASE_DRAFTING, progress=85,
+            )
+            # JC-WS-DECK-QA-RECOVERY-STAGE-2 (2026-07-05) — v1.1 §4.5 requires
+            # the enhanced deck to appear as a card at the top of the Deck
+            # list. Since `_run_enhance` persists to `work_studio_exports`
+            # (its native collection) and the Deck list reads only from
+            # `db.decks`, we mirror-insert a lightweight deck row here.
+            # This is SHAPE WORK external to the engine — `_run_enhance`
+            # itself is UNCHANGED. Only fires for `kind="deck"` (other
+            # enhance kinds like report/minutes stay in their own list
+            # views). The mirror row carries `source="enhance"` +
+            # `enhanced_from_export_id` so downstream consumers can
+            # trace lineage back to the export.
+            if kind == "deck":
+                try:
+                    export_row = await db.work_studio_exports.find_one(
+                        {"id": export_id, "context_id": context_id},
+                        {"_id": 0},
+                    )
+                    if export_row and export_row.get("status") == "complete":
+                        import uuid as _uuid
+                        mirror_id = str(_uuid.uuid4())
+                        # Extract title from the enhance draft — prefer
+                        # explicit deck title if the engine populated one,
+                        # else fall back to source filename with the
+                        # "Enhanced: " prefix so the card is self-describing.
+                        title = (
+                            (export_row.get("draft") or {}).get("title")
+                            or f"Enhanced: {source_filename}"
+                        )
+                        subtitle = (
+                            (export_row.get("draft") or {}).get("subtitle")
+                            or f"Enhanced from {source_label or source_filename}"
+                        )
+                        mirror = {
+                            "id": mirror_id,
+                            "context_id": context_id,
+                            "account_id": ctx["account"]["id"],
+                            "title": (title or "Enhanced deck")[:120],
+                            "subtitle": (subtitle or "")[:200],
+                            "slides": (export_row.get("draft") or {}).get("slides") or [],
+                            "model": export_row.get("model"),
+                            "model_id": export_row.get("model"),
+                            "tier": "deep",  # enhance runs a full LLM pass
+                            "quota": None,
+                            "quality_check": None,
+                            "user_feedback": None,
+                            "regen_count": 0,
+                            "sensitivity": export_row.get("sensitivity"),
+                            "validation": export_row.get("validation"),
+                            "status": "draft",
+                            # JC-WS-DECK-QA-RECOVERY-STAGE-2 lineage links.
+                            "source": "enhance",
+                            "enhanced_from_export_id": export_id,
+                            "created_at": iso(now()),
+                        }
+                        await db.decks.insert_one(mirror)
+                        # Update the job result so the FE poll response carries
+                        # the mirror deck id (used by onDeckEnhanced hook to
+                        # refresh the Deck list and highlight the new card).
+                        export_row["deck_id"] = mirror_id
+                except Exception as mirror_exc:
+                    # Non-fatal — the enhance itself succeeded, we just
+                    # couldn't mirror to db.decks. Log and continue so
+                    # the FE still surfaces the Download / Take-to-Chat
+                    # CTAs on the export.
+                    logger.warning(
+                        "enhance→decks mirror insert failed export_id=%s exc=%s",
+                        export_id, mirror_exc,
+                    )
+            # ------ Phase: complete — read the persisted row to include
+            # the export id + terminal fields in the job result payload
+            # (FE consumes this to render Download / Take-to-Chat / Close).
+            final_row = await db.work_studio_exports.find_one(
+                {"id": export_id, "context_id": context_id},
+                {"_id": 0},
+            )
+            await deck_generation_jobs.set_result(
+                job["job_id"], final_row or {"export_id": export_id},
             )
         except Exception as exc:
             logger.exception("enhance worker crashed (export_id=%s, kind=%s)", export_id, kind)
@@ -2664,20 +2825,34 @@ async def start_enhance(
             # can decide whether to offer Retry or not.
             err_class = type(exc).__name__
             err_msg = str(exc).replace("\n", " ").strip()[:300] or "(no message)"
+            err_detail = f"{err_class}: {err_msg}"
             await db.work_studio_exports.update_one(
                 {"id": export_id, "context_id": context_id},
                 {"$set": {
                     "status": "failed",
-                    "error": f"{err_class}: {err_msg}",
+                    "error": err_detail,
                     "completed_at": iso(now()),
                 }},
             )
+            # Mirror the failure to the deck_generation_jobs row so the
+            # polling FE surfaces the failure with the same signature.
+            await deck_generation_jobs.set_error(job["job_id"], {
+                "type": err_class,
+                "message": err_msg,
+                "status": 500,
+            })
     background.add_task(_runner)
 
     return {
         "export_id": export_id,
         "status": "running",
         "kind": kind,
+        # JC-WS-DECK-QA-RECOVERY-STAGE-2 — async job handle for FE polling.
+        "job_id": job["job_id"],
+        "phase": job["phase"],
+        "status_url": (
+            f"/api/contexts/{context_id}/decks/generation-status/{job['job_id']}"
+        ),
         "output_format": fmt,
         "source": "enhance",
         "created_at": created_at,
