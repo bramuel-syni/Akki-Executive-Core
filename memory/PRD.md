@@ -7443,3 +7443,58 @@ draft surfaced verbatim.
 ### Item 5 · Deck QA Recovery Stage 3a-3e
 
 **Status: HELD-BEHIND-DECK-031-DISPOSITION** · queued in sprint queue · Do NOT dispatch · Awaits: DECK-031 fix ships (A1 or A2b, user's choice from Track 1 delta table below) AND then explicit re-trigger from user.
+
+---
+
+## Three-track dispatch execution · 2026-07-08
+
+### Track A · JC-DECK-GENERATE-CHUNKED-INVOCATION · 🟢 SHIPPED-UNPUSHED · 13/13 GREEN
+
+- A1 chunked build per user's verbatim ruling (M3 dropped-in-A2b is the fail-closed governance itself; A2b rejected; A1 mandated).
+- Refactored `_run_generate_deck_job` at `routers/decks.py:464` from 1 `call_llm_with_tier` → N+1 chunks (1 meta + N slide-batch @ chunk_size=3).
+- All 14 governance controls preserved per-chunk (M1-M13 + M16 · per-chunk 19-field audit row + 13-field trust receipt).
+- Coherence quality gate armed: R-COH-1..R-COH-5 (orphan headers · dup titles · truncation · narrative arc · entity continuity). BLOCKED-ON-COHERENCE surface fires if any fails.
+- Zero streaming-adapter reroute · Shield UNTOUCHED (composite sha256 `c6902d324e...` preserved).
+- UI-layer coherence screenshot: WAIT-FOR-USER-CAPTURE per rule.
+- Commits: `1fe2493b` (§9 🟡), `c124065a` (memo+code+slice · 13/13 GREEN), `c2f95fba` (§9 🟢 close).
+- Content marker: `deck-generate-chunked-invocation-shipped-a1-14-controls-preserved-coherence-gate-armed`.
+
+### Track B · JC-WS-DRAFTS-BRIEFS-QA-RECOVERY-STAGE-1 · 🟢 SHIPPED-PENDING-USER-QA · 12/12 GREEN
+
+- Stage 1 Draft Creation Pipeline · Issues 1-6 · DB-002/003/007/018/029/030/031.
+- Backend `manual_create` accepts `origin=user_authored` · derives `akki_generated` flag from origin.
+- Frontend `ObjectiveCaptureModal` rebuilt with required Title field per v1.0 §4.2.
+- `WorkStudio.jsx` onSave threads title → name · origin=user_authored.
+- "Created by you" chip added on both row + card primitives (driven off `origin === "user_authored"`, not lifecycle state).
+- Backend contract test PASS end-to-end (title/origin/akki_generated/state assertions all green).
+- UI-layer capture: WAIT-FOR-USER-CAPTURE (automated preview URL redirects `/login` to marketing landing; no state-injection).
+- Stage 4 dual-capture precondition banked into Stage 1 memo (Split-Path Viewer Identity Check applied to Brief share).
+- STOP-AND-SHOW HARD-HOLD on Stages 2/3/4 · absolute.
+- DB-### story-id-namespace-check clean (zero DECK-### references).
+- Commits: `1fe2493b` (§9 🟡), `1307b3ee` (memo+code+slice · 12/12 GREEN), `c2f95fba` (§9 🟢 close).
+- Content marker (interim): `drafts-briefs-stage-1-shipped-full-journey-organic`. Final marker replaces `PENDING-USER-QA` with `USER-QA-CONFIRMED` on user's QA re-run pass.
+
+### Track C · JC-GITLEAKS-PATH-A-ALLOWLIST-AND-CANARY · 🔴 HARD-STOPPED-NOT-SHIPPED
+
+- Install PASS: pinned `gitleaks v8.18.4 linux_arm64` · SHA-256 `bf5f7f466ebfade1296c8bd32cf7d3f592c2aa78836aa9980ffbe2cadca7a861` matched · installed to `/usr/local/bin/gitleaks`.
+- Config PASS: 5 dispatch-specified path-anchored entries added to `.gitleaks.toml` · zero wildcards · one cause comment each.
+- 3-step canary NOT COMPLETED: baseline scan finds 6 leaks in files NOT in the 5-entry allowlist. Dispatch-targeted files have zero hits — allowlist is no-op.
+- Real hits: `memory/evidence/2026_07_02/bundle_v0_5_owner_digest/HALTED.md` (SG.keVt_ghmS... — may be REAL committed SendGrid token, same prefix as untracked `backend/.env` value) + `memory/jc_artifacts/JC-*.json` (5 hits · JC test artefacts).
+- HARD-STOP honoured per dispatch protocol. Did NOT improvise (no supplementary entries added, no rotation attempted, no proof fabricated).
+- User direction awaited (choose A/B/C/D per memo STEP 7):
+  - (A) add 3 supplementary path-anchored entries for the real hits + resume canary steps (b)+(c)
+  - (B) rotate the possibly-committed SendGrid token in HALTED.md (Path B, not Path A)
+  - (C) roll back the 5-entry edit and re-scope
+  - (D) other
+- §9 remains 🟡 IN-FLIGHT (does NOT flip 🟢 because arc did not close all-three-green).
+- Commits: `1fe2493b` (§9 🟡), `c68bf78d` (install-log + config + memo + slice), `b00c402d` (memo tweak).
+
+---
+
+**Shield UNTOUCHED across all three tracks** (composite sha256 `c6902d324ed90734cd815f63eaee8ebb66d776ef89f1797c1f7f50cbae10d5a8` preserved · 13 files sha256-identical).
+
+**Testing sub-agents BANNED throughout.** Proving slices + backend curl contract tests only.
+
+**MOCKED-integrations line preserved** (SendGrid dev-mode + Resend mock).
+
+**Push status: SHIPPED-UNPUSHED** for Tracks A + B (agent-side commits). Track C is HARD-STOPPED-NOT-SHIPPED. User pushes via "Save to GitHub" for Tracks A + B; user directs on Track C.
