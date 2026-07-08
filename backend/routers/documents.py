@@ -892,20 +892,19 @@ async def accept_pending_document(
 # ─────────────────────────────────────────────────────────────────────
 # Track A Phase 5 (2026-06-04) — POST /documents/manual-create
 #
-# FIX for W5 (fig 64 — "Draft Document 405 Method Not Allowed"). The
-# `WorkStudio.jsx` ObjectiveCaptureModal calls this endpoint to create
-# a blank `akki_generated` draft document carrying a {goal, context}
-# objective. Pre-Phase-5 the endpoint did not exist — FastAPI returned
-# 405 because the path partially matched the `POST /contexts/{cid}/
-# documents` multipart-upload handler at line 357. Now: JSON body, no
-# file, ClamAV skipped (no bytes), category enforcement skipped.
-# Returns the freshly-created document so the FE can immediately open
-# the drawer via `?doc_id=...`.
-# ─────────────────────────────────────────────────────────────────────
+# JC-WS-DRAFTS-BRIEFS-QA-RECOVERY-STAGE-1 (2026-07-08) — Draft Creation
+# Pipeline fix per UX Brief v1.0 §4.2. User-authored drafts are now created
+# with `origin="user_authored"` (was hardcoded `akki_generated` — Issue 2 /
+# DB-007). The `akki_generated` boolean flag on the persisted row is derived
+# from origin ("akki_generated" origin → True; anything else → False) so the
+# "Akki Generated" badge in the list only appears for genuinely Akki-authored
+# artefacts (per v1.0 §4.1 · Draft card provenance discipline).
 class _ManualCreateIn(BaseModel):
     name: str = Field(default="Untitled draft", max_length=300)
     body: str = Field(default="", max_length=200_000)
     state: str = Field(default="draft")  # draft | active
+    # v1.0 §4.2 · user-authored drafts use `user_authored`; legacy
+    # akki_generated remains valid for backward-compat with other callers.
     origin: str = Field(default="akki_generated")
     objective: Optional[Dict[str, Any]] = None
 
@@ -918,6 +917,9 @@ async def manual_create_document(
 ):
     doc_id = str(uuid.uuid4())
     now_iso = datetime.now(timezone.utc).isoformat()
+    # JC-WS-DRAFTS-BRIEFS-QA-RECOVERY-STAGE-1 · accept user_authored per v1.0 §4.2
+    _valid_origins = {"akki_generated", "user_authored", "upload", "email_receipt"}
+    resolved_origin = body.origin if body.origin in _valid_origins else "akki_generated"
     doc = {
         "id": doc_id,
         "context_id": context_id,
@@ -929,7 +931,11 @@ async def manual_create_document(
         "mime_type": "text/plain",
         "extracted_text": body.body or "",
         "state": body.state or "draft",
-        "origin": body.origin or "akki_generated",
+        "origin": resolved_origin,
+        # Provenance-discipline: akki_generated flag is derived from origin
+        # so the card-badge logic (`row.akki_generated === true` → show
+        # "Akki Generated") stays consistent with the actual authorship.
+        "akki_generated": resolved_origin == "akki_generated",
         "status": "active",
         "category": None,
         "objective": body.objective or None,
@@ -937,9 +943,6 @@ async def manual_create_document(
         "notes_updated_at": None,
         "created_at": now_iso,
         "updated_at": now_iso,
-        # Track A Phase 5 — the FE expects `body` echoed back when the
-        # drawer opens via `?doc_id=`. We persist as `extracted_text`
-        # (the canonical body field) and return `body` for compatibility.
     }
     await db.documents.insert_one(doc)
     try:

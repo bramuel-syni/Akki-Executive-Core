@@ -1,14 +1,17 @@
 /**
  * ObjectiveCaptureModal — Phase E.3 (2026-05-26).
  *
+ * JC-WS-DRAFTS-BRIEFS-QA-RECOVERY-STAGE-1 (2026-07-08) — Draft Creation
+ * Pipeline fix per UX Brief v1.0 §4.2. Modal now has TWO required fields:
+ *   1. Title — the name of the document (v1.0 spec addition; was missing)
+ *   2. Goal  — a plain-language statement of the document's purpose
+ * Plus optional Context. Title carries through to the drawer header on save
+ * (DB-018/029/030 · modal-title → drawer-header transition).
+ *
  * Fires when the user creates a new Draft via the Drafts tab's
- * "+ New draft" CTA. Captures the document's objective so the
- * Intelligence tab can score adherence:
- *   { goal: required, context: optional, set_at: ISO }
+ * "+ New draft" CTA. Save-and-Start-Drafting label per v1.0 §4.2.
  *
- * Persisted on `documents.objective` via PATCH (Phase E.3 backend).
- *
- * Inputs: open, onOpenChange, onSave({goal, context}).
+ * Inputs: open, onOpenChange, onSave({title, goal, context}).
  */
 import React, { useState } from "react";
 import {
@@ -19,16 +22,20 @@ import { Loader2 } from "lucide-react";
 
 
 export default function ObjectiveCaptureModal({ open, onOpenChange, onSave }) {
+  const [title, setTitle] = useState("");
   const [goal, setGoal] = useState("");
   const [context, setContext] = useState("");
   const [saving, setSaving] = useState(false);
 
   const onSubmit = async () => {
-    if (!goal.trim()) return;
+    if (!title.trim() || !goal.trim()) return;
     setSaving(true);
     try {
-      await onSave({ goal: goal.trim(), context: context.trim() });
+      // JC-WS-DRAFTS-BRIEFS-QA-RECOVERY-STAGE-1 · title threaded to onSave
+      // so it lands as `documents.name` on the create call (DB-018).
+      await onSave({ title: title.trim(), goal: goal.trim(), context: context.trim() });
       // Clear + close on success.
+      setTitle("");
       setGoal("");
       setContext("");
       onOpenChange(false);
@@ -41,16 +48,28 @@ export default function ObjectiveCaptureModal({ open, onOpenChange, onSave }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md" data-testid="objective-capture-modal">
         <DialogHeader>
-          <DialogTitle className="text-[15px]">What&apos;s the goal of this document?</DialogTitle>
+          <DialogTitle className="text-[15px]">Create a new draft</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          {/* v1.0 §4.2 · Title is a REQUIRED field per spec. */}
           <div>
-            <p className="text-[11px] uppercase tracking-[0.14em] font-mono text-[var(--muted)] mb-1.5">Goal</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] font-mono text-[var(--muted)] mb-1.5">Title <span className="text-[var(--muted)]">(required)</span></p>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Give this draft a name…"
+              autoFocus
+              maxLength={300}
+              className="w-full border border-[var(--rule)] rounded-sm px-2 py-1.5 text-[13px] focus:outline-none focus:border-[var(--ink)]"
+              data-testid="objective-modal-title-input"
+            />
+          </div>
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.14em] font-mono text-[var(--muted)] mb-1.5">Goal <span className="text-[var(--muted)]">(required)</span></p>
             <input
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
               placeholder="What this draft is trying to do…"
-              autoFocus
               className="w-full border border-[var(--rule)] rounded-sm px-2 py-1.5 text-[13px] focus:outline-none focus:border-[var(--ink)]"
               data-testid="objective-modal-goal-input"
             />
@@ -69,9 +88,14 @@ export default function ObjectiveCaptureModal({ open, onOpenChange, onSave }) {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} size="sm" data-testid="objective-modal-cancel">Cancel</Button>
-          <Button onClick={onSubmit} disabled={!goal.trim() || saving} size="sm" data-testid="objective-modal-save">
+          <Button
+            onClick={onSubmit}
+            disabled={!title.trim() || !goal.trim() || saving}
+            size="sm"
+            data-testid="objective-modal-save"
+          >
             {saving ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : null}
-            Save and start drafting
+            Save and Start Drafting
           </Button>
         </DialogFooter>
       </DialogContent>

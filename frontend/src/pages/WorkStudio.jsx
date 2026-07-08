@@ -505,6 +505,22 @@ function DocumentRow({ row, onOpen, pulseId }) {
                 </span>
               </>
             )}
+            {/* JC-WS-DRAFTS-BRIEFS-QA-RECOVERY-STAGE-1 (2026-07-08) · DB-007 ·
+                v1.0 §4.1. User-authored drafts show "Created by you" so
+                authorship is always distinguishable from Akki-generated
+                artefacts. Persists in both Draft and Committed states —
+                driven off `origin === "user_authored"`, not lifecycle state. */}
+            {origin === "user_authored" && (
+              <>
+                {(sourceCount !== null || contribCount !== null || akkiGenerated) && <span>·</span>}
+                <span
+                  className="inline-flex items-center rounded-sm bg-emerald-50 text-emerald-700 px-1 py-0.5 text-[9.5px] not-italic border border-emerald-200"
+                  data-testid="work-studio-document-row-created-by-you"
+                >
+                  Created by you
+                </span>
+              </>
+            )}
             {confPct !== null && (
               <>
                 <span>·</span>
@@ -1530,12 +1546,21 @@ export default function WorkStudio() {
           onOpenChange={setObjectiveModalOpen}
           onSave={async (obj) => {
             try {
+              // JC-WS-DRAFTS-BRIEFS-QA-RECOVERY-STAGE-1 (2026-07-08) · v1.0 §4.2.
+              // Title carries from modal to draft `name` (DB-018/029/030).
+              // Origin = "user_authored" (DB-007 · provenance discipline · no
+              // "Akki Generated" badge on user-authored drafts). Born-in-draft
+              // lifecycle state per RULE-BORN-IN-CORRECT-LIFECYCLE-STATE.
               const { data: newDoc } = await api.post(`/contexts/${cid}/documents/manual-create`, {
-                name: "Untitled draft",
+                name: obj.title || "Untitled draft",
                 body: "",
                 state: "draft",
-                origin: "akki_generated",
-                objective: { ...obj, set_at: new Date().toISOString() },
+                origin: "user_authored",
+                objective: {
+                  goal: obj.goal || "",
+                  context: obj.context || "",
+                  set_at: new Date().toISOString(),
+                },
               });
               fetchAggregates();
               // Open the new draft in the drawer via deep-link.

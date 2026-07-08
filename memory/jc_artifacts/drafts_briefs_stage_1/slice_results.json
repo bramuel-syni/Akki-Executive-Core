@@ -1,0 +1,70 @@
+{
+  "arc": "JC-WS-DRAFTS-BRIEFS-QA-RECOVERY-STAGE-1",
+  "content_marker": "drafts-briefs-stage-1-shipped-full-journey-organic",
+  "close_status": "SHIPPED-PENDING-USER-QA \u00b7 UI-layer WAIT-FOR-USER-CAPTURE",
+  "passed": 12,
+  "total": 12,
+  "verdict": "GREEN",
+  "rows": [
+    {
+      "row": "R1",
+      "ok": true,
+      "note": "UX Brief v1.0 (8 July 2026) present at canonical path \u00b7 29865 bytes"
+    },
+    {
+      "row": "R2",
+      "ok": true,
+      "note": "line-1 canonical spec cite present (v1.0 8 July 2026 + path)"
+    },
+    {
+      "row": "R3",
+      "ok": true,
+      "note": "story-id-namespace clean \u00b7 7 DB-### tokens in memo \u00b7 zero DECK-### references"
+    },
+    {
+      "row": "R4",
+      "ok": true,
+      "note": "backend _ManualCreateIn / manual_create accepts user_authored origin"
+    },
+    {
+      "row": "R5",
+      "ok": true,
+      "note": "manual_create derives akki_generated flag from origin (badge-driver consistency)"
+    },
+    {
+      "row": "R6",
+      "ok": true,
+      "note": "ObjectiveCaptureModal has required Title + required Goal + optional Context + Save-and-Start-Drafting CTA"
+    },
+    {
+      "row": "R7",
+      "ok": true,
+      "note": "WorkStudio.jsx onSave threads title \u2192 name + origin=user_authored + goal + set_at"
+    },
+    {
+      "row": "R8",
+      "ok": true,
+      "note": "\"Created by you\" chip rendered on both row + card primitives \u00b7 driven off origin === \"user_authored\""
+    },
+    {
+      "row": "R9",
+      "ok": true,
+      "note": "Born-in-Correct-Lifecycle-State: FE sends state='draft' at create \u00b7 BE persists \u00b7 regression floor armed for Stage 2"
+    },
+    {
+      "row": "R10",
+      "ok": true,
+      "note": "Stage 4 dual-capture precondition + Split-Path Viewer Identity Check banked into Stage 1 memo (inherits automatically)"
+    },
+    {
+      "row": "R11",
+      "ok": true,
+      "note": "Shield 13-file sha256 identity preserved"
+    },
+    {
+      "row": "R12",
+      "ok": true,
+      "note": "UI-layer capture status honestly declared \u00b7 WAIT-FOR-USER-CAPTURE \u00b7 no fabrication \u00b7 rule compliance affirmed"
+    }
+  ]
+}

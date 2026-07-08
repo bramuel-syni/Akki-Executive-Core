@@ -356,8 +356,11 @@ function DocumentCardRow({ item, onOpen, onDownload, onShare, onDelete, download
         {/* Track A Phase 5 (2026-06-04, fig 53 row 2) — sources count,
             contributors count, Akki Generated badge. Hidden entirely
             for cards that lack any of the additive fields (legacy
-            rows). */}
-        {(sourceCount !== null || contribCount !== null || akkiGenerated) && (
+            rows).
+            JC-WS-DRAFTS-BRIEFS-QA-RECOVERY-STAGE-1 (2026-07-08) · DB-007 ·
+            "Created by you" badge on user-authored drafts · driven off
+            `item.origin === "user_authored"`. */}
+        {(sourceCount !== null || contribCount !== null || akkiGenerated || item.origin === "user_authored") && (
           <div
             data-testid={`ws-document-card-meta-row2-${item.id}`}
             className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-[10.5px] text-[var(--muted)] font-mono uppercase tracking-[0.08em]"
@@ -383,6 +386,17 @@ function DocumentCardRow({ item, onOpen, onDownload, onShare, onDelete, download
                   className="inline-flex items-center rounded-sm bg-ned-purple/10 text-ned-purple px-1 py-0.5 text-[9.5px] not-italic"
                 >
                   Akki Generated
+                </span>
+              </>
+            )}
+            {item.origin === "user_authored" && (
+              <>
+                {(sourceCount !== null || contribCount !== null || akkiGenerated) && <span>·</span>}
+                <span
+                  data-testid={`ws-document-card-created-by-you-${item.id}`}
+                  className="inline-flex items-center rounded-sm bg-emerald-50 text-emerald-700 border border-emerald-200 px-1 py-0.5 text-[9.5px] not-italic"
+                >
+                  Created by you
                 </span>
               </>
             )}
