@@ -1,0 +1,44 @@
+{
+  "arc": "JC-SHIELD-CEILING-ASYMMETRY-DIAGNOSE",
+  "pre_arc_head": "f7255414",
+  "passed": 7,
+  "total": 7,
+  "verdict": "GREEN",
+  "rows": [
+    {
+      "row": "R1",
+      "ok": true,
+      "note": "memo present at canonical path (19197 bytes)"
+    },
+    {
+      "row": "R2",
+      "ok": true,
+      "note": "line 1 canonical spec cite present"
+    },
+    {
+      "row": "R3",
+      "ok": true,
+      "note": "all 16 required memo markers present"
+    },
+    {
+      "row": "R4",
+      "ok": true,
+      "note": "DEV_PIPELINE \u00a79 row present with all 2 markers"
+    },
+    {
+      "row": "R5",
+      "ok": true,
+      "note": "only allowed files touched since f7255414: ['backend/scripts/jc_shield_ceiling_asymmetry_diagnose_proving_slice.py', 'memory/sprints/JC_SHIELD_CEILING_ASYMMETRY_DIAGNOSE.md']"
+    },
+    {
+      "row": "R6",
+      "ok": true,
+      "note": "0 diff bytes on 12 protected paths since f7255414"
+    },
+    {
+      "row": "R7",
+      "ok": true,
+      "note": "Shield sha256 identity preserved (13 files \u00b7 composite=9ce4ccc8b2c2339b...)"
+    }
+  ]
+}
